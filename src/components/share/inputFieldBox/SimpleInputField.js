@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import styles from './inputField.module.css'
-const SimpleInputField = ({onChange, value, fieldTitle, name, clear }) => {
+const SimpleInputField = ({ onChange, value, fieldTitle, name, clear }) => {
   const [count, setCount] = useState(0);
   const [words, setWords] = useState("");
 
@@ -12,31 +12,31 @@ const SimpleInputField = ({onChange, value, fieldTitle, name, clear }) => {
       setCount(words.length);
     }
     onChange(e)
-};
+  };
 
-useEffect(() => {
-  if (clear) {
-    setCount(0);
-    setWords("")
-  }
-}, [clear])
-return (
-  <>
-    <div className={styles.input_fild__wrapper}>
+  useEffect(() => {
+    if (clear) {
+      setCount(0);
+      setWords("")
+    }
+  }, [clear])
+  return (
+    <>
+      <div className={styles.input_fild__wrapper}>
 
-      <div className={styles.input_fild__contbox}>
+        <div className={styles.input_fild__contbox}>
 
-        <div className={styles.input_file_titlebox}>
-          <h4 className={styles.input_title}>{fieldTitle} <span className={styles.required}>*</span></h4>
-          <p className={styles.pintext}>{(name === "keyword" || name === "Pname" || name === "Cname") && `(${count}/80)`}</p>
-        </div>
-        <div className={styles.input_fild_box}>
-          <input value={value} className={styles.input_singletext_fild} placeholder='' onChange={handleCounter} />
+          <div className={styles.input_file_titlebox}>
+            <h4 className={styles.input_title}>{fieldTitle} <span className={styles.required}>*</span></h4>
+            <p className={styles.pintext}>{(name === "keyword" || name === "Pname" || name === "Cname") && `(${count}/80)`}</p>
+          </div>
+          <div className={styles.input_fild_box}>
+            <input value={value ? value : ""} className={styles.input_singletext_fild} placeholder='' onChange={handleCounter} name={name ? name : ""} />
+          </div>
         </div>
       </div>
-    </div>
-  </>
-)
+    </>
+  )
 }
 
 export default SimpleInputField

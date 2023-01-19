@@ -1,11 +1,49 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import styles from './openAI.module.css';
 import { FcGoogle } from "react-icons/fc";
 import { HiArrowRight, HiReply } from "react-icons/hi";
 import shapeImg1 from '../../../assets/img/gradient-shape.png'
 import shapeImg2 from '../../../assets/img/gradient-shape-2.png'
 import SimpleInputField from '../../share/inputFieldBox/SimpleInputField'
+import { useParams } from 'react-router-dom';
+import { db } from './openAIdb';
 const GenerateAI = () => {
+  const { id } = useParams();
+  const [data, setData] = useState([]);
+  const [textDB, setTextDB] = useState([]);
+  const [clear, setClear] = useState(false);
+
+  const [state, setState] = useState({
+    Cname: "",
+    Pname: "",
+    keyword: ""
+  })
+
+  const clearInput = () => {
+    setState({
+      Cname: "",
+      Pname: "",
+      keyword: ""
+    })
+  }
+
+  const clearTextGenerator = () => {
+    setTextDB([])
+  }
+
+  const generatetext = () => {
+    let texts = [];
+    texts.push(state);
+    setTextDB(texts);
+    clearInput();
+  }
+  const handleChange = e => setState(prevState => ({ ...prevState, [e.target.name]: e.target.value }));
+
+  useEffect(() => {
+    let dbs = db.filter((item) => item.id === id);
+    setData(dbs);
+  }, [id]);
+
   return (
     <>
       <div className={styles.app_openAI_home}>
@@ -17,16 +55,15 @@ const GenerateAI = () => {
           <div className={styles.generator__head_box}>
             <span className={styles.features__icone} ><FcGoogle /></span>
             <div className={styles.generator__head_cont}>
-              <h3 className={styles.feature_card_title}>Google ad-copy outputs</h3>
-              <p className={styles.feature_card_desc}>Create key and benefit bullet points for Google Ads listing under the "about this item" section</p>
+              <h3 className={styles.feature_card_title}>{data[0]?.title}</h3>
+              <p className={styles.feature_card_desc}>{data[0]?.desc}</p>
             </div>
           </div>
-
           <div className={styles.text_generator__right_cont}>
             <ul className={styles.text_generator__top_tabs}>
               <li className={styles.text_generator_tabs_item}>New Output</li>
             </ul>
-            <button className={styles.generate_reset__btn} type='button'><span className={styles.icons}><HiReply /></span> Clear</button>
+            <button onClick={() => clearTextGenerator()} className={styles.generate_reset__btn} type='button'><span className={styles.icons}><HiReply /></span> Clear</button>
           </div>
 
         </div>
@@ -39,27 +76,35 @@ const GenerateAI = () => {
               <div className={styles.text_generator_leftwrap}>
                 <div className={styles.generate__textfild__wrap}>
                   <div className={styles.single_input_box}>
-                    <SimpleInputField singleFieldTitle='Company name' singleFieldLenght='(0/80))' />
+                    <SimpleInputField onChange={handleChange} clear={clear} fieldTitle='Company name' value={state.Cname} singleFieldLenght='(0/80))' name="Cname" />
                   </div>
                   <div className={styles.single_input_box}>
-                    <SimpleInputField singleFieldTitle='Product name' singleFieldLenght='(0/80)' />
+                    <SimpleInputField onChange={handleChange} clear={clear} fieldTitle='Product name' value={state.Pname} singleFieldLenght='(0/80)' name="Pname" />
                   </div>
                   <div className={styles.single_input_box}>
-                    <SimpleInputField singleFieldTitle='Keywords' singleFieldLenght='(0/80)' />
+                    <SimpleInputField onChange={handleChange} clear={clear} fieldTitle='Keywords' value={state.keyword} singleFieldLenght='(0/80)' name="keyword" />
                   </div>
                 </div>
                 <div className={styles.text_generator__bottomnav}>
                   <div className={styles.control__action__btnbox}>
-                    <button className={styles.clear__input_btn} type='button'><span className={styles.icons}><HiReply /></span> Clear</button>
-                    <button className={styles.generate_btn} type='button'>Generate <span className={styles.icons}><HiArrowRight /></span></button>
+                    <button onClick={() => clearInput()} className={styles.clear__input_btn} type='button'><span className={styles.icons}><HiReply /></span> Clear</button>
+                    <button onClick={() => state.Cname && state.Pname && state.keyword && generatetext()} className={styles.generate_btn} type='button'>Generate <span className={styles.icons}><HiArrowRight /></span></button>
                   </div>
                 </div>
               </div>
 
               {/* right sidebar box */}
               <div className={styles.text_generator_rightwrap}>
-
-
+                {
+                  textDB.length > 0 &&
+                  textDB.map((item, index) => (
+                    <div key={index}>
+                      <h6>{item.Cname}</h6>
+                      <h6>{item.Pname}</h6>
+                      <h6>{item.keyword}</h6>
+                    </div>
+                  ))
+                }
               </div>
 
             </div>

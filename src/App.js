@@ -65,7 +65,7 @@ const App = () => {
               <Route path="/features" element={<FeaturesAI />} />
             </Routes>
             <Routes>
-              <Route path="/text-generator" element={<GenerateAI />} />
+              <Route path="/text-generator/:id" element={<GenerateAI />} />
             </Routes>
             <Routes>
               <Route path="/news" element={<NewsCenter />} />
