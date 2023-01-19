@@ -1,0 +1,123 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,600&display=swap');
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, 'Poppins', Proxima Nova, system-ui, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  scroll-behavior: smooth;
+  box-sizing: border-box;
+  color: var(--white-color);
+  overflow: hidden;
+}
+
+:root {
+  --primary-font: 'Poppins', sans-serif;
+  --secondary-font: 'Inter', sans-serif;
+  --primary-color: #926BFF;
+  --secondary-color: linear-gradient(0deg, rgba(105, 103, 103, 0.26), rgba(105, 103, 103, 0.26)),
+    linear-gradient(180deg, rgba(232, 87, 130, 0.5) 0%, rgba(133, 90, 255, 0.5) 100%);
+  --gray-color: #2F2C3E;
+  --white-color: #FFFFFF;
+  --extra-gray: #989797;
+  --light-gray: #696767;
+  --gray-black: #323030;
+  --color-denger: #CE092C;
+  --bg-color: #000000;
+  --light-gray2: #464343;
+  --green-color: #639C63;
+  --light-black: #161515;
+  --border-color: border: 1px solid;
+  --border-image-source: linear-gradient(180deg, rgba(232, 87, 130, 0.5) 0%, rgba(133, 90, 255, 0.5) 100%);
+  --gradient-color: linear-gradient(90deg, #E85782 0%, #926BFF 100%);
+  --yellow-green: #8BE57F;
+
+}
+button{
+  background: none;
+  outline: none;
+  border: none;
+  cursor: pointer;
+}
+li,
+a {
+  list-style: none !important;
+  text-decoration: none !important;
+  font-family: var(--secondary-font);
+}
+
+.main-wrapper-box {
+  background-color: var(--bg-color);
+  width: 100%;
+  padding-left: 300px;
+  overflow: hidden;
+  height: 100%;
+}
+@media screen and (max-width:1280px) {
+  .main-wrapper-box {
+    padding-left: 255px;
+  }
+}
+@media screen and (max-width:991px) {
+  .main-wrapper-box {
+    padding-left: 81px;
+  }
+}
+.app-body {
+  display: flex;
+  height: 100vh;
+}
+
+.projects__item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.input_fild_textarea {
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 300;
+  font-family: var(--primary-font);
+  color: var(--white-color);
+  margin-bottom: 0;
+  width: 100%;
+  height: 48px;
+  background-color: transparent;
+  border: 0;
+  border-radius: 25px;
+  padding: 13px 17px 13px 22px;
+}
+
+.desc_text_box {
+  margin-bottom: 45px;
+}
+
+.desc_text_box .input_fild_textarea {
+  height: 117px;
+}
+
+.input_fild_textarea:focus {
+  box-shadow: none;
+  outline: 0;
+}
+
+.nav_navbar_nav__lh5sZ ul li a.active .nav_icons_svg_folder__R6XaF svg path,
+.nav_navbar_nav__lh5sZ ul li a.active .nav_icons_svg_graph__5v3po svg path,
+.nav_navbar_nav__lh5sZ ul li a.active .nav_icons_svg_settings__sCzqn svg path,
+.nav_navbar_nav__lh5sZ ul li a.active .nav_icons_svg_book__Lr8db svg path,
+.nav_navbar_nav__lh5sZ ul li:hover .icons_svg_folder svg path,
+.nav_navbar_nav__lh5sZ ul li:hover .icons_svg_graph svg path,
+.nav_navbar_nav__lh5sZ ul li:hover .icons_svg_settings svg path,
+.nav_navbar_nav__lh5sZ ul li:hover .icons_svg_book svg path{
+    stroke:var(--primary-color);
+}
+.nav_navbar_nav__lh5sZ  ul li a.active,
+.nav_navbar_nav__lh5sZ  ul li:hover a{color: var(--primary-color); transition: color 350ms ease 0s;}

@@ -1,0 +1,227 @@
+.app_auth_wrapper {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  background-color: var(--bg-color);
+  z-index: 999999;
+}
+.app_auth_wrapper .app_shape_img {
+  position: absolute;
+  right: 0;
+  bottom: 120px;
+}
+.app_auth_wrapper .app_shape_img4 {
+  position: absolute;
+  left: 0;
+  bottom: 0px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.app_auth_wrapper .app_auth_contbox {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+.app_auth__bandlogo {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.app_auth__form_contbox {
+  max-width: 500px;
+  width: 100%;
+  height: auto;
+}
+
+/* ===================== */
+.app_auth_formbox {
+  padding: 24px 32px 29px 32px;
+  background: rgba(105, 103, 103, 0.26);
+  border-radius: 15px;
+  z-index: 9;
+  position: relative;
+}
+.app_auth_formbox::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 15px;
+  padding: 1px;
+  background: linear-gradient(
+    180deg,
+    rgba(146, 107, 255, 0.5) 0%,
+    rgba(232, 87, 130, 0.5) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: add, add;
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+}
+
+.app_auth_formbox .app_auth_form_title {
+  color: #fff;
+  text-align: center;
+  margin-bottom: 45px;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+/* ================ */
+.app_auth_form {
+}
+.app_auth_form_group {
+  position: relative;
+  margin-bottom: 40px;
+}
+.app_gradient_box{
+    position: relative;
+    background: var(--bg-color);
+    border-radius: 25px;
+}
+.app_gradient_box::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: 25px;
+	padding: 1px;
+    background: linear-gradient(-90deg, #e85782 -6.25%, #926bff 81.97%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+	-webkit-mask-composite: xor;
+	mask-composite: exclude;
+	pointer-events: none;
+	width: 100%;
+	height: 100%;
+}
+.app_auth_form_group .app_auth_iconbox {
+}
+.app_auth_form_group .app_auth_inputfild {
+  border-radius: 20px;
+  background: var(--bg-color);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+  font-family: var(--primary-font);
+  color: var(--white-color);
+  margin-bottom: 0;
+  width: 100%;
+  min-height: 48px;
+  background-color: transparent;
+  border: 0;
+  border-radius: 25px;
+  padding: 16px 48px 13px 48px;
+  position: relative;
+  z-index: 999;
+}
+.app_auth_form_group .app_auth_inputfild:focus{
+    outline: 0;
+    box-shadow: none;
+} 
+.app_auth_form_group .app_auth_inputfild::placeholder{
+    color: var(--extra-gray);
+}
+.app_auth_link{
+    font-size: 15px;
+    font-weight: 500;
+    text-align: right;
+    margin-top: 20px;
+    color: var(--extra-gray);
+    margin-bottom: 0;
+    width: 100%;
+    display: block;
+}
+.app_auth_btn_contbox{
+    width: 100%;
+    text-align: center;
+    margin-top: 60px;
+}
+.app_auth_btn_contbox .app_auth_linkbox{
+    margin-bottom: 15px;
+}
+.app_auth_btn_contbox .app_auth_linkbox .link_boxtitle{
+    font-size: 15px;
+    font-weight: 500;
+    color: #fff;
+    margin-right: 4px;
+}
+.app_auth_linkto{
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: underline !important;
+    color: var(--primary-color);
+}
+.app_auth_btnbox{
+        position: relative;
+        display: block;
+        cursor: pointer;
+        width: 100%;
+        padding: 15px 21px 11px;
+        text-align: center;
+}
+.app_auth_btnbox::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50px;
+    padding: 1px;
+    background: linear-gradient(-90deg, #e85782 -6.25%, #926bff 81.97%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+}
+.app_auth_btnbox .app_auth_btn{
+    background: transparent;
+    border: 0;
+    box-shadow: 0;
+    font-family: var(--primary-font);
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 26px;
+    letter-spacing: 0em;
+    text-align: center;
+    color: var(--white-color);
+    position: relative;
+    display: block;
+    width: 100%;
+    cursor: pointer;
+}
+
+/* ==================== */
+.app_auth_iconbox{
+    display: flex;
+    justify-content: space-between;
+    position: absolute;
+    top: 12px;
+    width: 100%;
+    left: 0;
+    padding: 0 15px;
+    align-items: center;
+}
+.app_auth_form_icon{
+    font-size: 22px;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    position: relative;
+    z-index: 9999;
+}
+
+.loader{
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99999;
+}
+.loader .loader{
+  width: 50px;
+}

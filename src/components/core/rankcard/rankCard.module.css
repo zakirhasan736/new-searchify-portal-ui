@@ -1,0 +1,124 @@
+/* analytics rank card styles */
+
+  .analytics__Rank_card {
+    position: relative;
+    padding: 33px 28px 37px 36px;
+    border-radius: 10px;
+    background: rgba(88, 87, 87, 0.21);
+    border-radius: 10px;
+    min-width: 399px;
+    width: 100%;
+  }
+  .analytics__Rank_card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    padding: 1px;
+    background: linear-gradient(
+      180deg,
+      rgba(146, 107, 255, 0.5) 0%,
+      rgba(232, 87, 130, 0.5) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .analytics__rank_head {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    justify-content: space-between;
+    margin-bottom: 13px;
+  }
+  .analytics__rank_head .rank__head_title {
+    font-family: var(--primary-font);
+    font-size: 30px;
+    font-weight: 200;
+    line-height: 50px;
+    letter-spacing: 0em;
+    text-align: left;
+    color: var(--white-color);
+  }
+  .rank__type {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--primary-font);
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 26px;
+    letter-spacing: 0em;
+    text-align: left;
+    color: var(--extra-gray);
+  }
+  .rank__type .rank__icons {
+    position: relative;
+    top: 4px;
+  }
+  .analytics__rank_body {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    justify-content: space-between;
+  }
+  .analytics__rank_body .rank__number {
+    font-family: var(--primary-font);
+    font-size: 35px;
+    font-weight: 275;
+    line-height: 53px;
+    letter-spacing: 0em;
+    text-align: left;
+    color: var(--white-color);
+  }
+  .dateTimeBox{
+    color: #514e4e;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .dateTimeBox svg path{stroke: #514e4e;}
+@media screen and (max-width:1650px) {
+  .analytics__rank_head .rank__head_title {
+    font-size: 27px;
+  }
+}
+@media screen and (max-width:1550px) {
+  .analytics__Rank_card {
+    min-width: auto;
+    width: 100%;
+    max-width: 399px;
+  }
+}
+@media screen and (max-width:1199px) {
+  .analytics__Rank_card{
+    max-width: 336px;
+    padding: 10px 15px;
+  }
+  .analytics__rank_head .rank__head_title,
+  .analytics__rank_body .rank__number {
+    font-size: 15px;
+  }
+}
+@media screen and (max-width:991px) {
+  .analytics__Rank_card{
+    max-width: 100%;
+  }
+}
+@media screen and (max-width:767px) {
+  .analytics__rank_head{
+    display: block;
+  }
+  .analytics__rank_body{
+    display: block;
+  }
+  .overview__details_cont_leftbox 
+  .engagement_overview_list 
+  .overview_list_item {
+    display: block;
+  }
+}

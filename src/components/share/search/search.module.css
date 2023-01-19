@@ -1,0 +1,109 @@
+.search_inputbox{
+    width: 493px;
+    background: transparent;
+    height: 55px;
+    border-radius: 25px;
+    position: relative;
+}
+@media screen and (max-width:1199px) {
+    .search_inputbox{
+        width: 310px;
+    }
+}
+.inputWith__btn{
+    width: 100%;
+
+}
+.search_inputbar:focus{
+    outline: 0;
+    box-shadow: none;
+}
+.search_inputbar{
+    padding: 13px 56px 12px 56px;
+    background: transparent;
+    width: 100%;
+    border-radius: 25px;
+    height: 55px;
+    border: 1px solid #989797;
+    font-size: 15px;
+    line-height: 30px;
+    font-weight: 200;
+    color: var(--extra-gray);
+    font-family: var(--primary-font);
+}
+.search_icons{
+    position: absolute;
+    left: 22px;
+    top: 13px;
+}
+.inputWith__btn{
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+
+}
+  
+.inputWith__btn .search_inputbar{
+    padding:17px 29px 16px 29px;
+    border-radius: 25px;
+    position: relative;
+    border: 0;
+    width: 100%;
+    background: transparent;
+}
+.inputWith__btn .search_inputbar:focus{
+    outline: 0;
+    box-shadow: 0;
+}
+.inputWith__btn .search__inputbar_box{position: relative;width: 100%;}
+.inputWith__btn .search__inputbar_box::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50px;
+    padding: 1px;
+    background: linear-gradient(90deg, #E85782 0%, #926BFF 100%);
+    
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+  }
+.input_testUrl_button{
+    background: linear-gradient(90deg, #E85782 0%, #926BFF 100%);
+border-radius: 25px;
+font-size: 15px;
+line-height: 30px;
+font-weight: 600;
+color: var(--white-color);
+font-family: var(--primary-font);
+margin-bottom: 0;
+box-shadow: 0;
+border: 0;
+display: block;
+max-width: 177px;
+width: 177px;
+height: 63px;
+cursor: pointer;
+}
+.inputWith__btn .search_inputbar::placeholder{
+    color: var(--white-color);
+    font-family: var(--primary-font);
+}
+@media screen and (max-width:767px) {
+    .inputWith__btn{
+        display: flex;
+        align-items: baseline;
+        gap: 20px;
+       flex-direction: column;
+    }
+    .inputWith__btn .search__inputbar_box::before {
+        border-radius: 10px;
+      }
+      .input_testUrl_button{
+    border-radius: 10px;
+    }
+}

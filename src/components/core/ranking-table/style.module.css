@@ -1,0 +1,118 @@
+.ranking_table {
+  width: 100%;
+}
+
+.ranking_table tr {
+  display: flex;
+  justify-content: space-between;
+}
+
+.ranking_table .table_header {
+  background: rgba(88, 87, 87, 0.21);
+  border: 1px solid rgba(105, 103, 103, 0.26);
+  border-radius: 10px;
+  padding: 21px 20px 24px 20px;
+  margin-bottom: 15px;
+}
+
+.ranking_table .table_body {
+  border-bottom: 1px solid #292828;
+  padding-bottom: 15px;
+}
+.ranking_table .table_body:not(:first-child) {
+  padding-top: 21px;
+}
+
+.ranking_table .table_header th > h2 {
+  font-family: var(--primary-font);
+  font-style: normal;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 22px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.ranking_table tr th:nth-child(5) {
+  padding-right: 0px;
+}
+
+.ranking_table tr td:nth-child(1) > a {
+  font-family: var(--primary-font);
+  font-style: normal;
+  font-weight: 200;
+  font-size: 17px;
+  line-height: 26px;
+  text-align: center;
+  color: #5e7ed2;
+}
+
+.ranking_table tr td:nth-child(2) h2 {
+  font-family: var(--primary-font);
+  font-style: normal;
+  font-weight: 200;
+  font-size: 17px;
+  line-height: 26px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.ranking_table tr td:nth-child(1) {
+  font-family: var(--primary-font);
+  font-size: 17px;
+  font-weight: 200;
+  line-height: 26px;
+  letter-spacing: 0em;
+  text-align: center;
+  color: #5e7ed2;
+}
+.ranking_table tr td:nth-child(2),
+.ranking_table tr td:nth-child(3) {
+  display: flex;
+  align-items: center;
+}
+
+.ranking_table tr td:nth-child(2) h2,
+.ranking_table tr td:nth-child(3) h2 {
+  padding-right: 6px;
+}
+
+.ranking_table tr td h2 {
+  font-family: var(--primary-font);
+  font-style: normal;
+  font-weight: 200;
+  font-size: 17px;
+  line-height: 26px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.ranking_table tr td select {
+    font-family: var(--primary-font);
+    font-style: normal;
+    font-weight: 200;
+    font-size: 12px;
+    line-height: 18px;
+    display: flex;
+    color: #926bff;
+    align-items: center;
+    text-align: center;
+    background: rgba(105, 103, 103, 0.26);
+    border: 1px solid rgba(146, 107, 255, 0.44);
+    border-radius: 8px;
+    padding: 4px 6px 4px 12px;
+}
+@media screen and (max-width:767px) {
+  .ranking_table__box{
+    width: 100%;
+    padding-bottom: 30px;
+    overflow: hidden;
+    overflow-x: scroll;
+  }
+  .ranking_table {
+    width: 717px;
+  }
+  .ranking_table .table_header th > h2 {
+    white-space: nowrap;
+  }
+}

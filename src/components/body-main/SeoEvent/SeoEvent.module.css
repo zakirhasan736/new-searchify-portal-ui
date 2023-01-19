@@ -1,0 +1,119 @@
+.app_SEO_Optimization{
+    width: calc(100vw - 300px);
+    height: calc(100vh - 161px);
+    overflow: hidden;
+    position: relative;
+}
+.loader{
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    z-index: 99999;
+  }
+  .loader .loader{
+    width: 50px;
+  }
+@media screen and (max-width:1280px) {
+    .app_SEO_Optimization{
+        width: calc(100vw - 255px);
+    }
+}
+
+.SEO_Optimization_wrapper{
+    width: 100%;
+    height:calc(100vh - 161px);
+    padding: 31px 99px 35px 38px;
+    overflow: hidden;
+    overflow-y: scroll;
+    z-index: 99;
+    position: relative;
+}
+.app_shape_img{
+    position: absolute;
+    right: 0;
+    top: 5%;
+
+}
+.editing__titlebox{margin-bottom: 26px;}
+.breadcrumb__box{margin-bottom: 50px;}
+.app_shape_img4{
+    position: absolute;
+    left: -10%;
+    bottom: 0;
+}
+.project_action_box{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 999;
+}
+.__delete_action_btn{
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+.project_delete__button{
+    color: var(--white-color);
+    font-size: 15px;
+    line-height: 30px;
+    font-weight: 200;
+    margin-bottom: 0;
+    font-family: var(--primary-font);
+}
+@media screen and (max-width:991px) {
+    .app_SEO_Optimization{
+        width: calc(100vw - 81px);
+    }
+    .SEO_Optimization_wrapper{
+       padding-right: 25px;
+       padding-left: 20px;
+    }
+}
+@media screen and (max-width:767px) {
+.breadcrumb__box{margin-bottom: 50px;}
+.app_SEO_Optimization {
+	height: calc(100vh - 104px);
+}
+.SEO_Optimization_wrapper {
+	height: calc(100vh - 104px);
+}
+.SEO_Optimization_wrapper{
+    padding-right: 10px;
+    padding-left: 10px;
+ }
+}
+.__drop_action_btn{
+    width: 100%;
+    max-width: 560px;
+    margin-bottom: 36px;
+    margin-right: 175px;
+}
+@media screen and (max-width:1680px) and (min-width:1571px){
+    .__drop_action_btn{
+        max-width: 460px;
+    }
+}
+@media screen and (max-width:1570px) and (min-width:1441px){
+    .__drop_action_btn{
+        max-width: 370px;
+    }
+}
+@media screen and (max-width:1440px) and (min-width:1281px){
+    .__drop_action_btn{
+        max-width: 330px;
+    }
+}
+@media screen and (max-width:1280px) and (min-width:1200px){
+    .__drop_action_btn{
+        max-width: 250px;
+    }
+}
+@media screen and (max-width:1199px){
+    .project_action_box {
+        display: block;
+    }
+    .__drop_action_btn{
+        max-width:450px;
+    }
+}

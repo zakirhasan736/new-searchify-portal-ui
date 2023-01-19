@@ -1,0 +1,48 @@
+.edit__title_box .__project__title{
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.__gradient__title{
+    display: flex;
+    align-items: center;
+    gap: 20px;
+
+}
+.__gradient__title > span{
+    background: linear-gradient(90deg, #E85782 0%, #6056EA 119.77%);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+text-fill-color: transparent;
+
+
+}
+.__project__title{
+    font-size: 40px;
+    line-height: 60px;
+    font-weight: 600;
+    font-family: var(--primary-font);
+    color: var(--white-color);
+    margin-bottom: 0;
+}
+.__project__title .project_titleInput{
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 30px;
+    color: var( --extra-gray);
+    font-family: var(--primary-color);
+    margin-bottom: 0;
+    border: 0;
+    border-bottom: 1px solid var(--white-color);
+    max-width: 375px;
+    width: 100%;
+    background: transparent;
+    padding-bottom: 2px;
+
+}
+.__project__title .project_titleInput:focus{
+    box-shadow: none;
+    outline: 0;
+}
+.edite__icon__pen{cursor: pointer;}

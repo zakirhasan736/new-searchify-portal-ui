@@ -1,0 +1,111 @@
+.sidebar_section {
+    width: 300px;
+    height: 100vh;
+    background-color: transparent;
+    color: #ffff;
+    border-right: 1.5px solid var(--gray-black);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 999;
+    padding: 68px 23px 45px 56px;
+}
+
+.brand_logo_mobo {
+    display: none;
+}
+
+@media screen and (max-width:1280px) {
+    .sidebar_section {
+        padding-left: 30px;
+        width: 255px;
+    }
+}
+
+.sidebar_logo {
+    margin-bottom: 78px;
+}
+
+.navbar_nav ul li:not(:last-child) {
+    margin-bottom: 24px;
+}
+
+.navbar_nav ul li a,
+.dropdown .drop_Down_button,
+.dropDown_content li a {
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 20px;
+    font-family: var(--secondary-font);
+    color: var(--white-color);
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.dropDown_content li a {
+    margin-top: 12px;
+    margin-left: 22px;
+}
+
+.navbar_nav ul li a .active_Span svg,
+.navbar_nav ul li .dropdown .drop_Down_button .active_Span svg {
+    rotate: -90deg;
+}
+
+.navbar_nav ul li .dropdown .drop_Down_button:hover svg path,
+.navbar_nav ul li .dropdown .drop_Down_button:hover span svg path,
+.navbar_nav ul li:hover a svg path {
+    stroke: var(--primary-color);
+}
+
+.navbar_nav ul li .dropdown .drop_Down_button .active,
+.navbar_nav ul li .dropdown .drop_Down_button:hover,
+.dropDown_content:hover li a,
+.dropDown_content .active li a,
+.navbar_nav ul li a.active,
+.navbar_nav ul li a:hover {
+    color: var(--primary-color);
+    transition: color 350ms ease 0s;
+}
+
+@media screen and (max-width:991px) {
+    .brand_logo_mobo {
+        display: block;
+    }
+
+    .brand_logo_desk {
+        display: none;
+    }
+
+    .sidebar_section {
+        padding-left: 15px;
+        width: 81px;
+        padding-right: 15px;
+    }
+
+    .navbar_nav ul li a>span,
+    .dropdown .drop_Down_button>span {
+        width: 30px;
+        height: 31px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .navbar_nav ul li a>svg,
+    .dropdown .drop_Down_button>svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    .navbar_nav ul li a>span:nth-child(2),
+    .dropdown .drop_Down_button>span:nth-child(2) {
+        display: none;
+    }
+    .navbar_nav ul li  ul li  a{
+        font-size: 13px;
+        margin-left: 0px;
+    }
+}
