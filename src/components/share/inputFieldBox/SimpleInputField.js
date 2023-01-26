@@ -28,11 +28,13 @@ const SimpleInputField = ({ onChange, value, fieldTitle, name, clear }) => {
 
           <div className={styles.input_file_titlebox}>
             <h4 className={styles.input_title}>{fieldTitle} <span className={styles.required}>*</span></h4>
-            <p className={styles.pintext}>{(name === "keyword" || name === "Pname" || name === "Cname") && `(${count}/80)`}</p>
+            <p className={styles.pintext}>{(name === "keyword" || name === "Pname" || name === "Cname" || name === "tokens") && `(${count}/80)`}</p>
           </div>
+
           <div className={styles.input_fild_box}>
             <input value={value ? value : ""} className={styles.input_singletext_fild} placeholder='' onChange={handleCounter} name={name ? name : ""} />
           </div>
+
         </div>
       </div>
     </>

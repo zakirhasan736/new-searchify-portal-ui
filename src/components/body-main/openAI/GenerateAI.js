@@ -16,14 +16,14 @@ const GenerateAI = () => {
   const [state, setState] = useState({
     Cname: "",
     Pname: "",
-    keyword: ""
+    tokens: ""
   })
 
   const clearInput = () => {
     setState({
       Cname: "",
       Pname: "",
-      keyword: ""
+      tokens: ""
     })
   }
 
@@ -76,19 +76,19 @@ const GenerateAI = () => {
               <div className={styles.text_generator_leftwrap}>
                 <div className={styles.generate__textfild__wrap}>
                   <div className={styles.single_input_box}>
-                    <SimpleInputField onChange={handleChange} clear={clear} fieldTitle='Company name' value={state.Cname} singleFieldLenght='(0/80))' name="Cname" />
+                    <SimpleInputField onChange={handleChange} clear={clear} fieldTitle='Type of Written' value={state.Cname} singleFieldLenght='(0/80))' name="Cname" />
                   </div>
                   <div className={styles.single_input_box}>
-                    <SimpleInputField onChange={handleChange} clear={clear} fieldTitle='Product name' value={state.Pname} singleFieldLenght='(0/80)' name="Pname" />
+                    <SimpleInputField onChange={handleChange} clear={clear} fieldTitle='Domain Title' value={state.Pname} singleFieldLenght='(0/80)' name="Pname" />
                   </div>
                   <div className={styles.single_input_box}>
-                    <SimpleInputField onChange={handleChange} clear={clear} fieldTitle='Keywords' value={state.keyword} singleFieldLenght='(0/80)' name="keyword" />
+                    <SimpleInputField onChange={handleChange} clear={clear} fieldTitle='Number of Tokens' value={state.tokens} singleFieldLenght='(0/80)' name="tokens" />
                   </div>
                 </div>
                 <div className={styles.text_generator__bottomnav}>
                   <div className={styles.control__action__btnbox}>
                     <button onClick={() => clearInput()} className={styles.clear__input_btn} type='button'><span className={styles.icons}><HiReply /></span> Clear</button>
-                    <button onClick={() => state.Cname && state.Pname && state.keyword && generatetext()} className={styles.generate_btn} type='button'>Generate <span className={styles.icons}><HiArrowRight /></span></button>
+                    <button onClick={() => state.Cname && state.Pname && state.tokens && generatetext()} className={styles.generate_btn} type='button'>Generate <span className={styles.icons}><HiArrowRight /></span></button>
                   </div>
                 </div>
               </div>
@@ -98,10 +98,10 @@ const GenerateAI = () => {
                 {
                   textDB.length > 0 &&
                   textDB.map((item, index) => (
-                    <div key={index}>
+                    <div key={index} className={styles.generated__item_box}>
                       <h6>{item.Cname}</h6>
                       <h6>{item.Pname}</h6>
-                      <h6>{item.keyword}</h6>
+                      <h6>{item.tokens}</h6>
                     </div>
                   ))
                 }

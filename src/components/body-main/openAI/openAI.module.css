@@ -99,9 +99,10 @@
 }
 
 .features_card_box {
-  display: flex;
+  display: grid;
   align-items: center;
   gap: 35px;
+  grid-template-columns: repeat(3, 1fr);
 }
 .features_card_box .feature__card_item {
   padding: 45px 35px;
@@ -462,7 +463,7 @@
 }
 .text_generator__bottomnav .control__action__btnbox button span{position: relative;top: 3px;}
 .generate__textfild__wrap{
-  padding: 25px 35px;
+  padding: 36px 35px;
 }
 /* .app_openAI_wrapper .text_generator_rightwrap{} */
 @media screen and (max-width: 1679px) and (min-width: 1600px) {
@@ -501,3 +502,32 @@
     height: calc(100vh - 104px);
   }
 }
+.generate__textfild__wrap .single_input_box:not(:last-child){
+  margin-bottom: 35px;
+}
+.text_generator_rightwrap{
+  padding: 15px 30px;
+}
+.generated__item_box{
+  padding: 20px 15px 20px 18px;
+background: rgba(105, 103, 103, 0.26);
+border-radius: 10px;
+position: relative;
+}
+.generated__item_box::before {
+  content: '';
+position: absolute;
+inset: 0;
+border-radius: 10px;
+padding: 1px;
+background: linear-gradient( 180deg, rgba(146, 107, 255, 0.5) 0%, rgba(232, 87, 130, 0.5) 100% );
+-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: add, add;
+mask-composite: add, add;
+-webkit-mask-composite: xor;
+mask-composite: exclude;
+pointer-events: none;
+width: 100%;
+height: 100%;
+}
+.generated__item_box:not(:last-child){margin-bottom: 20px;}

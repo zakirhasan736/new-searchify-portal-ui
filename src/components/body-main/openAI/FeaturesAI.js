@@ -10,7 +10,7 @@ const FeaturesAI = () => {
   const [data, setData] = useState([]);
   const [filter, setFilterText] = useState("");
 
-  const handleFilter = useMemo(() => {
+  const handleFilter = useMemo(() => { 
     if (filter.length > 0) {
       let data = db.filter((item) => item.categories.includes(filter));
       setData(data)
