@@ -7,7 +7,7 @@ const Header = () => {
     <header className={styles.app_header}>
           <div className={styles.app_header_wrapper}>
             <div className={styles.app_header_searchbar}>
-              < Searchbar/>
+              < Searchbar placeholdertext="Search templates"/>
             </div>
             <div className={styles.app_header_Usersbox}>
               <User />

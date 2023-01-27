@@ -164,9 +164,10 @@ export const SeoOptimization = () => {
             </div>
             <div className={styles.__drop_action_btn}>
               <div className={styles.select__items__box}>
-                {website && <DomainFieldSelect onDomainChange={handleSelectDomain}
-                  currentDomain={website.settings.domain}
-                  inputTitle='Select Industry' />
+
+                {website && <DomainFieldSelect  onDomainChange={handleSelectDomain} 
+                                    currentDomain={website.settings.domain}
+                                    inputTitle='Select Industry' />
                 }
               </div>
             </div>

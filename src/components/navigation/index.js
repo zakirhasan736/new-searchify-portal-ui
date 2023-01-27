@@ -25,7 +25,7 @@ const Nav = () => {
                     <img src={BrandlogoMobo} width='50px' className={styles.brand_logo_mobo} alt={BrandlogoMobo} />
                 </Link></div>
                 <nav className={styles.navbar_nav}>
-                    <ul>
+                    <ul className={styles.navbar_navlist}>
                         <li>
                             <NavLink to="/dashboard">
                                 <BookIcon />
@@ -36,7 +36,7 @@ const Nav = () => {
                             </NavLink>
                         </li>
                         <li>
-                            <NavLink to="/seooptimization">
+                            <NavLink to="/SeoOptimization">
                                 <SettingIcon />
                                 <span className={styles.link__name}>Site optimization</span>
                                 <span className={`${navTitle === "site" && styles.active_Span}`} onClick={() => handleActive("site")}>
@@ -58,6 +58,15 @@ const Nav = () => {
                                         <li>
                                             <Link to="/SEOranking"><GraphIcon /> Keywords</Link>
                                         </li>
+                                        <li>
+                                            <Link to="/keywordanalyze/home"><GraphIcon /> Keyword Analyze</Link>
+                                        </li>
+                                        <li>
+                                            <Link to="/websitekeyword/home"><GraphIcon />Website Keywords</Link>
+                                        </li>
+                                        <li>
+                                            <Link to="/keywordgeneretor/home"><GraphIcon />Generate Keywords</Link>
+                                        </li>
                                     </ul>
                                 }
                             </div>
@@ -65,7 +74,7 @@ const Nav = () => {
                         <li>
                             <NavLink to="/works">
                                 <FolderIcon />
-                                <span className={styles.link__name}>My Projects</span>
+                                <span className={styles.link__name}>My works</span>
                                 <span className={`${navTitle === "work" && styles.active_Span}`} onClick={() => handleActive("work")}>
                                     <AarrowIcon />
                                 </span>

@@ -120,7 +120,7 @@ const SEOranking = () => {
         <img className={styles.app_shape_img7} src={shapeImg7} alt={shapeImg7} />
         <div className={styles.SEORanking__cont_box}>
           <div className={styles.SEORanking__left_wrap}>
-            <h3 className={styles.keyword_ranking__title}>Keyword rank</h3>
+            <h3 className={styles.keyword_title}>Keyword rank</h3>
             <ul className={styles.keyword_ranking__Updates_list}>
               {keywordRankData.map(({ id, subtitle, title, graphImg, RankSubtitle, RankTitle }) => (
                 <li className={styles.keyword_ranking__items}>

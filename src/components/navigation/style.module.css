@@ -50,14 +50,14 @@
     margin-left: 22px;
 }
 
-.navbar_nav ul li a .active_Span svg,
-.navbar_nav ul li .dropdown .drop_Down_button .active_Span svg {
+.navbar_nav ul.navbar_navlist > li a .active_Span svg,
+.navbar_nav ul.navbar_navlist > li .dropdown .drop_Down_button .active_Span svg {
     rotate: -90deg;
 }
 
-.navbar_nav ul li .dropdown .drop_Down_button:hover svg path,
-.navbar_nav ul li .dropdown .drop_Down_button:hover span svg path,
-.navbar_nav ul li:hover a svg path {
+.navbar_nav ul.navbar_navlist > li .dropdown .drop_Down_button:hover svg path,
+.navbar_nav ul.navbar_navlist > li .dropdown .drop_Down_button:hover span svg path,
+.navbar_nav ul.navbar_navlist > li:hover a svg path {
     stroke: var(--primary-color);
 }
 
@@ -65,8 +65,8 @@
 .navbar_nav ul li .dropdown .drop_Down_button:hover,
 .dropDown_content:hover li a,
 .dropDown_content .active li a,
-.navbar_nav ul li a.active,
-.navbar_nav ul li a:hover {
+.navbar_nav ul.navbar_navlist > li > a.active,
+.navbar_nav ul.navbar_navlist > li > a:hover {
     color: var(--primary-color);
     transition: color 350ms ease 0s;
 }
@@ -109,3 +109,5 @@
         margin-left: 0px;
     }
 }
+
+.dropDown_content li a{color: var(--primary-color);}

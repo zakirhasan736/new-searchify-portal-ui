@@ -1,0 +1,78 @@
+<svg viewBox="0 0 40 40" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path opacity=".4" fill-rule="evenodd" clip-rule="evenodd"
+        d="M27.465 11.95a1.06 1.06 0 010-1.5l3.453-3.454a1.06 1.06 0 011.5 1.5l-3.453 3.453a1.06 1.06 0 01-1.5 0z"
+        fill="url(#Highlights_svg__paint0_linear)"></path>
+    <path opacity=".3" fill-rule="evenodd" clip-rule="evenodd"
+        d="M14.432 37.526c0-.586.475-1.061 1.06-1.061h9.016a1.06 1.06 0 010 2.121h-9.015a1.06 1.06 0 01-1.06-1.06z"
+        fill="url(#Highlights_svg__paint1_linear)"></path>
+    <path opacity=".3" fill-rule="evenodd" clip-rule="evenodd"
+        d="M14.432 33.814c0-.586.475-1.06 1.06-1.06h9.016a1.06 1.06 0 110 2.12h-9.015a1.06 1.06 0 01-1.06-1.06z"
+        fill="url(#Highlights_svg__paint2_linear)"></path>
+    <path opacity=".4" fill-rule="evenodd" clip-rule="evenodd"
+        d="M12.536 11.95a1.06 1.06 0 000-1.5L9.082 6.996a1.06 1.06 0 10-1.5 1.5l3.454 3.453a1.06 1.06 0 001.5 0z"
+        fill="url(#Highlights_svg__paint3_linear)"></path>
+    <path opacity=".4" fill-rule="evenodd" clip-rule="evenodd"
+        d="M20 1.853c.586 0 1.06.475 1.06 1.06v4.883a1.06 1.06 0 11-2.12 0V2.914c0-.586.474-1.06 1.06-1.06z"
+        fill="url(#Highlights_svg__paint4_linear)"></path>
+    <path opacity=".4" fill-rule="evenodd" clip-rule="evenodd"
+        d="M37.56 19.414a1.06 1.06 0 01-1.06 1.06h-4.882a1.06 1.06 0 010-2.12H36.5c.586 0 1.06.474 1.06 1.06z"
+        fill="url(#Highlights_svg__paint5_linear)"></path>
+    <path opacity=".4" fill-rule="evenodd" clip-rule="evenodd"
+        d="M2.44 19.414c0 .586.474 1.06 1.06 1.06h4.882a1.06 1.06 0 100-2.12H3.5a1.06 1.06 0 00-1.06 1.06z"
+        fill="url(#Highlights_svg__paint6_linear)"></path>
+    <path fill-rule="evenodd" clip-rule="evenodd"
+        d="M24.604 25.242c0-.171.084-.331.22-.436a7.954 7.954 0 10-9.649 0c.137.105.221.265.221.436v3.66c0 .294.237.531.53.531h8.148a.53.53 0 00.53-.53v-3.66z"
+        fill="url(#Highlights_svg__paint7_linear)"></path>
+    <path fill-rule="evenodd" clip-rule="evenodd"
+        d="M20 26.13c.586 0 1.06.476 1.06 1.061v3.346a1.06 1.06 0 01-2.12 0V27.19c0-.585.474-1.06 1.06-1.06z"
+        fill="url(#Highlights_svg__paint8_linear)"></path>
+    <defs>
+        <linearGradient id="Highlights_svg__paint0_linear" x1="28.027" y1="11.012" x2="32.638" y2="6.401"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="#926bff"></stop>
+            <stop offset="1" stop-color="#ffffff"></stop>
+            <stop offset="1" stop-color="#e85782"></stop>
+        </linearGradient>
+        <linearGradient id="Highlights_svg__paint1_linear" x1="15.493" y1="37.791" x2="24.508" y2="37.791"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="#926bff"></stop>
+            <stop offset="1" stop-color="#86A8FF"></stop>
+        </linearGradient>
+        <linearGradient id="Highlights_svg__paint2_linear" x1="15.493" y1="34.079" x2="24.508" y2="34.079"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="#926bff"></stop>
+            <stop offset="1" stop-color="#86A8FF"></stop>
+        </linearGradient>
+        <linearGradient id="Highlights_svg__paint3_linear" x1="11.973" y1="11.012" x2="7.362" y2="6.401"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="#926bff"></stop>
+            <stop offset="1" stop-color="#e85782"></stop>
+            <stop offset="1" stop-color="#e85782"></stop>
+        </linearGradient>
+        <linearGradient id="Highlights_svg__paint4_linear" x1="21.37" y1="8.475" x2="21.37" y2="1.544"
+            gradientUnits="userSpaceOnUse">
+            <stop offset=".077" stop-color="#926bff"></stop>
+            <stop offset="1" stop-color="#91B0FF"></stop>
+        </linearGradient>
+        <linearGradient id="Highlights_svg__paint5_linear" x1="30.367" y1="19.414" x2="37.908" y2="19.414"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="#926bff"></stop>
+            <stop offset="1" stop-color="#e85782"></stop>
+        </linearGradient>
+        <linearGradient id="Highlights_svg__paint6_linear" x1="9.633" y1="19.414" x2="2.092" y2="19.414"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="#926bff"></stop>
+            <stop offset="1" stop-color="#fff"></stop>
+        </linearGradient>
+        <linearGradient id="Highlights_svg__paint7_linear" x1="15.913" y1="26.001" x2="25.683" y2="12.93"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="#926bff"></stop>
+            <stop offset=".929" stop-color="#e85782"></stop>
+        </linearGradient>
+        <linearGradient id="Highlights_svg__paint8_linear" x1="20" y1="30.679" x2="20" y2="27.191"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="#926bff"></stop>
+            <stop offset="1" stop-color="#fff"></stop>
+        </linearGradient>
+    </defs>
+</svg>

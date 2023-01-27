@@ -107,3 +107,23 @@ cursor: pointer;
     border-radius: 10px;
     }
 }
+.filter_search_inputbox{
+    position: relative;
+}
+.filter_search_inputbox .search_icons{
+    top: 16px;
+}
+.filter_search_inputbox  .search_inputbar::placeholder{color: var(--white-color);}
+.filter_search_inputbox  .search_inputbar{color: #ffffff;}
+.filter__search_withbtn{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 34px;
+}
+.filter__search_withbtn .filter_search_inputbox{
+width: 100%;
+}
+.filter_key__search .filter_search_inputbox .search_inputbar{
+    width: 100%;
+}
