@@ -14,6 +14,14 @@ const Signin = React.lazy(() => import('./components/body-main/auth/signin'));
 const SignUp = React.lazy(() => import('./components/body-main/auth/signup'));
 const ForgotPassword = React.lazy(() => import('./components/body-main/auth/forgotpassword'));
 const SEOranking = React.lazy(() => import('./components/body-main/analytics/SEOranking'));
+
+const Keywordanalyze = React.lazy(() => import('./components/body-main/analytics/keywordanalyze/Keywordanalyze.jsx')) ;
+const KeywordanalyzeOverview = React.lazy(() => import('./components/body-main/analytics/keywordanalyze/overview')) ;
+const WebsiteKeyword = React.lazy(() => import('./components/body-main/analytics/websitekeyword/WebsiteKeyword')) ;
+const WebsiteKeywordOverview = React.lazy(() => import('./components/body-main/analytics/websitekeyword/overview')) ;
+const KeywordGeneretor = React.lazy(() => import('./components/body-main/analytics/keywordgeneretor/KeywordGeneretor')) ;
+const KeywordGeneretorOverview = React.lazy(() => import('./components/body-main/analytics/keywordgeneretor/overview'));
+
 const AnalyticsOverview = React.lazy(() => import('./components/body-main/analytics/AnalyticsOverview'));
 const UserProfile = React.lazy(() => import('./components/body-main/analytics/UserProfile'));
 const FeaturesAI = React.lazy(() => import('./components/body-main/openAI/FeaturesAI'));
@@ -55,6 +63,28 @@ const App = () => {
             <Routes>
               <Route path="/SEOranking" element={<SEOranking />} />
             </Routes>
+            <Routes>
+              <Route path="/dashboard" element={<AnalyticsOverview />} />
+            </Routes>
+            <Routes>
+            <Route path="/keywordanalyze/home" element={<Keywordanalyze />} />
+          </Routes>
+          <Routes>
+            <Route path="/keywordanalyze/overview" element={<KeywordanalyzeOverview />} />
+          </Routes>
+          <Routes>
+            <Route path="/websitekeyword/home" element={<WebsiteKeyword />} />
+          </Routes>
+          <Routes>
+            <Route path="/websitekeyword/overview" element={<WebsiteKeywordOverview />} />
+          </Routes>
+
+          <Routes>
+            <Route path="/keywordgeneretor/home" element={<KeywordGeneretor />} />
+          </Routes>
+          <Routes>
+            <Route path="/keywordgeneretor/overview" element={<KeywordGeneretorOverview />} />
+          </Routes>
             <Routes>
               <Route path="/dashboard" element={<AnalyticsOverview />} />
             </Routes>
