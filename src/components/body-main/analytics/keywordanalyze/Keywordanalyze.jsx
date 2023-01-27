@@ -60,12 +60,14 @@ const Keywordanalyze = () => {
   };
 
   useEffect(() => {
-    setSearchList(prev => [...prev, value]);
+    if (value.length > 1) {
+      setSearchList(prev => [...prev, value]);
+    }
   }, [value])
 
   return (
     <>
-      <section onClick={() => {openResult && setResult(false);setText('')}} className={styles.keyword__wrap_section}>
+      <section onClick={() => { openResult && setResult(false); setText('') }} className={styles.keyword__wrap_section}>
         <img className={styles.app_shape_img6} src={shapeImg6} alt={shapeImg6} />
         <img className={styles.app_shape_img3} src={shapeImg3} alt={shapeImg3} />
         <img className={styles.app_shape_img4} src={shapeImg4} alt={shapeImg4} />
@@ -78,13 +80,13 @@ const Keywordanalyze = () => {
                 <p className={styles.keyword_desc}>Monitor your keyword share over time and optimize for each SERP</p>
                 <div className={styles.filter_search_inputbox}>
                   <label className={styles.search_icons}><img src={searchicon} alt={searchicon} /></label>
-                  <input value={text} className={styles.search_inputbar} placeholder='Search for a keyword or keyword list' onClick={() => setResult(true)} onChange={(e) => setText(e.target.value)} />             
-                  {openResult && <div onClick={(e)=>e.stopPropagation()} className={styles.searchList__main_box}>
+                  <input value={text} className={styles.search_inputbar} placeholder='Search for a keyword or keyword list' onClick={() => setResult(true)} onChange={(e) => setText(e.target.value)} />
+                  {openResult && <div onClick={(e) => e.stopPropagation()} className={styles.searchList__main_box}>
                     <ul className={styles.keyword_tabs_item}>
                       <li onClick={() => setSelectedTab1("keyword")} className={selectedtab1 === "keyword" && styles.active}>Keyword </li>
                       <li onClick={() => setSelectedTab1("list")} className={selectedtab1 === "list" && styles.active}>Keywords List</li>
                     </ul>
-                    {selectedtab1 === "keyword" &&  <ul className={styles.search_list_itembox}>
+                    {selectedtab1 === "keyword" && <ul className={styles.search_list_itembox}>
                       <li>Recent searchs</li>
                       {searchList.map((item) => (
                         <li>
@@ -129,11 +131,14 @@ const Keywordanalyze = () => {
                       <li>{item.name}</li>
                     )))}
                   </ul>}
-                  <ul>
-                    {selectedtab === "shared" && sharedList.length > 0 && sharedList.map((item => (
-                      <li>{item}</li>
-                    )))}
-                  </ul>
+
+                  {selectedtab === "shared" && sharedList.length > 0 &&
+                    <ul>
+                      {sharedList.map((item => (
+                        <li>{item}</li>
+                      )))}
+                    </ul>
+                  }
                 </div>
               </div>
             </div>
@@ -142,17 +147,17 @@ const Keywordanalyze = () => {
                 addNew &&
                 <div className={styles.new_list_container}>
                   <div onClick={(e) => e.stopPropagation()} className={styles.list_content}>
-                  <div className={styles.group__name_box}>
-                    <input type="text" placeholder='name of your group' className={styles.name__group} onChange={(e) => setGroupName(e.target.value)} />
+                    <div className={styles.group__name_box}>
+                      <input type="text" placeholder='name of your group' className={styles.name__group} onChange={(e) => setGroupName(e.target.value)} />
                     </div>
                     <div className={styles.keyword__listbox}>
-                    <h6>keywords in the list</h6>
-                    <span>keywords {`${keywordList.length}/200`}</span>
+                      <h6>keywords in the list</h6>
+                      <span>keywords {`${keywordList.length}/200`}</span>
                     </div>
                     <div className={styles.add_key_box}>
-                    <input className={styles.keyword__add_input} value={keyword} type="text" placeholder='Enter keywords or paste' onChange={(e) => setKeyword(e.target.value)} onPaste={(e) => saveOnPaseKeyword(e.target.value)} />
-                    <button  className={styles.add__keybtn} onClick={() => onSaveKeyword()}>+</button>
-                   </div>
+                      <input className={styles.keyword__add_input} value={keyword} type="text" placeholder='Enter keywords or paste' onChange={(e) => setKeyword(e.target.value)} onPaste={(e) => saveOnPaseKeyword(e.target.value)} />
+                      <button className={styles.add__keybtn} onClick={() => onSaveKeyword()}>+</button>
+                    </div>
                     <div className={styles.show_all_added_keywords}>
                       <ul>
                         {keywordList.length > 0 && keywordList.map((item => (
