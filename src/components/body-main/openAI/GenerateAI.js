@@ -7,6 +7,7 @@ import shapeImg2 from '../../../assets/img/gradient-shape-2.png'
 import SimpleInputField from '../../share/inputFieldBox/SimpleInputField'
 import { useParams } from 'react-router-dom';
 import { db } from './openAIdb';
+import TokenInput from '../../share/inputFieldBox/TokenInput';
 const GenerateAI = () => {
   const { id } = useParams();
   const [data, setData] = useState([]);
@@ -24,7 +25,8 @@ const GenerateAI = () => {
       Cname: "",
       Pname: "",
       tokens: ""
-    })
+    });
+    setClear(true)
   }
 
   const clearTextGenerator = () => {
@@ -32,9 +34,7 @@ const GenerateAI = () => {
   }
 
   const generatetext = () => {
-    let texts = [];
-    texts.push(state);
-    setTextDB(texts);
+    setTextDB(textDB => [...textDB, state]);
     clearInput();
   }
   const handleChange = e => setState(prevState => ({ ...prevState, [e.target.name]: e.target.value }));
@@ -82,7 +82,7 @@ const GenerateAI = () => {
                     <SimpleInputField onChange={handleChange} clear={clear} fieldTitle='Domain Title' value={state.Pname} singleFieldLenght='(0/80)' name="Pname" />
                   </div>
                   <div className={styles.single_input_box}>
-                    <SimpleInputField onChange={handleChange} clear={clear} fieldTitle='Number of Tokens' value={state.tokens} singleFieldLenght='(0/80)' name="tokens" />
+                    <TokenInput onChange={handleChange} clear={clear} fieldTitle='Number of Tokens' value={state.tokens} singleFieldLenght='(0/80)' name="tokens" />
                   </div>
                 </div>
                 <div className={styles.text_generator__bottomnav}>

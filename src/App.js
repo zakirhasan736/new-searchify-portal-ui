@@ -15,7 +15,7 @@ const SignUp = React.lazy(() => import('./components/body-main/auth/signup'));
 const ForgotPassword = React.lazy(() => import('./components/body-main/auth/forgotpassword'));
 const SEOranking = React.lazy(() => import('./components/body-main/analytics/SEOranking'));
 
-const Keywordanalyze = React.lazy(() => import('./components/body-main/analytics/keywordanalyze/Keywordanalyze.jsx')) ;
+const Keywordanalyze = React.lazy(() => import('./components/body-main/analytics/keywordanalyze/Keywordanalyze')) ;
 const KeywordanalyzeOverview = React.lazy(() => import('./components/body-main/analytics/keywordanalyze/overview')) ;
 const WebsiteKeyword = React.lazy(() => import('./components/body-main/analytics/websitekeyword/WebsiteKeyword')) ;
 const WebsiteKeywordOverview = React.lazy(() => import('./components/body-main/analytics/websitekeyword/overview')) ;

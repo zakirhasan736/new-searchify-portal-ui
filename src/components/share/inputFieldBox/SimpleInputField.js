@@ -15,11 +15,10 @@ const SimpleInputField = ({ onChange, value, fieldTitle, name, clear }) => {
   };
 
   useEffect(() => {
-    if (clear) {
-      setCount(0);
-      setWords("")
-    }
-  }, [clear])
+    setCount(0);
+    setWords("");
+  }, [clear]);
+
   return (
     <>
       <div className={styles.input_fild__wrapper}>
@@ -28,7 +27,7 @@ const SimpleInputField = ({ onChange, value, fieldTitle, name, clear }) => {
 
           <div className={styles.input_file_titlebox}>
             <h4 className={styles.input_title}>{fieldTitle} <span className={styles.required}>*</span></h4>
-            <p className={styles.pintext}>{(name === "keyword" || name === "Pname" || name === "Cname" || name === "tokens") && `(${count}/80)`}</p>
+            <p className={styles.pintext}>{(name === "keyword" || name === "Pname" || name === "Cname" || name === "tokens") && `(${clear ? 0 : count}/80)`}</p>
           </div>
 
           <div className={styles.input_fild_box}>
