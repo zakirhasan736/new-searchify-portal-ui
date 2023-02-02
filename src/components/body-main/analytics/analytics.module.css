@@ -3272,7 +3272,7 @@ li:empty {
   margin-bottom: auto;
   bottom: 0;
   left: 0;
-  display: none;
+  display: block;
   right: 0;
   margin-top: auto;
 }

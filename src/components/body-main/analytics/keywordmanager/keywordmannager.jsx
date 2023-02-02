@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import styles from '../analytics.module.css';
 import shapeImg6 from '../../../../assets/img/gradient-shape6.png';
 import shapeImg3 from '../../../../assets/img/gradient-shape3.png';
@@ -12,7 +12,128 @@ import {
   AiFillEdit,
 } from 'react-icons/ai';
 
-const keywordmannager = () => {
+const Keywordmannager = () => {
+  const [search, setsearch] = useState("");
+  const [list, setList] = useState([]);
+  const [updated, setUpdated] = useState([]);
+  const [shareList, setShareList] = useState([]);
+  const [ownList, setOwnList] = useState([]);
+  const [createInput, setCreatedInput] = useState("");
+  const [all, setAll] = useState(0);
+  const [openListModal, setListModal] = useState(false);
+  const [openShareModal, setShareModal] = useState(false);
+  const [openSharedListModal, setopenSharedListModal] = useState(false);
+  const [shareEmailInput, setSharedEmailInput] = useState("");
+  const [shareKeywordInput, setSharedKeywordInput] = useState("");
+  const [notFound, setNotFound] = useState(false);
+  const [editList, setEditList] = useState(null);
+  const [editListval, setEditListval] = useState("");
+
+  const handleSearch = () => {
+    let data = updated.filter(item => item.list.toLowerCase() === search.toLowerCase());
+    if (data.length === 0) {
+      setNotFound(true);
+    }
+    setUpdated(data);
+  }
+  useMemo(() => {
+    if (notFound && search === "") {
+      setUpdated(list);
+      setNotFound(false);
+    }
+  }, [notFound, search]);
+
+  const handleRemove = (inx) => {
+    let data = updated.filter((i, index) => index !== inx);
+    setUpdated(data);
+    setAll(data.length);
+  }
+
+  useMemo(() => {
+    if (editListval !== "") {
+      let find = updated.find((i, index) => index === editList);
+      let data = find.list = editListval;
+      setUpdated([...list, data]);
+    }
+  }, [editListval]);
+
+  const handleShared = () => {
+    const currentDate = new Date();
+    const timestamp = currentDate.getTime();
+    const listdata = {
+      "list": shareKeywordInput,
+      "email": shareEmailInput,
+      "limit": "0/100",
+      "updated": timestamp
+    }
+    setShareList([...shareList, listdata]);
+    setAll(all + 1);
+    setUpdated([...list, listdata]);
+    setShareModal(false);
+    setSharedEmailInput("");
+    setSharedKeywordInput("");
+  }
+
+  const handleOwnlist = () => {
+    const currentDate = new Date();
+    const timestamp = currentDate.getTime();
+    const listdata = {
+      "list": createInput,
+      "limit": "0/100",
+      "updated": timestamp
+    }
+    setOwnList([...ownList, listdata]);
+    setAll(all + 1);
+    setUpdated([...list, listdata]);
+    setListModal(false);
+  }
+  const handlechnageList = (num) => {
+    if (num === 1) {
+      setUpdated([...list, ...ownList])
+    }
+    else if (num === 2) {
+      setUpdated(ownList)
+    }
+    else if (num === 3) {
+      setUpdated(shareList)
+    }
+  }
+  useEffect(() => {
+    const data = [
+      {
+        "list": "Soap and More",
+        "limit": "0-100",
+        "updated": "12hours ago"
+      },
+      {
+        "list": "Soap and More2",
+        "limit": "0-100",
+        "updated": "1hours ago"
+      },
+      {
+        "list": "Soap and More2",
+        "limit": "0-100",
+        "updated": "1hours ago"
+      },
+      {
+        "list": "Soap and More2",
+        "limit": "0-100",
+        "updated": "1hours ago"
+      },
+      {
+        "list": "Soap and More2",
+        "limit": "0-100",
+        "updated": "1hours ago"
+      }
+    ]
+    setList(data);
+    setUpdated(data);
+    setAll(data.length)
+    return () => {
+      setList([])
+    }
+  }, [])
+
   return (
     <>
       <section className={styles.keyword__wrap_section}>
@@ -52,15 +173,17 @@ const keywordmannager = () => {
                     <div className={styles.keyword_mannager_main_filter}>
                       <div className={styles.keyword_mannager__search_filter}>
                         <input
+                          value={search}
                           type="seacrh"
                           className={styles.keywordmannager_searchbar}
                           placeholder="Search"
+                          onChange={(e) => setsearch(e.target.value)}
                         />
                         <label
                           htmlFor="search"
                           className={styles.keyword__search_icon}
                         >
-                          <button>
+                          <button onClick={() => search.length > 3 && handleSearch()}>
                             <span className={styles.search_icon}>
                               <AiOutlineSearch />
                             </span>
@@ -71,16 +194,16 @@ const keywordmannager = () => {
                       <div className={styles.keyword_mannager__tab_filter}>
                         <ul className={styles.kayword__tabs__filter}>
                           <li className={styles.keyword_tabs__filter_item}>
-                            <button className={styles.filters__tab}>All <span>0</span></button>
+                            <button onClick={() => handlechnageList(1)} className={styles.filters__tab}>All <span>{all}</span></button>
                           </li>
                           <li className={styles.keyword_tabs__filter_item}>
-                            <button className={styles.filters__tab}>
-                              My Own <span>0</span>
+                            <button onClick={() => handlechnageList(2)} className={styles.filters__tab}>
+                              My Own <span>{ownList.length}</span>
                             </button>
                           </li>
                           <li className={styles.keyword_tabs__filter_item}>
-                            <button className={styles.filters__tab}>
-                              Share With Me <span>0</span>
+                            <button onClick={() => handlechnageList(3)} className={styles.filters__tab}>
+                              Share With Me <span>{shareList.length}</span>
                             </button>
                           </li>
                         </ul>
@@ -88,13 +211,13 @@ const keywordmannager = () => {
                     </div>
 
                     <div className={styles.keyword_mannager__insight_filter}>
-                      <button className={styles.keyword__share}>
+                      <button onClick={() => setShareModal(!openShareModal)} className={styles.keyword__share}>
                         <span className={styles.share__icon}>
                           <AiOutlineUsergroupAdd />
                         </span>{' '}
                         Share
                       </button>
-                      <button className={styles.create__keyword__list}>
+                      <button onClick={() => setListModal(!openListModal)} className={styles.create__keyword__list}>
                         <span className={styles.add__list_icon}>+</span> Create
                         List
                       </button>
@@ -112,30 +235,38 @@ const keywordmannager = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td>
-                            Soap and More{' '}
-                            <span className={styles.edit__btn}>
-                              <AiFillEdit />
-                            </span>
-                          </td>
-                          <td>
-                            <span>0/1000</span>
-                          </td>
-                          <td>6 hours</td>
-                          <td>
-                            <div className={styles.action__box}>
-                              <button className={styles.share__action}>
-                                <span>
-                                  <AiOutlineUsergroupAdd />
+                        {
+                          updated.filter(item => item.list !== undefined).map((item, index) => (
+                            <tr>
+                              <td>
+                                {
+                                  editList === index ?
+                                    <input onBlur={() => { setEditList(null); setEditListval("") }} type="text" value={editListval} onChange={(e) => setEditListval(e.target.value)} /> :
+                                    item.list + ' '
+                                }
+                                <span onClick={() => setEditList(index)} className={styles.edit__btn}>
+                                  <AiFillEdit />
                                 </span>
-                              </button>
-                              <button className={styles.delete__action}>
-                                <AiOutlineDelete />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                              </td>
+                              <td>
+                                <span>{item.limit}</span>
+                              </td>
+                              <td>{item.updated}</td>
+                              <td>
+                                <div className={styles.action__box}>
+                                  <button onClick={() => setShareModal(true)} className={styles.share__action}>
+                                    <span>
+                                      <AiOutlineUsergroupAdd />
+                                    </span>
+                                  </button>
+                                  <button onClick={() => handleRemove(index)} className={styles.delete__action}>
+                                    <AiOutlineDelete />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        }
                       </tbody>
                     </table>
                   </div>
@@ -201,65 +332,77 @@ const keywordmannager = () => {
                 </div>
               </div>
               {/* ==============POPUP box =============== */}
-              <div className={styles.add_list__popup__box} >
-                <h3 className={styles.keyword__subtitle}>New keyword list</h3>
-                <div className={styles.add__keyword__list_input}>
-                  <div className={styles.add__key_input__box}>
-                    <input
-                      type="text"
-                      className={styles.add__key_list__input}
-                      placeholder="Enter list name"
-                    />
-                  </div>
-                  <div className={styles.add_list_control__box}>
-                    <button className={styles.create__list_button}>
-                      Create list
-                    </button>
-                    <button className={styles.cancel__popup_button}>
-                      Cancel
-                    </button>
+              {
+                openListModal && <div className={styles.add_list__popup__box} >
+                  <h3 className={styles.keyword__subtitle}>New keyword list</h3>
+                  <div className={styles.add__keyword__list_input}>
+                    <div className={styles.add__key_input__box}>
+                      <input
+                        type="text"
+                        className={styles.add__key_list__input}
+                        placeholder="Enter list name"
+                        onChange={(e) => setCreatedInput(e.target.value)}
+                      />
+                    </div>
+                    <div className={styles.add_list_control__box}>
+                      <button onClick={() => createInput.length > 3 && handleOwnlist()} className={styles.create__list_button}>
+                        Create list
+                      </button>
+                      <button onClick={() => setListModal(false)} className={styles.cancel__popup_button}>
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              }
               {/* =====popup end===== */}
 
               {/* ==============POPUP box =============== */}
-              <div className={styles.share_key__popup__box}  >
-                <button className={styles.close__popup_btn}>x</button>
+              {openShareModal && <div className={styles.share_key__popup__box}>
+                <button onClick={() => setShareModal(false)} className={styles.close__popup_btn}>x</button>
                 <h3 className={styles.keyword__subtitle}>
                   Share keyword lists
                 </h3>
                 <div className={styles.add__keyword__list_input}>
-                <div className={styles.add__key_input__boxwrap}>
-                <label htmlFor="select" className={styles.key__list__title}>
-                      Keyword lists <span>0/2</span>
+                  <div className={styles.add__key_input__boxwrap}>
+                    <label htmlFor="select" className={styles.key__list__title}>
+                      Keyword lists <span>{shareKeywordInput.split(',').length + "/2"}</span>
                     </label>
-                <div className={styles.add__key_input__box}>
-                    <input
-                      type="select"
-                      className={styles.add__key_list__input}
-                      placeholder="select keyword list"
-                    />
-                    <ul className={styles.key__group__list}>
-                      <li className={styles.key__list_select}></li>
-                    </ul>
+                    <div className={styles.add__key_input__box}>
+                      <input
+                        type="select"
+                        className={styles.add__key_list__input}
+                        placeholder="select keyword list"
+                        value={shareKeywordInput}
+                        onClick={() => setopenSharedListModal(!openSharedListModal)}
+                      />
+                      {
+                        openSharedListModal &&
+                        <ul className={styles.key__group__list}>
+                          {updated.map((item, index) => (
+                            <li onClick={() => { setSharedKeywordInput(item.list); setopenSharedListModal(false) }} className={styles.key__list_select}>
+                              {item.list}
+                            </li>
+                          ))}
+                        </ul>
+                      }
+                    </div>
                   </div>
-                </div>
-
 
                   <div className={styles.key__send__user_info_box}>
-
                     <div className={styles.user__info__gmail}>
                       <label htmlFor="email" className={styles.title_label}>
-                        Email addresses <span>0</span>
+                        Email addresses <span>{shareEmailInput.split(',').length}</span>
                       </label>
-                     <div className={styles.user__info__input_box}>
-                     <input
-                        type="text"
-                        className={styles.user_input__gmail}
-                        placeholder="mark@example.com, eve@example.com"
-                      />
-                     </div>
+                      <div className={styles.user__info__input_box}>
+                        <input
+                          type="text"
+                          name="email"
+                          className={styles.user_input__gmail}
+                          placeholder="mark@example.com, eve@example.com"
+                          onChange={(e) => setSharedEmailInput(e.target.value)}
+                        />
+                      </div>
                     </div>
 
                     <div className={styles.user__permition_selectbox}>
@@ -271,13 +414,13 @@ const keywordmannager = () => {
                       </ul>
                     </div>
                     <div className={styles.add_list_control__box}>
-                      <button className={styles.create__list_button}>
+                      <button onClick={() => (shareEmailInput.length > 3 && shareKeywordInput.length > 3) && handleShared()} className={styles.create__list_button}>
                         Create list
                       </button>
                     </div>
                   </div>
                 </div>
-              </div>
+              </div>}
               {/* =====popup end===== */}
 
             </div>
@@ -288,4 +431,4 @@ const keywordmannager = () => {
   );
 };
 
-export default keywordmannager;
+export default Keywordmannager;
