@@ -166,8 +166,10 @@ const Keywordanalyze = () => {
                               <input defaultValue={item} type="text" onBlur={(e) => onUpdateKeyword(item, e.target.value)} /> :
                               <span>{item}</span>
                             }
+                            <div className={styles.conrol_box}>
                             <button onClick={() => { setUpdateSelect(item); setUpdate(!update) }}>{`update`}</button>
                             <button onClick={() => removeKeyword(item)}>{` X `}</button>
+                            </div>
                           </li>
                         )))}
                       </ul>
