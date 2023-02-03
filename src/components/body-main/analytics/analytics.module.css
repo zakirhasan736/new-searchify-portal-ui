@@ -2723,53 +2723,22 @@ li:empty {
 }
 .keyword__input_fildbox .seal__text_color span {
   padding: 5px 7px;
-  background-color: rgba(196, 229, 254, 0.5);
   font-size: 14px;
   font-weight: 400;
   line-height: 17px;
   color: var(--white-color);
   border-radius: 10px;
 }
-.keyword__input_fildbox .seal__text_color span:empty {
+.keyword__input_fildbox .seal__text_color span {
   padding: 0px;
   border-radius: 50px;
   width: 16px;
   height: 16px;
   display: block;
-  background: rgba(196, 229, 254, 0.5);
 }
 .keyword__input_item_mainbox:not(:last-child) {
   margin-bottom: 35px;
 }
-.keyword__input_item_mainbox:nth-child(2)
-  .keyword_inputfild__contbox
-  .keyword__input_fildbox
-  .seal__text_color
-  span:empty {
-  background: rgb(89, 221, 170);
-}
-.keyword__input_item_mainbox:nth-child(3)
-  .keyword_inputfild__contbox
-  .keyword__input_fildbox
-  .seal__text_color
-  span:empty {
-  background: rgb(255, 140, 67);
-}
-.keyword__input_item_mainbox:nth-child(4)
-  .keyword_inputfild__contbox
-  .keyword__input_fildbox
-  .seal__text_color
-  span:empty {
-  background: rgb(171, 108, 254);
-}
-.keyword__input_item_mainbox:nth-child(5)
-  .keyword_inputfild__contbox
-  .keyword__input_fildbox
-  .seal__text_color
-  span:empty {
-  background: rgb(253, 194, 60);
-}
-
 .keyword__input_fildbox .add__domain_fild {
   padding: 10px 10px 10px 5px;
   background-color: transparent;
@@ -4028,3 +3997,25 @@ font-size: 20px;
   display: block;
   width: 100%;
 }
+
+/* country select style */
+.selected_country_list{
+  position: relative;
+}
+.openListcontent{
+  position: absolute;
+  width: 50px;
+  height: 100px;
+  overflow-y: scroll;
+}
+.country_container {
+  display: flex;
+}
+.image_container {
+  width: 20px;
+}
+
+.image_container img {
+  width: 100%;
+}
+

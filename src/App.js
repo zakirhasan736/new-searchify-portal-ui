@@ -22,7 +22,7 @@ const WebsiteKeywordOverview = React.lazy(() => import('./components/body-main/a
 const KeywordGeneretor = React.lazy(() => import('./components/body-main/analytics/keywordgeneretor/KeywordGeneretor')) ;
 const KeywordGeneretorOverview = React.lazy(() => import('./components/body-main/analytics/keywordgeneretor/overview'));
 
-const KeywordGap = React.lazy(() => import('./components/body-main/analytics/keywordgap/keywordgap.jsx'));
+const KeywordGap = React.lazy(() => import('./components/body-main/analytics/keywordgap/Keywordgap'));
 const KeywordMannager = React.lazy(() => import('./components/body-main/analytics/keywordmanager/Keywordmannager'));
 const KeywordOverview = React.lazy(() => import('./components/body-main/analytics/keywordmanager/overview'));
 const Organicsearch = React.lazy(() => import('./components/body-main/analytics/organicresearch/organicsearch.jsx'));
