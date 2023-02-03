@@ -23,10 +23,11 @@ const KeywordGeneretor = React.lazy(() => import('./components/body-main/analyti
 const KeywordGeneretorOverview = React.lazy(() => import('./components/body-main/analytics/keywordgeneretor/overview'));
 
 const KeywordGap = React.lazy(() => import('./components/body-main/analytics/keywordgap/keywordgap.jsx'));
+const KeywordGapOverview = React.lazy(() => import('./components/body-main/analytics/keywordgap/overview.jsx'));
 const KeywordMannager = React.lazy(() => import('./components/body-main/analytics/keywordmanager/keywordmannager.jsx'));
 const KeywordOverview = React.lazy(() => import('./components/body-main/analytics/keywordmanager/overview'));
 const Organicsearch = React.lazy(() => import('./components/body-main/analytics/organicresearch/organicsearch.jsx'));
-
+const OrganicsearchOverview  = React.lazy(() => import('./components/body-main/analytics/organicresearch/overview.jsx'));
 
 const AnalyticsOverview = React.lazy(() => import('./components/body-main/analytics/AnalyticsOverview'));
 const UserProfile = React.lazy(() => import('./components/body-main/analytics/UserProfile'));
@@ -98,6 +99,9 @@ const App = () => {
             <Routes>
             <Route path="/keywordgap/home" element={<KeywordGap />} />
           </Routes>
+          <Routes>
+            <Route path="/keywordgap/overview" element={<KeywordGapOverview />} />
+          </Routes>
 
           <Routes>
             <Route path="/keywordmannager/home" element={<KeywordMannager />} />
@@ -108,6 +112,9 @@ const App = () => {
 
           <Routes>
             <Route path="/organicsearch/home" element={<Organicsearch />} />
+          </Routes>
+          <Routes>
+            <Route path="/organicsearch/overview" element={<OrganicsearchOverview />} />
           </Routes>
 
             <Routes>

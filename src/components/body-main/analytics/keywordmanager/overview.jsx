@@ -233,7 +233,38 @@ const overview = () => {
                           <td>Needs updating</td>
                           <td>7 hour ago</td>
                           <td><button className={styles.delete__row}><span><AiOutlineDelete /></span></button></td>
-                          {/* <td></td> */}
+                        </tr>
+                        <tr>
+                          <td><input type="checkbox" className={styles.checkbox} /></td>
+                          <td><span className={styles.country_flag}>countryflag</span> www.shanehomes.com</td>
+                          <td><span>n/a</span></td>
+                          <td><span>-</span></td>
+                          <td><span>20</span></td>
+                          <td><span className={styles.graph}>n/a</span></td>
+                          <td><span>n/a</span> <span className={styles.highlight_color}></span></td>
+                          <td>0.00</td>
+                          <td>0.00</td>
+                          <td>No</td>
+                          <td>Needs updating</td>
+                          <td>Needs updating</td>
+                          <td>7 hour ago</td>
+                          <td><button className={styles.delete__row}><span><AiOutlineDelete /></span></button></td>
+                        </tr>
+                        <tr>
+                          <td><input type="checkbox" className={styles.checkbox} /></td>
+                          <td><span className={styles.country_flag}>countryflag</span> www.shanehomes.com</td>
+                          <td><span>n/a</span></td>
+                          <td><span>-</span></td>
+                          <td><span>20</span></td>
+                          <td><span className={styles.graph}>n/a</span></td>
+                          <td><span>n/a</span> <span className={styles.highlight_color}></span></td>
+                          <td>0.00</td>
+                          <td>0.00</td>
+                          <td>No</td>
+                          <td>Needs updating</td>
+                          <td>Needs updating</td>
+                          <td>7 hour ago</td>
+                          <td><button className={styles.delete__row}><span><AiOutlineDelete /></span></button></td>
                         </tr>
                       </tbody>
                     </table>
