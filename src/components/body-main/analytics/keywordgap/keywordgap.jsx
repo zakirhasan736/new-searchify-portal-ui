@@ -8,6 +8,10 @@ import infoModal2 from '../../../../assets/img/info-modal2.png';
 import infoModal3 from '../../../../assets/img/info-modal3.png';
 // import SelectItems from '../../../share/select/SelectItems';
 // import { Link } from 'react-router-dom'
+import {
+  TfiAngleDown,
+
+} from 'react-icons/tfi';
 const keywordgap = () => {
   return (
     <>
@@ -55,19 +59,24 @@ const keywordgap = () => {
                       </div>
                       <div className={styles.select_domain_type}>
                         <span className={styles.selected__item_text}>
-                        root domain
+                        root domain <span className={styles.arrow_down}>< TfiAngleDown /></span>
                         </span>
                         <ul className={styles.keyword__select_widget_box}>
-                          <li className={styles.select__widget__items}></li>
+                        <li className={styles.select__widget__items}>Root domain</li>
+                        <li className={styles.select__widget__items}>Exact URl</li>
+                        <li className={styles.select__widget__items}>Subdomain</li>
+                          <li className={styles.select__widget__items}>Subfolder</li>
                         </ul>
                       </div>
                     </div>
                     <div className={styles.select__keyword_type}>
                       <span className={styles.selected__item_text}>
-                        organic keywords
+                        organic keywords <span className={styles.arrow_down}>< TfiAngleDown /></span>
                       </span>
                       <ul className={styles.keyword__select_widget_box}>
-                        <li className={styles.select__widget__items}></li>
+                      <li className={styles.select__widget__items}>Organic keywords</li>
+                      <li className={styles.select__widget__items}>Paid keywords</li>
+                        <li className={styles.select__widget__items}>PLA kerwords</li>
                       </ul>
                     </div>
                   </div>
@@ -90,19 +99,24 @@ const keywordgap = () => {
                       </div>
                       <div className={styles.select_domain_type}>
                         <span className={styles.selected__item_text}>
-                          root domain
+                          root domain <span className={styles.arrow_down}>< TfiAngleDown /></span>
                         </span>
                         <ul className={styles.keyword__select_widget_box}>
-                          <li className={styles.select__widget__items}></li>
+                        <li className={styles.select__widget__items}>Root domain</li>
+                        <li className={styles.select__widget__items}>Exact URl</li>
+                        <li className={styles.select__widget__items}>Subdomain</li>
+                          <li className={styles.select__widget__items}>Subfolder</li>
                         </ul>
                       </div>
                     </div>
                     <div className={styles.select__keyword_type}>
                       <span className={styles.selected__item_text}>
-                        organic keywords
+                        organic keywords <span className={styles.arrow_down}>< TfiAngleDown /></span>
                       </span>
                       <ul className={styles.keyword__select_widget_box}>
-                        <li className={styles.select__widget__items}></li>
+                      <li className={styles.select__widget__items}>Organic keywords</li>
+                      <li className={styles.select__widget__items}>Paid keywords</li>
+                        <li className={styles.select__widget__items}>PLA kerwords</li>
                       </ul>
                     </div>
                   </div>
@@ -122,9 +136,10 @@ const keywordgap = () => {
                           placeholder="add domain"
                         />
                       </div>
+
                       <div className={styles.select_domain_type}>
                         <span className={styles.selected__item_text}>
-                          root domain
+                          root domain  <span className={styles.arrow_down}>< TfiAngleDown /></span>
                         </span>
                         <ul className={styles.keyword__select_widget_box}>
                           <li className={styles.select__widget__items}></li>
@@ -133,7 +148,7 @@ const keywordgap = () => {
                     </div>
                     <div className={styles.select__keyword_type}>
                       <span className={styles.selected__item_text}>
-                        organic keywords
+                        organic keywords  <span className={styles.arrow_down}>< TfiAngleDown /></span>
                       </span>
                       <ul className={styles.keyword__select_widget_box}>
                         <li className={styles.select__widget__items}></li>
@@ -158,7 +173,7 @@ const keywordgap = () => {
                       </div>
                       <div className={styles.select_domain_type}>
                         <span className={styles.selected__item_text}>
-                          root domain
+                          root domain  <span className={styles.arrow_down}>< TfiAngleDown /></span>
                         </span>
                         <ul className={styles.keyword__select_widget_box}>
                           <li className={styles.select__widget__items}></li>
@@ -167,7 +182,7 @@ const keywordgap = () => {
                     </div>
                     <div className={styles.select__keyword_type}>
                       <span className={styles.selected__item_text}>
-                        organic keywords
+                        organic keywords  <span className={styles.arrow_down}>< TfiAngleDown /></span>
                       </span>
                       <ul className={styles.keyword__select_widget_box}>
                         <li className={styles.select__widget__items}></li>
@@ -192,7 +207,7 @@ const keywordgap = () => {
                       </div>
                       <div className={styles.select_domain_type}>
                         <span className={styles.selected__item_text}>
-                          root domain
+                          root domain  <span className={styles.arrow_down}>< TfiAngleDown /></span>
                         </span>
                         <ul className={styles.keyword__select_widget_box}>
                           <li className={styles.select__widget__items}></li>
@@ -201,7 +216,7 @@ const keywordgap = () => {
                     </div>
                     <div className={styles.select__keyword_type}>
                       <span className={styles.selected__item_text}>
-                        organic keywords
+                        organic keywords  <span className={styles.arrow_down}>< TfiAngleDown /></span>
                       </span>
                       <ul className={styles.keyword__select_widget_box}>
                         <li className={styles.select__widget__items}></li>
@@ -215,7 +230,7 @@ const keywordgap = () => {
                       + Add up to 3 competitors
                     </button>
                     <div className={styles.competitor__controll_box}>
-                      <div className={styles.country__select_widget}>USA</div>
+                      <div className={styles.country__select_widget}>USA <span className={styles.arrow_down}>< TfiAngleDown /></span></div>
                       <button className={styles.compare__button}>
                         Compare
                       </button>
