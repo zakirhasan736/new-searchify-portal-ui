@@ -7,7 +7,7 @@ import shapeImg4 from '../../../../assets/img/gradient-shape4.png';
 
 import { TfiArrowLeft, TfiExport } from 'react-icons/tfi';
 import { FiExternalLink } from 'react-icons/fi';
-import FilterTabsOne from './filter-tabs/FilterTabsOne';
+import FilterTabsFive from './filter-tabs/FilterTabsFive';
 
 const overview = () => {
   return (
@@ -106,7 +106,8 @@ const overview = () => {
             </div>
 
             {/* ===========Tabs filter one================ */}
-            <FilterTabsOne />
+            <FilterTabsFive />
+            
 
           </div>
         </div>

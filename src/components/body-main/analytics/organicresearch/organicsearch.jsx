@@ -4,7 +4,10 @@ import shapeImg6 from '../../../../assets/img/gradient-shape6.png'
 import shapeImg3 from '../../../../assets/img/gradient-shape3.png'
 import shapeImg4 from '../../../../assets/img/gradient-shape4.png'
 import infoModal4 from '../../../../assets/img/info-modal4.png';
+import {
+  TfiAngleDown,
 
+} from 'react-icons/tfi';
 // import { Link } from 'react-router-dom'
 const organicsearch = () => {
   return (
@@ -41,7 +44,7 @@ Start with learning what works best for your competitors.
                     <input type="text" className={styles.keyword__inputfild__organic} placeholder='Enter domain, subdomain or URL' />
                     </div>
                     <div className={styles.competitor__controll_box}>
-                      <div className={styles.country__select_widget}>USA</div>
+                    <div className={styles.country__select_widget}>USA <span className={styles.arrow_down}>< TfiAngleDown /></span></div>
                       <button className={styles.compare__button}>
                         Compare
                       </button>
