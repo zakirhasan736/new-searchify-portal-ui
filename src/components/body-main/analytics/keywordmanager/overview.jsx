@@ -48,6 +48,20 @@ const overview = () => {
                     <span className={styles.arrow_downicon}>
                       <TfiAngleDown />
                     </span>
+                    <ul className={styles.keyword__select_widget_box}>
+                        <li className={styles.select__widget__items}>
+                         Informational
+                        </li>
+                        <li className={styles.select__widget__items}>
+                      Naviagation
+                        </li>
+                        <li className={styles.select__widget__items}>
+                          Commercial 
+                        </li>
+                        <li className={styles.select__widget__items}>
+                         Transactional 
+                        </li>
+                      </ul>
                   </button>
                   <ul className={styles.drop__select__items}>
                     <li className={styles.drop__select_list}></li>
@@ -111,6 +125,25 @@ const overview = () => {
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
+                      <ul className={styles.keyword__select_widget_box}>
+                        <li className={styles.select__widget__items}>
+                          All domains
+                        </li>
+                        <li className={styles.select__widget__items}>
+                          You-domain 
+                        </li>
+                        <li className={styles.select__widget__items}>
+                          Competitors 
+                        </li>
+                        <li className={styles.custom_rangebox}>
+                              <h6 className={styles.range_title}>Custom range</h6>
+                              <div className={styles.range_input_box}>
+                              <input type="text" className={styles.input_item_one} placeholder='from' />
+                                <input type="text" className={styles.input_item_two} placeholder='to' />
+                              </div>
+                              <button className={styles.apply_btn}>Apply</button>
+                            </li>
+                      </ul>
                     </button>
                   </div>
                   <div className={styles.selected__filter_item}>
@@ -119,6 +152,25 @@ const overview = () => {
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
+                      <ul className={styles.keyword__select_widget_box}>
+                        <li className={styles.select__widget__items}>
+                          All domains
+                        </li>
+                        <li className={styles.select__widget__items}>
+                          You-domain 
+                        </li>
+                        <li className={styles.select__widget__items}>
+                          Competitors 
+                        </li>
+                        <li className={styles.custom_rangebox}>
+                              <h6 className={styles.range_title}>Custom range</h6>
+                              <div className={styles.range_input_box}>
+                              <input type="text" className={styles.input_item_one} placeholder='from' />
+                                <input type="text" className={styles.input_item_two} placeholder='to' />
+                              </div>
+                              <button className={styles.apply_btn}>Apply</button>
+                            </li>
+                      </ul>
                     </button>
                   </div>
                   <div className={styles.selected__filter_item}>
@@ -127,6 +179,23 @@ const overview = () => {
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
+                      <ul className={styles.keyword__select_widget_box}>
+                        <li className={styles.select__widget__items}>
+                         <label htmlFor="checkeditem1"><input type="checkbox" id='checkeditem1' className={styles.checked__item} /> Informational</label>
+                        </li>
+                        <li className={styles.select__widget__items}>
+                         <label htmlFor="checkeditem2"><input type="checkbox" id='checkeditem2' className={styles.checked__item} /> Naviagation</label>
+                        </li>
+                        <li className={styles.select__widget__items}>
+                         <label htmlFor="checkeditem3"><input type="checkbox" id='checkeditem3' className={styles.checked__item} /> Commercial</label> 
+                        </li>
+                        <li className={styles.select__widget__items}>
+                         <label htmlFor="checkeditem3"><input type="checkbox" id='checkeditem3' className={styles.checked__item} /> Transactional</label> 
+                        </li>
+                        <li className={styles.custom_rangebox}>
+                              <button className={styles.apply_btn}>Apply</button>
+                            </li>
+                      </ul>
                     </button>
                   </div>
                   <div className={styles.selected__filter_item}>
@@ -135,6 +204,20 @@ const overview = () => {
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
+                      <ul className={styles.keyword__select_widget_box}>
+                        <li className={styles.select__widget__items}>
+                         
+                        </li>
+                      
+                        <li className={styles.custom_rangebox}>
+                              <h6 className={styles.range_title}>Custom range</h6>
+                              <div className={styles.range_input_box}>
+                              <input type="text" className={styles.input_item_one} placeholder='from' />
+                                <input type="text" className={styles.input_item_two} placeholder='to' />
+                              </div>
+                              <button className={styles.apply_btn}>Apply</button>
+                            </li>
+                      </ul>
                     </button>
                   </div>
                   <div className={styles.selected__filter_item}>
@@ -143,6 +226,32 @@ const overview = () => {
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
+                      <ul className={styles.keyword__select_widget_box}>
+                        <li className={styles.select__widget__items}>
+                         <label htmlFor="serp1"><input type="checkbox" id='serp1' className={styles.checked__item} /> Informational</label>
+                        </li>
+                        <li className={styles.select__widget__items}>
+                         <label htmlFor="serp2"><input type="checkbox" id='serp2' className={styles.checked__item} /> Naviagation</label>
+                        </li>
+                        <li className={styles.select__widget__items}>
+                         <label htmlFor="serp3"><input type="checkbox" id='serp3' className={styles.checked__item} /> Commercial</label> 
+                        </li>
+                        <li className={styles.select__widget__items}>
+                         <label htmlFor="serp3"><input type="checkbox" id='serp3' className={styles.checked__item} /> Transactional</label> 
+                        </li>
+                        <li className={styles.select__widget__items}>
+                         <label htmlFor="serp4"><input type="checkbox" id='serp4' className={styles.checked__item} /> None</label> 
+                        </li>
+                        <li className={styles.select__widget__items}>
+                         <label htmlFor="serp5"><input type="checkbox" id='serp5' className={styles.checked__item} /> None</label> 
+                        </li>
+                        <li className={styles.select__widget__items}>
+                         <label htmlFor="serp6"><input type="checkbox" id='serp6' className={styles.checked__item} /> None</label> 
+                        </li>
+                        <li className={styles.custom_rangebox}>
+                              <button className={styles.apply_btn}>Apply</button>
+                            </li>
+                      </ul>
                     </button>
                   </div>
                   <div className={styles.selected__filter_item}>
@@ -151,6 +260,20 @@ const overview = () => {
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
+                       <ul className={styles.keyword__select_widget_box}>
+                        <li className={styles.select__widget__items}>
+                         
+                        </li>
+                      
+                        <li className={styles.custom_rangebox}>
+                              <h6 className={styles.range_title}>Custom range</h6>
+                              <div className={styles.range_input_box}>
+                              <input type="text" className={styles.input_item_one} placeholder='from' />
+                                <input type="text" className={styles.input_item_two} placeholder='to' />
+                              </div>
+                              <button className={styles.apply_btn}>Apply</button>
+                            </li>
+                      </ul>
                     </button>
                   </div>
                   <div className={styles.selected__filter_item}>
@@ -159,6 +282,20 @@ const overview = () => {
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
+                       <ul className={styles.keyword__select_widget_box}>
+                        <li className={styles.select__widget__items}>
+                         
+                        </li>
+                      
+                        <li className={styles.custom_rangebox}>
+                              <h6 className={styles.range_title}>Custom range</h6>
+                              <div className={styles.range_input_box}>
+                              <input type="text" className={styles.input_item_one} placeholder='from' />
+                                <input type="text" className={styles.input_item_two} placeholder='to' />
+                              </div>
+                              <button className={styles.apply_btn}>Apply</button>
+                            </li>
+                      </ul>
                     </button>
                   </div>
                   <div className={styles.selected__filter_item}>
@@ -167,6 +304,20 @@ const overview = () => {
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
+                       <ul className={styles.keyword__select_widget_box}>
+                        <li className={styles.select__widget__items}>
+                         
+                        </li>
+                      
+                        <li className={styles.custom_rangebox}>
+                              <h6 className={styles.range_title}>Custom range</h6>
+                              <div className={styles.range_input_box}>
+                              <input type="text" className={styles.input_item_one} placeholder='from' />
+                                <input type="text" className={styles.input_item_two} placeholder='to' />
+                              </div>
+                              <button className={styles.apply_btn}>Apply</button>
+                            </li>
+                      </ul>
                     </button>
                   </div>
                 </div>
@@ -233,7 +384,38 @@ const overview = () => {
                           <td>Needs updating</td>
                           <td>7 hour ago</td>
                           <td><button className={styles.delete__row}><span><AiOutlineDelete /></span></button></td>
-                          {/* <td></td> */}
+                        </tr>
+                        <tr>
+                          <td><input type="checkbox" className={styles.checkbox} /></td>
+                          <td><span className={styles.country_flag}>countryflag</span> www.shanehomes.com</td>
+                          <td><span>n/a</span></td>
+                          <td><span>-</span></td>
+                          <td><span>20</span></td>
+                          <td><span className={styles.graph}>n/a</span></td>
+                          <td><span>n/a</span> <span className={styles.highlight_color}></span></td>
+                          <td>0.00</td>
+                          <td>0.00</td>
+                          <td>No</td>
+                          <td>Needs updating</td>
+                          <td>Needs updating</td>
+                          <td>7 hour ago</td>
+                          <td><button className={styles.delete__row}><span><AiOutlineDelete /></span></button></td>
+                        </tr>
+                        <tr>
+                          <td><input type="checkbox" className={styles.checkbox} /></td>
+                          <td><span className={styles.country_flag}>countryflag</span> www.shanehomes.com</td>
+                          <td><span>n/a</span></td>
+                          <td><span>-</span></td>
+                          <td><span>20</span></td>
+                          <td><span className={styles.graph}>n/a</span></td>
+                          <td><span>n/a</span> <span className={styles.highlight_color}></span></td>
+                          <td>0.00</td>
+                          <td>0.00</td>
+                          <td>No</td>
+                          <td>Needs updating</td>
+                          <td>Needs updating</td>
+                          <td>7 hour ago</td>
+                          <td><button className={styles.delete__row}><span><AiOutlineDelete /></span></button></td>
                         </tr>
                       </tbody>
                     </table>

@@ -11,6 +11,7 @@ import SubDomain from './SubDomain';
 import KeywordList from './KeywordList';
 // import SelectItems from '../../../share/select/SelectItems';
 // import { Link } from 'react-router-dom'
+
 const Keywordgap = () => {
 
   const [openMoreItem, setMoreItem] = useState(false);
@@ -48,6 +49,7 @@ const Keywordgap = () => {
         setCountries(data);
       });
   }, []);
+
   return (
     <>
       <section className={styles.keyword__wrap_section}>
@@ -76,6 +78,7 @@ const Keywordgap = () => {
                   competitors.
                 </p>
                 <div className={styles.keyword__main_compere__box}>
+
                   {
                     list__count.map((item, index1) => (
                       <div className={styles.keyword__input_item_mainbox}>
@@ -99,12 +102,14 @@ const Keywordgap = () => {
                       </div>
                     ))
                   }
+
                   {/* =============== */}
                   <div className={styles.keyword__compare_controlbox}>
                     <button onClick={() => setMoreItem(!openMoreItem)} className={styles.add__competitor_fild}>
                       + Add up to 3 competitors
                     </button>
                     <div className={styles.competitor__controll_box}>
+
                       <div className={styles.country__select_widget}>
                         <li className={styles.selected_country_list} onClick={() => updatedOpenCountryList(!openCountryList)}> {selected_country_name}</li>
                         {openCountryList && <div className={styles.openListcontent}>
@@ -119,6 +124,7 @@ const Keywordgap = () => {
                         </div>}
                       </div>
                       <button onClick={() => navigate("/keywordmannager/overview")} className={styles.compare__button}>
+
                         Compare
                       </button>
                     </div>
