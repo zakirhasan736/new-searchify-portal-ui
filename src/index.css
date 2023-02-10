@@ -121,3 +121,20 @@ a {
 }
 .nav_navbar_nav__lh5sZ  ul li a.active,
 .nav_navbar_nav__lh5sZ  ul li:hover a{color: var(--primary-color); transition: color 350ms ease 0s;}
+
+/* color configaration */
+.color_1{
+  background: rgba(196, 229, 254, 0.5);
+}
+.color_2{
+  background: rgb(89, 221, 170);
+}
+.color_3{
+  background: rgb(255, 140, 67);
+}
+.color_4{
+  background: rgb(171, 108, 254);
+}
+.color_5{
+  background: rgb(253, 194, 60);
+}
