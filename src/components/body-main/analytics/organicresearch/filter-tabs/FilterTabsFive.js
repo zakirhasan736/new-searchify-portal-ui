@@ -35,68 +35,30 @@ const FilterTabsFive = () => {
                             </div>
 
                             <div className={styles.filter_drop__selec__items}>
-                                <div className={styles.selected__filter_item}>
-                                    <button className={styles.selected__drop_item}>
-                                        Volume{' '}
-                                        <span className={styles.arrow_downicon}>
-                                            <TfiAngleDown />
-                                        </span>
-                                    </button>
-                                </div>
-                                <div className={styles.selected__filter_item}>
-                                    <button className={styles.selected__drop_item}>
-                                        KD%{' '}
-                                        <span className={styles.arrow_downicon}>
-                                            <TfiAngleDown />
-                                        </span>
-                                    </button>
-                                </div>
+                 
                                 <div className={styles.selected__filter_item}>
                                     <button className={styles.selected__drop_item}>
                                         Intent{' '}
                                         <span className={styles.arrow_downicon}>
                                             <TfiAngleDown />
                                         </span>
-                                    </button>
-                                </div>
-                                <div className={styles.selected__filter_item}>
-                                    <button className={styles.selected__drop_item}>
-                                        CPC (USD){' '}
-                                        <span className={styles.arrow_downicon}>
-                                            <TfiAngleDown />
-                                        </span>
-                                    </button>
-                                </div>
-                                <div className={styles.selected__filter_item}>
-                                    <button className={styles.selected__drop_item}>
-                                        SERP Features{' '}
-                                        <span className={styles.arrow_downicon}>
-                                            <TfiAngleDown />
-                                        </span>
-                                    </button>
-                                </div>
-                                <div className={styles.selected__filter_item}>
-                                    <button className={styles.selected__drop_item}>
-                                        Competitive density{' '}
-                                        <span className={styles.arrow_downicon}>
-                                            <TfiAngleDown />
-                                        </span>
-                                    </button>
-                                </div>
-                                <div className={styles.selected__filter_item}>
-                                    <button className={styles.selected__drop_item}>
-                                        Click potential{' '}
-                                        <span className={styles.arrow_downicon}>
-                                            <TfiAngleDown />
-                                        </span>
-                                    </button>
-                                </div>
-                                <div className={styles.selected__filter_item}>
-                                    <button className={styles.selected__drop_item}>
-                                        Tags{' '}
-                                        <span className={styles.arrow_downicon}>
-                                            <TfiAngleDown />
-                                        </span>
+                                        <ul className={styles.keyword__select_widget_box}>
+                                            <li className={styles.select__widget__items}>
+                                                <label htmlFor="checkeditem1"><input type="checkbox" id='checkeditem1' className={styles.checked__item} /> Informational</label>
+                                            </li>
+                                            <li className={styles.select__widget__items}>
+                                                <label htmlFor="checkeditem2"><input type="checkbox" id='checkeditem2' className={styles.checked__item} /> Naviagation</label>
+                                            </li>
+                                            <li className={styles.select__widget__items}>
+                                                <label htmlFor="checkeditem3"><input type="checkbox" id='checkeditem3' className={styles.checked__item} /> Commercial</label>
+                                            </li>
+                                            <li className={styles.select__widget__items}>
+                                                <label htmlFor="checkeditem3"><input type="checkbox" id='checkeditem3' className={styles.checked__item} /> Transactional</label>
+                                            </li>
+                                            <li className={styles.custom_rangebox}>
+                                                <button className={styles.apply_btn}>Apply</button>
+                                            </li>
+                                        </ul>
                                     </button>
                                 </div>
                             </div>

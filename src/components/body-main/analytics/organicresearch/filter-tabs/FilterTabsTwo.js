@@ -6,6 +6,7 @@ import { FiSearch } from 'react-icons/fi';
 import {
     TfiAngleDown,
     TfiExport,
+    TfiAngleRight
 } from 'react-icons/tfi';
 import { AiOutlineDelete } from 'react-icons/ai';
 
@@ -37,10 +38,56 @@ const FilterTabsTwo = () => {
                             <div className={styles.filter_drop__selec__items}>
                                 <div className={styles.selected__filter_item}>
                                     <button className={styles.selected__drop_item}>
+                                        Positions{' '}
+                                        <span className={styles.arrow_downicon}>
+                                            <TfiAngleDown />
+                                        </span>
+                                        <ul className={styles.keyword__select_widget_box}>
+                                            <li className={styles.select__widget__items}>
+                                                All domains
+                                            </li>
+                                            <li className={styles.select__widget__items}>
+                                                You-domain
+                                            </li>
+                                            <li className={styles.select__widget__items}>
+                                                Competitors
+                                            </li>
+                                            <li className={styles.custom_rangebox}>
+                                                <h6 className={styles.range_title}>Custom range</h6>
+                                                <div className={styles.range_input_box}>
+                                                    <input type="text" className={styles.input_item_one} placeholder='from' />
+                                                    <input type="text" className={styles.input_item_two} placeholder='to' />
+                                                </div>
+                                                <button className={styles.apply_btn}>Apply</button>
+                                            </li>
+                                        </ul>
+                                    </button>
+                                </div>
+                                <div className={styles.selected__filter_item}>
+                                    <button className={styles.selected__drop_item}>
                                         Volume{' '}
                                         <span className={styles.arrow_downicon}>
                                             <TfiAngleDown />
                                         </span>
+                                        <ul className={styles.keyword__select_widget_box}>
+                                            <li className={styles.select__widget__items}>
+                                                All domains
+                                            </li>
+                                            <li className={styles.select__widget__items}>
+                                                You-domain
+                                            </li>
+                                            <li className={styles.select__widget__items}>
+                                                Competitors
+                                            </li>
+                                            <li className={styles.custom_rangebox}>
+                                                <h6 className={styles.range_title}>Custom range</h6>
+                                                <div className={styles.range_input_box}>
+                                                    <input type="text" className={styles.input_item_one} placeholder='from' />
+                                                    <input type="text" className={styles.input_item_two} placeholder='to' />
+                                                </div>
+                                                <button className={styles.apply_btn}>Apply</button>
+                                            </li>
+                                        </ul>
                                     </button>
                                 </div>
                                 <div className={styles.selected__filter_item}>
@@ -49,6 +96,25 @@ const FilterTabsTwo = () => {
                                         <span className={styles.arrow_downicon}>
                                             <TfiAngleDown />
                                         </span>
+                                        <ul className={styles.keyword__select_widget_box}>
+                                            <li className={styles.select__widget__items}>
+                                                All domains
+                                            </li>
+                                            <li className={styles.select__widget__items}>
+                                                You-domain
+                                            </li>
+                                            <li className={styles.select__widget__items}>
+                                                Competitors
+                                            </li>
+                                            <li className={styles.custom_rangebox}>
+                                                <h6 className={styles.range_title}>Custom range</h6>
+                                                <div className={styles.range_input_box}>
+                                                    <input type="text" className={styles.input_item_one} placeholder='from' />
+                                                    <input type="text" className={styles.input_item_two} placeholder='to' />
+                                                </div>
+                                                <button className={styles.apply_btn}>Apply</button>
+                                            </li>
+                                        </ul>
                                     </button>
                                 </div>
                                 <div className={styles.selected__filter_item}>
@@ -57,48 +123,83 @@ const FilterTabsTwo = () => {
                                         <span className={styles.arrow_downicon}>
                                             <TfiAngleDown />
                                         </span>
+                                        <ul className={styles.keyword__select_widget_box}>
+                        <li className={styles.select__widget__items}>
+                         <label htmlFor="checkeditem1"><input type="checkbox" id='checkeditem1' className={styles.checked__item} /> Informational</label>
+                        </li>
+                        <li className={styles.select__widget__items}>
+                         <label htmlFor="checkeditem2"><input type="checkbox" id='checkeditem2' className={styles.checked__item} /> Naviagation</label>
+                        </li>
+                        <li className={styles.select__widget__items}>
+                         <label htmlFor="checkeditem3"><input type="checkbox" id='checkeditem3' className={styles.checked__item} /> Commercial</label> 
+                        </li>
+                        <li className={styles.select__widget__items}>
+                         <label htmlFor="checkeditem3"><input type="checkbox" id='checkeditem3' className={styles.checked__item} /> Transactional</label> 
+                        </li>
+                   
+                      </ul>
                                     </button>
                                 </div>
-                                <div className={styles.selected__filter_item}>
-                                    <button className={styles.selected__drop_item}>
-                                        CPC (USD){' '}
-                                        <span className={styles.arrow_downicon}>
-                                            <TfiAngleDown />
-                                        </span>
-                                    </button>
-                                </div>
+       
                                 <div className={styles.selected__filter_item}>
                                     <button className={styles.selected__drop_item}>
                                         SERP Features{' '}
                                         <span className={styles.arrow_downicon}>
                                             <TfiAngleDown />
                                         </span>
-                                    </button>
+                                        <ul className={styles.keyword__select_widget_box}>
+                        <li className={styles.select__widget__items}>
+                          All domains <span className={styles.angle__right}><TfiAngleRight /></span>
+                          <ul className={styles.sublist__select_item}>
+                            <li className={styles.list__items}>top 50 </li>
+                            <li className={styles.list__items}>top 20</li>
+                            <li className={styles.list__items}>top 10</li>
+                              <li className={styles.custom_rangebox}>
+                              <h6 className={styles.range_title}>Custom range</h6>
+                              <div className={styles.range_input_box}>
+                              <input type="text" className={styles.input_item_one} placeholder='from' />
+                                <input type="text" className={styles.input_item_two} placeholder='to' />
+                              </div>
+                              <button className={styles.apply_btn}>Apply</button>
+                            </li>
+                          </ul>
+                        </li>
+                        <li className={styles.select__widget__items}>
+                          You-domain <span className={styles.angle__right}><TfiAngleRight /></span> 
+                          <ul className={styles.sublist__select_item}>
+                            <li className={styles.list__items}>top 50 </li>
+                            <li className={styles.list__items}>top 20</li>
+                            <li className={styles.list__items}>top 10</li>
+                              <li className={styles.custom_rangebox}>
+                              <h6 className={styles.range_title}>Custom range</h6>
+                              <div className={styles.range_input_box}>
+                              <input type="text" className={styles.input_item_one} placeholder='from' />
+                                <input type="text" className={styles.input_item_two} placeholder='to' />
+                              </div>
+                              <button className={styles.apply_btn}>Apply</button>
+                            </li>
+                          </ul>
+                        </li>
+                        <li className={styles.select__widget__items}>
+                          Competitors <span className={styles.angle__right}><TfiAngleRight /></span> 
+                          <ul className={styles.sublist__select_item}>
+                            <li className={styles.list__items}>top 50 </li>
+                            <li className={styles.list__items}>top 20</li>
+                            <li className={styles.list__items}>top 10</li>
+                              <li className={styles.custom_rangebox}>
+                              <h6 className={styles.range_title}>Custom range</h6>
+                              <div className={styles.range_input_box}>
+                              <input type="text" className={styles.input_item_one} placeholder='from' />
+                                <input type="text" className={styles.input_item_two} placeholder='to' />
+                              </div>
+                              <button className={styles.apply_btn}>Apply</button>
+                            </li>
+                          </ul>
+                        </li>
+                      </ul>
+                    </button>
                                 </div>
-                                <div className={styles.selected__filter_item}>
-                                    <button className={styles.selected__drop_item}>
-                                        Competitive density{' '}
-                                        <span className={styles.arrow_downicon}>
-                                            <TfiAngleDown />
-                                        </span>
-                                    </button>
-                                </div>
-                                <div className={styles.selected__filter_item}>
-                                    <button className={styles.selected__drop_item}>
-                                        Click potential{' '}
-                                        <span className={styles.arrow_downicon}>
-                                            <TfiAngleDown />
-                                        </span>
-                                    </button>
-                                </div>
-                                <div className={styles.selected__filter_item}>
-                                    <button className={styles.selected__drop_item}>
-                                        Tags{' '}
-                                        <span className={styles.arrow_downicon}>
-                                            <TfiAngleDown />
-                                        </span>
-                                    </button>
-                                </div>
+
                             </div>
                         </div>
 
@@ -148,7 +249,7 @@ const FilterTabsTwo = () => {
 
                             <div className={styles.insight__overview__top}>
                                 <div className={styles.top__insight_overview_left}>
-                        
+
                                 </div>
 
                                 <div className={styles.top__insight_overview_right}>
