@@ -21,7 +21,8 @@ const WebsiteKeyword = React.lazy(() => import('./components/body-main/analytics
 const WebsiteKeywordOverview = React.lazy(() => import('./components/body-main/analytics/websitekeyword/overview')) ;
 const KeywordGeneretor = React.lazy(() => import('./components/body-main/analytics/keywordgeneretor/KeywordGeneretor')) ;
 const KeywordGeneretorOverview = React.lazy(() => import('./components/body-main/analytics/keywordgeneretor/overview'));
-
+const TrafficsAnalytics = React.lazy(() => import('./components/body-main/analytics/traffic-analytics/trafficsAnalytics'));
+const TrafficsAnalyticsOverview  = React.lazy(() => import('./components/body-main/analytics/traffic-analytics/TrafficOverview'));
 
 const KeywordGap = React.lazy(() => import('./components/body-main/analytics/keywordgap/keywordgap'));
 const KeywordGapOverview = React.lazy(() => import('./components/body-main/analytics/keywordgap/overview'));
@@ -117,6 +118,13 @@ const App = () => {
           </Routes>
           <Routes>
             <Route path="/organicsearch/overview" element={<OrganicsearchOverview />} />
+          </Routes>
+
+          <Routes>
+            <Route path="/trafficsAnalytics/home" element={<TrafficsAnalytics />} />
+          </Routes>
+          <Routes>
+            <Route path="/trafficsAnalytics/overview" element={<TrafficsAnalyticsOverview />} />
           </Routes>
 
             <Routes>

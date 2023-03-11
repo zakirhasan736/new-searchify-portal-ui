@@ -2747,7 +2747,7 @@ li:empty {
   color: var(--white-color);
   border-radius: 10px;
 }
-.keyword__input_fildbox .seal__text_color span {
+.keyword__input_fildbox .seal__text_color span:empty {
   padding: 0px;
   border-radius: 50px;
   width: 16px;
@@ -4408,6 +4408,9 @@ li:empty {
 .tabs__filters__box_wrap .search__filterbox  .search__button {
 	height: 46px;
 }
+
+
+
 
 /* ==============common component==================== */
 .select_domain_type,

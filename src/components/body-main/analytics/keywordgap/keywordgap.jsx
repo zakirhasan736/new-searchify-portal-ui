@@ -86,9 +86,9 @@ const Keywordgap = () => {
                           <div className={styles.keyword__input_fildbox}>
                             <label
                               htmlFor="text"
-                              className={`${item.seal__text_color} ${styles.seal__text_color}`}
+                              className={`${styles.seal__text_color}`}
                             >
-                              <span>{index1 === 0 ? "You" : ""}</span>
+                              <span className={`${item.seal__text_color}`}>{index1 === 0 ? "You" : ""}</span>
                             </label>
                             <input
                               type="text"
@@ -111,7 +111,10 @@ const Keywordgap = () => {
                     <div className={styles.competitor__controll_box}>
 
                       <div className={styles.country__select_widget}>
-                        <li className={styles.selected_country_list} onClick={() => updatedOpenCountryList(!openCountryList)}> {selected_country_name}</li>
+                        <li className={styles.selected_country_list} onClick={() => updatedOpenCountryList(!openCountryList)}> {selected_country_name}
+                        {/* <img src={item?.flags.png} alt={item?.name.common} /> */}
+                        
+                        </li>
                         {openCountryList && <div className={styles.openListcontent}>
                           {country.map((item, index) => (
                             <ul className={styles.country_container} key={index}>

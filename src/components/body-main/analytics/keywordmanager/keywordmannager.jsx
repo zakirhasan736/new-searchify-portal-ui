@@ -379,11 +379,7 @@ const Keywordmannager = () => {
                       {
                         openSharedListModal &&
                         <ul className={styles.key__group__list}>
-                          {updated.map((item, index) => (
-                            <li onClick={() => { setSharedKeywordInput(item.list); setopenSharedListModal(false) }} className={styles.key__list_select}>
-                              {item.list}
-                            </li>
-                          ))}
+                          \
                         </ul>
                       }
                     </div>
