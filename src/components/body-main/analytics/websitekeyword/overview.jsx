@@ -148,8 +148,8 @@ const WebsiteKeyOverview = () => {
                       <label for='check3'>Organic</label>
                     </li>
                     <li className={styles.checkbox__items}>
-                      <input onMouseOver={() => setChecked1(null)} type='checkbox' id='check3' value="paid" onChange={handleOnCheck} checked={checked1} />
-                      <label for='check3'>Paid</label>
+                      <input onMouseOver={() => setChecked1(null)} type='checkbox' id='check4' value="paid" onChange={handleOnCheck} checked={checked1} />
+                      <label for='check4'>Paid</label>
                     </li>
                   </ul>
                 </div>
@@ -228,13 +228,18 @@ const WebsiteKeyOverview = () => {
             addNew &&
             <div className={styles.new_list_container}>
               <div onClick={(e) => e.stopPropagation()} className={styles.list_content}>
-                <input type="text" placeholder='name of your group' />
-                <hr />
+                <div className={styles.group__name_box}>
+                      <input type="text" placeholder='name of your group' className={styles.name__group}  />
+                 </div>
+                 <div className={styles.keyword__listbox}>
                 <h6>keywords in the list</h6>
                 <span>keywords</span>
-                <hr />
-                <input type="text" placeholder='Enter keywords or paste' />
-                <button >+</button>
+                </div>
+              
+                <div className={styles.add_key_box}>
+                      <input className={styles.keyword__add_input} type="text" placeholder='Enter keywords or paste' />
+                      <button className={styles.add__keybtn}>+</button>
+                    </div>
                 <div className={styles.show_all_added_keywords}>
                   <ul>
 

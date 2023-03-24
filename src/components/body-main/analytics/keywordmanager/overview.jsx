@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from '../analytics.module.css';
 import shapeImg6 from '../../../../assets/img/gradient-shape6.png';
 import shapeImg3 from '../../../../assets/img/gradient-shape3.png';
@@ -8,7 +8,137 @@ import shapeImg4 from '../../../../assets/img/gradient-shape4.png';
 import { TfiAngleDown, TfiArrowLeft, TfiBackRight, TfiExport } from 'react-icons/tfi';
 import { FiUsers, FiPlus, FiSearch } from 'react-icons/fi';
 import {AiOutlineDelete} from 'react-icons/ai'
-const overview = () => {
+const Overview = () => {
+  const [keyList, setKeyList] = useState(false);
+  const [keyListSelected, setKeylistSelected] = useState("");
+  const [openValueList, setValueList] = useState(false);
+  const [volumeListSelected, setValuelistSelected] = useState("");
+  const [kdOpen, setKdOpen] = useState(false);
+  const [selected__kd, setSelectedKd] = useState("");
+  const [intOpen, setIntOpen] = useState(false);
+  const [serpOpen, setSerpOpen] = useState(false);
+  const [selected__int, setSelectedInt] = useState("");
+  const [selected__serp, setSelectedSerp] = useState("");
+  const [openDencity, setDencityOpen] = useState(false);
+  const [openPotential, setPotentialOpen] = useState(false);
+  const [openTags, setTagslOpen] = useState(false);
+  const [cpcOpen, setCpcOpen] = useState(false);
+  const [openSharedListModal, setopenSharedListModal] = useState(false);
+  const [openViwer, setopenViwer] = useState(false);
+  const [viewerList, setViewerList] = useState("");
+  const [openShareModal, setShareModal] = useState(false);
+  const [shareEmailInput, setSharedEmailInput] = useState("");
+  const [shareKeywordInput, setSharedKeywordInput] = useState("");
+
+  const [viewers] = useState([
+      {
+          id: 1,
+          list: "Viewer"
+      },
+      {
+          id: 2,
+          list: "Editor"
+      }
+  ])
+  const [select__intItem] = useState([
+    {
+        id: 1,
+        name: "Informational"
+    },
+    {
+        id: 2,
+        name: "Naviagation"
+    },
+    {
+        id: 3,
+        name: "Commercial"
+    },
+    {
+      id: 4,
+      name: "Transactional"
+  }
+]);
+  const [keyListItem] = useState([
+    {
+        id: 1,
+        listItems: "Informational"
+    },
+    {
+        id: 2,
+        listItems: "Naviagation"
+    },
+    {
+        id: 3,
+        listItems: "Commercial"
+    },
+    {
+      id: 4, 
+      listItems: "Transactional"
+  }
+]);
+const [select__serpItem] = useState([
+    {
+        id: 1,
+        listItems: "Informational"
+    },
+    {
+        id: 2,
+        listItems: "Naviagation"
+    },
+    {
+        id: 3,
+        listItems: "Commercial"
+    },
+    {
+      id: 4, 
+      listItems: "Transactional"
+  }
+]);
+const [valumeListItem] = useState([
+  {
+      id: 1,
+      listItems: "All domains"
+  },
+  {
+      id: 2,
+      listItems: "You-domain"
+  },
+  {
+      id: 3,
+      listItems: "Competitors"
+  }
+]);
+const [select__kd] = useState([
+  {
+      id: 1,
+      name: "All domains"
+  },
+  {
+      id: 2,
+      name: "Your-domain"
+  },
+  {
+      id: 3,
+      name: "Competitors"
+  }
+]);
+
+const [updated] = useState([
+  {
+      id: 1,
+      list: "Soap and More"
+  },
+  {
+      id: 2,
+      list: "Soap and More2"
+  },
+  {
+      id: 3,
+      list: "Soap and More3"
+  }
+]);
+
+
   return (
     <>
       <section className={styles.keyword__wrap_section}>
@@ -43,32 +173,31 @@ const overview = () => {
               <div className={styles.key__top__nav_items}>
                 <h2 className={styles.key__top_nav_title}>
                   Keyword Manager:
+
                   <button className={styles.drop__select}>
-                    Soap and More{' '}
+                  <span onClick={() => setKeyList(!keyList)} className={styles.selected__item_text}>
+                    {keyListSelected !== "" ? keyListSelected : "Soap and More"}
                     <span className={styles.arrow_downicon}>
                       <TfiAngleDown />
                     </span>
-                    <ul className={styles.keyword__select_widget_box}>
-                        <li className={styles.select__widget__items}>
-                         Informational
+                    </span>
+
+                   {keyList && <ul className={styles.keyword__select_widget_box}>
+                   {keyListItem.map((item, index) => (
+                        <li onClick={() => setKeylistSelected(item.listItems)} key={index} className={styles.select__widget__items}>
+                         {item.listItems}
                         </li>
-                        <li className={styles.select__widget__items}>
-                      Naviagation
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          Commercial 
-                        </li>
-                        <li className={styles.select__widget__items}>
-                         Transactional 
-                        </li>
-                      </ul>
+                   ))}
+                     
+                      </ul>}
+
                   </button>
                   <ul className={styles.drop__select__items}>
                     <li className={styles.drop__select_list}></li>
                   </ul>
                 </h2>
                 <div className={styles.top__right_key__box}>
-                  <button className={styles.share__info_item}>
+                  <button  onClick={() => setShareModal(!openShareModal)} className={styles.share__info_item}>
                     <span className={styles.users__icon}>
                       <FiUsers />
                     </span>{' '}
@@ -100,7 +229,7 @@ const overview = () => {
                     </button>
                   </div>
 
-                  <div className={styles.database__filterbox}>
+                  {/* <div className={styles.database__filterbox}>
                     <div className={styles.selecte__item_databases}>
                       <input
                         type="select"
@@ -114,27 +243,26 @@ const overview = () => {
                     <ul className={styles.select__item__box}>
                       <li className={styles.selected__items}></li>
                     </ul>
-                  </div>
+                  </div> */}
 
                 </div>
 
                 <div className={styles.filter_drop__selec__items}>
+
                   <div className={styles.selected__filter_item}>
                     <button className={styles.selected__drop_item}>
-                      Volume{' '}
+                    <span onClick={() => setValueList(!openValueList)} className={styles.selected__item_text}>
+                      {volumeListSelected !== "" ? volumeListSelected : "Volume"}
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
-                      <ul className={styles.keyword__select_widget_box}>
-                        <li className={styles.select__widget__items}>
-                          All domains
+                      </span>
+                    {openValueList &&   <ul className={styles.keyword__select_widget_box}>
+                    {valumeListItem.map((item, index) => (
+                        <li onClick={() => setValuelistSelected(item.listItems)} key={index} className={styles.select__widget__items}>
+                          {item.listItems}
                         </li>
-                        <li className={styles.select__widget__items}>
-                          You-domain 
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          Competitors 
-                        </li>
+                    ))}
                         <li className={styles.custom_rangebox}>
                               <h6 className={styles.range_title}>Custom range</h6>
                               <div className={styles.range_input_box}>
@@ -143,25 +271,22 @@ const overview = () => {
                               </div>
                               <button className={styles.apply_btn}>Apply</button>
                             </li>
-                      </ul>
+                      </ul>}
                     </button>
                   </div>
                   <div className={styles.selected__filter_item}>
-                    <button className={styles.selected__drop_item}>
-                      KD%{' '}
+                    <button onClick={() => setKdOpen(!kdOpen)}  className={styles.selected__drop_item}>
+                    <span className={styles.selected__item_text}>
+                      {selected__kd !== "" ? selected__kd : "KD%"}
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
-                      <ul className={styles.keyword__select_widget_box}>
-                        <li className={styles.select__widget__items}>
-                          All domains
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          You-domain 
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          Competitors 
-                        </li>
+                      </span>
+                      {kdOpen &&  <ul className={styles.keyword__select_widget_box}>
+                      {select__kd.map((item, index) => (
+                    <li onClick={() => setSelectedKd(item.name)} key={index} className={styles.select__widget__items}>{item.name}</li>
+                    ))}
+                       
                         <li className={styles.custom_rangebox}>
                               <h6 className={styles.range_title}>Custom range</h6>
                               <div className={styles.range_input_box}>
@@ -170,41 +295,35 @@ const overview = () => {
                               </div>
                               <button className={styles.apply_btn}>Apply</button>
                             </li>
-                      </ul>
+                      </ul>}
                     </button>
                   </div>
                   <div className={styles.selected__filter_item}>
-                    <button className={styles.selected__drop_item}>
-                      Intent{' '}
+                    <button onClick={() => setIntOpen(!intOpen)} className={styles.selected__drop_item}>
+                    {selected__int !== "" ? selected__int : "Intent"}
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
-                      <ul className={styles.keyword__select_widget_box}>
-                        <li className={styles.select__widget__items}>
-                         <label htmlFor="checkeditem1"><input type="checkbox" id='checkeditem1' className={styles.checked__item} /> Informational</label>
-                        </li>
-                        <li className={styles.select__widget__items}>
-                         <label htmlFor="checkeditem2"><input type="checkbox" id='checkeditem2' className={styles.checked__item} /> Naviagation</label>
-                        </li>
-                        <li className={styles.select__widget__items}>
-                         <label htmlFor="checkeditem3"><input type="checkbox" id='checkeditem3' className={styles.checked__item} /> Commercial</label> 
-                        </li>
-                        <li className={styles.select__widget__items}>
-                         <label htmlFor="checkeditem3"><input type="checkbox" id='checkeditem3' className={styles.checked__item} /> Transactional</label> 
-                        </li>
+                      {intOpen &&  <ul className={styles.keyword__select_widget_box}>
+                      {select__intItem.map((item, index) => (
+                      <li onClick={() => setSelectedInt(item.name)} key={index} className={styles.select__widget__items}>
+                      <label htmlFor="checkeditem1"><input type="checkbox" id='checkeditem1' className={styles.checked__item} /> {item.name}</label>
+                      </li>
+                    ))}
                         <li className={styles.custom_rangebox}>
                               <button className={styles.apply_btn}>Apply</button>
-                            </li>
-                      </ul>
+                        </li>
+                      </ul>}
                     </button>
                   </div>
+
                   <div className={styles.selected__filter_item}>
-                    <button className={styles.selected__drop_item}>
+                    <button onClick={() => setCpcOpen(!cpcOpen)} className={styles.selected__drop_item}>
                       CPC (USD){' '}
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
-                      <ul className={styles.keyword__select_widget_box}>
+                     {cpcOpen && <ul className={styles.keyword__select_widget_box}>
                         <li className={styles.select__widget__items}>
                          
                         </li>
@@ -217,50 +336,36 @@ const overview = () => {
                               </div>
                               <button className={styles.apply_btn}>Apply</button>
                             </li>
-                      </ul>
+                      </ul>}
                     </button>
                   </div>
+
                   <div className={styles.selected__filter_item}>
-                    <button className={styles.selected__drop_item}>
-                      SERP Features{' '}
+                    <button onClick={() => setSerpOpen(!serpOpen)} className={styles.selected__drop_item}>
+                    {selected__serp !== "" ? selected__serp : "SERP Features"}
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
-                      <ul className={styles.keyword__select_widget_box}>
-                        <li className={styles.select__widget__items}>
-                         <label htmlFor="serp1"><input type="checkbox" id='serp1' className={styles.checked__item} /> Informational</label>
-                        </li>
-                        <li className={styles.select__widget__items}>
-                         <label htmlFor="serp2"><input type="checkbox" id='serp2' className={styles.checked__item} /> Naviagation</label>
-                        </li>
-                        <li className={styles.select__widget__items}>
-                         <label htmlFor="serp3"><input type="checkbox" id='serp3' className={styles.checked__item} /> Commercial</label> 
-                        </li>
-                        <li className={styles.select__widget__items}>
-                         <label htmlFor="serp3"><input type="checkbox" id='serp3' className={styles.checked__item} /> Transactional</label> 
-                        </li>
-                        <li className={styles.select__widget__items}>
-                         <label htmlFor="serp4"><input type="checkbox" id='serp4' className={styles.checked__item} /> None</label> 
-                        </li>
-                        <li className={styles.select__widget__items}>
-                         <label htmlFor="serp5"><input type="checkbox" id='serp5' className={styles.checked__item} /> None</label> 
-                        </li>
-                        <li className={styles.select__widget__items}>
-                         <label htmlFor="serp6"><input type="checkbox" id='serp6' className={styles.checked__item} /> None</label> 
-                        </li>
+                      {serpOpen &&  <ul className={styles.keyword__select_widget_box}>
+                      {select__serpItem.map((item, index) => (
+                      <li onClick={() => setSelectedSerp(item.listItems)} key={index} className={styles.select__widget__items}>
+                      <label htmlFor="serp1"><input type="checkbox" id='serp1' className={styles.checked__item} /> {' '} {item.listItems}</label></li>
+                    ))}
                         <li className={styles.custom_rangebox}>
                               <button className={styles.apply_btn}>Apply</button>
-                            </li>
-                      </ul>
+                        </li>
+                      </ul>}
                     </button>
                   </div>
+
                   <div className={styles.selected__filter_item}>
-                    <button className={styles.selected__drop_item}>
+                    <button  onClick={() => setDencityOpen(!openDencity)} className={styles.selected__drop_item}>
+                    {/* {selected__dencity !== "" ? selected__dencity : "Competitive density"} */}
                       Competitive density{' '}
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
-                       <ul className={styles.keyword__select_widget_box}>
+                     {openDencity &&  <ul className={styles.keyword__select_widget_box}>
                         <li className={styles.select__widget__items}>
                          
                         </li>
@@ -271,18 +376,21 @@ const overview = () => {
                               <input type="text" className={styles.input_item_one} placeholder='from' />
                                 <input type="text" className={styles.input_item_two} placeholder='to' />
                               </div>
-                              <button className={styles.apply_btn}>Apply</button>
+                              <button
+                              //  onClick={() => setDencitySelected({})} 
+                               className={styles.apply_btn}>Apply</button>
                             </li>
-                      </ul>
+                      </ul> }
                     </button>
                   </div>
+
                   <div className={styles.selected__filter_item}>
-                    <button className={styles.selected__drop_item}>
+                    <button  onClick={() => setPotentialOpen(!openPotential)} className={styles.selected__drop_item}>
                       Click potential{' '}
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
-                       <ul className={styles.keyword__select_widget_box}>
+                     {openPotential &&  <ul className={styles.keyword__select_widget_box}>
                         <li className={styles.select__widget__items}>
                          
                         </li>
@@ -295,16 +403,17 @@ const overview = () => {
                               </div>
                               <button className={styles.apply_btn}>Apply</button>
                             </li>
-                      </ul>
+                      </ul>}
                     </button>
                   </div>
+
                   <div className={styles.selected__filter_item}>
-                    <button className={styles.selected__drop_item}>
+                    <button  onClick={() => setTagslOpen(!openTags)} className={styles.selected__drop_item}>
                       Tags{' '}
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
-                       <ul className={styles.keyword__select_widget_box}>
+                      {openTags && <ul className={styles.keyword__select_widget_box}>
                         <li className={styles.select__widget__items}>
                          
                         </li>
@@ -317,9 +426,10 @@ const overview = () => {
                               </div>
                               <button className={styles.apply_btn}>Apply</button>
                             </li>
-                      </ul>
+                      </ul>}
                     </button>
                   </div>
+
                 </div>
 
               </div>
@@ -433,9 +543,80 @@ const overview = () => {
 
           </div>
         </div>
+        
+         {/* ==============POPUP box =============== */}
+         {openShareModal && <div className={styles.share_key__popup__box}>
+                <button onClick={() => setShareModal(false)} className={styles.close__popup_btn}>x</button>
+                <h3 className={styles.keyword__subtitle}>
+                  Share keyword lists
+                </h3>
+                <div className={styles.add__keyword__list_input}>
+                  <div className={styles.add__key_input__boxwrap}>
+                    <label htmlFor="select" className={styles.key__list__title}>
+                      Keyword lists <span>{shareKeywordInput.split(',').length + "/2"}</span>
+                    </label>
+                    <div className={styles.add__key_input__box}>
+                      <input
+                        type="select"
+                        className={styles.add__key_list__input}
+                        placeholder="select keyword list"
+                        value={shareKeywordInput}
+                        onClick={() => setopenSharedListModal(!openSharedListModal)}
+                      />
+                      {
+                        openSharedListModal &&
+                        <ul className={styles.key__group__list}>
+                          {updated.map((item, index) => (
+                            <li onClick={() => { setSharedKeywordInput(item.list); setopenSharedListModal(false) }} className={styles.key__list_select}>
+                              {item.list}
+                            </li>
+                          ))}
+                        </ul>
+                      }
+                    </div>
+                  </div>
+
+                  <div className={styles.key__send__user_info_box}>
+                    <div className={styles.user__info__gmail}>
+                      <label htmlFor="email" className={styles.title_label}>
+                        Email addresses <span>{shareEmailInput.split(',').length}</span>
+                      </label>
+                      <div className={styles.user__info__input_box}>
+                        <input
+                          type="text"
+                          name="email"
+                          className={styles.user_input__gmail}
+                          placeholder="mark@example.com, eve@example.com"
+                          onChange={(e) => setSharedEmailInput(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.user__permition_selectbox}>
+                      <span onClick={() => setopenViwer(!openViwer)} className={styles.user__permission_select_item}>
+                      {viewerList !== "" ? viewerList : "Viwer"}
+                      </span>
+                      {openViwer && <ul className={styles.user__permission__list_item}>
+                      {viewers.map((item, index) => (
+                            <li onClick={() => setViewerList(item.list)} >
+                              {item.list}
+                            </li>
+                          ))}
+                       
+                      </ul>}
+                    </div>
+                    <div className={styles.add_list_control__box}>
+                      <button onClick={() => (shareEmailInput.length > 3 && shareKeywordInput.length > 3)} className={styles.create__list_button}>
+                        Create list
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>}
+              {/* =====popup end===== */}
       </section>
     </>
   );
 };
 
-export default overview;
+export default Overview;

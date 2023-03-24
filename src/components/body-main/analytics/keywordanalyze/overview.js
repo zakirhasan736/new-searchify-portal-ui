@@ -3,11 +3,6 @@ import styles from '../analytics.module.css';
 import shapeImg6 from '../../../../assets/img/gradient-shape6.png';
 import shapeImg7 from '../../../../assets/img/gradient-shape-7.png';
 import repeatIcon from '../../../../assets/icon/repeat.png';
-// import country1 from '../../../../assets/img/country1.png'
-// import country2 from '../../../../assets/img/country2.png'
-// import country3 from '../../../../assets/img/country3.png'
-// import country4 from '../../../../assets/img/country4.png'
-// import country5 from '../../../../assets/img/country5.png'
 import germanFlag from '../../../../assets/img/germany.png'
 import wordFlag from '../../../../assets/img/globe.png'
 import arrowUp from '../../../../assets/icon/arrow-up.png'
@@ -40,29 +35,6 @@ const AnalyzeOverview = () => {
     {
       id: 3,
       rankTitle: 'Intent',
-      typeTitle: 'industry name',
-      rankNumber: '#11,456',
-      iconsRankType: '',
-    }
-  ]
-  const CompetitorCarddata = [
-    {
-      id: 1,
-      rankTitle: '0 Organic desktop competitors',
-      typeTitle: 'Worldwide',
-      rankNumber: '#11,456',
-      iconsRankType: wordFlag,
-    },
-    {
-      id: 2,
-      rankTitle: '0 Paid desktop competitors',
-      typeTitle: 'Germany',
-      rankNumber: '#11,456',
-      iconsRankType: germanFlag,
-    },
-    {
-      id: 3,
-      rankTitle: '0 Mobile competitors',
       typeTitle: 'industry name',
       rankNumber: '#11,456',
       iconsRankType: '',

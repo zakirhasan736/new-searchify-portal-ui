@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from '../analytics.module.css';
 import shapeImg6 from '../../../../assets/img/gradient-shape6.png';
 import shapeImg3 from '../../../../assets/img/gradient-shape3.png';
 import shapeImg4 from '../../../../assets/img/gradient-shape4.png';
-// import infoModal1 from '../../../../assets/img/keywordmannager-modal1.svg';
 
+import SubDomain from './SubDomain';
 import {
   TfiAngleDown,
   TfiArrowLeft,
@@ -14,7 +14,100 @@ import {
 } from 'react-icons/tfi';
 import { FiSearch } from 'react-icons/fi';
 import { AiOutlineDelete } from 'react-icons/ai';
-const overview = () => {
+
+const Overview = () => {
+  const [positionOpen, setPosition] = useState(false);
+  const [volumeOpen, setVolume] = useState(false);
+  const [kdOpen, setKdOpen] = useState(false);
+  const [intOpen, setIntOpen] = useState(false);
+  const [selected__position, setSelectedPosition] = useState("");
+  const [selected__volume, setSelectedVolume] = useState("");
+  const [selected__kd, setSelectedKd] = useState("");
+  const [selected__int, setSelectedInt] = useState("");
+
+    const [select__position] = useState([
+        {
+            id: 1,
+            name: "All domains"
+        },
+        {
+            id: 2,
+            name: "Your-domain"
+        },
+        {
+            id: 3,
+            name: "Competitors"
+        }
+    ]);
+    const [select__volume] = useState([
+        {
+            id: 1,
+            name: "All domains"
+        },
+        {
+            id: 2,
+            name: "Your-domain"
+        },
+        {
+            id: 3,
+            name: "Competitors"
+        }
+    ]);
+    const [select__kd] = useState([
+        {
+            id: 1,
+            name: "All domains"
+        },
+        {
+            id: 2,
+            name: "Your-domain"
+        },
+        {
+            id: 3,
+            name: "Competitors"
+        }
+    ]);
+    const [select__intItem] = useState([
+        {
+            id: 1,
+            name: "Informational"
+        },
+        {
+            id: 2,
+            name: "Naviagation"
+        },
+        {
+            id: 3,
+            name: "Commercial"
+        },
+        {
+          id: 4,
+          name: "Transactional"
+      }
+    ]);
+  const [list__count] = useState([
+    {
+      id: 1,
+      seal__text_color: "color_1"
+    },
+    {
+      id: 2,
+      seal__text_color: "color_2"
+    },
+    {
+      id: 3,
+      seal__text_color: "color_3"
+    },
+    {
+      id: 4,
+      seal__text_color: "color_4"
+    },
+    {
+      id: 5,
+      seal__text_color: "color_5"
+    }
+  ]);
+
   return (
     <>
       <section className={styles.keyword__wrap_section}>
@@ -60,197 +153,41 @@ const overview = () => {
               </div>
 
               <div className={styles.compare__fild__box_cont}>
+              {
+                    list__count.map((item, index1) => (
                 <div className={styles.keyword__input_item_mainbox}>
                   <div className={styles.select_domain_type}>
-                    <span className={styles.selected__item_text}>
-                      root domain{' '}
-                      <span className={styles.arrow__icon}>
-                        <TfiAngleDown />
-                      </span>
-                    </span>
-                    <ul className={styles.keyword__select_widget_box}>
-                      <li className={styles.select__widget__items}>
-                        Root domain
-                      </li>
-                      <li className={styles.select__widget__items}>
-                        Exact URl
-                      </li>
-                      <li className={styles.select__widget__items}>
-                        Subdomain
-                      </li>
-                      <li className={styles.select__widget__items}>
-                        Subfolder
-                      </li>
-                    </ul>
+                  <SubDomain />
                   </div>
                   <div className={styles.keyword_inputfild__contbox}>
-                    <div className={styles.keyword__input_fildbox}>
-                      <label htmlFor="text" className={styles.seal__text_color}>
-                        <span>You</span>
-                      </label>
-                      <input
-                        type="text"
-                        className={styles.add__domain_fild}
-                        placeholder="add domain"
-                      />
-                    </div>
+                  <div className={styles.keyword__input_fildbox}>
+                            <label
+                              htmlFor="text"
+                              className={`${styles.seal__text_color}`}
+                            >
+                              <span className={`${item.seal__text_color}`}>{index1 === 0 ? "You" : ""}</span>
+                            </label>
+                            <input
+                              type="text"
+                              className={styles.add__domain_fild}
+                              placeholder="add domain"
+                            />
+                        </div>
                   </div>
                 </div>
+       ))
+      }
+               <div className={styles.compare__control__box}>
+                        <div className={styles.competitor__controll_box}>
+                          <button  className={styles.compare__button}>
+                            Compare
+                          </button>
+                          <button className={styles.reset__button}>
+                            Reset
+                          </button>
+                        </div>
+                      </div>
 
-                {/* ===================== */}
-                <div className={styles.keyword__input_item_mainbox}>
-                  <div className={styles.select_domain_type}>
-                    <span className={styles.selected__item_text}>
-                      root domain{' '}
-                      <span className={styles.arrow__icon}>
-                        <TfiAngleDown />
-                      </span>
-                    </span>
-                    <ul className={styles.keyword__select_widget_box}>
-                      <li className={styles.select__widget__items}>
-                        Root domain
-                      </li>
-                      <li className={styles.select__widget__items}>
-                        Exact URl
-                      </li>
-                      <li className={styles.select__widget__items}>
-                        Subdomain
-                      </li>
-                      <li className={styles.select__widget__items}>
-                        Subfolder
-                      </li>
-                    </ul>
-                  </div>
-                  <div className={styles.keyword_inputfild__contbox}>
-                    <div className={styles.keyword__input_fildbox}>
-                      <label htmlFor="text" className={styles.seal__text_color}>
-                        <span></span>
-                      </label>
-                      <input
-                        type="text"
-                        className={styles.add__domain_fild}
-                        placeholder="add domain"
-                      />
-                    </div>
-                  </div>
-                </div>
-                {/* ===================== */}
-                <div className={styles.keyword__input_item_mainbox}>
-                  <div className={styles.select_domain_type}>
-                    <span className={styles.selected__item_text}>
-                      root domain{' '}
-                      <span className={styles.arrow__icon}>
-                        <TfiAngleDown />
-                      </span>
-                    </span>
-                    <ul className={styles.keyword__select_widget_box}>
-                      <li className={styles.select__widget__items}>
-                        Root domain
-                      </li>
-                      <li className={styles.select__widget__items}>
-                        Exact URl
-                      </li>
-                      <li className={styles.select__widget__items}>
-                        Subdomain
-                      </li>
-                      <li className={styles.select__widget__items}>
-                        Subfolder
-                      </li>
-                    </ul>
-                  </div>
-                  <div className={styles.keyword_inputfild__contbox}>
-                    <div className={styles.keyword__input_fildbox}>
-                      <label htmlFor="text" className={styles.seal__text_color}>
-                        <span></span>
-                      </label>
-                      <input
-                        type="text"
-                        className={styles.add__domain_fild}
-                        placeholder="add domain"
-                      />
-                    </div>
-                  </div>
-                </div>
-                {/* ===================== */}
-                <div className={styles.keyword__input_item_mainbox}>
-                  <div className={styles.select_domain_type}>
-                    <span className={styles.selected__item_text}>
-                      root domain{' '}
-                      <span className={styles.arrow__icon}>
-                        <TfiAngleDown />
-                      </span>
-                    </span>
-                    <ul className={styles.keyword__select_widget_box}>
-                      <li className={styles.select__widget__items}>
-                        Root domain
-                      </li>
-                      <li className={styles.select__widget__items}>
-                        Exact URl
-                      </li>
-                      <li className={styles.select__widget__items}>
-                        Subdomain
-                      </li>
-                      <li className={styles.select__widget__items}>
-                        Subfolder
-                      </li>
-                    </ul>
-                  </div>
-                  <div className={styles.keyword_inputfild__contbox}>
-                    <div className={styles.keyword__input_fildbox}>
-                      <label htmlFor="text" className={styles.seal__text_color}>
-                        <span></span>
-                      </label>
-                      <input
-                        type="text"
-                        className={styles.add__domain_fild}
-                        placeholder="add domain"
-                      />
-                    </div>
-                  </div>
-                </div>
-                {/* ===================== */}
-                <div className={styles.keyword__input_item_mainbox}>
-                  <div className={styles.select_domain_type}>
-                    <span className={styles.selected__item_text}>
-                      root domain{' '}
-                      <span className={styles.arrow__icon}>
-                        <TfiAngleDown />
-                      </span>
-                    </span>
-                    <ul className={styles.keyword__select_widget_box}>
-                      <li className={styles.select__widget__items}>
-                        Root domain
-                      </li>
-                      <li className={styles.select__widget__items}>
-                        Exact URl
-                      </li>
-                      <li className={styles.select__widget__items}>
-                        Subdomain
-                      </li>
-                      <li className={styles.select__widget__items}>
-                        Subfolder
-                      </li>
-                    </ul>
-                  </div>
-                  <div className={styles.keyword_inputfild__contbox}>
-                    <div className={styles.keyword__input_fildbox}>
-                      <label htmlFor="text" className={styles.seal__text_color}>
-                        <span></span>
-                      </label>
-                      <input
-                        type="text"
-                        className={styles.add__domain_fild}
-                        placeholder="add domain"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.compare__control__box}>
-                  <div className={styles.competitor__controll_box}>
-                    <button className={styles.compare__button}>Compare</button>
-                  </div>
-                </div>
               </div>
 
               <div className={styles.topbar__key__tabs__filter_wrap}>
@@ -268,6 +205,7 @@ const overview = () => {
               </div>
 
               <div className={styles.topbar__key__filter__itembox}>
+                
                 <div className={styles.database__filter_wrap_box}>
                   <div className={styles.search__and_database__filterbox}>
                     <div className={styles.search__filterbox}>
@@ -282,39 +220,27 @@ const overview = () => {
                         </span>
                       </button>
                     </div>
-
-                    <div className={styles.database__filterbox}>
-                      <div className={styles.selecte__item_databases}>
-                        <input
-                          type="select"
-                          className={styles.selected_database}
-                          placeholder="Databesess"
-                        />
-                        <span className={styles.arrow_downicon}>
-                          <TfiAngleDown />
-                        </span>
-                      </div>
-                      <ul className={styles.select__item__box}>
-                        <li className={styles.selected__items}></li>
-                      </ul>
-                    </div>
                   </div>
                 </div>
 
                 <div className={styles.filter_drop__selec__items}>
+
                 <div className={styles.selected__filter_item}>
-                    <button className={styles.selected__drop_item}>
-                      Position{' '}
+                    <button onClick={() => setPosition(!positionOpen)} className={styles.selected__drop_item}>
+                    <span className={styles.selected__item_text}>
+                    {selected__position !== "" ? selected__position : "position"}
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
-                      <ul className={styles.keyword__select_widget_box}>
-                        <li className={styles.select__widget__items}>
-                          All domains <span className={styles.angle__right}><TfiAngleRight /></span>
-                          <ul className={styles.sublist__select_item}>
+                      </span>
+                      {positionOpen &&  <ul className={styles.keyword__select_widget_box}>
+                      {select__position.map((item, index) => (
+                    <li onClick={() => setSelectedPosition(item.name)} key={index} className={styles.select__widget__items}>{item.name} <span className={styles.angle__right}><TfiAngleRight /></span>
+                                              <ul className={styles.sublist__select_item}>
                             <li className={styles.list__items}>top 50 </li>
                             <li className={styles.list__items}>top 20</li>
                             <li className={styles.list__items}>top 10</li>
+
                               <li className={styles.custom_rangebox}>
                               <h6 className={styles.range_title}>Custom range</h6>
                               <div className={styles.range_input_box}>
@@ -323,59 +249,28 @@ const overview = () => {
                               </div>
                               <button className={styles.apply_btn}>Apply</button>
                             </li>
+
                           </ul>
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          You-domain <span className={styles.angle__right}><TfiAngleRight /></span> 
-                          <ul className={styles.sublist__select_item}>
-                            <li className={styles.list__items}>top 50 </li>
-                            <li className={styles.list__items}>top 20</li>
-                            <li className={styles.list__items}>top 10</li>
-                              <li className={styles.custom_rangebox}>
-                              <h6 className={styles.range_title}>Custom range</h6>
-                              <div className={styles.range_input_box}>
-                              <input type="text" className={styles.input_item_one} placeholder='from' />
-                                <input type="text" className={styles.input_item_two} placeholder='to' />
-                              </div>
-                              <button className={styles.apply_btn}>Apply</button>
-                            </li>
-                          </ul>
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          Competitors <span className={styles.angle__right}><TfiAngleRight /></span> 
-                          <ul className={styles.sublist__select_item}>
-                            <li className={styles.list__items}>top 50 </li>
-                            <li className={styles.list__items}>top 20</li>
-                            <li className={styles.list__items}>top 10</li>
-                              <li className={styles.custom_rangebox}>
-                              <h6 className={styles.range_title}>Custom range</h6>
-                              <div className={styles.range_input_box}>
-                              <input type="text" className={styles.input_item_one} placeholder='from' />
-                                <input type="text" className={styles.input_item_two} placeholder='to' />
-                              </div>
-                              <button className={styles.apply_btn}>Apply</button>
-                            </li>
-                          </ul>
-                        </li>
-                      </ul>
+                    
+                    </li>
+                ))}
+
+                      </ul>}
                     </button>
                   </div>
                   <div className={styles.selected__filter_item}>
-                    <button className={styles.selected__drop_item}>
-                      Volume{' '}
+                    <button onClick={() => setVolume(!volumeOpen)} className={styles.selected__drop_item}>
+                    <span className={styles.selected__item_text}>
+                     {selected__volume !== "" ? selected__volume : "Volume"}
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
-                      <ul className={styles.keyword__select_widget_box}>
-                        <li className={styles.select__widget__items}>
-                          All domains
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          You-domain 
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          Competitors 
-                        </li>
+                      </span>
+                      {volumeOpen &&  <ul className={styles.keyword__select_widget_box}>
+                      {select__volume.map((item, index) => (
+                    <li onClick={() => setSelectedVolume(item.name)} key={index} className={styles.select__widget__items}>{item.name}</li>
+                    ))}
+                       
                         <li className={styles.custom_rangebox}>
                               <h6 className={styles.range_title}>Custom range</h6>
                               <div className={styles.range_input_box}>
@@ -384,25 +279,22 @@ const overview = () => {
                               </div>
                               <button className={styles.apply_btn}>Apply</button>
                             </li>
-                      </ul>
+                      </ul>}
                     </button>
                   </div>
                   <div className={styles.selected__filter_item}>
-                    <button className={styles.selected__drop_item}>
-                      KD%{' '}
+                    <button onClick={() => setKdOpen(!kdOpen)}  className={styles.selected__drop_item}>
+                    <span className={styles.selected__item_text}>
+                      {selected__kd !== "" ? selected__kd : "KD%"}
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
-                                            <ul className={styles.keyword__select_widget_box}>
-                        <li className={styles.select__widget__items}>
-                          All domains
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          You-domain 
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          Competitors 
-                        </li>
+                      </span>
+                      {kdOpen &&  <ul className={styles.keyword__select_widget_box}>
+                      {select__kd.map((item, index) => (
+                    <li onClick={() => setSelectedKd(item.name)} key={index} className={styles.select__widget__items}>{item.name}</li>
+                    ))}
+                       
                         <li className={styles.custom_rangebox}>
                               <h6 className={styles.range_title}>Custom range</h6>
                               <div className={styles.range_input_box}>
@@ -411,169 +303,28 @@ const overview = () => {
                               </div>
                               <button className={styles.apply_btn}>Apply</button>
                             </li>
-                      </ul>
+                      </ul>}
                     </button>
                   </div>
                   <div className={styles.selected__filter_item}>
-                    <button className={styles.selected__drop_item}>
-                      Intent{' '}
+                    <button onClick={() => setIntOpen(!intOpen)} className={styles.selected__drop_item}>
+                    {selected__int !== "" ? selected__int : "Intent"}
                       <span className={styles.arrow_downicon}>
                         <TfiAngleDown />
                       </span>
-                          <ul className={styles.keyword__select_widget_box}>
-                        <li className={styles.select__widget__items}>
-                         <label htmlFor="checkeditem1"><input type="checkbox" id='checkeditem1' className={styles.checked__item} /> Informational</label>
-                        </li>
-                        <li className={styles.select__widget__items}>
-                         <label htmlFor="checkeditem2"><input type="checkbox" id='checkeditem2' className={styles.checked__item} /> Naviagation</label>
-                        </li>
-                        <li className={styles.select__widget__items}>
-                         <label htmlFor="checkeditem3"><input type="checkbox" id='checkeditem3' className={styles.checked__item} /> Commercial</label> 
-                        </li>
-                        <li className={styles.select__widget__items}>
-                         <label htmlFor="checkeditem3"><input type="checkbox" id='checkeditem3' className={styles.checked__item} /> Transactional</label> 
-                        </li>
+                      {intOpen &&  <ul className={styles.keyword__select_widget_box}>
+                      {select__intItem.map((item, index) => (
+                      <li onClick={() => setSelectedInt(item.name)} key={index} className={styles.select__widget__items}>
+                      <label htmlFor="checkeditem1"><input type="checkbox" id='checkeditem1' className={styles.checked__item} /> {item.name}</label>
+                      </li>
+                    ))}
                         <li className={styles.custom_rangebox}>
                               <button className={styles.apply_btn}>Apply</button>
-                            </li>
-                      </ul>
+                        </li>
+                      </ul>}
                     </button>
                   </div>
-                  {/* <div className={styles.selected__filter_item}>
-                    <button className={styles.selected__drop_item}>
-                      CPC (USD){' '}
-                      <span className={styles.arrow_downicon}>
-                        <TfiAngleDown />
-                      </span>
-                                            <ul className={styles.keyword__select_widget_box}>
-                        <li className={styles.select__widget__items}>
-                          All domains
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          You-domain 
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          Competitors 
-                        </li>
-                        <li className={styles.custom_rangebox}>
-                              <h6 className={styles.range_title}>Custom range</h6>
-                              <div className={styles.range_input_box}>
-                              <input type="text" className={styles.input_item_one} placeholder='from' />
-                                <input type="text" className={styles.input_item_two} placeholder='to' />
-                              </div>
-                              <button className={styles.apply_btn}>Apply</button>
-                            </li>
-                      </ul>
-                    </button>
-                  </div>
-                  <div className={styles.selected__filter_item}>
-                    <button className={styles.selected__drop_item}>
-                      SERP Features{' '}
-                      <span className={styles.arrow_downicon}>
-                        <TfiAngleDown />
-                      </span>
-                                            <ul className={styles.keyword__select_widget_box}>
-                        <li className={styles.select__widget__items}>
-                          All domains
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          You-domain 
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          Competitors 
-                        </li>
-                        <li className={styles.custom_rangebox}>
-                              <h6 className={styles.range_title}>Custom range</h6>
-                              <div className={styles.range_input_box}>
-                              <input type="text" className={styles.input_item_one} placeholder='from' />
-                                <input type="text" className={styles.input_item_two} placeholder='to' />
-                              </div>
-                              <button className={styles.apply_btn}>Apply</button>
-                            </li>
-                      </ul>
-                    </button>
-                  </div>
-                  <div className={styles.selected__filter_item}>
-                    <button className={styles.selected__drop_item}>
-                      Competitive density{' '}
-                      <span className={styles.arrow_downicon}>
-                        <TfiAngleDown />
-                      </span>
-                                            <ul className={styles.keyword__select_widget_box}>
-                        <li className={styles.select__widget__items}>
-                          All domains
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          You-domain 
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          Competitors 
-                        </li>
-                        <li className={styles.custom_rangebox}>
-                              <h6 className={styles.range_title}>Custom range</h6>
-                              <div className={styles.range_input_box}>
-                              <input type="text" className={styles.input_item_one} placeholder='from' />
-                                <input type="text" className={styles.input_item_two} placeholder='to' />
-                              </div>
-                              <button className={styles.apply_btn}>Apply</button>
-                            </li>
-                      </ul>
-                    </button>
-                  </div>
-                  <div className={styles.selected__filter_item}>
-                    <button className={styles.selected__drop_item}>
-                      Click potential{' '}
-                      <span className={styles.arrow_downicon}>
-                        <TfiAngleDown />
-                      </span>
-                                            <ul className={styles.keyword__select_widget_box}>
-                        <li className={styles.select__widget__items}>
-                          All domains
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          You-domain 
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          Competitors 
-                        </li>
-                        <li className={styles.custom_rangebox}>
-                              <h6 className={styles.range_title}>Custom range</h6>
-                              <div className={styles.range_input_box}>
-                              <input type="text" className={styles.input_item_one} placeholder='from' />
-                                <input type="text" className={styles.input_item_two} placeholder='to' />
-                              </div>
-                              <button className={styles.apply_btn}>Apply</button>
-                            </li>
-                      </ul>
-                    </button>
-                  </div>
-                  <div className={styles.selected__filter_item}>
-                    <button className={styles.selected__drop_item}>
-                      Tags{' '}
-                      <span className={styles.arrow_downicon}>
-                        <TfiAngleDown />
-                      </span>
-                                            <ul className={styles.keyword__select_widget_box}>
-                        <li className={styles.select__widget__items}>
-                          All domains
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          You-domain 
-                        </li>
-                        <li className={styles.select__widget__items}>
-                          Competitors 
-                        </li>
-                        <li className={styles.custom_rangebox}>
-                              <h6 className={styles.range_title}>Custom range</h6>
-                              <div className={styles.range_input_box}>
-                              <input type="text" className={styles.input_item_one} placeholder='from' />
-                                <input type="text" className={styles.input_item_two} placeholder='to' />
-                              </div>
-                              <button className={styles.apply_btn}>Apply</button>
-                            </li>
-                      </ul>
-                    </button>
-                  </div> */}
+
                 </div>
               </div>
             </div>
@@ -856,4 +607,4 @@ const overview = () => {
   );
 };
 
-export default overview;
+export default Overview;

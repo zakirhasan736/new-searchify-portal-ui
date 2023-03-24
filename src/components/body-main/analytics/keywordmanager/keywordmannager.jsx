@@ -26,8 +26,23 @@ const Keywordmannager = () => {
   const [shareEmailInput, setSharedEmailInput] = useState("");
   const [shareKeywordInput, setSharedKeywordInput] = useState("");
   const [notFound, setNotFound] = useState(false);
+  const [openViwer, setopenViwer] = useState(false);
   const [editList, setEditList] = useState(null);
   const [editListval, setEditListval] = useState("");
+  const [viewerList, setViewerList] = useState("");
+
+  const [viewers] = useState([
+      {
+          id: 1,
+          list: "Viewer"
+      },
+      {
+          id: 2,
+          list: "Editor"
+      }
+  ]);
+
+
 
   const handleSearch = () => {
     let data = updated.filter(item => item.list.toLowerCase() === search.toLowerCase());
@@ -72,6 +87,7 @@ const Keywordmannager = () => {
     setShareModal(false);
     setSharedEmailInput("");
     setSharedKeywordInput("");
+    setViewerList("");
   }
 
   const handleOwnlist = () => {
@@ -379,7 +395,11 @@ const Keywordmannager = () => {
                       {
                         openSharedListModal &&
                         <ul className={styles.key__group__list}>
-                          \
+                          {updated.map((item, index) => (
+                            <li onClick={() => { setSharedKeywordInput(item.list); setopenSharedListModal(false) }} className={styles.key__list_select}>
+                              {item.list}
+                            </li>
+                          ))}
                         </ul>
                       }
                     </div>
@@ -402,12 +422,17 @@ const Keywordmannager = () => {
                     </div>
 
                     <div className={styles.user__permition_selectbox}>
-                      <span className={styles.user__permission_select_item}>
-                        Viwer
+                      <span onClick={() => setopenViwer(!openViwer)} className={styles.user__permission_select_item}>
+                      {viewerList !== "" ? viewerList : "Viwer"}
                       </span>
-                      <ul className={styles.user__permission__list_item}>
-                        <li></li>
-                      </ul>
+                      {openViwer && <ul className={styles.user__permission__list_item}>
+                      {viewers.map((item, index) => (
+                            <li onClick={() => setViewerList(item.list)} >
+                              {item.list}
+                            </li>
+                          ))}
+                       
+                      </ul>}
                     </div>
                     <div className={styles.add_list_control__box}>
                       <button onClick={() => (shareEmailInput.length > 3 && shareKeywordInput.length > 3) && handleShared()} className={styles.create__list_button}>

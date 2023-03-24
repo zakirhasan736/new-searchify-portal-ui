@@ -68,13 +68,25 @@ const Nav = () => {
                                             <Link to="/keywordgeneretor/home"><GraphIcon />Generate Keywords</Link>
                                         </li>
                                         <li>
-                                            <Link to="/keywordgap/overview"><GraphIcon />keyword Gap</Link>
+                                            <Link to="/trafficsAnalytics/overview"><GraphIcon />Traffic Analytics</Link>
+                                        </li>
+                                        <li>
+                                            <Link to="/keywordgap/home"><GraphIcon />keyword Gap</Link>
                                         </li>
                                         <li>
                                             <Link to="/keywordmannager/home"><GraphIcon />Keyword Mannager</Link>
                                         </li>
                                         <li>
                                             <Link to="/organicsearch/home"><GraphIcon />Organic Search</Link>
+                                        </li>
+                                        <li>
+                                            <Link to="/keywordoverview/home"><GraphIcon />Keyword Overview</Link>
+                                        </li>
+                                        <li>
+                                            <Link to="/domainoverview/home"><GraphIcon />Domain Overview</Link>
+                                        </li>
+                                        <li>
+                                            <Link to="/backlink/home"><GraphIcon />Backlink Analytics</Link>
                                         </li>
                                     </ul>
                                 }

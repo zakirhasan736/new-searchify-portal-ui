@@ -71,6 +71,10 @@ const KeywordGeneretor = () => {
                   <li><a href='/'><span className={styles.icon_item}><AiOutlineAmazon /></span> Amazon</a></li>
                   <li><a href='/'><span className={styles.icon_item}><AiFillYoutube /></span> YouTube</a></li>
                 </ul>
+                <ul className={styles.site__link_item} >
+                  <li><button className={styles.country_site__link}>US</button></li>
+                  <li><button className={styles.country_site__link}>CA</button></li>
+                </ul>
                 <div className={styles.searchbar__withbtn}>
                   <div className={styles.search__inputbox}>
                     <div className={styles.filter__search_withbtn}>

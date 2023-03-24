@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import styles from '../../analytics.module.css';
 
 
@@ -10,6 +10,84 @@ import {
 import { AiOutlineDelete } from 'react-icons/ai';
 
 const FilterTabsThree = () => {
+    const [openValueList, setValueList] = useState(false);
+    const [volumeListSelected, setValuelistSelected] = useState("");
+    const [kdOpen, setKdOpen] = useState(false);
+    const [selected__kd, setSelectedKd] = useState("");
+    const [intOpen, setIntOpen] = useState(false);
+    const [serpOpen, setSerpOpen] = useState(false);
+    const [selected__int, setSelectedInt] = useState("");
+    const [selected__serp, setSelectedSerp] = useState("");
+    const [openDencity, setDencityOpen] = useState(false);
+    const [openPotential, setPotentialOpen] = useState(false);
+    const [openTags, setTagslOpen] = useState(false);
+    const [cpcOpen, setCpcOpen] = useState(false);
+
+    const [select__intItem] = useState([
+      {
+          id: 1,
+          name: "Informational"
+      },
+      {
+          id: 2,
+          name: "Naviagation"
+      },
+      {
+          id: 3,
+          name: "Commercial"
+      },
+      {
+        id: 4,
+        name: "Transactional"
+    }
+  ]);
+
+  const [select__serpItem] = useState([
+      {
+          id: 1,
+          listItems: "Informational"
+      },
+      {
+          id: 2,
+          listItems: "Naviagation"
+      },
+      {
+          id: 3,
+          listItems: "Commercial"
+      },
+      {
+        id: 4, 
+        listItems: "Transactional"
+    }
+  ]);
+  const [valumeListItem] = useState([
+    {
+        id: 1,
+        listItems: "All domains"
+    },
+    {
+        id: 2,
+        listItems: "You-domain"
+    },
+    {
+        id: 3,
+        listItems: "Competitors"
+    }
+  ]);
+  const [select__kd] = useState([
+    {
+        id: 1,
+        name: "All domains"
+    },
+    {
+        id: 2,
+        name: "Your-domain"
+    },
+    {
+        id: 3,
+        name: "Competitors"
+    }
+  ]);
     return (
         <>
             <div className={styles.organic__insight_overview_tabs1}>
@@ -35,140 +113,186 @@ const FilterTabsThree = () => {
                             </div>
 
                             <div className={styles.filter_drop__selec__items}>
-                                <div className={styles.selected__filter_item}>
-                                    <button className={styles.selected__drop_item}>
-                                        Positions{' '}
-                                        <span className={styles.arrow_downicon}>
-                                            <TfiAngleDown />
-                                        </span>
-                                        <ul className={styles.keyword__select_widget_box}>
-                                            <li className={styles.select__widget__items}>
-                                                All domains
-                                            </li>
-                                            <li className={styles.select__widget__items}>
-                                                You-domain
-                                            </li>
-                                            <li className={styles.select__widget__items}>
-                                                Competitors
-                                            </li>
-                                            <li className={styles.custom_rangebox}>
-                                                <h6 className={styles.range_title}>Custom range</h6>
-                                                <div className={styles.range_input_box}>
-                                                    <input type="text" className={styles.input_item_one} placeholder='from' />
-                                                    <input type="text" className={styles.input_item_two} placeholder='to' />
-                                                </div>
-                                                <button className={styles.apply_btn}>Apply</button>
-                                            </li>
-                                        </ul>
-                                    </button>
-                                </div>
-                                <div className={styles.selected__filter_item}>
-                                    <button className={styles.selected__drop_item}>
-                                        Positions Changes{' '}
-                                        <span className={styles.arrow_downicon}>
-                                            <TfiAngleDown />
-                                        </span>
-                                        <ul className={styles.keyword__select_widget_box}>
-                                            <li className={styles.select__widget__items}>
-                                                <label htmlFor="checkeditem1"><input type="checkbox" id='checkeditem1' className={styles.checked__item} /> Informational</label>
-                                            </li>
-                                            <li className={styles.select__widget__items}>
-                                                <label htmlFor="checkeditem2"><input type="checkbox" id='checkeditem2' className={styles.checked__item} /> Naviagation</label>
-                                            </li>
-                                            <li className={styles.select__widget__items}>
-                                                <label htmlFor="checkeditem3"><input type="checkbox" id='checkeditem3' className={styles.checked__item} /> Commercial</label>
-                                            </li>
-                                            <li className={styles.select__widget__items}>
-                                                <label htmlFor="checkeditem3"><input type="checkbox" id='checkeditem3' className={styles.checked__item} /> Transactional</label>
-                                            </li>
-                                            <li className={styles.custom_rangebox}>
+                            <div className={styles.selected__filter_item}>
+                    <button className={styles.selected__drop_item}>
+                    <span onClick={() => setValueList(!openValueList)} className={styles.selected__item_text}>
+                      {volumeListSelected !== "" ? volumeListSelected : "Volume"}
+                      <span className={styles.arrow_downicon}>
+                        <TfiAngleDown />
+                      </span>
+                      </span>
+                    {openValueList &&   <ul className={styles.keyword__select_widget_box}>
+                    {valumeListItem.map((item, index) => (
+                        <li onClick={() => setValuelistSelected(item.listItems)} key={index} className={styles.select__widget__items}>
+                          {item.listItems}
+                        </li>
+                    ))}
+                        <li className={styles.custom_rangebox}>
+                              <h6 className={styles.range_title}>Custom range</h6>
+                              <div className={styles.range_input_box}>
+                              <input type="text" className={styles.input_item_one} placeholder='from' />
+                                <input type="text" className={styles.input_item_two} placeholder='to' />
+                              </div>
+                              <button className={styles.apply_btn}>Apply</button>
+                            </li>
+                      </ul>}
+                    </button>
+                          </div>
+                  <div className={styles.selected__filter_item}>
+                    <button onClick={() => setKdOpen(!kdOpen)}  className={styles.selected__drop_item}>
+                    <span className={styles.selected__item_text}>
+                      {selected__kd !== "" ? selected__kd : "KD%"}
+                      <span className={styles.arrow_downicon}>
+                        <TfiAngleDown />
+                      </span>
+                      </span>
+                      {kdOpen &&  <ul className={styles.keyword__select_widget_box}>
+                      {select__kd.map((item, index) => (
+                    <li onClick={() => setSelectedKd(item.name)} key={index} className={styles.select__widget__items}>{item.name}</li>
+                    ))}
+                       
+                        <li className={styles.custom_rangebox}>
+                              <h6 className={styles.range_title}>Custom range</h6>
+                              <div className={styles.range_input_box}>
+                              <input type="text" className={styles.input_item_one} placeholder='from' />
+                                <input type="text" className={styles.input_item_two} placeholder='to' />
+                              </div>
+                              <button className={styles.apply_btn}>Apply</button>
+                            </li>
+                      </ul>}
+                    </button>
+                  </div>
+                  <div className={styles.selected__filter_item}>
+                    <button onClick={() => setIntOpen(!intOpen)} className={styles.selected__drop_item}>
+                    {selected__int !== "" ? selected__int : "Intent"}
+                      <span className={styles.arrow_downicon}>
+                        <TfiAngleDown />
+                      </span>
+                      {intOpen &&  <ul className={styles.keyword__select_widget_box}>
+                      {select__intItem.map((item, index) => (
+                      <li onClick={() => setSelectedInt(item.name)} key={index} className={styles.select__widget__items}>
+                      <label htmlFor="checkeditem1"><input type="checkbox" id='checkeditem1' className={styles.checked__item} /> {item.name}</label>
+                      </li>
+                    ))}
+                        <li className={styles.custom_rangebox}>
+                              <button className={styles.apply_btn}>Apply</button>
+                        </li>
+                      </ul>}
+                    </button>
+                  </div>
 
-                                                <button className={styles.apply_btn}>Apply</button>
-                                            </li>
+                  <div className={styles.selected__filter_item}>
+                    <button onClick={() => setCpcOpen(!cpcOpen)} className={styles.selected__drop_item}>
+                      CPC (USD){' '}
+                      <span className={styles.arrow_downicon}>
+                        <TfiAngleDown />
+                      </span>
+                     {cpcOpen && <ul className={styles.keyword__select_widget_box}>
+                        <li className={styles.select__widget__items}>
+                         
+                        </li>
+                      
+                        <li className={styles.custom_rangebox}>
+                              <h6 className={styles.range_title}>Custom range</h6>
+                              <div className={styles.range_input_box}>
+                              <input type="text" className={styles.input_item_one} placeholder='from' />
+                                <input type="text" className={styles.input_item_two} placeholder='to' />
+                              </div>
+                              <button className={styles.apply_btn}>Apply</button>
+                            </li>
+                      </ul>}
+                    </button>
+                  </div>
 
-                                        </ul>
-                                    </button>
-                                </div>
+                  <div className={styles.selected__filter_item}>
+                    <button onClick={() => setSerpOpen(!serpOpen)} className={styles.selected__drop_item}>
+                    {selected__serp !== "" ? selected__serp : "SERP Features"}
+                      <span className={styles.arrow_downicon}>
+                        <TfiAngleDown />
+                      </span>
+                      {serpOpen &&  <ul className={styles.keyword__select_widget_box}>
+                      {select__serpItem.map((item, index) => (
+                      <li onClick={() => setSelectedSerp(item.listItems)} key={index} className={styles.select__widget__items}>
+                      <label htmlFor="serp1"><input type="checkbox" id='serp1' className={styles.checked__item} /> {' '} {item.listItems}</label></li>
+                    ))}
+                        <li className={styles.custom_rangebox}>
+                              <button className={styles.apply_btn}>Apply</button>
+                        </li>
+                      </ul>}
+                    </button>
+                  </div>
 
-                                <div className={styles.selected__filter_item}>
-                                    <button className={styles.selected__drop_item}>
-                                        Volume{' '}
-                                        <span className={styles.arrow_downicon}>
-                                            <TfiAngleDown />
-                                        </span>
-                                        <ul className={styles.keyword__select_widget_box}>
-                                            <li className={styles.select__widget__items}>
-                                                All domains
-                                            </li>
-                                            <li className={styles.select__widget__items}>
-                                                You-domain
-                                            </li>
-                                            <li className={styles.select__widget__items}>
-                                                Competitors
-                                            </li>
-                                            <li className={styles.custom_rangebox}>
-                                                <h6 className={styles.range_title}>Custom range</h6>
-                                                <div className={styles.range_input_box}>
-                                                    <input type="text" className={styles.input_item_one} placeholder='from' />
-                                                    <input type="text" className={styles.input_item_two} placeholder='to' />
-                                                </div>
-                                                <button className={styles.apply_btn}>Apply</button>
-                                            </li>
-                                        </ul>
-                                    </button>
-                                </div>
+                  <div className={styles.selected__filter_item}>
+                    <button  onClick={() => setDencityOpen(!openDencity)} className={styles.selected__drop_item}>
+                    {/* {selected__dencity !== "" ? selected__dencity : "Competitive density"} */}
+                      Competitive density{' '}
+                      <span className={styles.arrow_downicon}>
+                        <TfiAngleDown />
+                      </span>
+                     {openDencity &&  <ul className={styles.keyword__select_widget_box}>
+                        <li className={styles.select__widget__items}>
+                         
+                        </li>
+                      
+                        <li className={styles.custom_rangebox}>
+                              <h6 className={styles.range_title}>Custom range</h6>
+                              <div className={styles.range_input_box}>
+                              <input type="text" className={styles.input_item_one} placeholder='from' />
+                                <input type="text" className={styles.input_item_two} placeholder='to' />
+                              </div>
+                              <button
+                              //  onClick={() => setDencitySelected({})} 
+                               className={styles.apply_btn}>Apply</button>
+                            </li>
+                      </ul> }
+                    </button>
+                  </div>
 
-                                <div className={styles.selected__filter_item}>
-                                    <button className={styles.selected__drop_item}>
-                                        KD{' '}
-                                        <span className={styles.arrow_downicon}>
-                                            <TfiAngleDown />
-                                        </span>
-                                        <ul className={styles.keyword__select_widget_box}>
-                                            <li className={styles.select__widget__items}>
-                                                All domains
-                                            </li>
-                                            <li className={styles.select__widget__items}>
-                                                You-domain
-                                            </li>
-                                            <li className={styles.select__widget__items}>
-                                                Competitors
-                                            </li>
-                                            <li className={styles.custom_rangebox}>
-                                                <h6 className={styles.range_title}>Custom range</h6>
-                                                <div className={styles.range_input_box}>
-                                                    <input type="text" className={styles.input_item_one} placeholder='from' />
-                                                    <input type="text" className={styles.input_item_two} placeholder='to' />
-                                                </div>
-                                                <button className={styles.apply_btn}>Apply</button>
-                                            </li>
-                                        </ul>
-                                    </button>
-                                </div>
-                                <div className={styles.selected__filter_item}>
-                                    <button className={styles.selected__drop_item}>
-                                        Intent{' '}
-                                        <span className={styles.arrow_downicon}>
-                                            <TfiAngleDown />
-                                        </span>
-                                        <ul className={styles.keyword__select_widget_box}>
-                                            <li className={styles.select__widget__items}>
-                                                <label htmlFor="checkeditem1"><input type="checkbox" id='checkeditem1' className={styles.checked__item} /> Informational</label>
-                                            </li>
-                                            <li className={styles.select__widget__items}>
-                                                <label htmlFor="checkeditem2"><input type="checkbox" id='checkeditem2' className={styles.checked__item} /> Naviagation</label>
-                                            </li>
-                                            <li className={styles.select__widget__items}>
-                                                <label htmlFor="checkeditem3"><input type="checkbox" id='checkeditem3' className={styles.checked__item} /> Commercial</label>
-                                            </li>
-                                            <li className={styles.select__widget__items}>
-                                                <label htmlFor="checkeditem3"><input type="checkbox" id='checkeditem3' className={styles.checked__item} /> Transactional</label>
-                                            </li>
+                  <div className={styles.selected__filter_item}>
+                    <button  onClick={() => setPotentialOpen(!openPotential)} className={styles.selected__drop_item}>
+                      Click potential{' '}
+                      <span className={styles.arrow_downicon}>
+                        <TfiAngleDown />
+                      </span>
+                     {openPotential &&  <ul className={styles.keyword__select_widget_box}>
+                        <li className={styles.select__widget__items}>
+                         
+                        </li>
+                      
+                        <li className={styles.custom_rangebox}>
+                              <h6 className={styles.range_title}>Custom range</h6>
+                              <div className={styles.range_input_box}>
+                              <input type="text" className={styles.input_item_one} placeholder='from' />
+                                <input type="text" className={styles.input_item_two} placeholder='to' />
+                              </div>
+                              <button className={styles.apply_btn}>Apply</button>
+                            </li>
+                      </ul>}
+                    </button>
+                  </div>
 
-                                        </ul>
-                                    </button>
-                                </div>
-
+                  <div className={styles.selected__filter_item}>
+                    <button  onClick={() => setTagslOpen(!openTags)} className={styles.selected__drop_item}>
+                      Tags{' '}
+                      <span className={styles.arrow_downicon}>
+                        <TfiAngleDown />
+                      </span>
+                      {openTags && <ul className={styles.keyword__select_widget_box}>
+                        <li className={styles.select__widget__items}>
+                         
+                        </li>
+                      
+                        <li className={styles.custom_rangebox}>
+                              <h6 className={styles.range_title}>Custom range</h6>
+                              <div className={styles.range_input_box}>
+                              <input type="text" className={styles.input_item_one} placeholder='from' />
+                                <input type="text" className={styles.input_item_two} placeholder='to' />
+                              </div>
+                              <button className={styles.apply_btn}>Apply</button>
+                            </li>
+                      </ul>}
+                    </button>
+                  </div>
                             </div>
                         </div>
 
@@ -177,14 +301,14 @@ const FilterTabsThree = () => {
                             <div className={styles.insight__overview_box}>
                                 <h6 className={styles.insight__title}> All Position Changes</h6>
                                 <h3 className={styles.insight__info}>
-                                    166{' '}
+                                166{' '}
                                 </h3>
                             </div>
 
                             <div className={styles.insight__overview_box}>
                                 <h6 className={styles.insight__title}>New</h6>
                                 <h3 className={styles.insight__info}>
-                                    69{' '}
+                                69{' '}
                                     <span className={styles.insight_percent}>-14.81%</span>
                                 </h3>
                             </div>
@@ -192,28 +316,28 @@ const FilterTabsThree = () => {
                             <div className={styles.insight__overview_box}>
                                 <h6 className={styles.insight__title}>Improved</h6>
                                 <h3 className={styles.insight__info}>
-                                    65{' '}
+                                65{' '}
                                     <span className={styles.insight_percent}>+ 62.5%</span>
                                 </h3>
                             </div>
                             <div className={styles.insight__overview_box}>
                                 <h6 className={styles.insight__title}>Declined</h6>
                                 <h3 className={styles.insight__info}>
-                                    65{' '}
+                                65{' '}
                                     <span className={styles.insight_percent}>+ 62.5%</span>
                                 </h3>
                             </div>
                             <div className={styles.insight__overview_box}>
                                 <h6 className={styles.insight__title}>Improved</h6>
                                 <h3 className={styles.insight__info}>
-                                    22{' '}
+                                22{' '}
                                     <span className={styles.insight_percent}>-4.35%</span>
                                 </h3>
                             </div>
                             <div className={styles.insight__overview_box}>
                                 <h6 className={styles.insight__title}>Lost</h6>
                                 <h3 className={styles.insight__info}>
-                                    10{' '}
+                                10{' '}
                                     <span className={styles.insight_percent}>-28.57%</span>
                                 </h3>
                             </div>
@@ -238,7 +362,7 @@ const FilterTabsThree = () => {
 
                             <div className={styles.insight__overview__top}>
                                 <div className={styles.top__insight_overview_left}>
-
+                        
                                 </div>
 
                                 <div className={styles.top__insight_overview_right}>
