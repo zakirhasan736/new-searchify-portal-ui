@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, Text, PieChart, Pie, Label, Cell } from 'recharts';
 import styles from '../analytics.module.css';
 import shapeImg6 from '../../../../assets/img/gradient-shape6.png';
 import shapeImg3 from '../../../../assets/img/gradient-shape3.png';
@@ -6,7 +7,6 @@ import shapeImg4 from '../../../../assets/img/gradient-shape4.png';
 import infoCompanybrand from '../../../../assets/img/amazon-logo.png';
 import trafficGraph from '../../../../assets/img/traffic-source.png'
 import trafficSourceImg1 from '../../../../assets/img/traffic_sourceimg1.png'
-import audiencedImg1 from '../../../../assets/img/audience_graph1.png'
 import audiencedImg2 from '../../../../assets/img/audience_graph2.png'
 import graphMapModal from '../../../../assets/img/graphmap-modal.svg'
 import {
@@ -27,6 +27,78 @@ import Dropdown from './Dropdown';
 
 
 const TrafficOverview = () => {
+  const traffic_devices_data = [
+    { date: "Jan 2022", visit: 200000000, unique: 102000000, avg: 50000000 },
+    { date: "Feb 2022", visit: 250000000, unique: 650000000, avg: 100000000 },
+    { date: "Mar 2022", visit: 400000000, unique: 300000000, avg: 100000000 },
+    { date: "Apr 2022", visit: 700000000, unique: 400000000, avg: 300000000 },
+    { date: "May 2022", visit: 800000000, unique: 600000000, avg: 50000000 },
+    { date: "Jun 2022", visit: 700000000, unique: 400000000, avg: 100000000 }
+  ];
+  const traffic_source_data = [
+    { date: "Jan 2022", visit: 200000000, unique: 102000000, avg: 50000000 },
+    { date: "Feb 2022", visit: 250000000, unique: 650000000, avg: 100000000 },
+    { date: "Mar 2022", visit: 400000000, unique: 300000000, avg: 100000000 },
+    { date: "Apr 2022", visit: 700000000, unique: 400000000, avg: 300000000 },
+    { date: "May 2022", visit: 800000000, unique: 600000000, avg: 50000000 },
+    { date: "Jun 2022", visit: 700000000, unique: 400000000, avg: 100000000 }
+  ];
+  const audienced_graph = [
+    {
+      name: "18-24",
+      Female: 56,
+      Male: 8,
+      amt: 2400
+    },
+    {
+      name: "25-34",
+      Female: 9,
+      Male: 6,
+      amt: 2210
+    },
+    {
+      name: "35-44",
+      Female: 6,
+      Male: 14,
+      amt: 2290
+    },
+    {
+      name: "45-54",
+      Female: 8,
+      Male: 12,
+      amt: 2000
+    },
+    {
+      name: "55-64",
+      Female: 5,
+      Male: 15,
+      amt: 2181
+    },
+    {
+      name: "65+",
+      Female: 10,
+      Male: 10,
+      amt: 2500
+    }
+  ];
+
+  const piedata = [
+    { name: "Male", value: 40 },
+    { name: "Female", value: 60 }
+  ];
+  const COLORS = ["#b664f8","#e2b6fc"];
+
+  const formatYAxisTick = (value) => {
+    if (value >= 1000000000) {
+      return `${(value / 1000000000).toFixed(1)}B`;
+    } else if (value >= 1000000) {
+      return `${(value / 1000000).toFixed(1)}M`;
+    } else {
+      return value;
+    }
+  };
+
+  const [height, setHeight] = useState(400);
 
   const [openListModal, setListModal] = useState(false);
   const [tabs, setTabs] = useState([
@@ -294,6 +366,20 @@ const TrafficOverview = () => {
       console.log(err)
     }
   }, [])
+  useLayoutEffect(() => {
+    function updateHeight() {
+      const chart = document.getElementById('chart-container');
+      if (chart) {
+        const { height } = chart.getBoundingClientRect();
+        setHeight(height);
+      }
+    }
+
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
 
   if (data.length === 0) return <Loader />
   return (
@@ -727,13 +813,28 @@ const TrafficOverview = () => {
                         </div>
                       </div>
                       <div className={styles.keyword_middle_insight__graph}>
-                        {
+                        {/* {
                           tab3db.map((item2) => (
                             <div className={styles.graph__insight_overview}>
                               <img src={require(`../../../../assets/img/${item2.photo}`)} alt={trafficSourceImg1} className="traffic_journy_graph" />
                             </div>
                           ))
-                        }
+                        } */}
+                        {/* chart implementaion */}
+
+                        <ResponsiveContainer width="100%" height={height}>
+                          <LineChart data={traffic_devices_data} className={"AnalyticsOverviewChart"}>
+                            <CartesianGrid strokeDasharray="0" />
+                            <XAxis dataKey="date" axisLine={false} tickLine={false} />
+                            <YAxis axisLine={false} tickLine={false} tickFormatter={formatYAxisTick} />
+                            <Legend />
+                            <Tooltip className="AnalyticsOverview_tooltip" tickFormatter={formatYAxisTick} />
+                            <Line type="linear" dataKey="visit" stroke="#2bb3ff" dot={true} strokeWidth={4} />
+                            <Line type="linear" dataKey="unique" stroke="#ff8c43" dot={true} strokeWidth={4} />
+                            <Line type="linear" dataKey="avg" stroke="#00c192" dot={true} strokeWidth={4} />
+                          </LineChart>
+                        </ResponsiveContainer>
+
                         <button className={styles.view__more}>
                           View full report
                         </button>
@@ -912,13 +1013,28 @@ const TrafficOverview = () => {
                     </div>
                     <div className={styles.keyword_middle_insight__graph}>
                       <div className={styles.graph__insight_overview}>
-                        {
+                        {/* {
                           tab3db11.map((item2) => (
                             <div className={styles.graph__insight_overview}>
                               <img src={require(`../../../../assets/img/${item2.photo}`)} alt={trafficSourceImg1} className="traffic_journy_graph" />
                             </div>
                           ))
-                        }
+                        } */}
+
+                        {/* chart implementaion */}
+                        <ResponsiveContainer width="100%" height={height}>
+                          <LineChart data={traffic_source_data} className={"AnalyticsOverviewChart"}>
+                            <CartesianGrid strokeDasharray="0" />
+                            <XAxis dataKey="date" axisLine={false} tickLine={false} />
+                            <YAxis axisLine={false} tickLine={false} tickFormatter={formatYAxisTick} />
+                            <Legend />
+                            <Tooltip className="AnalyticsOverview_tooltip" tickFormatter={formatYAxisTick} />
+                            <Line type="linear" dataKey="visit" stroke="#2bb3ff" dot={true} strokeWidth={4} />
+                            <Line type="linear" dataKey="unique" stroke="#ff8c43" dot={true} strokeWidth={4} />
+                            <Line type="linear" dataKey="avg" stroke="#00c192" dot={true} strokeWidth={4} />
+                          </LineChart>
+                        </ResponsiveContainer>
+
                       </div>
                       <button className={styles.view__more}>
                         View full report
@@ -985,13 +1101,85 @@ const TrafficOverview = () => {
                     <div className={styles.graph__insight_overview}>
                       <div className={styles.grid_wrap}>
                         <div className={styles.large_span_8}>
-                          <div className={styles.graph__insight_left}>
-                            <img src={audiencedImg1} alt={audiencedImg1} className="audienced_graph" height={'280px'} />
+                          <div style={{ backgroundColor: "white" }} className={styles.graph__insight_left}>
+                            {/* <img src={audiencedImg1} alt={audiencedImg1} className="audienced_graph" height={'280px'} /> */}
+
+                            <Text style={{ fontSize: "18px", fontWeight: "bold", color: "#000" }}>
+                              Age
+                            </Text>
+                            <ResponsiveContainer width="100%" height={height}>
+                              <BarChart
+                                className={"traffic_overview"}
+                                data={audienced_graph}
+                                margin={{
+                                  top: 50,
+                                  right: 30,
+                                  left: 20,
+                                  bottom: 5
+                                }}
+                              >
+                                <CartesianGrid stroke="#ccc" />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                                <YAxis
+                                  domain={[0, 60]}
+                                  ticks={[0, 15, 30, 45, 60]}
+                                  tickFormatter={(tick) => `${tick}%`}
+                                  axisLine={false}
+                                  tickLine={false}
+                                ></YAxis>
+                                <Tooltip />
+                                <Legend
+                                  verticalAlign="top"
+                                  align="right"
+                                  wrapperStyle={{ top: 20, right: 20, fontWeight: "bold" }}
+                                />
+                                <Bar
+                                  background={null}
+                                  dataKey="Male"
+                                  stackId="a"
+                                  fill="#b664f8"
+                                  isAnimationActive={false}
+                                ></Bar>
+                                <Bar
+                                  background={null}
+                                  dataKey="Female"
+                                  stackId="a"
+                                  fill="#e2b6fc"
+                                  isAnimationActive={false}
+                                ></Bar>
+                              </BarChart>
+                            </ResponsiveContainer>
                           </div>
                         </div>
                         <div className={styles.large_span_4}>
-                          <div className={styles.graph__insight_right}>
+                          <div style={{ backgroundColor: "white" }} className={styles.graph__insight_right}>
                             <img src={audiencedImg2} alt={audiencedImg2} className="audienced_graph" height={'280px'} />
+                            {/* <ResponsiveContainer width="100%" height={height}> */}
+                            <PieChart width={800} height={400}>
+                              <Pie
+                                data={piedata}
+                                cx={120}
+                                cy={200}
+                                innerRadius={60}
+                                outerRadius={100}
+                                fill="#e2b6fc"
+                                paddingAngle={0}
+                                dataKey="value"
+                              >
+                                {data.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                                <Label value={`10M`} position="center" fill="#000000" fontSize={20} />
+                                <Label
+                                  value={`Unique visitor`}
+                                  position="center"
+                                  fill="#000000"
+                                  fontSize={20}
+                                  y={20}
+                                />
+                              </Pie>
+                            </PieChart>
+                            </ResponsiveContainer>
                           </div>
                         </div>
                       </div>

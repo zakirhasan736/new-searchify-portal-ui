@@ -155,12 +155,18 @@ a {
 
 
 /* custom style for chat */
-
-.AnalyticsOverviewChart g .recharts-cartesian-grid-vertical,
-.AnalyticsOverviewChart g .recharts-cartesian-grid-vertical > line:hover {
-  display: none !important;
+.AnalyticsOverviewChart{
+  border: none !important;
 }
 
+.AnalyticsOverviewChart g.recharts-cartesian-grid-vertical,
+.traffic_overview g.recharts-cartesian-grid-vertical{
+  display: none !important;
+  stroke: none !important;
+}
+.recharts-surface:hover ~ g.recharts-cartesian-grid-vertical {
+  display: none !important;
+}
 .AnalyticsOverviewChart .recharts-legend-item {
   display: none !important;
 }

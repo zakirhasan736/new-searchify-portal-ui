@@ -5342,9 +5342,6 @@ background: var(--bg-color);
 }
 
 .graph__insight_overview {
-  display: flex;
-  align-items: flex-start;
-  gap: 35px;
   width: 100%;
 }
 
