@@ -1153,8 +1153,8 @@ const TrafficOverview = () => {
                         </div>
                         <div className={styles.large_span_4}>
                           <div style={{ backgroundColor: "white" }} className={styles.graph__insight_right}>
-                            <img src={audiencedImg2} alt={audiencedImg2} className="audienced_graph" height={'280px'} />
-                            {/* <ResponsiveContainer width="100%" height={height}> */}
+                            {/* <img src={audiencedImg2} alt={audiencedImg2} className="audienced_graph" height={'280px'} /> */}
+                            <ResponsiveContainer width="100%" height={height}>
                             <PieChart width={800} height={400}>
                               <Pie
                                 data={piedata}
