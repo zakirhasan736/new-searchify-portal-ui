@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useEffect, useState,useLayoutEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+import { useLocation } from "react-router-dom";
 import styles from './analytics.module.css';
 import shapeImg6 from '../../../assets/img/gradient-shape6.png';
 import shapeImg7 from '../../../assets/img/gradient-shape-7.png';
@@ -21,9 +23,18 @@ const AnalyticsOverview = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [websiteUrl, setWebsiteUrl] = useState(null);
+  const [height, setHeight] = useState(400);
 
   const location = useLocation();
 
+  const data = [
+    { date: "Jan 2022", visitor: 1000 },
+    { date: "Feb 2022", visitor: 500 },
+    { date: "Mar 2022", visitor: 3000 },
+    { date: "Apr 2022", visitor: 2000 },
+    { date: "May 2022", visitor: 5000 },
+    { date: "Jun 2022", visitor: 6000 }
+  ];
   const rankCarddata = [
     {
       id: 1,
@@ -49,7 +60,7 @@ const AnalyticsOverview = () => {
   ]
 
   useEffect(() => {
-    if(location.state && websiteUrl == null) {
+    if (location.state && websiteUrl == null) {
       setWebsiteUrl(location.state.websiteUrl)
     }
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -69,6 +80,20 @@ const AnalyticsOverview = () => {
     }
   }, [])
 
+  useLayoutEffect(() => {
+    function updateHeight() {
+      const chart = document.getElementById('chart-container');
+      if (chart) {
+        const { height } = chart.getBoundingClientRect();
+        setHeight(height);
+      }
+    }
+
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
   return (
     <>
       <section className={styles.SEORanking__wrap_section}>
@@ -77,16 +102,16 @@ const AnalyticsOverview = () => {
         <div className={styles.analytics_overview_titlebox}>
           <h2 className={styles.analytics_title}>Website Overview</h2>
           <div className={styles.dateTimeBox}>
-                <CalendarIcon />
-                <span>
-                  {startDate}
-                </span>
-                <span>{"-"}</span>
-                <span>
-                  {endDate}
-                </span>
-                <AarrowIcon />
-              </div>
+            <CalendarIcon />
+            <span>
+              {startDate}
+            </span>
+            <span>{"-"}</span>
+            <span>
+              {endDate}
+            </span>
+            <AarrowIcon />
+          </div>
         </div>
         <div className={styles.compare__site_box}>
           <input className={styles.terget_website} placeholder='website.com' value={websiteUrl} />
@@ -104,16 +129,16 @@ const AnalyticsOverview = () => {
               <div className={styles.visited_card__titlebox}>
                 <h3 className={styles.title}>Total Visits</h3>
                 <div className={styles.dateTimeBox}>
-                <CalendarIcon />
-                <span>
-                  {startDate}
-                </span>
-                <span>{"-"}</span>
-                <span>
-                  {endDate}
-                </span>
-                {/* <AarrowIcon /> */}
-              </div>
+                  <CalendarIcon />
+                  <span>
+                    {startDate}
+                  </span>
+                  <span>{"-"}</span>
+                  <span>
+                    {endDate}
+                  </span>
+                  {/* <AarrowIcon /> */}
+                </div>
               </div>
 
               <div className={styles.visitors__updates_cards}>
@@ -144,16 +169,16 @@ const AnalyticsOverview = () => {
               <div className={styles.engagement_overview__titlebox}>
                 <h2 className={styles.overview__title}>Engagement overview</h2>
                 <div className={styles.dateTimeBox}>
-                <CalendarIcon />
-                <span>
-                  {startDate}
-                </span>
-                <span>{"-"}</span>
-                <span>
-                  {endDate}
-                </span>
-                {/* <AarrowIcon /> */}
-              </div>
+                  <CalendarIcon />
+                  <span>
+                    {startDate}
+                  </span>
+                  <span>{"-"}</span>
+                  <span>
+                    {endDate}
+                  </span>
+                  {/* <AarrowIcon /> */}
+                </div>
               </div>
 
               <div className={styles.overview__details_contbox}>
@@ -193,16 +218,16 @@ const AnalyticsOverview = () => {
                   <div className={styles.visites__overtime_titlebox}>
                     <h3 className={styles.visites__overtime_title}>Visits Over Time</h3>
                     <div className={styles.dateTimeBox}>
-                <CalendarIcon />
-                <span>
-                  {startDate}
-                </span>
-                <span>{"-"}</span>
-                <span>
-                  {endDate}
-                </span>
-                {/* <AarrowIcon /> */}
-              </div>
+                      <CalendarIcon />
+                      <span>
+                        {startDate}
+                      </span>
+                      <span>{"-"}</span>
+                      <span>
+                        {endDate}
+                      </span>
+                      {/* <AarrowIcon /> */}
+                    </div>
                   </div>
 
                   <div className={styles.visites__overview_info}>
@@ -213,8 +238,19 @@ const AnalyticsOverview = () => {
                 </div>
 
                 <div className={styles.overview__chart_box}>
-                  <img src={chartImg} alt={chartImg} />
+                  {/* <img src={chartImg} alt={chartImg} /> */}
+                  <ResponsiveContainer width="100%" height={height}>
+                    <LineChart data={data} className={"AnalyticsOverviewChart"}>
+                      <CartesianGrid strokeDasharray="0" />
+                      <XAxis dataKey="date" axisLine={false} tickLine={false} />
+                      <YAxis axisLine={false} tickLine={false} />
+                      <Legend  />
+                      <Tooltip className="AnalyticsOverview_tooltip"/>
+                      <Line type="linear" dataKey="visitor" stroke="#8be57f" dot={true} />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
+
               </div>
             </div>
 
@@ -224,16 +260,16 @@ const AnalyticsOverview = () => {
               <div className={styles.top_country_titlebox}>
                 <h3 className={styles.top_country_title}>Top countries</h3>
                 <div className={styles.dateTimeBox}>
-                <CalendarIcon />
-                <span>
-                  {startDate}
-                </span>
-                <span>{"-"}</span>
-                <span>
-                  {endDate}
-                </span>
-                {/* <AarrowIcon /> */}
-              </div>
+                  <CalendarIcon />
+                  <span>
+                    {startDate}
+                  </span>
+                  <span>{"-"}</span>
+                  <span>
+                    {endDate}
+                  </span>
+                  {/* <AarrowIcon /> */}
+                </div>
               </div>
 
               <div className={styles.top_country__details_box}>

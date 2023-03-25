@@ -40,12 +40,14 @@ body {
   --yellow-green: #8BE57F;
 
 }
-button{
+
+button {
   background: none;
   outline: none;
   border: none;
   cursor: pointer;
 }
+
 li,
 a {
   list-style: none !important;
@@ -60,16 +62,19 @@ a {
   overflow: hidden;
   height: 100%;
 }
+
 @media screen and (max-width:1280px) {
   .main-wrapper-box {
     padding-left: 255px;
   }
 }
+
 @media screen and (max-width:991px) {
   .main-wrapper-box {
     padding-left: 81px;
   }
 }
+
 .app-body {
   display: flex;
   height: 100vh;
@@ -116,26 +121,50 @@ a {
 .nav_navbar_nav__lh5sZ ul li:hover .icons_svg_folder svg path,
 .nav_navbar_nav__lh5sZ ul li:hover .icons_svg_graph svg path,
 .nav_navbar_nav__lh5sZ ul li:hover .icons_svg_settings svg path,
-.nav_navbar_nav__lh5sZ ul li:hover .icons_svg_book svg path{
-    stroke:var(--primary-color);
+.nav_navbar_nav__lh5sZ ul li:hover .icons_svg_book svg path {
+  stroke: var(--primary-color);
 }
-.nav_navbar_nav__lh5sZ  ul li a.active,
-.nav_navbar_nav__lh5sZ  ul li:hover a{color: var(--primary-color); transition: color 350ms ease 0s;}
+
+.nav_navbar_nav__lh5sZ ul li a.active,
+.nav_navbar_nav__lh5sZ ul li:hover a {
+  color: var(--primary-color);
+  transition: color 350ms ease 0s;
+}
 
 
 /* color configaration */
-.color_1{
+.color_1 {
   background: rgba(196, 229, 254, 0.5);
 }
-.color_2{
+
+.color_2 {
   background: rgb(89, 221, 170);
 }
-.color_3{
+
+.color_3 {
   background: rgb(255, 140, 67);
 }
-.color_4{
+
+.color_4 {
   background: rgb(171, 108, 254);
 }
-.color_5{
+
+.color_5 {
   background: rgb(253, 194, 60);
+}
+
+
+/* custom style for chat */
+
+.AnalyticsOverviewChart g .recharts-cartesian-grid-vertical,
+.AnalyticsOverviewChart g .recharts-cartesian-grid-vertical > line:hover {
+  display: none !important;
+}
+
+.AnalyticsOverviewChart .recharts-legend-item {
+  display: none !important;
+}
+.AnalyticsOverviewChart .AnalyticsOverview_tooltip{
+  background: #161515 !important;
+  color: #FFFFFF !important;
 }
