@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, Text, PieChart, Pie, Label, Cell } from 'recharts';
+import { Chart } from "react-google-charts";
 import styles from '../analytics.module.css';
 import shapeImg6 from '../../../../assets/img/gradient-shape6.png';
 import shapeImg3 from '../../../../assets/img/gradient-shape3.png';
@@ -7,7 +8,6 @@ import shapeImg4 from '../../../../assets/img/gradient-shape4.png';
 import infoCompanybrand from '../../../../assets/img/amazon-logo.png';
 import trafficGraph from '../../../../assets/img/traffic-source.png'
 import trafficSourceImg1 from '../../../../assets/img/traffic_sourceimg1.png'
-import audiencedImg2 from '../../../../assets/img/audience_graph2.png'
 import graphMapModal from '../../../../assets/img/graphmap-modal.svg'
 import {
   TfiArrowLeft,
@@ -86,7 +86,7 @@ const TrafficOverview = () => {
     { name: "Male", value: 40 },
     { name: "Female", value: 60 }
   ];
-  const COLORS = ["#b664f8","#e2b6fc"];
+  const COLORS = ["#b664f8", "#e2b6fc"];
 
   const formatYAxisTick = (value) => {
     if (value >= 1000000000) {
@@ -96,6 +96,22 @@ const TrafficOverview = () => {
     } else {
       return value;
     }
+  };
+  const Geodata = [  ['Country', 'Mobile', 'Desktop'],
+  ['Germany', 2000000, 5000000],
+  ['United States', 3000000, 5000000],
+  ['Brazil', 4000000, 5000000],
+  ['Canada', 5000000, 5000000],
+  ['France', 6000000, 5000000],
+  ['RU', 7000000, 5000000],
+];
+
+  const handleGeoSelect = ({ chartWrapper }) => {
+    const chart = chartWrapper.getChart();
+    const selection = chart.getSelection();
+    if (selection.length === 0) return;
+    const region = Geodata[selection[0].row + 1];
+    console.log("Selected: " + region);
   };
 
   const [height, setHeight] = useState(400);
@@ -1152,34 +1168,93 @@ const TrafficOverview = () => {
                           </div>
                         </div>
                         <div className={styles.large_span_4}>
-                          <div style={{ backgroundColor: "white" }} className={styles.graph__insight_right}>
-                            {/* <img src={audiencedImg2} alt={audiencedImg2} className="audienced_graph" height={'280px'} /> */}
-                            <ResponsiveContainer width="100%" height={height}>
-                            <PieChart width={800} height={400}>
-                              <Pie
-                                data={piedata}
-                                cx={120}
-                                cy={200}
-                                innerRadius={60}
-                                outerRadius={100}
-                                fill="#e2b6fc"
-                                paddingAngle={0}
-                                dataKey="value"
-                              >
-                                {data.map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                                <Label value={`10M`} position="center" fill="#000000" fontSize={20} />
-                                <Label
-                                  value={`Unique visitor`}
-                                  position="center"
-                                  fill="#000000"
-                                  fontSize={20}
-                                  y={20}
-                                />
-                              </Pie>
-                            </PieChart>
-                            </ResponsiveContainer>
+                          <div className={styles.graph__insight_right}>
+                            <div style={{ backgroundColor: "#ffffff", height: height }}>
+                              <ResponsiveContainer width="100%" height={height}>
+                                <div style={{ position: "relative" }}>
+                                  <div style={{ position: "absolute", top: "20px", left: "20px" }}>
+                                    <span
+                                      style={{ color: "black", fontSize: "16px", fontWeight: "bold" }}
+                                    >
+                                      sex
+                                    </span>
+                                  </div>
+                                  <PieChart width={500} height={height}>
+                                    <Pie
+                                      data={piedata}
+                                      cx="45%"
+                                      cy="45%"
+                                      position="center"
+                                      innerRadius={80}
+                                      outerRadius={130}
+                                      fill="#e2b6fc"
+                                      paddingAngle={0}
+                                      dataKey="value"
+                                    >
+                                      {piedata.map((entry, index) => (
+                                        <Cell
+                                          key={`cell-${index}`}
+                                          fill={COLORS[index % COLORS.length]}
+                                        />
+                                      ))}
+                                      <Label
+                                        value={`10M`}
+                                        position="center"
+                                        fill="#000000"
+                                        fontSize={14}
+                                        fontWeight="bold"
+                                      />
+                                      <Label
+                                        value={`Unique visitor`}
+                                        position="center"
+                                        fill="#000000"
+                                        fontSize={14}
+                                        fontWeight="bold"
+                                        dy={25}
+                                      />
+                                    </Pie>
+                                  </PieChart>
+                                  <div
+                                    style={{
+                                      position: "absolute",
+                                      bottom: "20px",
+                                      left: "20px",
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      width: "90%"
+                                    }}
+                                  >
+                                    {piedata.map((entry, index) => (
+                                      <div
+                                        style={{
+                                          display: "flex",
+                                          justifyTtems: "space-between",
+                                          marginBottom: "5px",
+                                          justifyContent: "space-between",
+                                          width: "100%",
+                                          color: "black"
+                                        }}
+                                        key={`legend-${index}`}>
+                                        <div style={{ display: "flex", alignItems: "center" }}>
+                                          <div
+                                            style={{
+                                              width: "10px",
+                                              height: "10px",
+                                              backgroundColor: COLORS[index % COLORS.length],
+                                              marginRight: "5px"
+                                            }}
+                                          ></div>
+                                          <span>{entry.name}</span>
+                                        </div>
+                                        <div>
+                                          <span>{`${entry.value}% 3M`}</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </ResponsiveContainer>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1406,7 +1481,34 @@ const TrafficOverview = () => {
                           </div>
                           <div className={styles.graph__insight_righttbox}>
                             <div className={styles.graph__modal_map}>
-                              <img src={graphMapModal} alt={graphMapModal} className={styles.graph_modal__img} width={'100%'} height={'325px'} />
+                              {/* <img src={graphMapModal} alt={graphMapModal} className={styles.graph_modal__img} width={'100%'} height={'325px'} /> */}
+                              {/* add region chart */}
+                              <Chart
+                                chartType="GeoChart"
+                                data={Geodata}
+                                width="100%"
+                                height="400px"
+                                options={{
+                                  backgroundColor: "none",
+                                  datalessRegionColor: "#000000",
+                                  defaultColor: "#000000",
+                                  colorAxis: {
+                                    colors: ["#000000", "#000000"],
+                                  },
+                                  hAxis: {
+                                    format: '#'
+                                  },
+                                  displayMode: 'regions',
+                                  enableRegionInteractivity: true,
+                                  legend: 'none'
+                                }}
+                                chartEvents={[
+                                  {
+                                    eventName: "select",
+                                    callback: handleGeoSelect,
+                                  },
+                                ]}
+                              />
                             </div>
                           </div>
                         </div>

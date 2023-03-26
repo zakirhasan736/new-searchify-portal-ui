@@ -13,7 +13,6 @@ import country4 from '../../../assets/img/country4.png'
 import country5 from '../../../assets/img/country5.png'
 import germanFlag from '../../../assets/img/germany.png'
 import wordFlag from '../../../assets/img/globe.png'
-import chartImg from '../../../assets/img/Chart.png'
 import arrowUp from '../../../assets/icon/arrow-up.png'
 import countrymap from '../../../assets/img/high-resolution-grey-map-of-the-world-split-into-individual-countries-free-vector-removebg-preview 2.png'
 import RankCard from '../../core/rankcard/RankCard';
