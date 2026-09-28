@@ -1,6 +1,7 @@
+"use client";
 import React, { useState } from 'react'
 import Moredots from '../../../assets/icon/More-dots.svg'
-import { Link,  useNavigate } from 'react-router-dom';
+import { Link,  useNavigate } from '@/lib/navigation';
 import styles from './card.module.css';
 import {getProject, isWebsiteExist, updateProject, getCrawlingData, getWebsite} from "../../../utils/users/ProjectUtil";
 

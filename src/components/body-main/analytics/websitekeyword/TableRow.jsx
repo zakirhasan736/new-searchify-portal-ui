@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from 'react';
 import styles from '../analytics.module.css';
 const TableRow = ({ data, index, checked }) => {

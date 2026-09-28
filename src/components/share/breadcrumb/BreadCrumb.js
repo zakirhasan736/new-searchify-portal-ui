@@ -1,6 +1,7 @@
+"use client";
 import React from 'react'
 import styles from './breadCrumb.module.css'
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/lib/navigation';
 import { BsChevronLeft } from "react-icons/bs";
 const BreadCrumb = ({withLinkText}) => {
   const navigate = useNavigate();

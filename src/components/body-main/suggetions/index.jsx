@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useState } from 'react'
 import EditTitle from '../../share/EditTitle/EditTitle'
 import BreadCrumb from '../../share/breadcrumb/BreadCrumb'
@@ -10,8 +11,7 @@ import ProjectSuggestionCard from '../../share/projectSuggestion/ProjectSuggesti
 import DeepSuggestionCard from '../../share/projectSuggestion/DeepSuggestionCard'
 import styles from './style.module.css'
 import { db } from './db'
-import { useNavigate, useLocation } from "react-router-dom";
-import CONFIG from "../../../config/users/Constant";
+import { useNavigate, useLocation } from '@/lib/navigation';
 import { getUser, userLogout } from "../../../utils/users/Helpers";
 import {getProject, isWebsiteExist, updateProject, getCrawlingData, pickupWebsiteFromProject, getWebsite, addWebpageAndUpdateProject} from "../../../utils/users/ProjectUtil";
 import { detectTagsData, fetchAllDomains,fetchDeepSuggestions, fetchSearchifyTags, simplifyTags, fetchSuggestionsByDomain } from "../../../utils/users/TagUtil";
@@ -31,7 +31,7 @@ const ProjectMakingTags = () => {
 
     const location = useLocation();
 
-    const webpage = location.state.webpage;
+    const webpage = location.state?.webpage || null;
 
     const handleTabs = (name) => {
         setTabs(name);
@@ -101,6 +101,7 @@ const ProjectMakingTags = () => {
     }
 
     const handleSaveWebPageSuggestion = async () => {
+        if (!webpage) return;
         const currentWebpageSuggestion = {
             createdDate: Date().toLocaleString(),
             fieldContents: [{ name: 'title', value: previewPageTitle() },
@@ -125,7 +126,7 @@ const ProjectMakingTags = () => {
         const res = await addWebpageAndUpdateProject(getProject(), getWebsite(), currentWebpage);
         const returnProject = await res.json();
         localStorage.setItem('project', JSON.stringify(returnProject));
-        localStorage.setItem('currentWebsite', JSON.stringify(pickupWebsiteFromProject(returnProject, getWebsite().url)));
+        localStorage.setItem('currentWebsite', JSON.stringify(pickupWebsiteFromProject(returnProject, getWebsite()?.url)));
 
     }
 
@@ -143,7 +144,10 @@ const ProjectMakingTags = () => {
             const fetchSuggestions = await res.json();
             setSuggestions(fetchSuggestions)
         }
-        fetchSuggestions(getWebsite().settings.domain);
+        const website = getWebsite();
+        if (website?.settings?.domain) {
+          fetchSuggestions(website.settings.domain);
+        }
         return () => {
             setData([])
         }
@@ -192,7 +196,7 @@ const ProjectMakingTags = () => {
                             <div class="projectSuggestion_project__suggestion_result_wrap__Vsaow">
                                 <div class="projectSuggestion_project_suggestion_contbox__BGVpi">
                                     <div style={{"font-size": "10px"}}>
-                                        {webpage.url}
+                                        {webpage?.url || "Open this page from a crawled site."}
                                     </div>
                                     <h3 class="projectSuggestion___project_title__SjGoy">{previewPageTitle()}</h3>
                                     <p style={{"font-size": "10px"}} class="projectSuggestion___project_desc__i77ZL">{previewMetaDescriptions()}</p>
@@ -213,7 +217,7 @@ const ProjectMakingTags = () => {
                             <div style={{"margin-bottom": "15px"}} className={styles.select__items__box}>
                                 <TagFieldSelect inputTitle='Tags' clear={clearInput} 
                                  selectedTags = {tags}
-                                 currentDomain={getWebsite().settings.domain}
+                                 currentDomain={getWebsite()?.settings?.domain}
                                  onChange = {handleTagsChanged}/>
                             </div>
                             <div style={{"margin-bottom": "15px"}} className={styles.single_input_box}>

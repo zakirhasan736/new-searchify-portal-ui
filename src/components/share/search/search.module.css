@@ -1,8 +1,8 @@
 .search_inputbox{
-    width: 493px;
+    width: min(100%, 460px);
     background: transparent;
-    height: 55px;
-    border-radius: 25px;
+    height: 44px;
+    border-radius: 999px;
     position: relative;
 }
 @media screen and (max-width:1199px) {
@@ -19,22 +19,22 @@
     box-shadow: none;
 }
 .search_inputbar{
-    padding: 13px 56px 12px 56px;
-    background: transparent;
+    padding: 8px 16px 8px 44px;
+    background: rgba(255, 255, 255, 0.03);
     width: 100%;
-    border-radius: 25px;
-    height: 55px;
-    border: 1px solid #989797;
-    font-size: 15px;
-    line-height: 30px;
-    font-weight: 200;
-    color: var(--extra-gray);
+    border-radius: 999px;
+    height: 44px;
+    border: 1px solid rgba(146, 107, 255, 0.35);
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 400;
+    color: var(--white-color);
     font-family: var(--primary-font);
 }
 .search_icons{
     position: absolute;
-    left: 22px;
-    top: 13px;
+    left: 16px;
+    top: 10px;
 }
 .inputWith__btn{
     display: flex;

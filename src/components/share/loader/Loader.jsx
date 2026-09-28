@@ -1,14 +1,26 @@
-import React from 'react';
-import styles from './styles.module.css';
-import Lottie from "lottie-react";
-import animationdata from '../../../assets/img/v-3.json';
+"use client";
+import React, { useEffect, useState } from "react";
+import styles from "./styles.module.css";
+import animationdata from "../../../assets/img/v-3.json";
 
 const Loader = () => {
-    return ( 
-        <div className={styles.loader}>
-            <Lottie animationData={animationdata} loop={true} />
-        </div>
-    )
-}
+  const [Lottie, setLottie] = useState(null);
 
-export default Loader
+  useEffect(() => {
+    let alive = true;
+    import("lottie-react").then((mod) => {
+      if (alive) setLottie(() => mod.default);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  return (
+    <div className={styles.loader}>
+      {Lottie ? <Lottie animationData={animationdata} loop={true} /> : null}
+    </div>
+  );
+};
+
+export default Loader;

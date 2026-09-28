@@ -1,7 +1,8 @@
+"use client";
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from '@/lib/navigation'
 import styles from './pageOerview.module.css'
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from '@/lib/navigation';
 import {getUser, userLogout } from "../../../utils/users/Helpers";
 import {getProject, isWebsiteExist, updateProject, getCrawlingData, getWebsite} from "../../../utils/users/ProjectUtil";
 

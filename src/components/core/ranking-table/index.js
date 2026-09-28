@@ -1,5 +1,6 @@
+"use client";
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom'
+import { Link } from '@/lib/navigation'
 import styles from './style.module.css';
 
 const RankingTable = () => {

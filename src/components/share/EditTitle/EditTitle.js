@@ -1,3 +1,4 @@
+"use client";
 import React, {  useEffect, useState }  from 'react'
 import styles from './EditTitle.module.css'
 import EditeIcon from '../../../assets/img/edit-2.png'

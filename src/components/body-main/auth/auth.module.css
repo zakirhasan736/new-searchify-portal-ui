@@ -32,9 +32,10 @@
   margin-bottom: 30px;
 }
 .app_auth__form_contbox {
-  max-width: 500px;
-  width: 100%;
+  max-width: 460px;
+  width: calc(100% - 32px);
   height: auto;
+  margin: 16px;
 }
 
 /* ===================== */
@@ -221,4 +222,57 @@
 }
 .loader .loader{
   width: 50px;
+}
+
+.social_stack {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+.social_divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 14px;
+  color: rgba(255,255,255,0.45);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.social_divider::before,
+.social_divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.12);
+}
+.social_row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.social_btn,
+.social_btn_github {
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(0,0,0,0.25);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.social_btn:hover,
+.social_btn_github:hover {
+  border-color: rgba(146,107,255,0.6);
+}
+.social_btn:disabled,
+.social_btn_github:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.social_hint {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.4);
+  text-align: center;
 }

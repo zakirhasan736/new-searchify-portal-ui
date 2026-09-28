@@ -1,6 +1,7 @@
+"use client";
 import React from 'react'
 import styles from './projectSuggestion.module.css'
-import { Link } from 'react-router-dom'
+import { Link } from '@/lib/navigation'
 const DeepSuggestionCard = ({applyIt, suggestion}) => {
 
   const handleUseIt = () => {

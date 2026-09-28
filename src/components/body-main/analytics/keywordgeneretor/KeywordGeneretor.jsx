@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from 'react';
 import { useDebounce } from 'use-debounce';
 import searchicon from '../../../../assets/icon/search.svg'
@@ -7,7 +8,7 @@ import shapeImg3 from '../../../../assets/img/gradient-shape3.png'
 import shapeImg4 from '../../../../assets/img/gradient-shape4.png'
 import bulbeIcon from '../../../../assets/icon/lightBulbe.svg'
 import { AiOutlineGoogle, AiOutlineAmazon, AiFillYoutube } from 'react-icons/ai'
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/lib/navigation';
 // import FilterSearchBtn from '../../../share/search/FilterSearchbtn'
 
 const KeywordGeneretor = () => {
@@ -70,6 +71,10 @@ const KeywordGeneretor = () => {
                   <li><a href='/'><span className={styles.icon_item}><AiOutlineGoogle /></span> Google</a></li>
                   <li><a href='/'><span className={styles.icon_item}><AiOutlineAmazon /></span> Amazon</a></li>
                   <li><a href='/'><span className={styles.icon_item}><AiFillYoutube /></span> YouTube</a></li>
+                </ul>
+                <ul className={styles.site__link_item} >
+                  <li><button className={styles.country_site__link}>US</button></li>
+                  <li><button className={styles.country_site__link}>CA</button></li>
                 </ul>
                 <div className={styles.searchbar__withbtn}>
                   <div className={styles.search__inputbox}>

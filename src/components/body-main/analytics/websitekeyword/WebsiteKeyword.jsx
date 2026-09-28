@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from 'react'
 import { useDebounce } from 'use-debounce';
 import styles from '../analytics.module.css'
@@ -6,7 +7,7 @@ import shapeImg3 from '../../../../assets/img/gradient-shape3.png'
 import shapeImg4 from '../../../../assets/img/gradient-shape4.png'
 // import FilterSearch from '../../../share/search/FilterSearch';
 import searchicon from '../../../../assets/icon/search.svg';
-import { Link } from 'react-router-dom';
+import { Link } from '@/lib/navigation';
 
 const WebsiteKeyword = () => {
   const [recentWeb, setRecentWeb] = useState([]);

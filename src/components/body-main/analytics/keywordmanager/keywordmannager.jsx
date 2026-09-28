@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import styles from '../analytics.module.css';
 import shapeImg6 from '../../../../assets/img/gradient-shape6.png';
@@ -11,6 +12,7 @@ import {
   AiOutlineDelete,
   AiFillEdit,
 } from 'react-icons/ai';
+import { loadFeatures, saveFeature } from '@/lib/clientApi';
 
 const Keywordmannager = () => {
   const [search, setsearch] = useState("");
@@ -26,8 +28,23 @@ const Keywordmannager = () => {
   const [shareEmailInput, setSharedEmailInput] = useState("");
   const [shareKeywordInput, setSharedKeywordInput] = useState("");
   const [notFound, setNotFound] = useState(false);
+  const [openViwer, setopenViwer] = useState(false);
   const [editList, setEditList] = useState(null);
   const [editListval, setEditListval] = useState("");
+  const [viewerList, setViewerList] = useState("");
+
+  const [viewers] = useState([
+      {
+          id: 1,
+          list: "Viewer"
+      },
+      {
+          id: 2,
+          list: "Editor"
+      }
+  ]);
+
+
 
   const handleSearch = () => {
     let data = updated.filter(item => item.list.toLowerCase() === search.toLowerCase());
@@ -72,6 +89,12 @@ const Keywordmannager = () => {
     setShareModal(false);
     setSharedEmailInput("");
     setSharedKeywordInput("");
+    setViewerList("");
+    saveFeature("keyword-share", shareKeywordInput || "Shared list", {
+      ...listdata,
+      email: shareEmailInput,
+      permission: viewerList || "Viewer",
+    });
   }
 
   const handleOwnlist = () => {
@@ -86,6 +109,7 @@ const Keywordmannager = () => {
     setAll(all + 1);
     setUpdated([...list, listdata]);
     setListModal(false);
+    saveFeature("keyword-list", createInput, listdata);
   }
   const handlechnageList = (num) => {
     if (num === 1) {
@@ -99,6 +123,12 @@ const Keywordmannager = () => {
     }
   }
   useEffect(() => {
+    loadFeatures("keyword-list").then((records) => {
+      if (!records.length) return;
+      const saved = records.map((record) => record.payload).filter((item) => item && item.list);
+      setOwnList((current) => [...saved, ...current]);
+      setUpdated((current) => [...saved, ...current]);
+    });
     const data = [
       {
         "list": "Soap and More",
@@ -379,7 +409,11 @@ const Keywordmannager = () => {
                       {
                         openSharedListModal &&
                         <ul className={styles.key__group__list}>
-                          \
+                          {updated.map((item, index) => (
+                            <li onClick={() => { setSharedKeywordInput(item.list); setopenSharedListModal(false) }} className={styles.key__list_select}>
+                              {item.list}
+                            </li>
+                          ))}
                         </ul>
                       }
                     </div>
@@ -402,12 +436,17 @@ const Keywordmannager = () => {
                     </div>
 
                     <div className={styles.user__permition_selectbox}>
-                      <span className={styles.user__permission_select_item}>
-                        Viwer
+                      <span onClick={() => setopenViwer(!openViwer)} className={styles.user__permission_select_item}>
+                      {viewerList !== "" ? viewerList : "Viwer"}
                       </span>
-                      <ul className={styles.user__permission__list_item}>
-                        <li></li>
-                      </ul>
+                      {openViwer && <ul className={styles.user__permission__list_item}>
+                      {viewers.map((item, index) => (
+                            <li onClick={() => setViewerList(item.list)} >
+                              {item.list}
+                            </li>
+                          ))}
+                       
+                      </ul>}
                     </div>
                     <div className={styles.add_list_control__box}>
                       <button onClick={() => (shareEmailInput.length > 3 && shareKeywordInput.length > 3) && handleShared()} className={styles.create__list_button}>

@@ -1,3 +1,4 @@
+"use client";
 export const db = [
     {
         id: "b7257c69-48a8-43a8-bb38-eb12b957a204",

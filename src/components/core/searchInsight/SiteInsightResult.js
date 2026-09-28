@@ -1,7 +1,8 @@
+"use client";
 import React from 'react'
 import styles from './searchInsightResults.module.css'
-import { Link } from 'react-router-dom'
-import { useNavigate } from "react-router-dom";
+import { Link } from '@/lib/navigation'
+import { useNavigate } from '@/lib/navigation';
 import {getProject, isWebsiteExist, updateProject, getCrawlingData, getWebsite} from "../../../utils/users/ProjectUtil";
 import { pickupFieldFromSuggestion } from "../../../utils/users/ProjectUtil";
 

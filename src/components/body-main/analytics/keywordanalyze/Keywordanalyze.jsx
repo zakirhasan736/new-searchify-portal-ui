@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from 'react';
 import { useDebounce } from 'use-debounce';
 
@@ -8,7 +9,8 @@ import shapeImg4 from '../../../../assets/img/gradient-shape4.png'
 import { BiPlus } from 'react-icons/bi'
 // import FilterSearch from '../../../share/search/FilterSearch';
 import searchicon from '../../../../assets/icon/search.svg';
-import { Link } from 'react-router-dom'
+import { Link } from '@/lib/navigation'
+import { saveFeature } from '@/lib/clientApi'
 
 const Keywordanalyze = () => {
   const [addNew, setNew] = useState(null);
@@ -37,6 +39,9 @@ const Keywordanalyze = () => {
     setGroupKeywordsList(prev => [...prev, group]);
     setKeywordsList([]);
     setNew(!addNew);
+    if ((keywordList || []).length <= 200) {
+      saveFeature("keyword-group", groupName || "Keyword group", group);
+    }
   }
   const onSaveKeyword = () => {
     setKeywordsList(prev => [...prev, keyword]);

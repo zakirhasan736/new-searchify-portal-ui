@@ -1,10 +1,11 @@
+"use client";
 import React from 'react'
 import styles from './SeoEvent.module.css'
 import SearchWithbtn from '../../share/search/searchWithbtn'
 import BreadCrumb from '../../share/breadcrumb/BreadCrumb'
 import EditTitle from '../../share/EditTitle/EditTitle'
 import PageOverview from '../../core/pageOverview/PageOverview'
-import { Link } from 'react-router-dom'
+import { Link } from '@/lib/navigation'
 import { RiDeleteBin6Line } from "react-icons/ri";
 import SearchInsightResult from '../../core/searchInsight/SearchInsightResult'
 import shapeImg3 from '../../../assets/img/gradient-shape3.png'

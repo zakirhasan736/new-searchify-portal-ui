@@ -1,5 +1,6 @@
+"use client";
 import React, { useEffect, useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from '@/lib/navigation';
 import styles from './SeoEvent.module.css'
 import shapeImg3 from '../../../assets/img/gradient-shape3.png'
 import SearchWithbtn from '../../share/search/searchWithbtn'
@@ -9,8 +10,7 @@ import EditTitle from '../../share/EditTitle/EditTitle'
 import PageOverview from '../../core/pageOverview/PageOverview'
 import SearchInsightResult from '../../core/searchInsight/SearchInsightResult'
 import SiteInsightResult from '../../core/searchInsight/SiteInsightResult'
-import CONFIG from "../../../config/users/Constant";
-import { getUser, userLogout } from "../../../utils/users/Helpers";
+import { getUser, userLogout, authHeaders } from "../../../utils/users/Helpers";
 import { getProject, isWebsiteExist, updateProject, getCrawlingData, getWebsite } from "../../../utils/users/ProjectUtil";
 import { detectTagsData, fetchAllDomains, fetchSearchifyTags, simplifyTags } from "../../../utils/users/TagUtil";
 import Loader from '../../share/loader/Loader';
@@ -87,19 +87,17 @@ export const SeoOptimization = () => {
   const handleCrawling = async (event) => {
     setLoading(true);
     setIsRetry(false);
-    const res = await fetch(CONFIG.hostname + ":8082/crawl/", {
+    const res = await fetch("/api/v1/crawl", {
       body: JSON.stringify({ link: siteUrl }),
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: authHeaders(),
       method: "POST",
     });
     const data = await res.json();
     const text = [];
     if (data.current.error != "invalid url") {
       setLoading(false);
-      const settings = [{ name: "domain", value: domain }];
-      const updatedWebsite = { name: siteName, url: siteUrl, tokenId: null, ranking: null, settings: settings, templates: null, webPages: null }
+      const settings = { domain: domain };
+      const updatedWebsite = { name: siteName, url: siteUrl, tokenId: null, ranking: null, settings: settings, templates: null, webpages: null }
       setWebsite(updatedWebsite);
 
       if (!isWebsiteExist(websites, siteUrl)) {

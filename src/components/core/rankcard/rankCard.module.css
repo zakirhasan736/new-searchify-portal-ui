@@ -2,11 +2,11 @@
 
   .analytics__Rank_card {
     position: relative;
-    padding: 33px 28px 37px 36px;
-    border-radius: 10px;
-    background: rgba(88, 87, 87, 0.21);
-    border-radius: 10px;
-    min-width: 399px;
+    padding: 20px;
+    border-radius: 18px;
+    background: #14121c;
+    border: 1px solid rgba(146, 107, 255, 0.22);
+    min-width: 0;
     width: 100%;
   }
   .analytics__Rank_card::before {

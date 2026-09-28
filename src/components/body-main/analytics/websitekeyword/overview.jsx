@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useState } from 'react'
 import styles from '../analytics.module.css';
 import shapeImg6 from '../../../../assets/img/gradient-shape6.png';
@@ -13,6 +14,7 @@ import { db } from '../websitekeyword/db';
 import { useDebounce } from 'use-debounce';
 import DropDown from './DropDown';
 import TableRow from './TableRow';
+import { saveFeature } from '@/lib/clientApi';
 
 
 const WebsiteKeyOverview = () => {
@@ -23,6 +25,8 @@ const WebsiteKeyOverview = () => {
   const [text, setText] = useState('');
   const [value] = useDebounce(text, 1000);
   const [addNew, setNew] = useState(false);
+  const [listName, setListName] = useState("");
+  const [listKeyword, setListKeyword] = useState("");
   const [checkItems, setCheckedItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([])
   const [reset, setReset] = useState(false);
@@ -148,8 +152,8 @@ const WebsiteKeyOverview = () => {
                       <label for='check3'>Organic</label>
                     </li>
                     <li className={styles.checkbox__items}>
-                      <input onMouseOver={() => setChecked1(null)} type='checkbox' id='check3' value="paid" onChange={handleOnCheck} checked={checked1} />
-                      <label for='check3'>Paid</label>
+                      <input onMouseOver={() => setChecked1(null)} type='checkbox' id='check4' value="paid" onChange={handleOnCheck} checked={checked1} />
+                      <label for='check4'>Paid</label>
                     </li>
                   </ul>
                 </div>
@@ -228,13 +232,18 @@ const WebsiteKeyOverview = () => {
             addNew &&
             <div className={styles.new_list_container}>
               <div onClick={(e) => e.stopPropagation()} className={styles.list_content}>
-                <input type="text" placeholder='name of your group' />
-                <hr />
+                <div className={styles.group__name_box}>
+                      <input type="text" placeholder='name of your group' className={styles.name__group} value={listName} onChange={(event) => setListName(event.target.value)} />
+                 </div>
+                 <div className={styles.keyword__listbox}>
                 <h6>keywords in the list</h6>
                 <span>keywords</span>
-                <hr />
-                <input type="text" placeholder='Enter keywords or paste' />
-                <button >+</button>
+                </div>
+              
+                <div className={styles.add_key_box}>
+                      <input className={styles.keyword__add_input} type="text" placeholder='Enter keywords or paste' value={listKeyword} onChange={(event) => setListKeyword(event.target.value)} />
+                      <button className={styles.add__keybtn}>+</button>
+                    </div>
                 <div className={styles.show_all_added_keywords}>
                   <ul>
 
@@ -243,7 +252,10 @@ const WebsiteKeyOverview = () => {
               </div>
               <div className={styles.new__list_ctrlbox}>
                 <button className={styles.btn__cancel} onClick={() => setNew(!addNew)}>Cancel</button>
-                <button className={styles.btn__save} onClick={() => setNew(!addNew)}>Save</button>
+                <button className={styles.btn__save} onClick={() => {
+                  saveFeature("website-keyword-list", listName || "Keyword list", { name: listName, keyword: listKeyword });
+                  setNew(false);
+                }}>Save</button>
               </div>
             </div>
           }

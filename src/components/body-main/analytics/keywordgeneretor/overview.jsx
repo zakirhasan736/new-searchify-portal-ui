@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useState } from 'react'
 import styles from '../analytics.module.css';
 import shapeImg6 from '../../../../assets/img/gradient-shape6.png';

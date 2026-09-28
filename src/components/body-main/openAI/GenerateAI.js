@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from 'react'
 import styles from './openAI.module.css';
 import { FcGoogle } from "react-icons/fc";
@@ -5,7 +6,7 @@ import { HiArrowRight, HiReply } from "react-icons/hi";
 import shapeImg1 from '../../../assets/img/gradient-shape.png'
 import shapeImg2 from '../../../assets/img/gradient-shape-2.png'
 import SimpleInputField from '../../share/inputFieldBox/SimpleInputField'
-import { useParams } from 'react-router-dom';
+import { useParams } from '@/lib/navigation';
 import { db } from './openAIdb';
 import TokenInput from '../../share/inputFieldBox/TokenInput';
 const GenerateAI = () => {

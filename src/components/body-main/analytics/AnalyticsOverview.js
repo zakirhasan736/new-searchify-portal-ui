@@ -1,5 +1,6 @@
+"use client";
 import React, { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from '@/lib/navigation';
 import styles from './analytics.module.css';
 import shapeImg6 from '../../../assets/img/gradient-shape6.png';
 import shapeImg7 from '../../../assets/img/gradient-shape-7.png';

@@ -1,0 +1,15 @@
+name: NodeJS with Webpack
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: self-hosted
+    
+    steps:
+    - run: sudo chmod -R 777 ~/searchify/searchify-new-ui-portal/actions-runner
+    - uses: actions/checkout@v3
+    - name: Build & Run
+      run: bash /home/ubuntu/searchify/searchify-new-ui-portal/scripts/deploy.sh

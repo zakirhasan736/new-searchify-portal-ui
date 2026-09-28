@@ -1,8 +1,9 @@
 export const parseJwt = (token) => {
     if (!token) { return }
     const base64Url = token.split('.')[1]
-    const base64 = base64Url.replace('-', '+').replace('_', '/')
-    return JSON.parse(window.atob(base64))
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
+    return JSON.parse(window.atob(padded))
   }
   
 export const handleLogError = (error) => {
@@ -15,12 +16,19 @@ export const handleLogError = (error) => {
     }
   }
 
+const storage = () => (typeof window === "undefined" ? null : window.localStorage);
+
 export const getUser = () => {
-    return JSON.parse(localStorage.getItem('user'))
+    const store = storage();
+    if (!store) return null;
+    const raw = store.getItem("user");
+    return raw ? JSON.parse(raw) : null;
   }
 
 export const  userIsAuthenticated = () => {
-    let user = localStorage.getItem('user')
+    const store = storage();
+    if (!store) return false;
+    let user = store.getItem("user");
     if (!user) {
       return false;
     }
@@ -35,14 +43,25 @@ export const  userIsAuthenticated = () => {
   }
 
 export const  userLogin = user => {
-    localStorage.setItem('user', JSON.stringify(user));
+    const store = storage();
+    if (!store) return;
+    store.setItem("user", JSON.stringify(user));
   }
 
 export const  userLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('project');
-    localStorage.removeItem('currentWebsite');
-    localStorage.removeItem('crawlingData');
-    
+    const store = storage();
+    if (!store) return;
+    store.removeItem("user");
+    store.removeItem("project");
+    store.removeItem("currentWebsite");
+    store.removeItem("crawlingData");
   }
+
+export function authHeaders() {
+    const token = getUser()?.result?.token;
+    return {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+}
 

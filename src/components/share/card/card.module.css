@@ -1,9 +1,10 @@
 .project__Card_box {
-  border-radius: 10px;
-  padding: 13px 15px 16px 13px;
+  border-radius: 18px;
+  padding: 18px;
   position: relative;
-  background: rgba(105, 103, 103, 0.26);
-  width: 280px;
+  background: #14121c;
+  width: min(100%, 280px);
+  border: 1px solid rgba(146, 107, 255, 0.22);
 }
 @media screen and (max-width:1679px) and (min-width:1600px) {
   .project__Card_box {

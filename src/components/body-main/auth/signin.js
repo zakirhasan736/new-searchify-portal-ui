@@ -1,141 +1,122 @@
-import React, { useState } from "react";
-import styles from './auth.module.css';
-import validator from "validator";
-import shapeImg3 from '../../../assets/img/gradient-shape3.png'
-import shapeImg4 from '../../../assets/img/gradient-shape4.png'
-import brandLogo from '../../../assets/img/Searchify-logo.png'
-import { AiOutlineEyeInvisible, AiOutlineEye } from "react-icons/ai";
-import { CiLock } from "react-icons/ci";
-import { BiUser } from "react-icons/bi";
-import { useNavigate } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
-import CONFIG from "../../../config/users/Constant";
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useNavigate } from "@/lib/navigation";
 import { parseJwt, userLogin } from "../../../utils/users/Helpers";
 import { fetchProjectByUserId } from "../../../utils/users/ProjectUtil";
-import Loader from "../../share/loader/Loader";
+import { AuthField, AuthScreen, AuthSubmit } from "@/components/v3/AuthScreen";
+import SocialLoginButtons from "./SocialLoginButtons";
 
-const Signin = () => {
-    let navigate = useNavigate();
-    const [username, setUsername] = useState("");
-    const [pwd, setPwd] = useState("");
-    const [pending,setPending] = useState(false);
+export default function Signin() {
+  const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+  const [pwd, setPwd] = useState("");
+  const [show, setShow] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [toast, setToast] = useState("");
+  const [toastKind, setToastKind] = useState("");
 
-    const [showPassword, setShowPassword] = useState({
-        password: false,
+  const notice = (msg, kind = "") => {
+    setToast(msg);
+    setToastKind(kind);
+  };
+
+  const finishLogin = async (result) => {
+    const data = parseJwt(result.token);
+    const user = { data, result };
+    userLogin(user);
+    const resProject = await fetchProjectByUserId(user.data.sub);
+    const resultProject = await resProject.json().catch(() => ({}));
+    localStorage.setItem("project", JSON.stringify(resultProject));
+    if (result.userType === "admin") navigate("/admin/tagmgmt");
+    else navigate("/app");
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("social") === "error") {
+      notice(params.get("detail") || "Social login failed.");
+      return;
+    }
+    const token = params.get("token");
+    if (params.get("social") === "1" && token) {
+      setPending(true);
+      finishLogin({
+        token,
+        userType: params.get("userType") || "client",
+        username: params.get("username") || "",
+      }).finally(() => setPending(false));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!username.trim()) return notice("Enter your username or email.");
+    if (!pwd) return notice("Enter your password.");
+    setPending(true);
+    const res = await fetch("/api/v1/auth/signin", {
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+      body: JSON.stringify({ username: username.trim(), password: pwd }),
     });
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok || !result.token) {
+      setPending(false);
+      notice(result.detail || "Sign in failed.");
+      return;
+    }
+    await finishLogin(result);
+    setPending(false);
+  };
 
-    const handleShowPassword = () => {
-        setShowPassword({ showPassword, password: !showPassword.password });
-    };
-
-    const handleLogin = async (username, password) => {
-        return await fetch(CONFIG.hostname + ':8081/users/signin?username=' + username + '&password=' + password, {
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            method: 'POST'
-        });
-    };
-    const handleSubmit = async (e) => {
-        if (validator.isEmpty(username)) {
-            toast.error("Please Enter Username!", {
-                autoClose: 1500,
-                style: { backgroundColor: "black", color: "white" },
-            });
-            e.preventusers();
-        }
-        else if (validator.isEmpty(pwd)) {
-            toast.error("Please Enter Password!", {
-                autoClose: 1500,
-                style: { backgroundColor: "black", color: "white" },
-            });
-            e.preventusers();
-        } else {
-            setPending(true);
-            const res = await handleLogin(username, pwd);
-            const result = await res.json();
-            const data = parseJwt(result.token);
-            const user = { data, result };
-            if(result.token){
-                setPending(false); 
-            }
-            const resProject = await fetchProjectByUserId(user.data.sub);
-            const resultProject = await resProject.json();
-            localStorage.setItem('project', JSON.stringify(resultProject));
-            userLogin(user);
-           
-            if (result.userType === "client") {
-                
-                navigate("/works");
-
-            }
-            else if (result.userType === "admin") {
-              
-                navigate("/admin/tagmgmt");
-            }
-        }
-    };
-    return (
-        <div className={styles.app_auth_wrapper}>
-            <img className={styles.app_shape_img} src={shapeImg3} alt={shapeImg3} />
-            <img className={styles.app_shape_img4} src={shapeImg4} alt={shapeImg4} />
-            <div className={styles.app_auth_contbox}>
-                <div className={styles.app_auth__form_contbox}>
-                    <div className={styles.app_auth__bandlogo}>
-                        <img src={brandLogo} alt={brandLogo} width={'90px'} />
-                    </div>
-                    <div className={styles.app_auth_formbox}>
-                        <h2 className={styles.app_auth_form_title}>Sign In</h2>
-                        <form className={styles.app_auth_form} action="" method="post">
-                            <div className={styles.app_auth_form_group}>
-                                <div className={styles.app_gradient_box}>
-                                    <div className={styles.app_auth_iconbox}>
-                                        <span className={styles.app_auth_form_icon}><BiUser /></span>
-                                    </div>
-                                    <input className={styles.app_auth_inputfild} type="text" name="username"
-                                        placeholder="Enter Username"
-                                        value={username}
-                                        onChange={(e) => {
-                                            setUsername(e.target.value);
-                                        }} />
-                                </div>
-                            </div>
-                            <div className={styles.app_auth_form_group}>
-                                <div className={styles.app_gradient_box}>
-                                    <div className={styles.app_auth_iconbox}>
-                                    <span className={styles.app_auth_form_icon}><CiLock /></span>
-                                        <span onClick={() => handleShowPassword()} className={styles.app_auth_form_icon}>{showPassword.password ? <AiOutlineEye /> : <AiOutlineEyeInvisible />}</span>
-                                    </div>
-                                    <input className={styles.app_auth_inputfild} type={showPassword.password ? "text" : "password"} name="password"
-                                        placeholder="Enter Password" value={pwd}
-                                        onChange={(e) => {
-                                            setPwd(e.target.value);
-                                        }} />
-                                </div>
-                                <a className={styles.app_auth_link} href='/forgotpassword'>Forgot Password?</a>
-                            </div>
-                            <div className={styles.app_auth_btn_contbox}>
-                                <div className={styles.app_auth_linkbox}><span className={styles.link_boxtitle}>New Registration?</span> <a className={styles.app_auth_linkto} href='/signup'>Signup</a></div>
-                                <div className={styles.app_auth_btnbox}>
-                                    <input type="button" className={styles.app_auth_btn} name="button" value="Sign In"
-                                        onClick={handleSubmit} />
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                {/* loader */}
-            {
-                pending &&
-                <div className={styles.loader}>
-                    <Loader />
-                </div>
-            }
-            </div>
-            <ToastContainer />
-      
+  return (
+    <AuthScreen
+      label="Workspace access"
+      line1="SIGN"
+      line2="IN."
+      sub="Open the work queue, review title and description updates, then approve what goes live."
+      toast={toast}
+      toastKind={toastKind}
+    >
+      <form onSubmit={handleSubmit}>
+        <AuthField
+          label="Username or email"
+          type="text"
+          name="username"
+          autoComplete="username"
+          placeholder="you@agency.com"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+        <AuthField label="Password">
+          <div className="sf-auth-pass">
+            <input
+              type={show ? "text" : "password"}
+              name="password"
+              autoComplete="current-password"
+              placeholder="Your password"
+              value={pwd}
+              onChange={(e) => setPwd(e.target.value)}
+            />
+            <button type="button" className="sf-link" onClick={() => setShow((v) => !v)}>
+              {show ? "Hide" : "Show"}
+            </button>
+          </div>
+        </AuthField>
+        <div className="sf-auth-row">
+          <Link className="sf-link" href="/forgotpassword">
+            Forgot password
+          </Link>
         </div>
-    )
+        <AuthSubmit disabled={pending}>{pending ? "Signing in…" : "Sign in →"}</AuthSubmit>
+        <SocialLoginButtons onError={notice} />
+        <p className="sf-auth-foot">
+          New workspace? <Link href="/signup">Create access</Link>
+        </p>
+      </form>
+    </AuthScreen>
+  );
 }
-
-export default Signin

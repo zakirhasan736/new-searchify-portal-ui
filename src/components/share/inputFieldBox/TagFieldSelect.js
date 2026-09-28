@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from 'react'
 import styles from './inputField.module.css'
 import removedIcon from '../../../assets/img/x.png'

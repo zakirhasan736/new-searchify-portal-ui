@@ -1,6 +1,6 @@
 .app_SEO_Optimization{
-    width: calc(100vw - 300px);
-    height: calc(100vh - 161px);
+    width: 100%;
+    height: 100%;
     overflow: hidden;
     position: relative;
 }
@@ -15,13 +15,13 @@
   }
 @media screen and (max-width:1280px) {
     .app_SEO_Optimization{
-        width: calc(100vw - 255px);
+        width: 100%;
     }
 }
 
 .SEO_Optimization_wrapper{
     width: 100%;
-    height:calc(100vh - 161px);
+    height:100%;
     padding: 31px 99px 35px 38px;
     overflow: hidden;
     overflow-y: scroll;
@@ -63,7 +63,7 @@
 }
 @media screen and (max-width:991px) {
     .app_SEO_Optimization{
-        width: calc(100vw - 81px);
+        width: 100%;
     }
     .SEO_Optimization_wrapper{
        padding-right: 25px;
@@ -73,10 +73,10 @@
 @media screen and (max-width:767px) {
 .breadcrumb__box{margin-bottom: 50px;}
 .app_SEO_Optimization {
-	height: calc(100vh - 104px);
+	height: 100%;
 }
 .SEO_Optimization_wrapper {
-	height: calc(100vh - 104px);
+	height: 100%;
 }
 .SEO_Optimization_wrapper{
     padding-right: 10px;

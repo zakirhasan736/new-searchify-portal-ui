@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useState } from 'react'
 import styles from './analytics.module.css'
 import { TfiAngleRight } from "react-icons/tfi";

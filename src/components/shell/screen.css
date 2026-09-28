@@ -1,0 +1,117 @@
+.app-body-main-content [class*="analytics_title"],
+.app-body-main-content [class*="keyword_title"],
+.app-body-main-content [class*="analytics__overview__title"] {
+  font-size: 32px !important;
+  line-height: 1.15 !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.04em !important;
+}
+
+.app-body-main-content [class*="analytics_overview_titlebox"],
+.app-body-main-content [class*="global__rank__titlebox"] {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  margin-bottom: 22px !important;
+  flex-wrap: wrap !important;
+}
+
+.app-body-main-content [class*="compare__site_box"] {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+  align-items: center !important;
+  margin-bottom: 22px !important;
+}
+
+.app-body-main-content [class*="terget_website"],
+.app-body-main-content [class*="search_inputbar"],
+.app-body-main-content input[type="text"]:not([class*="app_auth"]),
+.app-body-main-content input[type="password"]:not([class*="app_auth"]),
+.app-body-main-content input[type="email"]:not([class*="app_auth"]) {
+  background: #100e16 !important;
+  border: 1px solid rgba(146, 107, 255, 0.28) !important;
+  border-radius: 12px !important;
+  color: #fff !important;
+  min-height: 44px;
+}
+
+.app-body-main-content [class*="analytics__total_visite_card"],
+.app-body-main-content [class*="engagement_overview__wrapbox"],
+.app-body-main-content [class*="visits_overtime__wrapper"],
+.app-body-main-content [class*="top_country_visits_wrapper"],
+.app-body-main-content [class*="keyword__cont_main"],
+.app-body-main-content [class*="PageOverview"] {
+  background: #14121c !important;
+  border: 1px solid rgba(146, 107, 255, 0.2) !important;
+  border-radius: 20px !important;
+  padding: 22px !important;
+  margin: 0 0 16px !important;
+}
+
+.app-body-main-content [class*="analytics__rank_card_wrapper"],
+.app-body-main-content [class*="keyword_ranking__Updates_list"] {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  gap: 12px !important;
+  overflow: visible !important;
+}
+
+.app-body-main-content [class*="keyword_ranking__items"] {
+  margin: 0 !important;
+  background: #14121c;
+  border: 1px solid rgba(146, 107, 255, 0.18);
+  border-radius: 16px;
+  padding: 8px;
+}
+
+.app-body-main-content [class*="total_number_visitor"],
+.app-body-main-content [class*="visites__overview_number"] {
+  font-weight: 600 !important;
+  letter-spacing: -0.05em !important;
+  font-size: 48px !important;
+  line-height: 1.1 !important;
+}
+
+.app-body-main-content [class*="overview__number"] {
+  font-weight: 600 !important;
+  letter-spacing: -0.03em !important;
+}
+
+.app-body-main-content [class*="dateTimeBox"] {
+  color: #c4b2ff !important;
+  font-size: 13px !important;
+}
+
+.app-body-main-content table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.app-body-main-content th {
+  text-align: left;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #c4b2ff;
+  font-weight: 600;
+  padding: 12px 10px;
+  border-bottom: 1px solid rgba(146, 107, 255, 0.2);
+}
+
+.app-body-main-content td {
+  padding: 12px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@media screen and (max-width: 767px) {
+  .app-body-main-content [class*="analytics_title"] {
+    font-size: 26px !important;
+  }
+
+  .app-body-main-content [class*="total_number_visitor"] {
+    font-size: 36px !important;
+  }
+}

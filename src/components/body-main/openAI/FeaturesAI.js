@@ -1,10 +1,11 @@
+"use client";
 import React, { useState, useEffect, useMemo } from 'react'
 import styles from './openAI.module.css';
 import { FcGoogle } from "react-icons/fc";
 import shapeImg1 from '../../../assets/img/gradient-shape.png'
 import shapeImg2 from '../../../assets/img/gradient-shape-2.png'
 import { db } from './openAIdb';
-import { Link } from 'react-router-dom';
+import { Link } from '@/lib/navigation';
 const FeaturesAI = () => {
 
   const [data, setData] = useState([]);

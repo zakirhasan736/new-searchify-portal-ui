@@ -1,15 +1,16 @@
-import React  from 'react'; 
+"use client";
+import React from 'react'; 
 import styles from '../analytics.module.css'
 import shapeImg6 from '../../../../assets/img/gradient-shape6.png'
 import shapeImg3 from '../../../../assets/img/gradient-shape3.png'
 import shapeImg4 from '../../../../assets/img/gradient-shape4.png'
 import infoModal4 from '../../../../assets/img/info-modal4.png';
-import {
-  TfiAngleDown,
+import infoModal5 from '../../../../assets/img/info-modal5.png';
+import infoModal6 from '../../../../assets/img/info-modal6.png';
+import CountrySelect from '../../../share/countryselect/CountrySelect';
 
-} from 'react-icons/tfi';
-// import { Link } from 'react-router-dom'
-const organicsearch = () => {
+const Organicsearch = () => {
+
   return (
     <>
        <section className={styles.keyword__wrap_section}>
@@ -44,7 +45,9 @@ Start with learning what works best for your competitors.
                     <input type="text" className={styles.keyword__inputfild__organic} placeholder='Enter domain, subdomain or URL' />
                     </div>
                     <div className={styles.competitor__controll_box}>
-                    <div className={styles.country__select_widget}>USA <span className={styles.arrow_down}>< TfiAngleDown /></span></div>
+                     
+                       <CountrySelect />
+
                       <button className={styles.compare__button}>
                         Compare
                       </button>
@@ -83,8 +86,8 @@ Start with learning what works best for your competitors.
                   <div className={styles.keyword__info__details_item}>
                     <div className={styles.info__details_modalimg__item}>
                       <img
-                        src={infoModal4}
-                        alt={infoModal4}
+                        src={infoModal5}
+                        alt={infoModal5}
                         className={styles.info_details_modal1}
                       />
                     </div>
@@ -103,8 +106,8 @@ Start with learning what works best for your competitors.
                   <div className={styles.keyword__info__details_item}>
                     <div className={styles.info__details_modalimg__item}>
                       <img
-                        src={infoModal4}
-                        alt={infoModal4}
+                        src={infoModal6}
+                        alt={infoModal6}
                         className={styles.info_details_modal1}
                       />
                     </div>
@@ -139,4 +142,4 @@ Start with learning what works best for your competitors.
   )
 }
 
-export default organicsearch
+export default Organicsearch

@@ -1,16 +1,15 @@
 .app_dashboard_home {
-    width: calc(100vw - 300px);
-    height: calc(100vh - 161px);
+    width: 100%;
+    height: 100%;
     overflow: hidden;
     position: relative;
 }
 .app_dashboard_wrapper{
     width: 100%;
-    height:calc(100vh - 161px);
-    padding: 31px 99px 35px 38px;
-    overflow: hidden;
-    overflow-y: scroll;
-    z-index: 9999;
+    height: auto;
+    min-height: 100%;
+    padding: 0;
+    overflow: visible;
     position: relative;
 }
 
@@ -37,12 +36,12 @@
 }
 @media screen and (max-width:1280px) {
     .app_dashboard_home {
-        width: calc(100vw - 255px);
+        width: 100%;
     }
 }
 @media screen and (max-width:991px) {
     .app_dashboard_home {
-        width: calc(100vw - 81px);
+        width: 100%;
     }
     .app_dashboard_wrapper{
         padding-right: 25px;
@@ -55,9 +54,9 @@
         padding-left: 10px;
      }
      .app_dashboard_home {
-        height: calc(100vh - 104px);
+        height: 100%;
     }
     .app_dashboard_wrapper{
-        height:calc(100vh - 104px);
+        height:100%;
     } 
 }

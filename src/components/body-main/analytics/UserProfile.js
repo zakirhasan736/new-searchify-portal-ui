@@ -1,15 +1,36 @@
-import React, { useRef, useState } from 'react';
+"use client";
+import React, { useEffect, useRef, useState } from 'react';
 import styles from './analytics.module.css';
 import shapeImg6 from '../../../assets/img/gradient-shape6.png';
 import shapeImg7 from '../../../assets/img/gradient-shape-7.png';
 import UserImg from '../../../assets/img/Profile-pic.png';
 import GoogleIcon from '../../../assets/img/google.png';
 import Mastercard from '../../../assets/img/Mastercard_2019_logo 1.png';
+import { authHeaders } from '../../../utils/users/Helpers';
 
 const UserProfile = () => {
     const [imgUrl, setImgUrl] = useState(UserImg);
     const imgRef = useRef(null);
     const [editField, setField] = useState(null);
+    const [displayName, setDisplayName] = useState("");
+    const [saved, setSaved] = useState("");
+
+    useEffect(() => {
+        fetch("/api/v1/profile", { headers: authHeaders() })
+            .then((response) => response.ok ? response.json() : null)
+            .then((profile) => {
+                if (profile?.displayName) setDisplayName(profile.displayName);
+            });
+    }, []);
+
+    const saveProfile = async () => {
+        const response = await fetch("/api/v1/profile", {
+            method: "PUT",
+            headers: authHeaders(),
+            body: JSON.stringify({ displayName, photo: typeof imgUrl === "string" ? imgUrl : "" }),
+        });
+        setSaved(response.ok ? "Profile saved." : "Sign in to save your profile.");
+    };
 
     const handleImgChange = (e) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -35,6 +56,11 @@ const UserProfile = () => {
                 <img className={styles.app_shape_img7} src={shapeImg7} alt={shapeImg7} />
                 <div className={styles.analytics_overview_titlebox}>
                     <h2 className={styles.analytics_title}>User profile settings</h2>
+                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                        <input value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="Display name" style={{ padding: 8 }} />
+                        <button type="button" onClick={saveProfile}>Save profile</button>
+                    </div>
+                    {saved ? <p>{saved}</p> : null}
                 </div>
 
                 <div className={styles.user__profile_box}>

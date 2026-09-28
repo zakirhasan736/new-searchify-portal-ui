@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useState } from 'react'
 import styles from './rankCard.module.css';
 import {  CalendarIcon } from '../../body-main/analytics/icons';

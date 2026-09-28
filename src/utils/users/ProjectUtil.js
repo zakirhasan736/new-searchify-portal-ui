@@ -1,29 +1,23 @@
-import CONFIG from "../../config/users/Constant";
+import { authHeaders } from "./Helpers";
 
 export const fetchProjectByUserId = async(userId) => {
-    return await fetch(CONFIG.hostname + ':8086/get/project/customerId/' + userId,{
-        headers: {
-          'Content-Type': 'application/json'
-        },
+    return await fetch('/api/v1/projects/customer/' + userId,{
+        headers: authHeaders(),
         method: 'GET'
     });
 }
 
 export const fetchProjectById = async(projectId) => {
-    return await fetch(CONFIG.hostname + ':8086/get/project/' + projectId,{
-        headers: {
-          'Content-Type': 'application/json'
-        },
+    return await fetch('/api/v1/projects/' + projectId,{
+        headers: authHeaders(),
         method: 'GET'
     });
 }
 
 export const updateProject = async(project) => {
-    return await fetch(CONFIG.hostname + ':8086/update/project/' + project.projectId,{
+    return await fetch('/api/v1/projects/' + project.projectId,{
         body: JSON.stringify(project),
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: authHeaders(),
         method: 'PUT'
     });
 }
@@ -74,16 +68,27 @@ export const addWebpageAndUpdateProject = async (project, website, webpage) => {
 
 }
 
+const storage = () => (typeof window === "undefined" ? null : window.localStorage);
+
 export const getCrawlingData = () => {
-    return JSON.parse(localStorage.getItem('crawlingData'));
+    const store = storage();
+    if (!store) return null;
+    const raw = store.getItem("crawlingData");
+    return raw ? JSON.parse(raw) : null;
 }
 
 export const getProject = () => {
-    return JSON.parse(localStorage.getItem('project'))
+    const store = storage();
+    if (!store) return null;
+    const raw = store.getItem("project");
+    return raw ? JSON.parse(raw) : null;
 }
 
 export const getWebsite = () => {
-    return JSON.parse(localStorage.getItem('currentWebsite'))
+    const store = storage();
+    if (!store) return null;
+    const raw = store.getItem("currentWebsite");
+    return raw ? JSON.parse(raw) : null;
 }
 
 export const isWebsiteExist = (websites, url) => {

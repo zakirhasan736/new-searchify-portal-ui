@@ -1,3 +1,4 @@
+"use client";
 import React from 'react'
 import styles from './home.module.css';
 import ProjectCatelog from '../../core/projectCatelog/ProjectCatelog';

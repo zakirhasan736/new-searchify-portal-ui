@@ -1,3 +1,4 @@
+"use client";
 import React from 'react'
 import styles from './openAI.module.css';
 import { FiCopy } from "react-icons/fi";

@@ -1,8 +1,9 @@
+"use client";
 import React, { useEffect,useState } from 'react';
 import styles from './user.module.css';
 import profileImg from '../../../assets/img/Profile-pic.png';
 import arrowDownImg from '../../../assets/img/Profile-dropdown.png';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from '@/lib/navigation';
 import { getUser, userLogout } from "../../../utils/users/Helpers";
 
 const User = () => {
