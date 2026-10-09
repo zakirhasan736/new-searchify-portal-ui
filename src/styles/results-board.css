@@ -538,3 +538,39 @@ dialog.workspace-dialog::backdrop{background:#030702d6;backdrop-filter:blur(5px)
     overflow: visible !important;
   }
 }
+.draft-checks{display:grid;gap:8px;margin-top:10px}
+.draft-checks .evidence-row{flex-wrap:wrap}
+.claim-list{margin:0;padding-left:18px;display:grid;gap:4px;color:#f3ca82;font-size:13px;line-height:1.5}
+.claim-list strong{color:#ffe1a8}
+.skip-list{margin:0;padding-left:18px;display:grid;gap:6px;color:#bccdae;font-size:13px;line-height:1.5}
+.skip-list span{color:#8e9d83;overflow-wrap:anywhere}
+.homepage-review{display:grid;gap:12px}
+.homepage-review .change-pair{margin:0}
+.account-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 14px;font-size:14px;color:#c9d6bd}
+.result-state{margin:6px 0 0;font-size:12px;color:#f3ca82}
+.sf-pager{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding-top:16px;margin-top:4px;border-top:1px solid #303c29;font-size:13px;color:#a4b198}
+.sf-pager-pages{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sf-pager-pages button{min-width:36px;min-height:36px;padding:0 10px;border-radius:7px;border:1px solid #45523b;background:#171f14;color:#d6e2cb;font:600 13px var(--font);cursor:pointer}
+.sf-pager-pages button:hover:not(:disabled){border-color:#a2c36f}
+.sf-pager-pages button.on{background:var(--lime);border-color:var(--lime);color:#1c2813}
+.sf-pager-pages button:disabled{opacity:.4;cursor:default}
+.sf-pager-gap{padding:0 4px;color:#7d8c72}
+.extension-view .sf-pager-size{display:flex;align-items:center;gap:8px;font-size:13px;color:#a4b198}
+.extension-view .sf-pager-size select{min-height:36px;padding:6px 10px}
+.plan-usage.out{color:#f3ca82!important}
+.plan-usage a{color:var(--lime)}
+@media (max-width:640px){.sf-pager{justify-content:center}.sf-pager-count{width:100%;text-align:center}}
+
+.workspace-controls{display:flex;align-items:flex-start;gap:18px;flex-wrap:wrap;min-width:0}
+.workspace-controls>div{min-width:0}
+.region-selector label{display:flex;align-items:center;gap:12px;font-size:13px;color:#a7b59f}
+.region-select-wrap{position:relative;display:inline-flex;align-items:center;gap:8px}
+.region-flag{font-size:18px;line-height:1}
+.region-selector select{max-width:240px;padding-left:8px}
+.region-selector .site-scope-note{display:block;margin-top:6px;max-width:260px}
+@media(max-width:760px){
+  .workspace-controls{width:100%}
+  .workspace-controls>div,.region-selector{width:100%}
+  .region-selector label{width:100%;display:grid;grid-template-columns:auto 1fr;align-items:center}
+  .region-selector select{width:100%;max-width:none}
+}

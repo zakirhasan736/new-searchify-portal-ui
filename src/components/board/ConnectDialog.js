@@ -147,8 +147,11 @@ export function useConnectionStatus() {
         wordpress: Boolean(wp),
         wordpressId: wp?.id || null,
         wordpressUrl: wp?.siteUrl || "",
-        gsc: Boolean(g.gscSiteUrl),
-        ga: Boolean(g.ga4PropertyId),
+        gsc: g.gsc?.status === "connected",
+        ga: g.ga4?.status === "connected",
+        gscStatus: g.gsc?.status || (g.gscSiteUrl ? "unverified" : "not_selected"),
+        gaStatus: g.ga4?.status || (g.ga4PropertyId ? "unverified" : "not_selected"),
+        googleAccount: g.account?.status || (g.connected ? "connected" : "disconnected"),
         google: g,
       });
     }).catch(() => {});

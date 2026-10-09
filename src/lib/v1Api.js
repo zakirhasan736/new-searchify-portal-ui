@@ -8,6 +8,21 @@ async function json(res) {
   return { ok: res.ok, status: res.status, data };
 }
 
+/** Plain message from an API error. `detail` may be a string or {code, message}. */
+export function errorText(res, fallback = "Something went wrong.") {
+  const detail = res?.data?.detail;
+  if (typeof detail === "string" && detail) return detail;
+  if (detail && typeof detail.message === "string") return detail.message;
+  if (Array.isArray(detail) && detail[0]?.msg) return detail[0].msg;
+  if (typeof res?.data?.message === "string" && res.data.message) return res.data.message;
+  return fallback;
+}
+
+export function errorCode(res) {
+  const detail = res?.data?.detail;
+  return detail && typeof detail === "object" && !Array.isArray(detail) ? detail.code || "" : "";
+}
+
 async function cachedFetch(key, runner, { force = false, getter, setter } = {}) {
   const store = useV3Store.getState();
   if (!force) {
@@ -55,8 +70,9 @@ export async function startGoogleOAuth(services = "gsc,ga4,ads", options = {}) {
   return res;
 }
 
-export async function listGoogleSites() {
-  return json(await fetch("/api/v1/oauth/google/sites", { headers: authHeaders() }));
+export async function listGoogleSites(site = "") {
+  const qs = site ? `?site=${encodeURIComponent(site)}` : "";
+  return json(await fetch(`/api/v1/oauth/google/sites${qs}`, { headers: authHeaders(), cache: "no-store" }));
 }
 
 export async function selectGoogleProperties(body) {
@@ -344,20 +360,48 @@ async function research(kind, body) {
   }));
 }
 
-export function researchKeywords({ site, terms = [], country = "", force = false }) {
-  return research("keywords", { site, terms, country, force });
+export function researchKeywords({ site, terms = [], country = "", reach = "", force = false }) {
+  return research("keywords", { site, terms, country, reach, force });
 }
 
-export function researchBacklinks({ site, force = false }) {
-  return research("backlinks", { site, force });
+export function researchBacklinks({ site, force = false, storedOnly = false }) {
+  return research("backlinks", { site, force, stored_only: storedOnly });
 }
 
 export function researchAudit({ site, force = false }) {
   return research("audit", { site, force });
 }
 
-export function researchVisibility({ site, brand = "", country = "", prompts = [], force = false }) {
-  return research("visibility", { site, brand, country, prompts, force });
+export function researchVisibility({ site, brand = "", country = "", reach = "", prompts = [], force = false }) {
+  return research("visibility", { site, brand, country, reach, prompts, force });
+}
+
+export async function getMarket({ site = "", siteId = "" } = {}) {
+  const params = new URLSearchParams();
+  if (site) params.set("site", site);
+  if (siteId != null && siteId !== "") params.set("siteId", String(siteId));
+  const qs = params.toString();
+  return json(await fetch(`/api/v1/operator/market${qs ? `?${qs}` : ""}`, { headers: authHeaders(), cache: "no-store" }));
+}
+
+export async function saveMarket({ site = "", siteId = null, countryIso = "", language = "", city = "", region = "", serviceArea = "" } = {}) {
+  return json(await fetch("/api/v1/operator/market", {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ site, siteId, countryIso, language, city, region, serviceArea }),
+  }));
+}
+
+export async function getJourney() {
+  return json(await fetch("/api/v1/operator/journey", { headers: authHeaders(), cache: "no-store" }));
+}
+
+export async function putJourney(state) {
+  return json(await fetch("/api/v1/operator/journey", {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ state }),
+  }));
 }
 
 export async function getSiteScan(siteUrl = "") {
@@ -415,7 +459,7 @@ export async function dismissChange(id) {
 
 export async function approveChange(id) {
   const res = await json(await fetch(`/api/v1/operator/changes/${id}/approve`, { method: "POST", headers: authHeaders() }));
-  if (res.ok) invalidateV3Cache(["changes"]);
+  invalidateV3Cache(["changes"]);
   return res;
 }
 
@@ -427,7 +471,7 @@ export async function executeChange(id, { forceDryRun = false } = {}) {
       body: JSON.stringify({ force_dry_run: forceDryRun }),
     }),
   );
-  if (res.ok) invalidateV3Cache(["changes"]);
+  invalidateV3Cache(["changes"]);
   return res;
 }
 
@@ -584,12 +628,12 @@ export function featureKpi(payload, labelPart, fallback = "—") {
 }
 
 export function queueItems(changes = []) {
-  return (changes || []).filter((c) => ["proposed", "awaiting_approval", "approved"].includes(c.status));
+  return (changes || []).filter((c) => ["proposed", "awaiting_approval", "approved", "failed", "needs_review"].includes(c.status));
 }
 
 export function historyItems(changes = []) {
   return (changes || []).filter(
-    (c) => ["applied", "monitoring", "closed", "failed", "undone"].includes(c.status) || c.appliedAt,
+    (c) => ["applied", "monitoring", "closed", "published_unverified", "undone"].includes(c.status) || c.appliedAt,
   );
 }
 

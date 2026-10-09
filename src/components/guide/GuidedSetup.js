@@ -5,8 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { userIsAuthenticated } from "@/utils/users/Helpers";
-import { completeDraft, draftForSetup, loadJourney, markConnection, profileFromAnswers, saveDraft } from "@/lib/journey";
-import { saveBusinessProfile } from "@/lib/v1Api";
+import { completeDraft, draftForSetup, hydrateJourney, loadJourney, markConnection, saveDraft, syncJourneyNow } from "@/lib/journey";
 import { QUESTIONS } from "@/components/guide/questions";
 import ConnectDialog from "@/components/board/ConnectDialog";
 
@@ -31,12 +30,17 @@ export default function GuidedSetup() {
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
   const [connectOpen, setConnectOpen] = useState(false);
+  const [finishing, setFinishing] = useState(false);
+  const [pendingPath, setPendingPath] = useState("");
 
   useEffect(() => {
     if (!userIsAuthenticated()) {
       router.replace("/login");
       return;
     }
+    let cancel = false;
+    hydrateJourney().then(() => {
+    if (cancel) return;
     const draft = draftForSetup(isNew);
     if (!draft) {
       router.replace("/app");
@@ -52,10 +56,26 @@ export default function GuidedSetup() {
     setAnswers(nextAnswers);
     setIndex(Math.min(Number(draft.step) || 0, QUESTIONS.length - 1));
     setReady(true);
+    });
+    return () => { cancel = true; };
   }, [googleBack, isNew, router]);
 
   const question = QUESTIONS[index];
   const total = QUESTIONS.length;
+
+  const finish = async (nextAnswers) => {
+    setFinishing(true);
+    setError("");
+    const path = pendingPath || completeDraft(nextAnswers);
+    setPendingPath(path);
+    const res = await syncJourneyNow();
+    setFinishing(false);
+    if (!res.ok) {
+      setError(`Your answers were not saved to your account. ${res.error} Nothing is lost on this device. Try again.`);
+      return;
+    }
+    router.push(path);
+  };
 
   const advance = (nextAnswers, from) => {
     const current = QUESTIONS[from];
@@ -72,8 +92,7 @@ export default function GuidedSetup() {
     saveDraft(nextAnswers, from + 1);
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (current.last || from === total - 1) {
-      saveBusinessProfile(profileFromAnswers(nextAnswers)).catch(() => {});
-      router.push(completeDraft(nextAnswers));
+      finish(nextAnswers);
       return;
     }
     setLoading(true);
@@ -115,7 +134,7 @@ export default function GuidedSetup() {
           </Link>
           <div className="topmeta">
             <span>{isNew ? "New website" : "Setup"}</span>
-            <button className="skip-all" type="button" onClick={() => { saveBusinessProfile(profileFromAnswers(answers)).catch(() => {}); router.push(completeDraft(answers)); }}>
+            <button className="skip-all" type="button" disabled={finishing} onClick={() => finish(answers)}>
               Skip questionnaire <span aria-hidden="true">↗</span>
             </button>
           </div>
@@ -232,8 +251,8 @@ export default function GuidedSetup() {
               Back
             </button>
             {question.type === "text" ? (
-              <button className="continuebtn" type="button" onClick={submitText}>
-                {question.last ? (loadJourney().planId ? "Open my dashboard" : "See plans") : "Continue"} <span aria-hidden="true">↗</span>
+              <button className="continuebtn" type="button" disabled={finishing} onClick={submitText}>
+                {finishing ? "Saving your answers…" : question.last ? (loadJourney().planId ? "Open my dashboard" : "See plans") : "Continue"} <span aria-hidden="true">↗</span>
               </button>
             ) : (
               <span />

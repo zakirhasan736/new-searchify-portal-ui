@@ -1,9 +1,19 @@
+import { authHeaders, getUser } from "@/utils/users/Helpers";
+
 const KEY = "sf_journey_v1";
+const SYNC_DELAY = 500;
+let syncTimer = null;
+let hydrated = null;
+
+function ownerKey() {
+  const user = typeof window === "undefined" ? null : getUser();
+  return String(user?.result?.username || user?.data?.username || user?.result?.email || "");
+}
 
 export const PLANS = [
-  { id: "starter", name: "Starter", price: 29, annual: 24, sites: 1, keywords: 25, prompts: 5, audits: 2, desc: "One site. A clear next step." },
-  { id: "growth", name: "Growth", price: 79, annual: 65, sites: 3, keywords: 150, prompts: 30, audits: 8, desc: "More coverage as you grow." },
-  { id: "agency", name: "Agency", price: 199, annual: 165, sites: 10, keywords: 500, prompts: 100, audits: 30, desc: "A workspace for your clients." },
+  { id: "starter", name: "Starter", price: 29, annual: 24, sites: 1, keywords: 10, prompts: 5, audits: 2, desc: "One site. A clear next step." },
+  { id: "growth", name: "Growth", price: 79, annual: 65, sites: 3, keywords: 50, prompts: 30, audits: 8, desc: "More coverage as you grow." },
+  { id: "agency", name: "Agency", price: 199, annual: 165, sites: 10, keywords: 200, prompts: 100, audits: 30, desc: "A workspace for your clients." },
 ];
 
 function empty() {
@@ -20,15 +30,96 @@ export function loadJourney() {
       billing: raw.billing === "annual" ? "annual" : "monthly",
       sites: raw.sites,
       activeId: raw.activeId || null,
+      owner: raw.owner || "",
+      dirty: Boolean(raw.dirty),
     };
   } catch {
     return empty();
   }
 }
 
-function save(state) {
+function writeLocal(state) {
   localStorage.setItem(KEY, JSON.stringify(state));
   return state;
+}
+
+function save(state) {
+  writeLocal({ ...state, owner: ownerKey(), dirty: true });
+  if (syncTimer) window.clearTimeout(syncTimer);
+  syncTimer = window.setTimeout(() => {
+    syncTimer = null;
+    syncJourneyNow().catch(() => {});
+  }, SYNC_DELAY);
+  return state;
+}
+
+function serverShape(state) {
+  const { planId, billing, sites, activeId } = state;
+  return { planId, billing, sites, activeId };
+}
+
+/** Push the local journey to the server. Resolves to { ok, error }. */
+export async function syncJourneyNow() {
+  if (typeof window === "undefined") return { ok: false, error: "Not in a browser." };
+  if (syncTimer) {
+    window.clearTimeout(syncTimer);
+    syncTimer = null;
+  }
+  const state = loadJourney();
+  let res;
+  try {
+    res = await fetch("/api/v1/operator/journey", {
+      method: "PUT",
+      headers: authHeaders(),
+      body: JSON.stringify({ state: serverShape(state) }),
+    });
+  } catch {
+    return { ok: false, error: "Could not reach Searchify. Your answers are kept on this device; try again." };
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const detail = typeof data.detail === "string" ? data.detail : data.detail?.message;
+    return { ok: false, error: detail || `Saving your setup failed (HTTP ${res.status}).` };
+  }
+  const latest = loadJourney();
+  if (JSON.stringify(serverShape(latest)) === JSON.stringify(serverShape(state))) {
+    writeLocal({ ...latest, dirty: false, owner: ownerKey() });
+  }
+  return { ok: true, profiles: data.profiles || [] };
+}
+
+/** Load the signed-in user's journey from the server once per page load. */
+export function hydrateJourney({ force = false } = {}) {
+  if (typeof window === "undefined") return Promise.resolve(empty());
+  if (hydrated && !force) return hydrated;
+  hydrated = (async () => {
+    const local = loadJourney();
+    const me = ownerKey();
+    const mine = !local.owner || local.owner === me;
+    let server = null;
+    try {
+      const res = await fetch("/api/v1/operator/journey", { headers: authHeaders(), cache: "no-store" });
+      if (!res.ok) return mine ? local : empty();
+      server = (await res.json().catch(() => ({})))?.journey?.state || null;
+    } catch {
+      return mine ? local : empty();
+    }
+    if (mine && local.dirty && local.sites.length) {
+      await syncJourneyNow();
+      return loadJourney();
+    }
+    if (server) {
+      writeLocal({ ...empty(), ...server, owner: me, dirty: false });
+    } else if (mine && local.sites.length) {
+      writeLocal({ ...local, owner: me, dirty: true });
+      await syncJourneyNow();
+    } else {
+      writeLocal({ ...empty(), owner: me, dirty: false });
+    }
+    window.dispatchEvent(new CustomEvent("sf-site", { detail: { id: loadJourney().activeId } }));
+    return loadJourney();
+  })();
+  return hydrated;
 }
 
 export function planById(id) {
@@ -170,16 +261,13 @@ export function saveDraft(answers, step) {
 }
 
 export function profileFromAnswers(answers = {}) {
-  const offer = answers.businessType || "";
-  const market = answers.market || "";
-  const reach = answers.reach || "";
   return {
-    business: [offer, market].filter(Boolean).join(" in ") || offer,
-    services: offer,
-    areas: [market, reach].filter(Boolean).join(" · "),
-    locations: market,
+    business: "",
+    services: "",
+    areas: answers.market || "",
+    locations: answers.market || "",
     claims: "Only facts that are visible on the live page.",
-    voice: answers.shortGoal || "specific, local, and concrete",
+    voice: "",
     restrictions: [answers.industry, answers.avoid].filter((item) => item && item !== "No special category").join(". "),
   };
 }

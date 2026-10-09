@@ -165,11 +165,12 @@ export default function ArticleStudio({ kind = "ai-article", title, description 
     const queued = await queue.json().catch(() => ({}));
     setBusy(false);
     setDrafts((current) => current.map((row) => (row.id === item.id ? { ...row, status: "approved", changeId: queued.change?.id } : row)));
-    setMessage(
-      queued.change?.id
-        ? `Approved · site change #${queued.change.id} queued for CMS. Open SEO Operator to execute.`
-        : "Approved for CMS queue.",
-    );
+    if (!queue.ok || !queued.change?.id) {
+      const detail = queued.detail;
+      setMessage(`Draft approved, but it was not added to the website queue: ${typeof detail === "string" ? detail : detail?.message || `HTTP ${queue.status}`}. Nothing was published.`);
+      return;
+    }
+    setMessage(`Draft approved. Website change #${queued.change.id} is waiting in the approval queue. Nothing is published until you approve it there.`);
   };
 
   return (

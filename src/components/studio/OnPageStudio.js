@@ -5,6 +5,13 @@ import Link from "next/link";
 import { approveDraft, crawlOnPageFix, loadFeatures, operatorApproveChange, operatorExecuteChange } from "@/lib/clientApi";
 import { groupFor } from "@/lib/tools";
 
+function detailText(data, fallback) {
+  const detail = data?.detail;
+  if (typeof detail === "string" && detail) return detail;
+  if (detail && typeof detail.message === "string") return detail.message;
+  return fallback;
+}
+
 export default function OnPageStudio({
   kind = "on-page-seo",
   title = "On Page SEO Checker",
@@ -71,11 +78,18 @@ export default function OnPageStudio({
     }
     setDraft({ ...draft, status: "approved" });
     if (change?.id) {
-      await operatorApproveChange(change.id);
-      setChange({ ...change, status: "approved" });
+      const approved = await operatorApproveChange(change.id);
+      const body = await approved.json().catch(() => ({}));
+      if (!approved.ok) {
+        setBusy(false);
+        setMessage(`Draft approved, but the website change was not: ${detailText(body, `HTTP ${approved.status}`)}`);
+        return false;
+      }
+      setChange(body?.id ? body : { ...change, status: "approved" });
     }
     setBusy(false);
-    setMessage("Approved — execute on CMS from here or SEO Operator.");
+    setMessage("Approved. Publish it from here or from the approval queue.");
+    return true;
   };
 
   const executeCms = async (dry = true) => {
@@ -83,21 +97,22 @@ export default function OnPageStudio({
       setMessage("No site change queued — run crawl again.");
       return;
     }
-    if (change.status === "awaiting_approval") {
-      await approve();
-    }
+    if (change.status === "awaiting_approval" && !(await approve())) return;
     setBusy(true);
     setMessage(dry ? "Dry-run on CMS…" : "Executing on CMS…");
     const response = await operatorExecuteChange(change.id, { forceDryRun: dry });
     const data = await response.json().catch(() => ({}));
     setBusy(false);
     if (!response.ok) {
-      setMessage(data.detail || "Connect a CMS on /operator first.");
+      if (data.detail?.change) setChange(data.detail.change);
+      setMessage(`Nothing was published. ${detailText(data, "Connect a CMS first.")}`);
       return;
     }
-    setChange(data.change || { ...change, status: data.change?.status || "applied" });
+    if (data.change) setChange(data.change);
     const ex = data.execution || {};
-    setMessage(ex.dryRun ? `Dry-run recorded · ${ex.provider}` : `Applied on ${ex.provider} · monitoring started`);
+    if (ex.dryRun || data.dryRun) setMessage(`Dry run only on ${ex.provider || "the CMS"}. Nothing was published.`);
+    else if (data.change?.status === "published_unverified") setMessage(`Sent to ${ex.provider}, but the CMS did not confirm the new title. Check the live page.`);
+    else setMessage(`Published on ${ex.provider}${ex.liveCheck?.titleLive ? " and found on the live page" : ""}. Monitoring started.`);
   };
 
   return (

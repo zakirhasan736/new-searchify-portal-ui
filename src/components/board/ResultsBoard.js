@@ -4,14 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import OverviewTour from "@/components/board/OverviewTour";
-import SampleQueue from "@/components/board/SampleQueue";
+import HomepageReview from "@/components/board/HomepageReview";
+import SiteDrafts from "@/components/board/SiteDrafts";
 import { useConnectionStatus } from "@/components/board/ConnectDialog";
 import { userIsAuthenticated } from "@/utils/users/Helpers";
 import { BREADTH_LABELS, loadGuardrails, saveGuardrails } from "@/lib/guardrails";
 import { useWorkspaceSite } from "@/components/board/useBusinessBrief";
 import { hostnameOf, starterKeywords, starterPrompts } from "@/lib/businessBrief";
-import { activeJourneySite, loadJourney, planById, requiredJourneyPath, resumeSetup } from "@/lib/journey";
-import { loadFeature } from "@/lib/v1Api";
+import { activeJourneySite, hydrateJourney, loadJourney, planById, requiredJourneyPath, resumeSetup } from "@/lib/journey";
+import { loadFeature, researchBacklinks } from "@/lib/v1Api";
 import "@/styles/results-board.css";
 
 const NAV = [
@@ -53,6 +54,9 @@ export default function ResultsBoard() {
       router.replace("/login");
       return;
     }
+    let cancel = false;
+    hydrateJourney().then(() => {
+    if (cancel) return;
     const gate = requiredJourneyPath("/app");
     if (gate) {
       router.replace(gate);
@@ -74,6 +78,8 @@ export default function ResultsBoard() {
     };
     setAddedKeywords(countKeywords(active));
     setReady(true);
+    });
+    return () => { cancel = true; };
   }, [router]);
 
   const connected = [status.wordpress, status.gsc, status.ga].filter(Boolean).length;
@@ -96,7 +102,7 @@ export default function ResultsBoard() {
     Promise.all([
       loadFeature("site-audit").catch(() => null),
       loadFeature("organic-search").catch(() => null),
-      loadFeature("backlinks").catch(() => null),
+      brief.siteUrl ? researchBacklinks({ site: brief.siteUrl, storedOnly: true }).catch(() => null) : Promise.resolve(null),
     ]).then(([audit, queries, links]) => {
       if (cancel) return;
       const auditPayload = payload(audit);
@@ -104,18 +110,18 @@ export default function ResultsBoard() {
         || auditPayload.scores?.mobile?.seo
         || "";
       const queryRows = payload(queries).rows || payload(queries).items || [];
-      const linkRows = payload(links).rows || payload(links).items || [];
-      const domains = new Set(linkRows.map((row) => row?.domain || row?.[0]).filter(Boolean)).size;
+      const linkSummary = links?.ok ? links.data?.summary || null : null;
       setLive({
         score: score && score !== "—" ? String(score) : "",
         keywords: queryRows.length ? queryRows.length : null,
-        domains: linkRows.length ? domains : null,
+        domains: linkSummary?.referringDomains ?? null,
+        domainsAt: linkSummary ? links.data.fetchedAt || "" : "",
       });
     }).finally(() => {
       if (!cancel) setLiveLoading(false);
     });
     return () => { cancel = true; };
-  }, [displayName]);
+  }, [displayName, brief.siteUrl]);
 
   useEffect(() => {
     const node = guardrailRef.current;
@@ -182,25 +188,14 @@ export default function ResultsBoard() {
                       <div className="w-metric"><span>Site audit</span><strong>{live.score ? `${live.score} / 100` : "—"}</strong><small>{live.score ? `PageSpeed for ${displayName}` : `No score stored for ${displayName}`}</small></div>
                       <div className="w-metric"><span>Tracked keywords</span><strong>{live.keywords ?? (brief.ready ? preparedKeywords : "—")}</strong><small>{live.keywords ? `Search Console queries for ${displayName}` : "From this website’s setup until Search Console has queries"}</small></div>
                       <div className="w-metric"><span>AI prompts</span><strong>{brief.ready ? preparedPrompts : "—"}</strong><small>{brief.ready ? `Prepared for ${displayName}` : `Add setup answers for ${displayName}`}</small></div>
-                      <div className="w-metric"><span>Referring domains</span><strong>{live.domains ?? "—"}</strong><small>{live.domains ? `Stored links for ${displayName}` : `No links stored for ${displayName}`}</small></div>
+                      <div className="w-metric"><span>Referring domains</span><strong>{live.domains ?? "—"}</strong><small>{live.domains != null ? `DataForSEO live total${live.domainsAt ? `, checked ${live.domainsAt.slice(0, 10)}` : ""}` : `No backlink report stored for ${displayName}`}</small></div>
                     </>
                   )}
                 </div>
                 {liveLoading ? <p className="w-footnote" role="status">Loading audit data for {displayName}.</p> : null}
-                <aside className="urgent-alert" aria-label={brief.ready ? "First review from your setup" : "Setup still needed"}>
-                  <span className="urgent-beacon" aria-hidden="true" />
-                  <div>
-                    <span className="urgent-kicker">FIRST REVIEW</span>
-                    <strong>{brief.market ? `Put ${brief.market} in the title for ${displayName}` : `Review the first draft for ${displayName}`}</strong>
-                    <p>
-                      {`${displayName} is the website in the menu above. Approve or dismiss each card. Nothing is published from this page.`}
-                      {brief.avoid ? ` Keep this out of suggestions: ${brief.avoid}.` : ""}
-                    </p>
-                    {brief.ready ? null : <button className="w-button" type="button" onClick={() => router.push(resumeSetup())}>Continue setup</button>}
-                  </div>
-                </aside>
+                <HomepageReview brief={brief} onSetup={() => router.push(resumeSetup())} />
                 <div className="dashgrid">
-                  <SampleQueue site={site} />
+                  <SiteDrafts site={site} brief={brief} showScanDetails={false} />
                   <aside className="control-column">
                     <section className="control-card" data-tour="guardrails">
                       <details className="guardrail-fold" ref={guardrailRef}>

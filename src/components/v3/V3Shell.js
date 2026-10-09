@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { getUser, userIsAuthenticated, userLogout } from "@/utils/users/Helpers";
-import { beginAnotherWebsite, requiredJourneyPath } from "@/lib/journey";
+import { beginAnotherWebsite, hydrateJourney, requiredJourneyPath } from "@/lib/journey";
 import { getActiveSite, getBusinessProfile, getGoogleStatus, listCmsConnections, loadWorkspace, prefetchHotData, setActiveSite } from "@/lib/v1Api";
 import PageSkeleton from "@/components/v3/PageSkeleton";
 import BrandMark from "@/components/v3/BrandMark";
@@ -304,12 +304,13 @@ export default function V3Shell({ children }) {
       router.replace("/login");
       return;
     }
-    const gate = requiredJourneyPath(pathname);
-    if (gate) {
-      router.replace(gate);
-      return;
-    }
-    setReady(true);
+    let cancel = false;
+    hydrateJourney().then(() => {
+      if (cancel) return;
+      const gate = requiredJourneyPath(pathname);
+      if (gate) router.replace(gate);
+      else setReady(true);
+    });
     const applyWorkspace = (google, cms, profile) => {
       const g = google?.connection || google || {};
       const sites = (cms?.connections || []).filter((c) => c.status === "connected");
@@ -352,6 +353,7 @@ export default function V3Shell({ children }) {
         /* ignore */
       }
     });
+    return () => { cancel = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

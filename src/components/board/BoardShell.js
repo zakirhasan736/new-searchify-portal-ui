@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { userIsAuthenticated, userLogout } from "@/utils/users/Helpers";
 import AssistantDock from "@/components/board/AssistantDock";
 import WebsiteBar from "@/components/board/WebsiteBar";
-import { activeJourneySite, beginAnotherWebsite, loadJourney, planById, requiredJourneyPath } from "@/lib/journey";
+import { activeJourneySite, beginAnotherWebsite, hydrateJourney, loadJourney, planById, requiredJourneyPath } from "@/lib/journey";
 import { pendingPreviewCount } from "@/lib/previewQueue";
 import "@/styles/results-board.css";
 
@@ -61,17 +61,24 @@ export default function BoardShell({ children }) {
       router.replace("/login");
       return;
     }
-    const gate = requiredJourneyPath(pathname);
-    if (gate) {
-      const extra = window.location.search;
-      router.replace(extra && !gate.includes("?") ? `${gate}${extra}` : gate);
-      return;
-    }
-    const state = loadJourney();
-    setHost(hostOf(activeJourneySite(state)));
-    setPlan(planById(state.planId)?.name || "");
-    setReady(true);
-    setPending(pendingPreviewCount());
+    let live = true;
+    hydrateJourney().then(() => {
+      if (!live) return;
+      const gate = requiredJourneyPath(pathname);
+      if (gate) {
+        const extra = window.location.search;
+        router.replace(extra && !gate.includes("?") ? `${gate}${extra}` : gate);
+        return;
+      }
+      const state = loadJourney();
+      setHost(hostOf(activeJourneySite(state)));
+      setPlan(planById(state.planId)?.name || "");
+      setReady(true);
+      setPending(pendingPreviewCount());
+    });
+    return () => {
+      live = false;
+    };
   }, [pathname, router]);
 
   useEffect(() => {

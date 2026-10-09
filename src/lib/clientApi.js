@@ -64,7 +64,7 @@ export async function queueDraftForCms({ draftId, targetUrl = "", execute = fals
     body: JSON.stringify({
       draft_id: draftId,
       target_url: targetUrl,
-      auto_approve: true,
+      auto_approve: false,
       execute,
       force_dry_run: forceDryRun,
     }),

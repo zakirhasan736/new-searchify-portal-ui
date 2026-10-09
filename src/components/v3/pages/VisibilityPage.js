@@ -168,14 +168,14 @@ export default function VisibilityPage() {
 
       <div className="sf-three sf-gap">
         <div className="sf-box">
-          <div className="sf-small">Answers mentioning you</div>
-          <div className="sf-metric">{kpis.Mentions || "0"}</div>
-          <div className="sf-small">Across this selected prompt sample</div>
+          <div className="sf-small">Estimated mentions</div>
+          <div className="sf-metric">{kpis["Estimated mentions"] || kpis.Mentions || "0"}</div>
+          <div className="sf-small">A model estimate, not a live answer</div>
         </div>
         <div className="sf-box">
-          <div className="sf-small">Answers citing your site</div>
-          <div className="sf-metric">{kpis.Citations || "0"}</div>
-          <div className="sf-small">A linked source, not just a mention</div>
+          <div className="sf-small">Estimated citations</div>
+          <div className="sf-metric">{kpis["Estimated citations"] || kpis.Citations || "0"}</div>
+          <div className="sf-small">A model estimate, not a live answer</div>
         </div>
         <div className="sf-box">
           <div className="sf-small">Issues to fix</div>
@@ -193,9 +193,9 @@ export default function VisibilityPage() {
               <div className="sf-engine" key={row.id || row.name}>
                 <strong>{row.name}</strong>
                 <div className="sf-enginebar">
-                  <span style={{ width: `${Math.max(4, Number(row.score) || 0)}%` }} />
+                  <span style={{ width: `${row.score == null ? 0 : Math.max(4, Number(row.score) || 0)}%` }} />
                 </div>
-                <span className="sf-small">{row.score}%</span>
+                <span className="sf-small">{row.score == null ? "Not estimated" : `${row.score}% estimated`}</span>
               </div>
             ))}
         </div>
@@ -221,9 +221,9 @@ export default function VisibilityPage() {
                     <h3>{item.prompt}</h3>
                     <div className="sf-chiprow">
                       <Pill warn={bad} neutral={!item.mention}>
-                        {item.mention ? "Mentioned" : "Not mentioned"}
+                        {item.mention == null ? "Not estimated" : item.mention ? "Likely mentioned (estimate)" : "Unlikely to be mentioned (estimate)"}
                       </Pill>
-                      <Pill neutral={!item.citation}>{item.citation ? "Website cited" : "No citation"}</Pill>
+                      <Pill neutral={!item.citation}>{item.citation == null ? "Citation not estimated" : item.citation ? "Likely cited (estimate)" : "Unlikely to be cited (estimate)"}</Pill>
                     </div>
                     {bad && item.error ? <p className="sf-vis-errortext">{item.error}</p> : null}
                   </div>

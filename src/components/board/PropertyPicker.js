@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { listGoogleSites, selectGoogleProperties, syncGoogleLive } from "@/lib/v1Api";
+import { errorCode, errorText, listGoogleSites, selectGoogleProperties, syncGoogleLive } from "@/lib/v1Api";
 
 function hostOf(url) {
   try {
@@ -21,7 +21,9 @@ export default function PropertyPicker({ google, cmsConnectionId = null, siteLab
   const [busy, setBusy] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
-  const signedIn = Boolean(google?.connected || google?.status === "connected");
+  const [match, setMatch] = useState(null);
+  const signedIn = google?.account ? google.account.status === "connected" : Boolean(google?.connected);
+  const reauth = google?.account?.status === "reauth_required";
   const siteHost = hostOf(siteLabel);
   const mismatch = Boolean(siteHost && hostOf(gsc) && siteHost !== hostOf(gsc));
 
@@ -33,25 +35,23 @@ export default function PropertyPicker({ google, cmsConnectionId = null, siteLab
   useEffect(() => {
     if (!signedIn) return;
     let cancel = false;
-    listGoogleSites().then((res) => {
+    listGoogleSites(siteLabel).then((res) => {
       if (cancel) return;
       if (!res.ok) {
-        setError(typeof res.data?.detail === "string" ? res.data.detail : "Could not load Google properties.");
+        setError(errorCode(res) === "google_reauth_required"
+          ? "Google access was revoked or expired. Sign in to Google again to choose properties."
+          : errorText(res, "Could not load Google properties."));
         return;
       }
-      const sites = res.data?.gscSites || [];
-      const props = res.data?.ga4Properties || [];
-      setGscSites(sites);
-      setGa4Props(props);
+      setGscSites(res.data?.gscSites || []);
+      setGa4Props(res.data?.ga4Properties || []);
+      setMatch(res.data?.match || null);
       setError("");
-      const want = hostOf(siteLabel);
-      if (want && !google?.gscSiteUrl) {
-        const match = sites.find((site) => hostOf(site.siteUrl) === want);
-        if (match) setGsc(match.siteUrl);
-      }
+      if (!google?.gscSiteUrl && res.data?.match?.gsc?.status === "matched") setGsc(res.data.match.gsc.selected);
+      if (!google?.ga4PropertyId && res.data?.match?.ga4?.status === "matched") setGa4(res.data.match.ga4.selected);
     });
     return () => { cancel = true; };
-  }, [signedIn, siteLabel, google?.gscSiteUrl]);
+  }, [signedIn, siteLabel, google?.gscSiteUrl, google?.ga4PropertyId]);
 
   const save = async (thenSync) => {
     if (!gsc && !ga4) {
@@ -70,7 +70,7 @@ export default function PropertyPicker({ google, cmsConnectionId = null, siteLab
     });
     if (!saved.ok) {
       setBusy("");
-      setError(typeof saved.data?.detail === "string" ? saved.data.detail : "Could not save those properties.");
+      setError(errorText(saved, "Could not save those properties."));
       return;
     }
     if (!thenSync) {
@@ -82,7 +82,7 @@ export default function PropertyPicker({ google, cmsConnectionId = null, siteLab
     const sync = await syncGoogleLive(cmsConnectionId);
     setBusy("");
     if (!sync.ok) {
-      setError(typeof sync.data?.detail === "string" ? sync.data.detail : "Properties saved, but the sync did not finish.");
+      setError(errorText(sync, "Properties saved, but the sync did not finish."));
       onSaved?.(saved.data);
       return;
     }
@@ -96,6 +96,15 @@ export default function PropertyPicker({ google, cmsConnectionId = null, siteLab
     onSaved?.(saved.data);
   };
 
+  if (reauth) {
+    return (
+      <div className="w-panel below">
+        <div className="dash-eyebrow">GOOGLE SIGN-IN EXPIRED</div>
+        <h2>Sign in to Google again.</h2>
+        <p>{`Google access for ${google?.account?.email || google?.googleEmail || "this account"} was revoked or expired. Search Console and Analytics data stop updating until you sign in again. Your saved property choices are kept.`}</p>
+      </div>
+    );
+  }
   if (!signedIn) return null;
 
   return (
@@ -107,6 +116,10 @@ export default function PropertyPicker({ google, cmsConnectionId = null, siteLab
         {siteLabel ? ` for ${siteLabel}` : " for this website"}. Saving and syncing fills keywords, the site audit, and the approval queue.
       </p>
       {google?.googleEmail ? <p className="w-muted">Signed in as {google.googleEmail}</p> : null}
+      {match?.gsc?.status === "matched" && match.gsc.selected === gsc && !google?.gscSiteUrl ? <p className="w-muted">{`Search Console property matched to this website: ${gsc}. Save to confirm.`}</p> : null}
+      {match?.gsc?.status && match.gsc.status !== "matched" && !gsc ? <p className="w-inset">{match.gsc.reason}</p> : null}
+      {match?.ga4?.status && match.ga4.status !== "matched" && !ga4 ? <p className="w-inset">{match.ga4.reason}</p> : null}
+      {google?.gsc?.status === "unverified" || google?.ga4?.status === "unverified" ? <p className="w-footnote">Saved properties are not verified yet. Save or sync to check this Google account can read them.</p> : null}
       {mismatch ? <p className="w-inset">Search Console is {gsc}, while this website is {siteLabel}. Choose the matching property or the live tables stay empty.</p> : null}
       {google?.lastError ? <p className="w-footnote">Last sync: {google.lastError}</p> : null}
       <div className="form-grid">

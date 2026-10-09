@@ -46,12 +46,14 @@ export const  userLogin = user => {
     const store = storage();
     if (!store) return;
     store.setItem("user", JSON.stringify(user));
+    window.dispatchEvent(new Event("sf-auth"));
   }
 
 export const  userLogout = () => {
     const store = storage();
     if (!store) return;
     store.removeItem("user");
+    window.dispatchEvent(new Event("sf-auth"));
     store.removeItem("project");
     store.removeItem("currentWebsite");
     store.removeItem("crawlingData");

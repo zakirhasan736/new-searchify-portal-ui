@@ -1,5 +1,6 @@
 import { Manrope, Barlow_Condensed } from "next/font/google";
 import ProductShell from "@/components/v3/ProductShell";
+import StoreProvider from "@/store/StoreProvider";
 import { absoluteUrl } from "@/lib/seo";
 import "../index.css";
 import "./tailwind.css";
@@ -68,7 +69,9 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${manrope.variable} ${barlow.variable}`}>
       <body className={manrope.className} style={{ margin: 0, background: "#101112" }}>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-        <ProductShell>{children}</ProductShell>
+        <StoreProvider>
+          <ProductShell>{children}</ProductShell>
+        </StoreProvider>
       </body>
     </html>
   );

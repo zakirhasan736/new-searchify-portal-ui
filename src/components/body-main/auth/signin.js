@@ -6,7 +6,7 @@ import { useNavigate } from "@/lib/navigation";
 import { parseJwt, userLogin } from "../../../utils/users/Helpers";
 import { fetchProjectByUserId } from "../../../utils/users/ProjectUtil";
 import { AuthField, AuthScreen, AuthSubmit } from "@/components/v3/AuthScreen";
-import { postLoginPath } from "@/lib/journey";
+import { hydrateJourney, postLoginPath } from "@/lib/journey";
 import SocialLoginButtons from "./SocialLoginButtons";
 
 export default function Signin() {
@@ -35,7 +35,10 @@ export default function Signin() {
       localStorage.setItem("project", "{}");
     }
     if (result.userType === "admin") navigate("/admin/tagmgmt");
-    else navigate(postLoginPath());
+    else {
+      await hydrateJourney({ force: true });
+      navigate(postLoginPath());
+    }
   };
 
   useEffect(() => {

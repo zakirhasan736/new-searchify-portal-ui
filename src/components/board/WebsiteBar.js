@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import RegionSelector from "@/components/board/RegionSelector";
 import { briefFromAnswers } from "@/lib/businessBrief";
 import { activeJourneySite, loadJourney, readySites, selectJourneySite, websiteLabel } from "@/lib/journey";
 import { clearPageSites, loadPageSites, pageScope, saveGlobalSite, setPageSiteKey } from "@/lib/siteScope";
@@ -26,16 +27,20 @@ function websiteOptions(journeySites, connections) {
       kind: "cms",
       id: item.id,
       label: hostOfUrl(item.siteUrl || item.site_url) || item.label || `Site ${item.id}`,
+      siteUrl: item.siteUrl || item.site_url || "",
+      answers: {},
     }));
   const seen = new Set(connected.map((item) => item.label));
   const added = journeySites.map((site, index) => {
     const named = websiteLabel(site);
+    const answers = site.answers || {};
     return {
       key: `journey:${site.id}`,
       kind: "journey",
       id: site.id,
       label: named === "Website" ? `Website ${index + 1}` : named,
-      answers: site.answers || {},
+      siteUrl: answers.site || "",
+      answers,
     };
   }).filter((item) => !seen.has(item.label));
   return [...connected, ...added];
@@ -78,7 +83,14 @@ export default function WebsiteBar({ pill, onChange }) {
           }
         }
         window.dispatchEvent(new CustomEvent("sf-site", {
-          detail: { id: current.id, label: current.label, key: current.key, scope: pageScope(pathname), local },
+          detail: {
+            id: current.id,
+            label: current.label,
+            key: current.key,
+            siteUrl: current.siteUrl || "",
+            scope: pageScope(pathname),
+            local,
+          },
         }));
       } else onChangeRef.current?.("Example website");
     };
@@ -93,7 +105,9 @@ export default function WebsiteBar({ pill, onChange }) {
     setActiveKey(option.key);
     if (scope) {
       setPageSiteKey(scope, option);
-      window.dispatchEvent(new CustomEvent("sf-site", { detail: { id: option.id, label: option.label, key: option.key, scope, local: true } }));
+      window.dispatchEvent(new CustomEvent("sf-site", {
+        detail: { id: option.id, label: option.label, key: option.key, siteUrl: option.siteUrl || "", scope, local: true },
+      }));
     } else {
       clearPageSites();
       saveGlobalSite(option);
@@ -101,7 +115,9 @@ export default function WebsiteBar({ pill, onChange }) {
         selectJourneySite(option.id);
         if (option.answers?.googleEmail) useGoogleAccount(option.answers.googleEmail).catch(() => {});
       } else setActiveSite(option.id);
-      window.dispatchEvent(new CustomEvent("sf-site", { detail: { id: option.id, label: option.label, key: option.key, scope: "", local: false } }));
+      window.dispatchEvent(new CustomEvent("sf-site", {
+        detail: { id: option.id, label: option.label, key: option.key, siteUrl: option.siteUrl || "", scope: "", local: false },
+      }));
     }
     onChange?.(option.label);
   };
@@ -115,17 +131,25 @@ export default function WebsiteBar({ pill, onChange }) {
       : briefFromAnswers(selected?.answers).ready
         ? "FROM YOUR SETUP"
         : "SETUP INCOMPLETE");
+
   return (
     <div className="workspace-bar" data-tour="website">
-      <div>
-        <label htmlFor="active-site">Website
-          <select id="active-site" value={demo ? "example" : activeKey} onChange={chooseSite}>
-            {demo ? <option value="example">Example website</option> : sites.map((site) => (
-              <option key={site.key} value={site.key}>{site.label}</option>
-            ))}
-          </select>
-        </label>
-        <span className="site-scope-note">{scope ? "This page only" : "Applies to every page"}</span>
+      <div className="workspace-controls">
+        <div>
+          <label htmlFor="active-site">Website
+            <select id="active-site" value={demo ? "example" : activeKey} onChange={chooseSite}>
+              {demo ? <option value="example">Example website</option> : sites.map((site) => (
+                <option key={site.key} value={site.key}>{site.label}</option>
+              ))}
+            </select>
+          </label>
+          <span className="site-scope-note">{scope ? "This page only" : "Applies to every page"}</span>
+        </div>
+        <RegionSelector
+          siteUrl={selected?.siteUrl || ""}
+          siteId={selected?.kind === "journey" ? selected.id : null}
+          disabled={demo}
+        />
       </div>
       <span className="demo-pill">{statusPill}</span>
     </div>

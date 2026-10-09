@@ -1,38 +1,78 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { skipToken } from "@reduxjs/toolkit/query";
 import ConnectDialog, { useConnectionStatus } from "@/components/board/ConnectDialog";
+import Paginator, { usePagination } from "@/components/board/Paginator";
 import PropertyPicker from "@/components/board/PropertyPicker";
 import { buildAuditFindings } from "@/lib/auditFindings";
 import { breadthKey, BREADTH_LABELS, loadGuardrails, saveGuardrails } from "@/lib/guardrails";
-import SampleQueue from "@/components/board/SampleQueue";
 import SiteDrafts from "@/components/board/SiteDrafts";
 import { useBusinessBrief, useWorkspaceSite } from "@/components/board/useBusinessBrief";
+import useTargetMarket from "@/lib/useTargetMarket";
 import { starterKeywords, starterPrompts } from "@/lib/businessBrief";
-import { PLANS, activeJourneySite, assignGoogleAccount, beginAnotherWebsite, choosePlan, loadJourney, markConnection, planById, readySites, removeJourneySite, websiteLabel } from "@/lib/journey";
+import { PLANS, activeJourneySite, assignGoogleAccount, beginAnotherWebsite, choosePlan, loadJourney, markConnection, planById, readySites, removeJourneySite, syncJourneyNow, websiteLabel } from "@/lib/journey";
 import { completionEntries, recordActivity } from "@/lib/previewQueue";
 import {
   createChange,
   deleteCmsConnection,
   disconnectGoogle,
+  errorCode,
+  errorText,
   generateMetaCopy,
   getGoogleStatus,
   listChanges,
   listCmsConnections,
   loadFeature,
   removeGoogleAccount,
-  researchAudit,
-  researchBacklinks,
-  researchKeywords,
   researchVisibility,
   startGoogleOAuth,
   useGoogleAccount,
 } from "@/lib/v1Api";
+import {
+  researchApi,
+  rtkErrorCode,
+  rtkErrorText,
+  useAuditQuery,
+  useBacklinksQuery,
+  useKeywordsQuery,
+  useRefreshAuditMutation,
+  useRefreshBacklinksMutation,
+  useRefreshKeywordsMutation,
+  useUsageQuery,
+} from "@/store/researchApi";
 
 function providerNote(res, fallback) {
-  return typeof res?.data?.detail === "string" ? res.data.detail : fallback;
+  return errorText(res, fallback);
+}
+
+const UPGRADE_HINT = " A larger plan raises the monthly limit.";
+
+function quotaText(error, fallback) {
+  const text = rtkErrorText(error, fallback);
+  return rtkErrorCode(error) === "quota_exceeded" ? text + UPGRADE_HINT : text;
+}
+
+function PlanUsage({ feature }) {
+  const { data } = useUsageQuery();
+  const item = data?.features?.[feature];
+  if (!item) return null;
+  if (item.limit == null) return <p className="w-footnote plan-usage">{`${item.label}: no monthly limit on this account (${item.used} used this month).`}</p>;
+  return (
+    <p className={`w-footnote plan-usage${item.left === 0 ? " out" : ""}`}>
+      {`${item.label} this month: ${item.used} of ${item.limit} used on the ${data.planLabel} plan. Resets ${data.resetsOn}. Results reused from the cache are free.`}
+      {item.left === 0 ? <> <Link href="/app/plans">See plans</Link></> : null}
+    </p>
+  );
+}
+
+function placeLabel(data) {
+  if (!data) return "";
+  const city = data.place?.city ? `${data.place.city}, ` : "";
+  return `${city}${data.location}${data.language ? ` · ${data.language}` : ""}`;
 }
 
 function fetchedLabel(stamp) {
@@ -147,7 +187,6 @@ function rowsOf(payload) {
 
 export function ApprovalsView() {
   const { brief, site } = useWorkspaceSite();
-  const [live, setLive] = useState(0);
   return (
     <section className="dash-view" id="view-approvals">
       <div className="subview-head">
@@ -155,19 +194,30 @@ export function ApprovalsView() {
         <h1>Needs human approval.</h1>
         <p>{brief.ready ? `These drafts follow ${brief.focus || brief.hostname || "your setup"}. Every live website change stays paused until you approve it.` : "Every live website change stays paused until you approve it."}</p>
       </div>
-      <SiteDrafts site={site} brief={brief} onCount={setLive} />
-      {live ? null : (
-        <div id="approval-queue-home">
-          <SampleQueue site={site} />
-        </div>
-      )}
+      <div id="approval-queue-home">
+        <SiteDrafts site={site} brief={brief} showScanDetails />
+      </div>
     </section>
   );
+}
+
+const PROPERTY_LABEL = {
+  connected: ["good", "Connected · verified"],
+  unverified: ["warn", "Selected · not verified"],
+  not_selected: ["", "No property chosen"],
+  reauth_required: ["danger", "Google sign-in expired"],
+};
+
+function connectorPill(id, on, status) {
+  if (id === "wordpress") return [on ? "good" : "", on ? "Connected" : "Not connected"];
+  if (status.googleAccount === "disconnected") return ["", "Not connected"];
+  return PROPERTY_LABEL[id === "gsc" ? status.gscStatus : status.gaStatus] || ["", "Not connected"];
 }
 
 export function ConnectionsView() {
   const params = useSearchParams();
   const [status, refresh] = useConnectionStatus();
+  const { brief } = useWorkspaceSite();
   const [dialog, setDialog] = useState(params.get("panel") || "");
   const [message, setMessage] = useState("");
 
@@ -198,6 +248,12 @@ export function ConnectionsView() {
     <section className="dash-view extension-view">
       <Head eyebrow="SETUP, AT YOUR PACE" title="Connect your evidence." text="Skipped a connection during setup? Finish it here. You control each website and property." />
       {message ? <p className="w-inset">{message}</p> : null}
+      <p className="account-line">
+        <span>Google account</span>
+        <span className={`w-pill ${status.googleAccount === "connected" ? "good" : status.googleAccount === "reauth_required" ? "danger" : ""}`.trim()}>
+          {status.googleAccount === "connected" ? `Signed in${status.google?.account?.email ? ` as ${status.google.account.email}` : ""}` : status.googleAccount === "reauth_required" ? "Sign-in expired · sign in again" : "Not signed in"}
+        </span>
+      </p>
       <div className="w-card-grid">
         {[
           ["wordpress", "W", "WordPress", status.wordpress, "Publish approved titles and descriptions."],
@@ -206,25 +262,25 @@ export function ConnectionsView() {
         ].map(([id, mark, title, on, body]) => (
           <article className="w-panel connector" key={id}>
             <span className="connector-mark">{mark}</span>
-            <span className={`w-pill${on ? " good" : ""}`}>{on ? "Connected" : "Not connected"}</span>
+            {(() => { const [tone, label] = connectorPill(id, on, status); return <span className={`w-pill ${tone}`.trim()}>{label}</span>; })()}
             <h2>{title}</h2>
             <p>{body}</p>
             {id === "wordpress" && status.wordpressUrl ? <small>{status.wordpressUrl}</small> : null}
             {id === "gsc" && status.google?.gscSiteUrl ? <small>{status.google.gscSiteUrl}</small> : null}
             {id === "ga" && (status.google?.ga4PropertyName || status.google?.ga4PropertyId) ? <small>{status.google.ga4PropertyName || status.google.ga4PropertyId}</small> : null}
             <div className="w-actions">
-              <button className="w-button primary" type="button" onClick={() => setDialog(id)}>{on ? "Manage" : `Connect ${title}`}</button>
+              <button className="w-button primary" type="button" onClick={() => setDialog(id)}>{on ? "Manage" : status.googleAccount === "reauth_required" && id !== "wordpress" ? "Sign in to Google again" : `Connect ${title}`}</button>
               {on && id === "wordpress" ? <button className="w-button" type="button" onClick={disconnectWp}>Disconnect</button> : null}
-              {on && id !== "wordpress" ? <button className="w-button" type="button" onClick={disconnectG}>Disconnect Google</button> : null}
+              {id !== "wordpress" && status.googleAccount !== "disconnected" ? <button className="w-button" type="button" onClick={disconnectG}>Disconnect Google</button> : null}
             </div>
           </article>
         ))}
       </div>
-      {status.google?.connected || params.get("google") === "connected" ? (
+      {status.google?.connected || status.googleAccount === "reauth_required" || params.get("google") === "connected" ? (
         <PropertyPicker
           google={status.google}
           cmsConnectionId={status.wordpressId}
-          siteLabel={status.wordpressUrl}
+          siteLabel={status.wordpressUrl || brief.siteUrl}
           onSaved={(connection) => {
             if (connection?.gscSiteUrl) markConnection("gsc", "Connected");
             if (connection?.ga4PropertyId) markConnection("ga", "Connected");
@@ -296,11 +352,26 @@ export function KeywordsView() {
   const [adding, setAdding] = useState(false);
   const [open, setOpen] = useState(null);
   const [notice, setNotice] = useState("");
-  const [allowance, setAllowance] = useState(25);
-  const [form, setForm] = useState({ term: "", country: "Canada", device: "Mobile", page: "" });
-  const [live, setLive] = useState(null);
-  const [liveBusy, setLiveBusy] = useState(false);
-  const [liveNote, setLiveNote] = useState("");
+  const [form, setForm] = useState({ term: "", country: brief.market || "", device: "Mobile", page: "" });
+  const dispatch = useDispatch();
+  const { data: usage } = useUsageQuery();
+  const [planId, setPlanId] = useState(null);
+  const [liveKey, setLiveKey] = useState(null);
+  const { country: marketCountry, label: marketLabel, ready: marketReady } = useTargetMarket();
+  const researchCountry = marketCountry || brief.market || "";
+  const liveArgs = liveKey && liveKey.briefKey === briefKey && brief.siteUrl && researchCountry
+    ? { site: brief.siteUrl, terms: liveKey.terms, country: researchCountry, reach: brief.reach || "" }
+    : null;
+  const liveQuery = useKeywordsQuery(liveArgs ?? skipToken);
+  const [refreshKeywords, refreshState] = useRefreshKeywordsMutation();
+  const live = liveQuery.currentData || null;
+  const liveBusy = liveQuery.isFetching || refreshState.isLoading;
+  const liveError = refreshState.error || liveQuery.error;
+  const liveNote = brief.siteUrl && !researchCountry
+    ? "Choose a target country in the dashboard header (or finish setup). Keyword data is not loaded without a market."
+    : liveError ? quotaText(liveError, "Live keyword data could not be loaded.") : "";
+  const allowance = usage ? usage.trackedKeywords ?? Infinity : planById(planId)?.keywords || 10;
+  const allowanceNote = Number.isFinite(allowance) ? `${allowance} included in the ${usage?.planLabel || "selected"} plan` : "No limit on this account";
 
   const applyLive = (rows, data) => {
     if (!data) return rows;
@@ -317,28 +388,28 @@ export function KeywordsView() {
         intent: hit.intent || "",
         page: row.page || hit.page || "",
         country: data.location || row.country,
+        source: hit.source || "",
         live: true,
       };
     });
   };
 
-  const fetchLive = async (rows, force = false) => {
-    if (!brief.siteUrl) return;
-    setLiveBusy(true);
-    setLiveNote("");
-    const res = await researchKeywords({ site: brief.siteUrl, terms: rows.map((row) => row.term), country: brief.market || rows[0]?.country || "", force });
-    setLiveBusy(false);
-    if (!res.ok) {
-      setLiveNote(providerNote(res, "Live keyword data could not be loaded."));
-      return;
+  const refreshLive = async () => {
+    if (!liveArgs) return;
+    const args = { ...liveArgs, terms: keywords.map((row) => row.term) };
+    try {
+      const data = await refreshKeywords(args).unwrap();
+      await dispatch(researchApi.util.upsertQueryData("keywords", args, data));
+      setLiveKey({ briefKey, terms: args.terms });
+    } catch {
+      /* shown through refreshState.error */
     }
-    setLive(res.data);
-    setKeywords((current) => applyLive(current, res.data));
   };
 
   useEffect(() => {
     if (!key) return;
-    setAllowance(planById(loadJourney().planId)?.keywords || 25);
+    setPlanId(loadJourney().planId);
+    refreshState.reset();
     const saved = rowsFor("keywords", key).map((row) => ({
       id: row.id || Date.now(),
       term: row.term || "",
@@ -346,15 +417,18 @@ export function KeywordsView() {
       previous: asNumber(row.previous),
       volume: asNumber(row.volume),
       page: row.page || "",
-      country: row.country || "Canada",
+      country: row.country || "",
       device: row.device || "Mobile",
       sample: false,
     })).filter((row) => row.term);
     const rows = [...starterKeywords(brief), ...saved];
     setKeywords(rows);
-    setLive(null);
-    fetchLive(rows);
+    setLiveKey({ briefKey, terms: rows.map((row) => row.term) });
   }, [briefKey]);
+
+  useEffect(() => {
+    if (live) setKeywords((current) => applyLive(current, live));
+  }, [live]);
 
   const trackIdea = (idea) => {
     if (keywords.some((item) => item.term.toLowerCase() === idea.keyword.toLowerCase())) return;
@@ -365,7 +439,7 @@ export function KeywordsView() {
     const next = [...keywords, {
       id: Date.now(),
       term: idea.keyword,
-      country: live?.location || "United States",
+      country: live?.location || "",
       device: "Mobile",
       page: idea.page || "",
       rank: asNumber(idea.position),
@@ -386,6 +460,9 @@ export function KeywordsView() {
   };
 
   const shown = keywords.filter((item) => item.term.toLowerCase().includes(query.trim().toLowerCase()));
+  const trackedPager = usePagination("keywords-tracked", shown, `${briefKey}|${query}`);
+  const rankedPager = usePagination("keywords-ranked", live?.ranked, briefKey);
+  const ideasPager = usePagination("keywords-ideas", live?.ideas, briefKey);
   const topTen = keywords.filter((item) => item.rank && item.rank <= 10).length;
   const improving = keywords.filter((item) => item.rank && item.previous != null && item.rank < item.previous).length;
 
@@ -409,7 +486,7 @@ export function KeywordsView() {
     recordActivity({ title: "Keyword added", detail: `${term} · ${form.country} · ${form.device}`, siteKey: key });
     setAdding(false);
     setNotice("");
-    setForm({ term: "", country: "Canada", device: "Mobile", page: "" });
+    setForm({ term: "", country: brief.market || "", device: "Mobile", page: "" });
   };
 
   const removeKeyword = (id) => {
@@ -421,31 +498,33 @@ export function KeywordsView() {
 
   return (
     <section className="dash-view extension-view">
-      <Head eyebrow="SEARCH DEMAND" title="Know what to target." text={live ? `Google positions and monthly volume for ${live.host} in ${live.location}, from DataForSEO.` : brief.ready ? `Starting terms for ${brief.focus || brief.hostname}. Positions fill in when live keyword data loads.` : "Finish setup to fill this list from your offer and market. You can still add a term yourself."} action={<button className="w-button primary" type="button" onClick={() => { setNotice(""); setAdding(true); }}>Add keyword</button>} />
+      <Head eyebrow="SEARCH DEMAND" title="Know what to target." text={live ? `Google positions and monthly volume for ${live.host} in ${placeLabel(live)}, from DataForSEO.` : brief.ready ? `Starting terms for ${brief.focus || brief.hostname}. Positions fill in when live keyword data loads.` : "Finish setup to fill this list from your offer and market. You can still add a term yourself."} action={<button className="w-button primary" type="button" onClick={() => { setNotice(""); setAdding(true); }}>Add keyword</button>} />
       <div className="w-metrics">
-        <Metric label="Tracked" value={String(keywords.length)} note={`${allowance} included in the selected plan`} />
+        <Metric label="Tracked" value={String(keywords.length)} note={allowanceNote} />
         <Metric label="Top 10" value={String(topTen)} note={live ? "Tracked terms in Google's top 10" : "Counted only when a position exists"} />
         <Metric label="Ranking now" value={live ? String(live.ranked?.length || 0) : "—"} note={live ? "Searches this site already appears for" : "Loads with live data"} />
         <Metric label="Improving" value={String(improving)} note="Moved up since the last update" />
       </div>
       {liveBusy ? <div className="audit-loading" role="status"><span className="audit-loading-mark" aria-hidden="true" /><strong>Loading live keyword data</strong><p>Positions, volume, and ideas for {brief.hostname || "this website"}.</p></div> : null}
       {liveNote ? <p className="w-inset" role="status">{liveNote}</p> : null}
+      {live?.termsDropped?.length ? <p className="w-inset" role="status">{`${live.termsDropped.length} tracked term${live.termsDropped.length === 1 ? " was" : "s were"} left out of live data because the plan covers ${live.termLimit} tracked keywords: ${live.termsDropped.slice(0, 5).join(", ")}${live.termsDropped.length > 5 ? "…" : ""}`}</p> : null}
+      <PlanUsage feature="keywords" />
       <div className="w-panel">
         <div className="w-toolbar">
           <label>Find a keyword<input id="keyword-filter" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tracked terms…" type="search" /></label>
-          <span className="w-muted">{live ? `Updated ${fetchedLabel(live.fetchedAt)} · ${live.location}` : brief.market ? `Location from setup: ${brief.market}` : "Location: add it in setup"}</span>
-          <button className="w-button" type="button" disabled={liveBusy || !brief.siteUrl} onClick={() => fetchLive(keywords, true)}>Refresh live data</button>
+          <span className="w-muted">{live ? `Updated ${fetchedLabel(live.fetchedAt)} · ${placeLabel(live)}` : researchCountry ? `Target market: ${marketLabel || researchCountry}` : "Location: choose a region in the header"}</span>
+          <button className="w-button" type="button" disabled={liveBusy || !liveArgs} onClick={refreshLive}>Refresh live data</button>
           <button className="w-button" type="button" onClick={() => exportKeywords(shown)}>Export CSV</button>
         </div>
         <div className="table-scroll" id="keyword-rows">
           <table className="w-table">
             <thead><tr><th>Keyword</th><th>Position</th><th>Change</th><th>Monthly volume</th><th>Target page</th><th>Action</th></tr></thead>
             <tbody>
-              {shown.map((item) => {
+              {trackedPager.rows.map((item) => {
                 const change = keywordChange(item);
                 return (
                   <tr key={item.id}>
-                    <td data-label="Keyword"><strong>{item.term}</strong><small>{item.country} · {item.device}</small></td>
+                    <td data-label="Keyword"><strong>{item.term}</strong><small>{[item.country || "No location", item.device, item.source].filter(Boolean).join(" · ")}</small></td>
                     <td data-label="Position">{item.rank ?? (item.live ? "Not in top 100" : "Awaiting data")}</td>
                     <td data-label="Change">{change == null ? "—" : <span className={`w-pill ${change > 0 ? "good" : "warn"}`}>{change > 0 ? `+${change}` : change}</span>}</td>
                     <td data-label="Volume">{volumeLabel(item.volume)}</td>
@@ -457,36 +536,38 @@ export function KeywordsView() {
             </tbody>
           </table>
         </div>
+        <Paginator pager={trackedPager} label="keywords" />
       </div>
       {live?.ranked?.length ? (
         <div className="w-panel below">
-          <div className="w-toolbar"><strong>Already ranking</strong><span className="w-muted">Searches where {live.host} appears in Google today</span></div>
+          <div className="w-toolbar"><strong>Already ranking</strong><span className="w-muted">{`Estimated Google positions from DataForSEO Labs for ${placeLabel(live)}. Not Search Console data.`}</span></div>
           <div className="table-scroll">
             <table className="w-table">
               <thead><tr><th>Search</th><th>Position</th><th>Monthly volume</th><th>Page</th><th>Action</th></tr></thead>
               <tbody>
-                {live.ranked.slice(0, 20).map((row) => (
+                {rankedPager.rows.map((row) => (
                   <tr key={`r-${row.keyword}`}>
                     <td data-label="Search"><strong>{row.keyword}</strong><small>{row.intent || "intent unknown"}</small></td>
                     <td data-label="Position">{row.position ?? "—"}</td>
                     <td data-label="Volume">{volumeLabel(row.volume)}</td>
-                    <td data-label="Page">{row.page || "—"}</td>
+                    <td data-label="Page">{row.page || "—"}{row.otherUrls?.length ? <small>{`Also ranks: ${row.otherUrls.length} other URL${row.otherUrls.length === 1 ? "" : "s"}`}</small> : null}</td>
                     <td data-label=""><button className="w-button" type="button" onClick={() => trackIdea(row)}>{keywords.some((k) => k.term.toLowerCase() === row.keyword.toLowerCase()) ? "Tracked" : "Track"}</button></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          <Paginator pager={rankedPager} label="searches" />
         </div>
       ) : null}
       {live?.ideas?.length ? (
         <div className="w-panel below">
-          <div className="w-toolbar"><strong>Keyword ideas</strong><span className="w-muted">Related searches with real monthly volume</span></div>
+          <div className="w-toolbar"><strong>Keyword ideas</strong><span className="w-muted">{`DataForSEO keyword suggestions for ${placeLabel(live)}`}</span></div>
           <div className="table-scroll">
             <table className="w-table">
               <thead><tr><th>Idea</th><th>Monthly volume</th><th>Difficulty</th><th>Intent</th><th>Action</th></tr></thead>
               <tbody>
-                {live.ideas.slice(0, 15).map((row) => (
+                {ideasPager.rows.map((row) => (
                   <tr key={`i-${row.keyword}`}>
                     <td data-label="Idea"><strong>{row.keyword}</strong></td>
                     <td data-label="Volume">{volumeLabel(row.volume)}</td>
@@ -498,16 +579,17 @@ export function KeywordsView() {
               </tbody>
             </table>
           </div>
+          <Paginator pager={ideasPager} label="ideas" />
         </div>
       ) : null}
       {notice ? <p className="w-footnote">{notice}</p> : null}
-      <p className="w-footnote">{live ? `Positions, volume, difficulty, and ideas come from DataForSEO for ${live.location}. "Not in top 100" means the site does not rank for that search yet. Data is reused for 24 hours unless you refresh it.` : brief.ready ? `These starting terms come from your setup for ${brief.hostname || "this website"}. Rank and volume stay empty until live keyword data loads. Nothing here is invented.` : "No setup answers yet, so this list does not invent a sample business. Add your website, offer, and market, or type a term yourself."}</p>
+      <p className="w-footnote">{live ? `Positions, volume, difficulty, and ideas come from DataForSEO Labs at country level for ${placeLabel(live)}${live.place?.city ? " (Labs has no city-level data)" : ""}. "Not in top 100" means the site does not rank for that search yet. An empty volume means DataForSEO has no figure, not zero. Data is reused for 24 hours unless you refresh it.` : brief.ready ? `These starting terms come from your setup for ${brief.hostname || "this website"}. Rank and volume stay empty until live keyword data loads. Nothing here is invented.` : "No setup answers yet, so this list does not invent a sample business. Add your website, offer, and market, or type a term yourself."}</p>
       {adding ? (
         <Modal title="Track a keyword" onClose={() => setAdding(false)}>
           <form onSubmit={add}>
             <label>Search phrase<input value={form.term} onChange={(event) => setForm({ ...form, term: event.target.value })} maxLength={120} required placeholder={brief.market ? `e.g. ${brief.businessType || "service"} ${brief.market}` : "e.g. your service and city"} /></label>
             <div className="form-grid">
-              <label>Country<select value={form.country} onChange={(event) => setForm({ ...form, country: event.target.value })}><option>Canada</option><option>United States</option><option>United Kingdom</option></select></label>
+              <label>Country or city<input value={form.country} onChange={(event) => setForm({ ...form, country: event.target.value })} maxLength={80} required placeholder="e.g. Canada or Toronto, Ontario" /></label>
               <label>Device<select value={form.device} onChange={(event) => setForm({ ...form, device: event.target.value })}><option>Mobile</option><option>Desktop</option></select></label>
             </div>
             <label>Target page path (optional)<input value={form.page} onChange={(event) => setForm({ ...form, page: event.target.value })} placeholder="/" pattern="/.*" /></label>
@@ -574,24 +656,17 @@ export function VisibilityView() {
   const [open, setOpen] = useState(null);
   const [notice, setNotice] = useState("");
   const [allowance, setAllowance] = useState(5);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (!key) return undefined;
     let cancelled = false;
     setAllowance(planById(loadJourney().planId)?.prompts || 5);
-    const saved = rowsFor("prompts", key).map((row, index) => ({ ...asPrompt({ ...row, mention: row.mention }, index), ...(row.live ? { live: true, sources: row.sources || [], checkedAt: row.checkedAt || "", modelName: row.modelName || "" } : {}) })).filter((row) => row.text);
+    const saved = rowsFor("prompts", key).map((row, index) => ({ ...asPrompt({ ...row, mention: row.mention }, index), ...(row.live || row.status ? { live: Boolean(row.live), sources: row.sources || [], checkedAt: row.checkedAt || "", modelName: row.modelName || "", status: row.status || "ok", error: row.error || "", stale: Boolean(row.stale), applied: row.applied || null } : {}) })).filter((row) => row.text);
     const savedTexts = new Set(saved.map((row) => row.text.toLowerCase()));
     const prepared = starterPrompts(brief).filter((row) => !savedTexts.has(row.text.toLowerCase()));
     setPrompts([...prepared, ...saved]);
     setSample(!saved.some((row) => row.live));
-    loadFeature("ai-search").then((res) => {
-      if (cancelled) return;
-      const stored = rowsOf(res.data).map(asPrompt).filter(Boolean);
-      if (stored.length) {
-        setPrompts([...stored, ...saved]);
-        setSample(false);
-      }
-    }).catch(() => {});
     return () => { cancelled = true; };
   }, [briefKey]);
 
@@ -600,7 +675,8 @@ export function VisibilityView() {
   };
 
   const shown = prompts.filter((item) => model === "All engines" || item.model === model);
-  const checked = prompts.filter((item) => item.mention !== null);
+  const promptPager = usePagination("visibility", shown, `${briefKey}|${model}`);
+  const checked = prompts.filter((item) => item.mention != null && item.status !== "error");
   const mentioned = checked.filter((item) => item.mention).length;
   const citations = checked.filter((item) => item.citation).length;
 
@@ -632,7 +708,12 @@ export function VisibilityView() {
       setNotice("Every question has a live answer. Use Check again to refresh them.");
       return;
     }
+    if (!brief.market) {
+      setNotice("Add the country or city you serve in setup, or say you serve worldwide. AI answers are not checked without a location, so none is guessed.");
+      return;
+    }
     let next = prompts;
+    let failures = 0;
     setNotice("");
     for (let index = 0; index < queue.length; index += 1) {
       const item = queue[index];
@@ -641,30 +722,44 @@ export function VisibilityView() {
         site: brief.siteUrl,
         brand: (brief.hostname || "").split(".")[0],
         country: brief.market,
+        reach: brief.reach || "",
         prompts: [{ id: String(item.id), text: item.text, engine: item.model }],
         force,
       });
       if (!res.ok) {
-        setNotice(providerNote(res, "The live check could not run."));
+        setNotice(errorCode(res) === "quota_exceeded" ? providerNote(res, "") + UPGRADE_HINT : providerNote(res, "The live check could not run."));
         break;
       }
       const hit = (res.data.results || [])[0];
       if (!hit) continue;
-      next = next.map((row) => (row.id === item.id ? {
-        ...row,
-        mention: hit.mention,
-        citation: hit.citation || "",
-        snippet: hit.snippet || "",
-        sources: hit.sources || [],
-        modelName: hit.model || "",
-        checkedAt: hit.fetchedAt || "",
-        sample: false,
-        live: true,
-      } : row));
+      if (hit.status === "error") failures += 1;
+      next = next.map((row) => {
+        if (row.id !== item.id) return row;
+        if (hit.status === "error" && !hit.stale) {
+          return { ...row, status: "error", error: hit.error || "The check failed.", stale: false, failedAt: hit.failedAt || "" };
+        }
+        return {
+          ...row,
+          mention: hit.mention ?? null,
+          citation: hit.citation || "",
+          snippet: hit.snippet || "",
+          sources: hit.sources || [],
+          modelName: hit.model || "",
+          checkedAt: hit.fetchedAt || "",
+          status: hit.status || "ok",
+          error: hit.error || "",
+          stale: Boolean(hit.stale),
+          applied: hit.location?.applied || null,
+          sample: false,
+          live: true,
+        };
+      });
       setPrompts(next);
       persistExtras(next);
     }
     setChecking("");
+    dispatch(researchApi.util.invalidateTags(["Usage"]));
+    if (failures) setNotice(`${failures} check${failures === 1 ? "" : "s"} failed. Failed rows keep their last good answer, marked with its date, or show the error.`);
     if (next.some((row) => row.live)) setSample(false);
     recordActivity({ title: "AI visibility checked", detail: `${queue.length} question${queue.length === 1 ? "" : "s"} · ${brief.hostname || "website"}`, siteKey: key });
   };
@@ -686,6 +781,7 @@ export function VisibilityView() {
       </div>
       {checking ? <div className="audit-loading" role="status"><span className="audit-loading-mark" aria-hidden="true" /><strong>{checking}</strong><p>Each answer can take up to a minute. Keep this page open.</p></div> : null}
       {notice ? <p className="w-inset" role="status">{notice}</p> : null}
+      <PlanUsage feature="visibility" />
       <div className="w-panel">
         <div className="w-toolbar">
           <label>Answer engine
@@ -703,11 +799,16 @@ export function VisibilityView() {
           <table className="w-table">
             <thead><tr><th>Prompt</th><th>Engine</th><th>Mention</th><th>Citation</th><th>Evidence</th></tr></thead>
             <tbody>
-              {shown.map((item) => (
+              {promptPager.rows.map((item) => (
                 <tr key={item.id}>
                   <td data-label="Prompt">{item.text}</td>
                   <td data-label="Engine">{item.model}</td>
-                  <td data-label="Mention"><span className={`w-pill ${item.mention ? "good" : ""}`.trim()}>{mentionLabel(item.mention)}</span></td>
+                  <td data-label="Mention">
+                    {item.status === "error" && !item.stale ? <span className="w-pill danger">Check failed</span>
+                      : item.status === "empty" ? <span className="w-pill warn">Empty answer</span>
+                      : <span className={`w-pill ${item.mention ? "good" : ""}`.trim()}>{mentionLabel(item.mention)}</span>}
+                    {item.stale ? <p className="result-state">{`Last good answer from ${fetchedLabel(item.checkedAt)}. Latest check failed.`}</p> : null}
+                  </td>
                   <td data-label="Citation">{item.citation || "—"}</td>
                   <td data-label=""><button className="w-button" type="button" onClick={() => setOpen(item)}>View response</button></td>
                 </tr>
@@ -715,6 +816,7 @@ export function VisibilityView() {
             </tbody>
           </table>
         </div>
+        <Paginator pager={promptPager} label="questions" />
       </div>
       <p className="w-footnote">{sample ? `Prepared from your setup${brief.hostname ? ` for ${brief.hostname}` : ""}. "Not checked" means the question has not been asked yet. Each live check uses one lookup from today's research limit.` : "Live answers through DataForSEO, with web search on. Answers can change with the model, wording, location, and day. A check is reused for 7 days unless you check again."}</p>
       {adding ? (
@@ -731,6 +833,8 @@ export function VisibilityView() {
         <Modal title="Prompt evidence" onClose={() => setOpen(null)}>
           <blockquote>{open.text}</blockquote>
           <p>{open.model}{open.modelName ? ` · ${open.modelName}` : ""} · {open.live ? `Checked ${fetchedLabel(open.checkedAt)}` : open.mention === null ? "Not checked" : "Earlier sample"}</p>
+          {open.applied ? <p className="w-muted">{open.applied.country ? `Asked as a user in ${open.applied.city ? `${open.applied.city}, ` : ""}${open.applied.country}` : "Asked without a location"}{open.applied.note ? `. ${open.applied.note}` : ""}</p> : null}
+          {open.status === "error" ? <p className="w-inset" role="alert">{`Latest check failed: ${open.error}`}</p> : null}
           <div className="w-inset answer-text">{open.snippet || "No answer yet. Run live checks to ask this question."}</div>
           <p>Cites this site: <strong>{open.citation || "No"}</strong></p>
           {open.sources?.length ? (
@@ -784,56 +888,50 @@ function exportLinks(rows) {
 
 export function BacklinksView() {
   const brief = useBusinessBrief("backlinks");
-  const [links, setLinks] = useState([]);
-  const [sample, setSample] = useState(true);
   const [filter, setFilter] = useState("All links");
   const [open, setOpen] = useState(null);
-  const [live, setLive] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState("");
-
-  const fetchLive = async (force = false) => {
-    if (!brief.siteUrl) return;
-    setBusy(true);
-    setNote("");
-    const res = await researchBacklinks({ site: brief.siteUrl, force });
-    setBusy(false);
-    if (!res.ok) {
-      setNote(providerNote(res, "Live backlink data could not be loaded."));
-      return;
-    }
-    setLive(res.data);
-    setLinks((res.data.links || []).map((link, index) => ({ id: index + 1, ...link })));
-    setSample(false);
-  };
+  const dispatch = useDispatch();
+  const args = brief.siteUrl ? { site: brief.siteUrl } : null;
+  const liveQuery = useBacklinksQuery(args ?? skipToken);
+  const [refreshBacklinks, refreshState] = useRefreshBacklinksMutation();
+  const live = liveQuery.currentData || null;
+  const busy = liveQuery.isFetching || refreshState.isLoading;
+  const liveError = refreshState.error || liveQuery.error;
+  const note = liveError ? quotaText(liveError, "Live backlink data could not be loaded.") : "";
+  const links = useMemo(() => (live?.links || []).map((link, index) => ({ id: index + 1, ...link })), [live]);
+  const sample = !live;
 
   useEffect(() => {
-    setLive(null);
-    setLinks([]);
-    loadFeature("backlinks").then((res) => {
-      const stored = rowsOf(res.data).map(asLink).filter((link) => link.domain);
-      if (stored.length) {
-        setLinks(stored);
-        setSample(false);
-      }
-    }).catch(() => {});
-    fetchLive();
+    refreshState.reset();
   }, [brief.siteUrl]);
+
+  const fetchLive = async () => {
+    if (!args) return;
+    try {
+      const data = await refreshBacklinks(args).unwrap();
+      await dispatch(researchApi.util.upsertQueryData("backlinks", args, data));
+    } catch {
+      /* shown through refreshState.error */
+    }
+  };
+
   const shown = links.filter((link) => filter === "All links" || link.state === filter);
-  const domains = live?.summary?.referringDomains ?? new Set(links.map((link) => link.domain)).size;
+  const linkPager = usePagination("backlinks", shown, `${brief.siteUrl}|${filter}`);
+  const domains = live?.summary?.referringDomains ?? null;
   const newer = links.filter((link) => link.state === "New").length;
   const lost = links.filter((link) => link.state === "Lost").length;
   return (
     <section className="dash-view extension-view">
       <Head eyebrow="OFF-SITE SIGNALS" title="See who points to you." text={live ? `Links pointing to ${live.host}, from the DataForSEO link index.` : brief.hostname ? `Links that point to ${brief.hostname} show up here when live link data loads. None are invented from the setup answers.` : "Links show up here after a link source is connected. Setup answers do not invent referring domains."} action={<button className="w-button" type="button" onClick={() => exportLinks(shown)}>Export CSV</button>} />
       <div className="w-metrics">
-        <Metric label="Referring domains" value={Number(domains || 0).toLocaleString("en-US")} note={live ? "Whole link index" : links.length ? "Unique domains in this list" : "None stored yet"} />
-        <Metric label="Backlinks" value={live?.summary?.backlinks == null ? "—" : Number(live.summary.backlinks).toLocaleString("en-US")} note={live ? "All links to the site" : "Loads with live data"} />
-        <Metric label="New links" value={String(newer)} note={links.length ? "In the list below" : "Waiting for a link source"} />
-        <Metric label="Lost links" value={String(lost)} note="Verify before outreach" />
+        <Metric label="Referring domains" value={domains == null ? "—" : Number(domains).toLocaleString("en-US")} note={live ? "Live domains, whole DataForSEO index" : "Loads with live data"} />
+        <Metric label="Backlinks" value={live?.summary?.backlinks == null ? "—" : Number(live.summary.backlinks).toLocaleString("en-US")} note={live ? "Live links, whole DataForSEO index" : "Loads with live data"} />
+        <Metric label="New links" value={live ? String(newer) : "—"} note={live ? `Among the ${links.length} domains listed below` : "Loads with live data"} />
+        <Metric label="Lost links" value={live ? String(lost) : "—"} note={live ? `Among the ${links.length} domains listed below. Verify before outreach.` : "Loads with live data"} />
       </div>
       {busy ? <div className="audit-loading" role="status"><span className="audit-loading-mark" aria-hidden="true" /><strong>Loading live backlink data</strong><p>Referring domains for {brief.hostname || "this website"}.</p></div> : null}
       {note ? <p className="w-inset" role="status">{note}</p> : null}
+      <PlanUsage feature="backlinks" />
       <div className="w-panel">
         <div className="w-toolbar">
           <label>Link status
@@ -844,8 +942,8 @@ export function BacklinksView() {
               <option>Lost</option>
             </select>
           </label>
-          <span className="w-muted">{live ? `One link per domain · updated ${fetchedLabel(live.fetchedAt)}` : links.length ? (sample ? "Stored list" : "Stored provider snapshot") : `No links stored${brief.hostname ? ` for ${brief.hostname}` : ""}`}</span>
-          <button className="w-button" type="button" disabled={busy || !brief.siteUrl} onClick={() => fetchLive(true)}>Refresh live data</button>
+          <span className="w-muted">{live ? `${live.linksNote || "One link per domain"} Showing ${links.length}${live.referringDomainsListed != null ? ` of ${Number(live.referringDomainsListed).toLocaleString("en-US")}` : ""} · updated ${fetchedLabel(live.fetchedAt)}` : links.length ? (sample ? "Stored list" : "Stored provider snapshot") : `No links stored${brief.hostname ? ` for ${brief.hostname}` : ""}`}</span>
+          <button className="w-button" type="button" disabled={busy || !brief.siteUrl} onClick={fetchLive}>Refresh live data</button>
         </div>
         <div className="table-scroll" id="backlink-rows">
           <table className="w-table">
@@ -856,7 +954,7 @@ export function BacklinksView() {
                   <td className="app-span" colSpan={6} data-label="">No referring domains yet. Connecting a link source is what fills this list. A lost link, once one appears, is only a review cue.</td>
                 </tr>
               )}
-              {shown.map((link) => (
+              {linkPager.rows.map((link) => (
                 <tr key={link.id}>
                   <td data-label="Domain">{link.domain}</td>
                   <td data-label="Target">{link.target}</td>
@@ -869,20 +967,23 @@ export function BacklinksView() {
             </tbody>
           </table>
         </div>
+        <Paginator pager={linkPager} label="referring domains" />
       </div>
       <div className="w-inset below">A lost link is a review cue. Searchify should verify the source page before suggesting outreach or a redirect; it should not automatically disavow links.</div>
       {open ? (
         <Modal title="Inspect backlink" onClose={() => setOpen(null)}>
           <dl className="detail-list">
-            <dt>Source · {live ? "live index" : sample ? "example" : "stored"}</dt><dd>{open.source || open.domain}</dd>
+            <dt>Source · {live ? "live index" : "stored"}</dt><dd>{open.source || open.domain}</dd>
             <dt>Target</dt><dd>{open.target}</dd>
             <dt>Anchor</dt><dd>{open.anchor}</dd>
             <dt>Relationship</dt><dd>{open.follow}</dd>
-            <dt>Status</dt><dd>{open.state}</dd>
+            <dt>Status</dt><dd>{open.state}{open.lostDate ? ` · lost ${open.lostDate}` : ""}</dd>
+            <dt>Seen</dt><dd>{[open.firstSeen && `first ${open.firstSeen}`, open.lastSeen && `last ${open.lastSeen}`].filter(Boolean).join(" · ") || "—"}</dd>
+            <dt>Domain rank</dt><dd>{open.rank == null ? "—" : `${open.rank} (${live?.summary?.rankScale || "DataForSEO rank, 0 to 1000"})`}</dd>
           </dl>
           <p>{open.state === "Lost" ? "Recheck the source page before contacting the publisher." : "Review the source page and relevance before making an outreach decision."}</p>
           {live && open.source ? <a className="w-button" href={open.source} target="_blank" rel="noopener noreferrer">Open the linking page</a> : null}
-          <p className="w-footnote">{sample ? "The .example domains are reserved sample names; there is no live link to open." : open.seen || "Stored from the link index. Confirm the source page before outreach."}</p>
+          <p className="w-footnote">Confirm the source page before outreach. Links are never disavowed automatically.</p>
         </Modal>
       ) : null}
     </section>
@@ -906,11 +1007,15 @@ export function AuditView() {
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState("");
   const [base, setBase] = useState(null);
-  const [crawl, setCrawl] = useState(null);
-  const [crawlNote, setCrawlNote] = useState("");
-  const [crawlBusy, setCrawlBusy] = useState(false);
-  const poll = useRef(null);
-  const alive = useRef(true);
+  const dispatch = useDispatch();
+  const crawlArgs = brief.siteUrl ? { site: brief.siteUrl } : null;
+  const [pollMs, setPollMs] = useState(0);
+  const crawlQuery = useAuditQuery(crawlArgs ?? skipToken, { pollingInterval: pollMs, skipPollingIfUnfocused: true });
+  const [refreshAudit, refreshState] = useRefreshAuditMutation();
+  const crawl = crawlQuery.currentData || null;
+  const crawlBusy = refreshState.isLoading;
+  const crawlError = refreshState.error || crawlQuery.error;
+  const crawlNote = crawlError ? quotaText(crawlError, "The site crawl could not run.") : "";
 
   const load = () => {
     setLoading(true);
@@ -927,32 +1032,23 @@ export function AuditView() {
       .finally(() => setLoading(false));
   };
 
-  const runCrawl = async (force = false) => {
-    if (!brief.siteUrl) return;
-    clearTimeout(poll.current);
-    setCrawlBusy(true);
-    setCrawlNote("");
-    const res = await researchAudit({ site: brief.siteUrl, force });
-    setCrawlBusy(false);
-    if (!res.ok) {
-      setCrawlNote(providerNote(res, "The site crawl could not run."));
-      return;
+  const recrawl = async () => {
+    if (!crawlArgs) return;
+    try {
+      const data = await refreshAudit(crawlArgs).unwrap();
+      await dispatch(researchApi.util.upsertQueryData("audit", crawlArgs, data));
+    } catch {
+      /* shown through refreshState.error */
     }
-    if (!alive.current) return;
-    setCrawl(res.data);
-    if (res.data.state === "crawling") poll.current = setTimeout(() => runCrawl(false), 10000);
   };
 
   useEffect(() => { load(); }, []);
   useEffect(() => {
-    alive.current = true;
-    setCrawl(null);
-    runCrawl(false);
-    return () => {
-      alive.current = false;
-      clearTimeout(poll.current);
-    };
+    refreshState.reset();
   }, [brief.siteUrl]);
+  useEffect(() => {
+    setPollMs(crawl?.state === "crawling" ? 10000 : 0);
+  }, [crawl?.state]);
   useEffect(() => {
     if (!base) return;
     const next = buildAuditFindings({ ...base, crawl });
@@ -963,6 +1059,7 @@ export function AuditView() {
   const crawling = crawl?.state === "crawling";
 
   const shown = findings.filter((item) => filter === "All severities" || item.severity === filter);
+  const findingPager = usePagination("audit", shown, `${brief.siteUrl}|${filter}`);
   const critical = findings.filter((item) => item.severity === "Critical").length;
 
   const sendToQueue = async (finding) => {
@@ -1027,6 +1124,7 @@ export function AuditView() {
         </div>
       ) : null}
       {crawlNote ? <p className="w-inset" role="status">{crawlNote}</p> : null}
+      <PlanUsage feature="audits" />
       {note ? <p className="w-inset">{note}</p> : null}
       <div className="w-panel">
         {loading ? (
@@ -1047,13 +1145,13 @@ export function AuditView() {
             </select>
           </label>
           <span className="w-muted">{crawl?.fetchedAt ? `Site crawled ${fetchedLabel(crawl.fetchedAt)}` : findings.length ? "Live findings from the connected sources" : "No findings stored yet"}</span>
-          <button className="w-button" type="button" disabled={crawlBusy || crawling || !brief.siteUrl} onClick={() => runCrawl(true)}>{crawling ? "Crawling…" : "Crawl the site again"}</button>
+          <button className="w-button" type="button" disabled={crawlBusy || crawling || !brief.siteUrl} onClick={recrawl}>{crawling ? "Crawling…" : "Crawl the site again"}</button>
         </div>
         <div className="table-scroll">
           <table className="w-table">
             <thead><tr><th>Severity</th><th>Finding</th><th>Affected pages / items</th><th>Action</th></tr></thead>
             <tbody>
-              {shown.length ? shown.map((item) => (
+              {shown.length ? findingPager.rows.map((item) => (
                 <tr key={item.id}>
                   <td data-label="Severity"><span className={`w-pill ${severityClass(item.severity)}`.trim()}>{item.severity}</span></td>
                   <td data-label="Finding"><strong>{item.name}</strong><small>{item.manual ? "Manual investigation" : "Metadata draft supported"}</small></td>
@@ -1064,6 +1162,7 @@ export function AuditView() {
             </tbody>
           </table>
         </div>
+        <Paginator pager={findingPager} label="findings" />
         </>
         )}
       </div>
@@ -1278,19 +1377,23 @@ export function BillingView() {
   const [current, setCurrent] = useState(null);
   const [used, setUsed] = useState(0);
   const [note, setNote] = useState("");
+  const dispatch = useDispatch();
+  const { data: usage } = useUsageQuery();
   useEffect(() => {
     const state = loadJourney();
     setCurrent(state.planId);
     setBilling(state.billing || "monthly");
     setUsed(readySites(state).length);
   }, []);
-  const select = (plan) => {
+  const select = async (plan) => {
     if (used > plan.sites) {
       setNote(`${plan.name} includes ${plan.sites} websites. This workspace already has ${used}.`);
       return;
     }
     choosePlan(plan.id, billing);
     setCurrent(plan.id);
+    await syncJourneyNow().catch(() => {});
+    dispatch(researchApi.util.invalidateTags(["Usage"]));
     setNote(`${plan.name} is the active plan. Card checkout is this selection until billing is connected.`);
     router.refresh();
   };
@@ -1313,7 +1416,16 @@ export function BillingView() {
               <li>{plan.sites === 1 ? "1 website" : `${plan.sites} websites`}</li>
               <li>{plan.keywords} tracked keywords</li>
               <li>{plan.prompts} AI prompts</li>
-              <li>{plan.audits} audits</li>
+              {usage?.plans?.[plan.id] ? (
+                <>
+                  <li>{usage.plans[plan.id].keywordIdeas} keyword ideas per refresh</li>
+                  <li>{usage.plans[plan.id].monthly.keywords} keyword refreshes a month</li>
+                  <li>{usage.plans[plan.id].monthly.backlinks} backlink refreshes a month</li>
+                  <li>{usage.plans[plan.id].monthly.visibility} AI visibility checks a month</li>
+                  <li>{usage.plans[plan.id].monthly.competitors} competitor lookups a month</li>
+                  <li>{usage.plans[plan.id].monthly.audits} site audits a month</li>
+                </>
+              ) : <li>{plan.audits} site audits a month</li>}
             </ul>
             <button className="w-button primary" type="button" onClick={() => select(plan)}>{current === plan.id ? "Current plan" : `Choose ${plan.name}`}</button>
           </article>
@@ -1322,6 +1434,10 @@ export function BillingView() {
       <div className="w-panel below">
         <h2>Your usage</h2>
         <div className="usage-row"><span>Websites</span><strong>{used} / {planById(current)?.sites || "—"}</strong></div>
+        {usage ? Object.entries(usage.features).map(([id, item]) => (
+          <div className="usage-row" key={id}><span>{item.label}</span><strong>{item.limit == null ? `${item.used} · no limit` : `${item.used} / ${item.limit}`}</strong></div>
+        )) : null}
+        {usage ? <p className="w-footnote">{`Counts for ${usage.planLabel} reset on ${usage.resetsOn}. Only new provider lookups count; results reused from the cache are free.`}</p> : null}
       </div>
     </section>
   );
