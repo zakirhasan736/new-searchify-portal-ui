@@ -8,6 +8,7 @@ const LOCAL_PAGES = {
   "/app/keywords": "keywords",
   "/app/backlinks": "backlinks",
   "/app/visibility": "visibility",
+  "/app/results": "results",
   "/app/history": "history",
 };
 

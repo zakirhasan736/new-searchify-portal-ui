@@ -47,7 +47,7 @@ const STEPS = [
     target: "route",
     href: "/app/visibility",
     title: "AI visibility",
-    body: "AI visibility is a short list of questions a customer might ask about your business. Run live checks to ask ChatGPT, Gemini, and Perplexity and see whether your business is named or your site is cited. Each check keeps the full answer and its sources.",
+    body: "AI visibility is a short list of questions a customer might ask about your business. Run live checks to ask ChatGPT, Gemini, Perplexity, or Claude and see whether your business is named or your site is cited. Each check keeps the full answer and its sources.",
   },
   {
     target: "route",

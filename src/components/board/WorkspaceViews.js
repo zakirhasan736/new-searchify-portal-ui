@@ -13,6 +13,7 @@ import { breadthKey, BREADTH_LABELS, loadGuardrails, saveGuardrails } from "@/li
 import SiteDrafts from "@/components/board/SiteDrafts";
 import { useBusinessBrief, useWorkspaceSite } from "@/components/board/useBusinessBrief";
 import useTargetMarket from "@/lib/useTargetMarket";
+import { AI_VISIBILITY_ENGINES } from "@/lib/aiEngines";
 import { starterKeywords, starterPrompts } from "@/lib/businessBrief";
 import { PLANS, activeJourneySite, assignGoogleAccount, beginAnotherWebsite, choosePlan, loadJourney, markConnection, planById, readySites, removeJourneySite, syncJourneyNow, websiteLabel } from "@/lib/journey";
 import { completionEntries, recordActivity } from "@/lib/previewQueue";
@@ -357,8 +358,9 @@ export function KeywordsView() {
   const { data: usage } = useUsageQuery();
   const [planId, setPlanId] = useState(null);
   const [liveKey, setLiveKey] = useState(null);
-  const { country: marketCountry, label: marketLabel, ready: marketReady } = useTargetMarket();
-  const researchCountry = marketCountry || brief.market || "";
+  const { country: marketCountry, label: marketLabel, market, ready: marketReady } = useTargetMarket();
+  // Prefer the country name for older APIs; ISO codes also resolve on current backends.
+  const researchCountry = market?.countryName || marketLabel || marketCountry || brief.market || "";
   const liveArgs = liveKey && liveKey.briefKey === briefKey && brief.siteUrl && researchCountry
     ? { site: brief.siteUrl, terms: liveKey.terms, country: researchCountry, reach: brief.reach || "" }
     : null;
@@ -368,7 +370,7 @@ export function KeywordsView() {
   const liveBusy = liveQuery.isFetching || refreshState.isLoading;
   const liveError = refreshState.error || liveQuery.error;
   const liveNote = brief.siteUrl && !researchCountry
-    ? "Choose a target country in the dashboard header (or finish setup). Keyword data is not loaded without a market."
+    ? "Choose a target country in the Region menu next to the website. Keyword data needs that market before it loads."
     : liveError ? quotaText(liveError, "Live keyword data could not be loaded.") : "";
   const allowance = usage ? usage.trackedKeywords ?? Infinity : planById(planId)?.keywords || 10;
   const allowanceNote = Number.isFinite(allowance) ? `${allowance} included in the ${usage?.planLabel || "selected"} plan` : "No limit on this account";
@@ -540,7 +542,7 @@ export function KeywordsView() {
       </div>
       {live?.ranked?.length ? (
         <div className="w-panel below">
-          <div className="w-toolbar"><strong>Already ranking</strong><span className="w-muted">{`Estimated Google positions from DataForSEO Labs for ${placeLabel(live)}. Not Search Console data.`}</span></div>
+          <div className="w-toolbar"><strong>Already ranking</strong><span className="w-muted">{`Best organic positions first (top 100), then higher monthly volume · ${placeLabel(live)}. Labs estimate, not Search Console.`}</span></div>
           <div className="table-scroll">
             <table className="w-table">
               <thead><tr><th>Search</th><th>Position</th><th>Monthly volume</th><th>Page</th><th>Action</th></tr></thead>
@@ -773,7 +775,7 @@ export function VisibilityView() {
 
   return (
     <section className="dash-view extension-view">
-      <Head eyebrow="ANSWER ENGINE MONITORING" title="Are you in the answer?" text={brief.ready ? `Questions a customer might ask about ${brief.focus || brief.hostname}. Run live checks to ask ChatGPT, Gemini, and Perplexity and see if ${brief.hostname || "the site"} is named or cited.` : "Finish setup and these questions follow your offer and market."} action={<button className="w-button primary" type="button" onClick={() => setAdding(true)}>Add prompt</button>} />
+      <Head eyebrow="ANSWER ENGINE MONITORING" title="Are you in the answer?" text={brief.ready ? `Questions a customer might ask about ${brief.focus || brief.hostname}. Run live checks on ChatGPT, Gemini, Perplexity, or Claude (with country proximity) and see if ${brief.hostname || "the site"} is named or cited. Copilot, Google AI Overviews, and Grok are listed for tracking next.` : "Finish setup and these questions follow your offer and market."} action={<button className="w-button primary" type="button" onClick={() => setAdding(true)}>Add prompt</button>} />
       <div className="w-metrics">
         <Metric label="Brand mentions" value={`${mentioned} / ${checked.length}`} note={sample ? "No live checks yet" : "Named in the live answers"} />
         <Metric label="Citations" value={String(citations)} note={sample ? "No live checks yet" : "Answers that link to the site"} />
@@ -787,9 +789,9 @@ export function VisibilityView() {
           <label>Answer engine
             <select id="model-filter" value={model} onChange={(event) => setModel(event.target.value)}>
               <option>All engines</option>
-              <option>ChatGPT</option>
-              <option>Gemini</option>
-              <option>Perplexity</option>
+              {AI_VISIBILITY_ENGINES.map((name) => (
+                <option key={name}>{name}</option>
+              ))}
             </select>
           </label>
           <button className="w-button primary" type="button" disabled={Boolean(checking)} onClick={() => runChecks(false)}>Run live checks</button>
@@ -823,8 +825,14 @@ export function VisibilityView() {
         <Modal title="Add a visibility prompt" onClose={() => setAdding(false)}>
           <form onSubmit={add}>
             <label>Customer question<input value={text} onChange={(event) => setText(event.target.value)} maxLength={200} required placeholder="Who offers…?" /></label>
-            <label>Answer engine<select value={engine} onChange={(event) => setEngine(event.target.value)}><option>ChatGPT</option><option>Gemini</option><option>Perplexity</option></select></label>
-            <p className="w-footnote">New questions stay unchecked until you run live checks.</p>
+            <label>Answer engine
+              <select value={engine} onChange={(event) => setEngine(event.target.value)}>
+                {AI_VISIBILITY_ENGINES.map((name) => (
+                  <option key={name}>{name}</option>
+                ))}
+              </select>
+            </label>
+            <p className="w-footnote">Live checks run on ChatGPT, Gemini, Perplexity, and Claude. Copilot, Google AI Overviews, and Grok can be saved now; live answers for those come next.</p>
             <button className="w-button primary" type="submit">Add prompt</button>
           </form>
         </Modal>
@@ -979,7 +987,9 @@ export function BacklinksView() {
             <dt>Relationship</dt><dd>{open.follow}</dd>
             <dt>Status</dt><dd>{open.state}{open.lostDate ? ` · lost ${open.lostDate}` : ""}</dd>
             <dt>Seen</dt><dd>{[open.firstSeen && `first ${open.firstSeen}`, open.lastSeen && `last ${open.lastSeen}`].filter(Boolean).join(" · ") || "—"}</dd>
-            <dt>Domain rank</dt><dd>{open.rank == null ? "—" : `${open.rank} (${live?.summary?.rankScale || "DataForSEO rank, 0 to 1000"})`}</dd>
+            <dt>Domain rank</dt><dd>{open.domainRank == null && open.rank == null ? "—" : `${open.domainRank ?? open.rank} (${live?.summary?.rankScale || "DataForSEO domain rank, 0 to 1000"})`}</dd>
+            <dt>Spam score</dt><dd>{open.spamScore == null ? "—" : open.spamScore}</dd>
+            <dt>Source page</dt><dd>{open.pageTitle || "—"}</dd>
           </dl>
           <p>{open.state === "Lost" ? "Recheck the source page before contacting the publisher." : "Review the source page and relevance before making an outreach decision."}</p>
           {live && open.source ? <a className="w-button" href={open.source} target="_blank" rel="noopener noreferrer">Open the linking page</a> : null}
@@ -998,7 +1008,7 @@ function severityClass(severity) {
 
 export function AuditView() {
   const router = useRouter();
-  const brief = useBusinessBrief();
+  const { brief, key: siteKey } = useWorkspaceSite("results");
   const [filter, setFilter] = useState("All severities");
   const [findings, setFindings] = useState([]);
   const [report, setReport] = useState(null);
@@ -1015,7 +1025,7 @@ export function AuditView() {
   const crawl = crawlQuery.currentData || null;
   const crawlBusy = refreshState.isLoading;
   const crawlError = refreshState.error || crawlQuery.error;
-  const crawlNote = crawlError ? quotaText(crawlError, "The site crawl could not run.") : "";
+  const crawlNote = crawlError ? quotaText(crawlError, "The site crawl could not run.") : !brief.siteUrl ? "Choose a website in the header so the crawl and SEO score have a target." : "";
 
   const load = () => {
     setLoading(true);
@@ -1042,7 +1052,7 @@ export function AuditView() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [siteKey, brief.siteUrl]);
   useEffect(() => {
     refreshState.reset();
   }, [brief.siteUrl]);
@@ -1060,7 +1070,7 @@ export function AuditView() {
 
   const shown = findings.filter((item) => filter === "All severities" || item.severity === filter);
   const findingPager = usePagination("audit", shown, `${brief.siteUrl}|${filter}`);
-  const critical = findings.filter((item) => item.severity === "Critical").length;
+  const critical = report?.critical ?? findings.filter((item) => item.severity === "Critical").length;
 
   const sendToQueue = async (finding) => {
     if (finding.changeId) {
@@ -1104,7 +1114,7 @@ export function AuditView() {
       ) : (
         <div className="w-metrics">
           <Metric label="Site health" value={report?.health == null ? "—" : String(Math.round(report.health))} note={report?.health == null ? "Loads with the site crawl" : "DataForSEO, out of 100"} />
-          <Metric label="SEO score" value={report?.seoScore || "—"} note="PageSpeed, home page" />
+          <Metric label="SEO score" value={report?.seoScore ?? "—"} note={report?.seoSource || "PageSpeed or site crawl"} />
           <Metric label="Pages crawled" value={report?.crawled ? String(report.crawled) : "—"} note={report?.crawled ? "Whole site" : "Loads with the site crawl"} />
           <Metric label="Critical findings" value={String(critical)} note={`${findings.length} findings in total`} />
         </div>

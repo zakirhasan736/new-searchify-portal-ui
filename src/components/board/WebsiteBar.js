@@ -146,7 +146,7 @@ export default function WebsiteBar({ pill, onChange }) {
           <span className="site-scope-note">{scope ? "This page only" : "Applies to every page"}</span>
         </div>
         <RegionSelector
-          siteUrl={selected?.siteUrl || ""}
+          siteUrl={selected?.siteUrl || (selected?.label && selected.label !== "Example website" ? `https://${selected.label}` : "")}
           siteId={selected?.kind === "journey" ? selected.id : null}
           disabled={demo}
         />

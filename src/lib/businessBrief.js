@@ -104,5 +104,14 @@ export function starterPrompts(brief) {
       snippet: "",
       sample: true,
     },
+    {
+      id: "brief-prompt-4",
+      text: `Is ${host} a good option for ${offer} in ${place}?`,
+      model: "Claude",
+      mention: null,
+      citation: "",
+      snippet: "",
+      sample: true,
+    },
   ];
 }

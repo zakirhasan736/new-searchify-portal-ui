@@ -20,7 +20,42 @@ function keyOf(url) {
   return pathOf(url).replace(/\/+$/, "") || "/";
 }
 
+function kpiValue(rows, label) {
+  const hit = (rows || []).find((row) => {
+    const name = String(row?.[0] || "").trim().toLowerCase();
+    return name === label || name.includes(label);
+  });
+  const raw = hit?.[1];
+  if (raw == null || raw === "" || raw === "—") return null;
+  return raw;
+}
+
+function scoreText(value) {
+  if (value == null || value === "" || value === "—") return null;
+  const num = Number(value);
+  if (Number.isFinite(num)) return String(Math.round(num));
+  return String(value);
+}
+
+/** PageSpeed SEO first, then crawl on-page score — never collapse 0 to blank. */
+export function resolveSeoScore(auditPayload = {}, crawlReport = null) {
+  const fromPsi =
+    kpiValue(auditPayload.kpis, "seo")
+    ?? kpiValue(auditPayload.panels?.kpis, "seo")
+    ?? auditPayload.scores?.mobile?.seo
+    ?? auditPayload.scores?.seo
+    ?? auditPayload.panels?.audit?.find?.((row) => String(row?.[0] || "").toLowerCase() === "seo")?.[1];
+  const fromCrawl = crawlReport?.seoScore ?? crawlReport?.score;
+  const text = scoreText(fromPsi) ?? scoreText(fromCrawl);
+  return {
+    seoScore: text,
+    seoSource: scoreText(fromPsi) != null ? "PageSpeed, home page" : fromCrawl != null ? "DataForSEO on-page score" : "Loads after PageSpeed sync or a site crawl",
+  };
+}
+
 const SEVERITY_RANK = { Critical: 0, Warning: 1, Notice: 2 };
+
+const PSI_CRITICAL = /document title|title element|http status|is.?crawlable|robots\.txt|canonical|indexability|noindex|blocked/i;
 
 function crawlFindings(report, { impressions, sessions, open }) {
   return (report?.issues || []).map((issue) => {
@@ -31,7 +66,8 @@ function crawlFindings(report, { impressions, sessions, open }) {
     })).sort((a, b) => (b.impressions + b.sessions) - (a.impressions + a.sessions));
     const seen = pages.reduce((sum, page) => sum + page.impressions, 0);
     const visits = pages.reduce((sum, page) => sum + page.sessions, 0);
-    const severity = (seen || visits) && issue.severity === "Notice" ? "Warning" : issue.severity;
+    let severity = issue.severity || "Notice";
+    if ((seen || visits) && severity === "Notice") severity = "Warning";
     const bits = [`DataForSEO crawled ${report.pagesCrawled || "the"} pages and found this on ${issue.count}.`];
     if (seen) bits.push(`Search Console: these pages had ${seen.toLocaleString("en-US")} impressions.`);
     if (visits) bits.push(`Analytics: ${visits.toLocaleString("en-US")} sessions landed on them.`);
@@ -45,7 +81,7 @@ function crawlFindings(report, { impressions, sessions, open }) {
       name: issue.name,
       detail: issue.meta ? "Metadata draft supported" : "Manual investigation",
       count: issue.count,
-      pages: pages.map((page) => page.url),
+      pages: pages.map((page) => page.url).filter(Boolean),
       evidence: bits.join(" "),
       fix: issue.fix,
       manual: !issue.meta,
@@ -66,13 +102,13 @@ export function buildAuditFindings({ audit, pages, queries, landings, places, ch
   const open = (Array.isArray(changes) ? changes : []).filter((change) => ["proposed", "awaiting_approval", "approved"].includes(change.status));
   const queuedUrls = new Set(open.map((change) => String(change.targetUrl || "").replace(/\/$/, "")));
   const findings = [];
-  const seoScore = (auditPayload.kpis || []).find((row) => String(row[0]).toLowerCase() === "seo")?.[1] || auditPayload.scores?.mobile?.seo || "—";
+  const crawlReport = crawl?.report || null;
+  const { seoScore, seoSource } = resolveSeoScore(auditPayload, crawlReport);
   const sources = [];
   if (pageRows.length || queryRows.length) sources.push("Search Console");
   if (landingRows.length) sources.push("Analytics");
   if (auditPayload.scores || (auditPayload.kpis || []).length) sources.push("PageSpeed");
   if (placeRows.length) sources.push("Places");
-  const crawlReport = crawl?.report || null;
   if (crawlReport) sources.unshift("DataForSEO site crawl");
 
   open.forEach((change) => {
@@ -81,7 +117,7 @@ export function buildAuditFindings({ audit, pages, queries, landings, places, ch
     if (proposed.evidence) evidenceBits.push(`Search Console: ${proposed.evidence.clicks ?? "—"} clicks, ${proposed.evidence.impressions ?? "—"} impressions, position ${proposed.evidence.position ?? "—"}.`);
     if (proposed.analytics) evidenceBits.push("Analytics has a stored landing or channel figure for this property.");
     if (Array.isArray(proposed.competitors) && proposed.competitors.length) evidenceBits.push(`${proposed.competitors.length} competitor titles were compared.`);
-    if (seoScore !== "—") evidenceBits.push(`PageSpeed SEO score for the tested URL is ${seoScore}.`);
+    if (seoScore != null) evidenceBits.push(`SEO score for the tested URL is ${seoScore}.`);
     if (placeRows.length) evidenceBits.push("Places data is connected, so a local name is only used when the page is about that place.");
     findings.push({
       id: `change-${change.id}`,
@@ -132,9 +168,10 @@ export function buildAuditFindings({ audit, pages, queries, landings, places, ch
     if (row[1] !== "Fail") return;
     const name = String(row[0] || "SEO check");
     const aboutMeta = /title|meta description|document/i.test(name);
+    const critical = PSI_CRITICAL.test(name);
     findings.push({
       id: `psi-${index}`,
-      severity: aboutMeta ? "Warning" : "Notice",
+      severity: critical ? "Critical" : aboutMeta ? "Warning" : "Notice",
       name,
       detail: aboutMeta ? "Metadata draft supported" : "Manual investigation",
       count: 1,
@@ -215,12 +252,15 @@ export function buildAuditFindings({ audit, pages, queries, landings, places, ch
   }
   findings.sort((a, b) => (SEVERITY_RANK[a.severity] ?? 3) - (SEVERITY_RANK[b.severity] ?? 3) || (b.traffic || 0) - (a.traffic || 0));
 
+  const critical = findings.filter((item) => item.severity === "Critical").length;
   const used = sources.filter(Boolean);
   return {
     findings,
     report: {
       seoScore,
+      seoSource,
       health: crawlReport?.score ?? null,
+      critical,
       crawled: crawlReport?.pagesCrawled || 0,
       pages: pageRows.length,
       queries: queryRows.length,

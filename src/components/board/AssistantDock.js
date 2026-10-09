@@ -117,7 +117,7 @@ function guideReply(text, brief) {
   }
   if (/visibility|answer engine|\bai prompt/.test(lower)) {
     return {
-      text: "AI visibility is a short list of questions a customer might ask about your business. Run live checks and Searchify asks ChatGPT, Gemini, and Perplexity, then shows whether your business is named or your site is cited, with the full answer and its sources.",
+      text: "AI visibility is a short list of questions a customer might ask about your business. Run live checks and Searchify asks ChatGPT, Gemini, Perplexity, or Claude, then shows whether your business is named or your site is cited, with the full answer and its sources.",
       href: "/app/visibility",
       label: "Open AI visibility",
     };
