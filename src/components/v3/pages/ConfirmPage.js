@@ -19,8 +19,7 @@ export default function ConfirmPage() {
   const [busy, setBusy] = useState(false);
   const [booted, setBooted] = useState(false);
   const [sentBack, setSentBack] = useState(false);
-  const [includeOpenGraph, setIncludeOpenGraph] = useState(false);
-  const [includeJsonLd, setIncludeJsonLd] = useState(false);
+  const [includeSocialSchema, setIncludeSocialSchema] = useState(false);
 
   const load = useCallback(async () => {
     const { data } = await listChanges({ force: true });
@@ -61,8 +60,8 @@ export default function ConfirmPage() {
     }
     const exec = await executeChange(change.id, {
       forceDryRun: false,
-      includeOpenGraph,
-      includeJsonLd,
+      includeOpenGraph: includeSocialSchema,
+      includeJsonLd: includeSocialSchema,
     });
     setBusy(false);
     if (exec.ok && exec.data?.ok && !exec.data?.dryRun) {
@@ -103,48 +102,26 @@ export default function ConfirmPage() {
         </div>
         <DraftChecks proposed={change.proposed} compact />
         {publishable ? (
-          <fieldset className="w-inset" style={{ marginTop: 16, display: "grid", gap: 10 }}>
-            <legend style={{ fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 700 }}>
-              Optional on WordPress
-            </legend>
-            <p className="w-footnote" style={{ margin: 0 }}>
-              Meta title and meta description always publish. These extras stay off unless you check them.
-            </p>
-            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
-              <input
-                type="checkbox"
-                checked={includeOpenGraph}
-                onChange={(e) => setIncludeOpenGraph(e.target.checked)}
-                disabled={busy}
-                style={{ marginTop: 3 }}
-              />
-              <span>
-                <strong>Also generate Open Graph</strong>
-                <br />
-                <span className="w-footnote">Uses this meta title and description for social preview tags (og:title / og:description).</span>
-              </span>
-            </label>
-            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
-              <input
-                type="checkbox"
-                checked={includeJsonLd}
-                onChange={(e) => setIncludeJsonLd(e.target.checked)}
-                disabled={busy}
-                style={{ marginTop: 3 }}
-              />
-              <span>
-                <strong>Also generate JSON-LD schema</strong>
-                <br />
-                <span className="w-footnote">Adds a WebPage JSON-LD block on the WordPress page from this meta title and description.</span>
-              </span>
-            </label>
-          </fieldset>
+          <label className={`publish-extra${includeSocialSchema ? " on" : ""}${busy ? " disabled" : ""}`}>
+            <input
+              type="checkbox"
+              className="publish-extra-input"
+              checked={includeSocialSchema}
+              onChange={(e) => setIncludeSocialSchema(e.target.checked)}
+              disabled={busy}
+            />
+            <span className="publish-extra-switch" aria-hidden="true">
+              <span className="publish-extra-knob" />
+            </span>
+            <span className="publish-extra-copy">
+              <strong>Also write Open Graph + JSON-LD</strong>
+              <small>Uses this meta title and description for social previews and WebPage schema. Off by default.</small>
+            </span>
+          </label>
         ) : null}
         <p>
           One page · meta title and meta description
-          {includeOpenGraph || includeJsonLd
-            ? ` · ${[includeOpenGraph ? "Open Graph" : null, includeJsonLd ? "JSON-LD" : null].filter(Boolean).join(" + ")}`
-            : ""}
+          {includeSocialSchema ? " · Open Graph + JSON-LD" : ""}
           {" "}· previous values retained · approver {getUser()?.result?.username || getUser()?.data?.username || "signed-in user"}.
         </p>
         <div className="w-actions">
