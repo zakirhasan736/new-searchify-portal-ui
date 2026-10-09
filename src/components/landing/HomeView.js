@@ -107,7 +107,7 @@ function WalkVisual({ step, onApprove }) {
         <ul className="checklist">
           <li>Correct site: Northline Plumbing</li>
           <li>Correct page: /services/drain-cleaning</li>
-          <li>Only the title and description will change</li>
+          <li>Only the meta title and meta description will change</li>
         </ul>
         <button id="approve-demo" className="btn primary small approve-demo" type="button" onClick={onApprove}>
           Approve this example

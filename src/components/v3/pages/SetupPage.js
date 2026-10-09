@@ -209,7 +209,7 @@ export default function SetupPage({ step = 1 }) {
             <div className="sf-listrow" style={{ alignItems: "flex-start" }}>
               <div style={{ flex: 1 }}>
                 <h3>Connect WordPress</h3>
-                <p style={{ fontSize: 13 }}>Allow approved title and description updates.</p>
+                <p style={{ fontSize: 13 }}>Allow approved meta title and meta description updates.</p>
                 <div className="sf-small" style={{ marginTop: 6 }}>
                   Site: {validSiteUrl(url) ? url : "Set website in step 1"}
                 </div>

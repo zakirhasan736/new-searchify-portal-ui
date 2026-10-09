@@ -55,7 +55,7 @@ export default function HistoryPage() {
 
       {undoId != null ? (
         <div className="sf-box" style={{ marginBottom: 15 }}>
-          <h3>Restore the previous title and description?</h3>
+          <h3>Restore the previous meta title and meta description?</h3>
           <p style={{ fontSize: 13 }}>This restores the saved values for this change.</p>
           <div className="sf-row sf-gap">
             <Btn onClick={() => setUndoId(null)}>Keep current version</Btn>

@@ -463,12 +463,16 @@ export async function approveChange(id) {
   return res;
 }
 
-export async function executeChange(id, { forceDryRun = false } = {}) {
+export async function executeChange(id, { forceDryRun = false, includeOpenGraph = false, includeJsonLd = false } = {}) {
   const res = await json(
     await fetch(`/api/v1/operator/changes/${id}/execute`, {
       method: "POST",
       headers: authHeaders(),
-      body: JSON.stringify({ force_dry_run: forceDryRun }),
+      body: JSON.stringify({
+        force_dry_run: forceDryRun,
+        include_open_graph: Boolean(includeOpenGraph),
+        include_json_ld: Boolean(includeJsonLd),
+      }),
     }),
   );
   invalidateV3Cache(["changes"]);

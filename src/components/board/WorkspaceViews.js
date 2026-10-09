@@ -286,7 +286,7 @@ export function ConnectionsView() {
       </p>
       <div className="w-card-grid">
         {[
-          ["wordpress", "W", "WordPress", status.wordpress, "Publish approved titles and descriptions."],
+          ["wordpress", "W", "WordPress", status.wordpress, "Publish approved meta titles and meta descriptions."],
           ["gsc", "G", "Search Console", status.gsc, "Queries, pages, clicks, and impressions."],
           ["ga", "A", "Google Analytics", status.ga, "Organic traffic next to the work you approve."],
         ].map(([id, mark, title, on, body]) => (

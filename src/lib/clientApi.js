@@ -78,10 +78,14 @@ export async function operatorApproveChange(changeId) {
   });
 }
 
-export async function operatorExecuteChange(changeId, { forceDryRun = false } = {}) {
+export async function operatorExecuteChange(changeId, { forceDryRun = false, includeOpenGraph = false, includeJsonLd = false } = {}) {
   return fetch(`/api/v1/operator/changes/${changeId}/execute`, {
     method: "POST",
     headers: authHeaders(),
-    body: JSON.stringify({ force_dry_run: forceDryRun }),
+    body: JSON.stringify({
+      force_dry_run: forceDryRun,
+      include_open_graph: Boolean(includeOpenGraph),
+      include_json_ld: Boolean(includeJsonLd),
+    }),
   });
 }

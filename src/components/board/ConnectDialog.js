@@ -7,7 +7,7 @@ import { markConnection } from "@/lib/journey";
 const COPY = {
   wordpress: {
     title: "WordPress connection",
-    body: "Publish approved titles and descriptions to this site. Searchify stores the application password on the server.",
+    body: "Publish approved meta titles and meta descriptions to this site. Searchify never renames WordPress pages or menus. The application password stays on the server.",
   },
   gsc: {
     title: "Google Search Console",
