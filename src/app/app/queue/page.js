@@ -1,7 +1,12 @@
-import QueuePage from "@/components/v3/pages/QueuePage";
+import { Suspense } from "react";
+import { ApprovalsView } from "@/components/board/WorkspaceViews";
 
-export const metadata = { title: "Work queue" };
+export const metadata = { title: "Needs human approval" };
 
 export default function Page() {
-  return <QueuePage />;
+  return (
+    <Suspense fallback={null}>
+      <ApprovalsView />
+    </Suspense>
+  );
 }

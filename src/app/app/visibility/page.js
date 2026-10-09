@@ -1,7 +1,7 @@
-﻿import VisibilityPage from "@/components/v3/pages/VisibilityPage";
+﻿import { VisibilityView } from "@/components/board/WorkspaceViews";
 
-export const metadata = { title: "AI Visibility" };
+export const metadata = { title: "AI visibility" };
 
 export default function Page() {
-  return <VisibilityPage />;
+  return <VisibilityView />;
 }

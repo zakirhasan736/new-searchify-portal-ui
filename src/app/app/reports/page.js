@@ -1,7 +1,5 @@
-﻿import ReportsPage from "@/components/v3/pages/ReportsPage";
-
-export const metadata = { title: "Reports" };
+﻿import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <ReportsPage />;
+  redirect("/app/history");
 }

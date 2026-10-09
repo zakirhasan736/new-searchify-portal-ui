@@ -2,12 +2,22 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import V3Shell from "@/components/v3/V3Shell";
+import BoardShell from "@/components/board/BoardShell";
 import AdminShell from "@/components/v3/AdminShell";
+import ClientOnly from "@/components/shell/ClientOnly";
 import { userIsAuthenticated } from "@/utils/users/Helpers";
 
-const AUTH = new Set(["/", "/signin", "/signup", "/forgotpassword", "/resetpassword"]);
-const LEGACY_OK = new Set(["/signin", "/signup", "/forgotpassword", "/resetpassword"]);
+const MARKETING = new Set(["/", "/about", "/pricing", "/contact", "/terms", "/privacy"]);
+const AUTH = new Set([
+  "/login",
+  "/signin",
+  "/signup",
+  "/forgot",
+  "/forgotpassword",
+  "/reset",
+  "/reset-password",
+  "/resetpassword",
+]);
 
 /**
  * First-release shell: V3 UI for /app*.
@@ -18,20 +28,32 @@ export default function ProductShell({ children }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (AUTH.has(pathname) || pathname.startsWith("/app") || pathname.startsWith("/admin") || pathname.startsWith("/api")) return;
-    if (userIsAuthenticated() && !LEGACY_OK.has(pathname)) {
-      router.replace("/app");
+    if (
+      MARKETING.has(pathname) ||
+      AUTH.has(pathname) ||
+      pathname.startsWith("/app") ||
+      pathname.startsWith("/admin") ||
+      pathname.startsWith("/api")
+    ) {
+      return;
     }
+    if (userIsAuthenticated()) router.replace("/app");
   }, [pathname, router]);
 
-  if (AUTH.has(pathname)) {
-    return (
-      <div id="sf-app" className="sf-auth">
-        {children}
-      </div>
-    );
-  }
-  if (pathname.startsWith("/app")) return <V3Shell>{children}</V3Shell>;
-  if (pathname.startsWith("/admin")) return <AdminShell>{children}</AdminShell>;
-  return children;
+  if (MARKETING.has(pathname)) return children;
+  if (pathname === "/app/start" || pathname === "/app/plans") return <ClientOnly>{children}</ClientOnly>;
+
+  const inner = AUTH.has(pathname) ? (
+    <div id="sf-app" className="sf-auth">
+      {children}
+    </div>
+  ) : pathname.startsWith("/app") ? (
+    <BoardShell>{children}</BoardShell>
+  ) : pathname.startsWith("/admin") ? (
+    <AdminShell>{children}</AdminShell>
+  ) : (
+    children
+  );
+
+  return <ClientOnly>{inner}</ClientOnly>;
 }

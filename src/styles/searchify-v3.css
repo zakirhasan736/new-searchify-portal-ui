@@ -1,4 +1,4 @@
-﻿/* Searchify UI Source v3 — extracted */
+/* Searchify UI Source v3 — extracted */
 html,body{margin:0;background:#101112}button,input,select,textarea{font-family:inherit}
 #sf-app .sf-empty h1{font-family:"Barlow Condensed",Impact,sans-serif;font-size:clamp(48px,7vw,88px);line-height:1;text-transform:uppercase;letter-spacing:-1px}#sf-app p[style],#sf-app .sf-check{font-size:14px!important}
 
@@ -16,7 +16,7 @@ html,body{margin:0;background:#101112}button,input,select,textarea{font-family:i
 @media(max-width:480px){#sf-app .sf-grid,#sf-app .sf-three{grid-template-columns:1fr}#sf-app .sf-three{gap:8px}#sf-app .sf-three .sf-box{padding:13px 16px}#sf-app .sf-metric{font-size:25px}#sf-app .sf-listrow{align-items:flex-start;flex-wrap:wrap}#sf-app .sf-top{flex-wrap:wrap}#sf-app h1{font-size:24px}#sf-app .sf-evidence{gap:17px}#sf-app input:not([type=checkbox]),#sf-app textarea,#sf-app select{font-size:16px}#sf-app .sf-content{padding:17px}#sf-app .sf-box{padding:16px}}
 @media(pointer:coarse){#sf-app button{min-height:44px}}
 
-#sf-app{color-scheme:dark;--sf-bg:#101112;--sf-panel:#181a1b;--sf-text:#f4f4ee;--sf-sub:#b2b5b0;--sf-line:#343734;--sf-soft:#232720;--sf-brand:#926BFF;--sf-brandtext:#172009;--sf-green:#926BFF;--sf-warn:#926BFF;font-family:var(--font-manrope),Manrope,Arial,sans-serif;font-size:16px;border:0;border-radius:0;overflow:visible;height:auto;min-height:100dvh;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+#sf-app{color-scheme:dark;--sf-bg:#101112;--sf-panel:#181a1b;--sf-text:#f4f4ee;--sf-sub:#b2b5b0;--sf-line:#343734;--sf-soft:#232720;--sf-brand:#d5f879;--sf-brandtext:#172009;--sf-green:#d5f879;--sf-warn:#d5f879;font-family:var(--font-manrope),Manrope,Arial,sans-serif;font-size:16px;border:0;border-radius:0;overflow:visible;height:auto;min-height:100dvh;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 #sf-app .sf-shell{grid-template-columns:196px minmax(0,1fr);height:auto;min-height:100dvh;overflow:visible;align-items:start}
 #sf-app .sf-side{background:#101112;padding:14px 12px;gap:10px}
 #sf-app .sf-logo{font-size:26px;font-weight:700;letter-spacing:-1.4px}
@@ -24,7 +24,7 @@ html,body{margin:0;background:#101112}button,input,select,textarea{font-family:i
 #sf-app .sf-top{padding:18px 38px;background:#101112}
 #sf-app .sf-content{padding:0 38px 30px;max-width:1420px;margin:auto}
 #sf-app .sf-nav button{padding:0 12px;font-size:14px;min-height:38px;height:38px;transition:background .16s,box-shadow .16s,color .16s}
-#sf-app .sf-nav button[aria-current=page]{background:#242b19;color:#926BFF;box-shadow:inset 2px 0 #926BFF}
+#sf-app .sf-nav button[aria-current=page]{background:#242b19;color:#d5f879;box-shadow:inset 2px 0 #d5f879}
 #sf-app .sf-small{font-size:13px}#sf-app .sf-label{font-size:12px;letter-spacing:1.8px}
 #sf-app .sf-hero{padding:38px 0 30px;border-bottom:1px solid var(--sf-line);margin-bottom:30px;position:relative}
 #sf-app .sf-hero-top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:22px}
@@ -163,11 +163,11 @@ html,body{margin:0;background:#101112}button,input,select,textarea{font-family:i
 /* Nav Links — taller rows, even spacing, quiet hover */
 #sf-app .sf-nav a{display:flex;align-items:center;gap:10px;width:100%;min-height:38px;height:38px;padding:0 12px;font-size:14px;line-height:1.2;border-radius:8px;border:0;background:transparent;color:inherit;text-decoration:none;transition:background .16s,color .16s,box-shadow .16s;cursor:pointer}
 #sf-app .sf-nav a svg{width:15px;height:15px;flex-shrink:0}
-#sf-app .sf-nav a[aria-current=page],#sf-app .sf-nav a.active{background:#242b19;color:#926BFF;box-shadow:inset 2px 0 #926BFF}
+#sf-app .sf-nav a[aria-current=page],#sf-app .sf-nav a.active{background:#242b19;color:#d5f879;box-shadow:inset 2px 0 #d5f879}
 #sf-app .sf-nav a:hover{background:#1c1f1a;color:#e8ebd6;box-shadow:none}
-#sf-app .sf-nav a[aria-current=page]:hover,#sf-app .sf-nav a.active:hover{background:#242b19;color:#926BFF}
+#sf-app .sf-nav a[aria-current=page]:hover,#sf-app .sf-nav a.active:hover{background:#242b19;color:#d5f879}
 #sf-app .sf-sectiontabs a{display:inline-flex;align-items:center;padding:10px 14px;border:0;background:transparent;color:inherit;text-decoration:none;font-size:14px;cursor:pointer}
-#sf-app .sf-sectiontabs a.active{color:#926BFF;box-shadow:inset 0 -2px #926BFF}
+#sf-app .sf-sectiontabs a.active{color:#d5f879;box-shadow:inset 0 -2px #d5f879}
 @media(max-width:760px){#sf-app .sf-nav a{padding:10px 12px;font-size:14px;min-height:44px}}
 @media(max-width:900px){#sf-app .sf-sectiontabs a{white-space:nowrap;min-height:44px}}
 
@@ -227,7 +227,7 @@ html,body{margin:0;background:#101112}button,input,select,textarea{font-family:i
     border-radius:12px;border:0;background:transparent;padding:4px 2px;width:100%;
   }
   #sf-app .sf-tabbar a.active,#sf-app .sf-tabbar a[aria-current=page],#sf-app .sf-tabbar button.active{
-    color:#926BFF;background:#242b19;
+    color:#d5f879;background:#242b19;
   }
   #sf-app .sf-tabbar svg{width:20px;height:20px}
   #sf-app .sf-nav{
@@ -267,6 +267,9 @@ body:has(#sf-app.sf-auth){
     #101112;
   padding:0;
 }
+#sf-app .sf-auth-enter{animation:sf-auth-in .45s ease both}
+@keyframes sf-auth-in{from{opacity:.01;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){#sf-app .sf-auth-enter{animation:none}}
 #sf-app .sf-auth-inner{
   width:100%;
   max-width:1180px;
@@ -369,8 +372,8 @@ body:has(#sf-app.sf-auth){
 }
 #sf-app .sf-nav a[aria-current=page],#sf-app .sf-nav a.active{
   background:#242b19;
-  color:#926BFF;
-  box-shadow:inset 2px 0 #926BFF;
+  color:#d5f879;
+  box-shadow:inset 2px 0 #d5f879;
   font-weight:600;
 }
 #sf-app .sf-sidefoot{
@@ -433,11 +436,11 @@ body:has(#sf-app.sf-auth){
   padding:12px 14px;
   border-radius:8px;
   background:#2c2218;
-  color:#926BFF;
+  color:#d5f879;
   font-size:14px;
   flex-shrink:0;
 }
-#sf-app .sf-auth-toast.sf-auth-ok{background:#1f261a;color:#926BFF}
+#sf-app .sf-auth-toast.sf-auth-ok{background:#1f261a;color:#d5f879}
 #sf-app .sf-auth-card{
   flex:0 1 auto;
   min-height:0;
@@ -562,6 +565,17 @@ body:has(#sf-app.sf-auth){
   border-bottom-color:var(--sf-line);
   box-shadow:0 8px 24px #0005;
 }
+#sf-app.sf-scrolled .sf-top::after{
+  content:"";
+  position:absolute;
+  left:8%;
+  right:8%;
+  bottom:0;
+  height:2px;
+  background:linear-gradient(90deg,transparent,#d5f879,transparent);
+  animation:sf-top-line .4s ease both;
+}
+@keyframes sf-top-line{from{transform:scaleX(.25);opacity:0}to{transform:scaleX(1);opacity:1}}
 #sf-app .sf-sectiontabs{
   position:sticky;
   top:var(--sf-top-h);
@@ -926,7 +940,7 @@ body:has(#sf-app.sf-auth){
   }
   #sf-app .sf-tabbar a.active,
   #sf-app .sf-tabbar a[aria-current=page],
-  #sf-app .sf-tabbar button.active{color:#926BFF;background:#242b19}
+  #sf-app .sf-tabbar button.active{color:#d5f879;background:#242b19}
   #sf-app .sf-tabbar svg{width:20px;height:20px;flex-shrink:0}
   #sf-app .sf-skel-title,
   #sf-app .sf-skel-title-2{max-width:100%;width:78%}
@@ -1043,15 +1057,15 @@ body:has(#sf-app.sf-auth){
     background:#101211;color:#d7dacb;text-decoration:none;font-size:14px;font-weight:600;
   }
   #sf-app .sf-sheet-grid a.active{
-    border-color:#6f8344;background:#242b19;color:#926BFF;
+    border-color:#6f8344;background:#242b19;color:#d5f879;
   }
   #sf-app .sf-sheet-ico{
     width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
-    background:#1c2118;color:#926BFF;flex-shrink:0;
+    background:#1c2118;color:#d5f879;flex-shrink:0;
   }
   #sf-app .sf-sheet-signout{
     width:100%;min-height:46px;border:0;border-radius:12px;
-    background:#2a1f1a;color:#926BFF;font-weight:600;
+    background:#2a1f1a;color:#d5f879;font-weight:600;
   }
   #sf-app .sf-dock{
     display:block;
@@ -1088,7 +1102,7 @@ body:has(#sf-app.sf-auth){
   #sf-app .sf-dock-item svg{width:20px;height:20px}
   #sf-app .sf-dock-item.active{
     color:#172009;
-    background:#926BFF;
+    background:#d5f879;
     box-shadow:0 6px 16px #b6e35a40;
   }
   #sf-app .sf-dock-item.active .sf-dock-ico{background:transparent}
@@ -1458,6 +1472,74 @@ body:has(#sf-app.sf-auth){
   #sf-app.sf-auth .sf-hero h1{font-size:clamp(36px,10vw,46px);margin-bottom:4px}
   #sf-app.sf-auth .sf-auth-lead{font-size:13px;line-height:1.35}
   #sf-app.sf-auth label.sf-field{margin:5px 0}
+}
+#sf-app .sf-promptrow{
+  padding:18px 0;
+  border-bottom:1px solid var(--sf-line);
+}
+#sf-app .sf-promptrow:last-child{border-bottom:0}
+#sf-app .sf-promptrow h3{margin:4px 0 10px;font-size:18px;letter-spacing:-.3px}
+#sf-app .sf-promptrow.is-error{padding-bottom:20px}
+#sf-app .sf-vis-errortext{
+  margin:10px 0 0;
+  color:var(--sf-warn);
+  font-size:14px;
+  max-width:42em;
+}
+#sf-app .sf-vis-actions{display:flex;gap:8px;flex-shrink:0;align-items:flex-start}
+#sf-app .sf-vis-steps{margin:12px 0 0;padding-left:18px;display:grid;gap:8px}
+#sf-app .sf-vis-draft{
+  margin-top:16px;
+  padding:14px 16px;
+  border:1px solid var(--sf-line);
+  border-radius:12px;
+  background:var(--sf-soft);
+}
+#sf-app .sf-vis-draft p{margin:8px 0 0}
+#sf-app .sf-modal{
+  position:fixed;
+  inset:0;
+  z-index:80;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));
+}
+#sf-app .sf-modal-backdrop{
+  position:absolute;
+  inset:0;
+  border:0;
+  background:#0009;
+  cursor:pointer;
+}
+#sf-app .sf-modal-card{
+  position:relative;
+  width:min(560px,100%);
+  max-height:min(86dvh,720px);
+  overflow:auto;
+  background:var(--sf-panel);
+  color:var(--sf-text);
+  border:1px solid var(--sf-line);
+  border-radius:18px;
+  padding:22px;
+  box-shadow:0 24px 60px #0008;
+}
+#sf-app .sf-modal-card h2{margin:8px 0 10px;font-size:26px;letter-spacing:-.6px}
+#sf-app .sf-modal-x{
+  border:0;
+  background:transparent;
+  color:var(--sf-sub);
+  font-size:28px;
+  line-height:1;
+  padding:0 4px;
+}
+@media(min-width:760px){
+  #sf-app .sf-modal{align-items:center}
+}
+@media(max-width:720px){
+  #sf-app .sf-promptrow .sf-row.sf-between{flex-direction:column;align-items:stretch;gap:12px}
+  #sf-app .sf-vis-actions{width:100%}
+  #sf-app .sf-vis-actions .sf-btn{flex:1}
 }
 @media(prefers-reduced-motion:reduce){
   #sf-app .sf-page,

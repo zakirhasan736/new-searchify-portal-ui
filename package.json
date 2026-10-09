@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "framer-motion": "^14.0.0",
     "lottie-react": "^2.3.1",
     "next": "^16.3.6",
     "react": "^19.3.0",

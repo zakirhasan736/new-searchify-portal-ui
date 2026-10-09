@@ -1,7 +1,7 @@
-import OverviewPage from "@/components/v3/pages/OverviewPage";
+import ResultsBoard from "@/components/board/ResultsBoard";
 
-export const metadata = { title: "Overview" };
+export const metadata = { title: "Your next SEO moves" };
 
 export default function Page() {
-  return <OverviewPage />;
+  return <ResultsBoard />;
 }

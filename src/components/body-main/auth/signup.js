@@ -44,7 +44,7 @@ export default function SignUp() {
     setPending(false);
     if (res.ok) {
       notice("Account created. Sign in to open the workspace.", "ok");
-      setTimeout(() => navigate("/signin"), 700);
+      setTimeout(() => navigate("/login"), 700);
       return;
     }
     const data = await res.json().catch(() => ({}));
@@ -106,7 +106,7 @@ export default function SignUp() {
         <AuthSubmit disabled={pending}>{pending ? "Creating…" : "Create access →"}</AuthSubmit>
         <SocialLoginButtons onError={notice} />
         <p className="sf-auth-foot">
-          Already have access? <Link href="/signin">Sign in</Link>
+          Already have access? <Link href="/login">Sign in</Link>
         </p>
       </form>
     </AuthScreen>

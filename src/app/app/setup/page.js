@@ -1,7 +1,5 @@
-import SetupPage from "@/components/v3/pages/SetupPage";
-
-export const metadata = { title: "Setup" };
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <SetupPage />;
+  redirect("/app/start");
 }

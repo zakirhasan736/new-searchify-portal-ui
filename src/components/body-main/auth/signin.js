@@ -6,6 +6,7 @@ import { useNavigate } from "@/lib/navigation";
 import { parseJwt, userLogin } from "../../../utils/users/Helpers";
 import { fetchProjectByUserId } from "../../../utils/users/ProjectUtil";
 import { AuthField, AuthScreen, AuthSubmit } from "@/components/v3/AuthScreen";
+import { postLoginPath } from "@/lib/journey";
 import SocialLoginButtons from "./SocialLoginButtons";
 
 export default function Signin() {
@@ -26,11 +27,15 @@ export default function Signin() {
     const data = parseJwt(result.token);
     const user = { data, result };
     userLogin(user);
-    const resProject = await fetchProjectByUserId(user.data.sub);
-    const resultProject = await resProject.json().catch(() => ({}));
-    localStorage.setItem("project", JSON.stringify(resultProject));
+    try {
+      const resProject = await fetchProjectByUserId(user.data.sub);
+      const resultProject = await resProject.json().catch(() => ({}));
+      localStorage.setItem("project", JSON.stringify(resultProject));
+    } catch {
+      localStorage.setItem("project", "{}");
+    }
     if (result.userType === "admin") navigate("/admin/tagmgmt");
-    else navigate("/app");
+    else navigate(postLoginPath());
   };
 
   useEffect(() => {
@@ -57,19 +62,23 @@ export default function Signin() {
     if (!username.trim()) return notice("Enter your username or email.");
     if (!pwd) return notice("Enter your password.");
     setPending(true);
-    const res = await fetch("/api/v1/auth/signin", {
-      headers: { "Content-Type": "application/json" },
-      method: "POST",
-      body: JSON.stringify({ username: username.trim(), password: pwd }),
-    });
-    const result = await res.json().catch(() => ({}));
-    if (!res.ok || !result.token) {
+    try {
+      const res = await fetch("/api/v1/auth/signin", {
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+        body: JSON.stringify({ username: username.trim(), password: pwd }),
+      });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok || !result.token) {
+        notice(typeof result.detail === "string" ? result.detail : "Sign in failed. Use the same username and password as before.");
+        return;
+      }
+      await finishLogin(result);
+    } catch {
+      notice("Sign in could not reach Searchify. Try again in a moment.");
+    } finally {
       setPending(false);
-      notice(result.detail || "Sign in failed.");
-      return;
     }
-    await finishLogin(result);
-    setPending(false);
   };
 
   return (
@@ -107,7 +116,7 @@ export default function Signin() {
           </div>
         </AuthField>
         <div className="sf-auth-row">
-          <Link className="sf-link" href="/forgotpassword">
+          <Link className="sf-link" href="/forgot">
             Forgot password
           </Link>
         </div>

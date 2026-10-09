@@ -1,7 +1,5 @@
-﻿import RankingsPage from "@/components/v3/pages/RankingsPage";
-
-export const metadata = { title: "Rankings" };
+﻿import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <RankingsPage />;
+  redirect("/app/keywords");
 }

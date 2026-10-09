@@ -1,7 +1,5 @@
-import ProfilePage from "@/components/v3/pages/ProfilePage";
-
-export const metadata = { title: "Business profile" };
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <ProfilePage />;
+  redirect("/app/settings");
 }

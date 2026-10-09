@@ -1,7 +1,7 @@
-import WorkspacePage from "@/components/v3/pages/WorkspacePage";
+import { ManageView } from "@/components/board/WorkspaceViews";
 
-export const metadata = { title: "Workspace" };
+export const metadata = { title: "Manage workspace" };
 
 export default function Page() {
-  return <WorkspacePage />;
+  return <ManageView />;
 }

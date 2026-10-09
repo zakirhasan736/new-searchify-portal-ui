@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Btn, Pill } from "@/components/v3/V3Shell";
+import Link from "next/link";
+import "@/styles/results-board.css";
 import { changePath, listChanges, queueItems } from "@/lib/v1Api";
 
 export default function PublishedPage() {
@@ -25,10 +26,10 @@ export default function PublishedPage() {
 
   if (!change) {
     return (
-      <div className="sf-empty">
-        <h2>Change not found</h2>
-        <Btn href="/app/queue">← Work queue</Btn>
-      </div>
+      <section className="dash-view">
+        <header className="w-head"><div><h1>Change not found.</h1></div></header>
+        <Link className="w-button" href="/app/queue">Back to approvals</Link>
+      </section>
     );
   }
 
@@ -37,46 +38,30 @@ export default function PublishedPage() {
   const description = change.proposed?.metaDescription || "";
 
   return (
-    <>
-      <div className="sf-empty">
-        <div className="sf-avatar" style={{ margin: "0 auto 18px", width: 48, height: 48, color: "var(--sf-green)" }}>
-          ✓
+    <section className="dash-view extension-view">
+      <header className="w-head">
+        <div>
+          <div className="dash-eyebrow">{dry ? "DRY-RUN RECORDED" : "PUBLICATION COMPLETE"}</div>
+          <h1>Your change is published.</h1>
+          <p>{dry ? "WordPress credentials are incomplete, so the intent was recorded. Finish the connection to apply it live." : "The approved text was applied and checked."}</p>
         </div>
-        <div className="sf-label">{dry ? "Dry-run recorded" : "Publication complete"}</div>
-        <h1 style={{ fontFamily: "'Barlow Condensed', Impact, sans-serif", textTransform: "uppercase", fontSize: 48 }}>
-          Your change is published.
-        </h1>
-        <p>{dry ? "Credentials incomplete — intent recorded. Connect WordPress to apply live." : "The approved text was applied and checked."}</p>
-      </div>
-      <div className="sf-box">
-        <div className="sf-row sf-between">
-          <h3>{changePath(change)}</h3>
-          <Pill>{dry ? "Dry-run" : "Published"}</Pill>
+      </header>
+      <article className="w-panel">
+        <span className={`w-pill${dry ? "" : " good"}`}>{dry ? "Dry-run" : "Published"}</span>
+        <h2>{changePath(change)}</h2>
+        <div className="change-pair">
+          <div className="change-cell suggested"><small>New page title</small><span>{title}</span></div>
+          <div className="change-cell suggested"><small>Description</small><span>{description}</span></div>
         </div>
-        <div className="sf-divider" />
-        <div className="sf-small">New page title</div>
-        <h3 style={{ marginTop: 7 }}>{title}</h3>
-        <p style={{ marginTop: 9, fontSize: 13 }}>{description}</p>
+      </article>
+      <div className="w-two-col below">
+        <article className="w-panel"><h2>What happens next</h2><p>The next checks track this page’s search performance.</p></article>
+        <article className="w-panel"><h2>You can undo this</h2><p>The previous values stay in the completion log.</p><Link className="w-button" href="/app/history">Open completion log</Link></article>
       </div>
-      <div className="sf-grid sf-gap">
-        <div className="sf-box">
-          <h3>What happens next</h3>
-          <p style={{ fontSize: 13 }}>The next checks track this page’s search performance.</p>
-        </div>
-        <div className="sf-box">
-          <h3>You can undo this</h3>
-          <p style={{ fontSize: 13 }}>The previous values are saved in your change history.</p>
-          <button type="button" className="sf-link" onClick={() => router.push("/app/history")}>
-            Open change history →
-          </button>
-        </div>
+      <div className="w-actions">
+        <Link className="w-button" href="/app">Back to overview</Link>
+        <button className="w-button primary" type="button" onClick={() => router.push(nextId ? `/app/queue/${nextId}` : "/app/results")}>{nextId ? "Review next update" : "View site audit"}</button>
       </div>
-      <div className="sf-row sf-between sf-gap">
-        <Btn href="/app">Back to overview</Btn>
-        <Btn primary onClick={() => (nextId ? router.push(`/app/queue/${nextId}`) : router.push("/app/results"))}>
-          {nextId ? "Review next update →" : "View results"}
-        </Btn>
-      </div>
-    </>
+    </section>
   );
 }

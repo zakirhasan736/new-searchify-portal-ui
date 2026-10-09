@@ -1,7 +1,7 @@
-import ResultsPage from "@/components/v3/pages/ResultsPage";
+import { AuditView } from "@/components/board/WorkspaceViews";
 
-export const metadata = { title: "Performance" };
+export const metadata = { title: "Site audit" };
 
 export default function Page() {
-  return <ResultsPage />;
+  return <AuditView />;
 }

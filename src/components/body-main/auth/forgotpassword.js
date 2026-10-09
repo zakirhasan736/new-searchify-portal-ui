@@ -17,7 +17,7 @@ export default function ForgotPassword() {
       setToast("Enter the username or email for this workspace.");
       return;
     }
-    router.push(`/resetpassword?user=${encodeURIComponent(value)}`);
+    router.push(`/reset-password?user=${encodeURIComponent(value)}`);
   };
 
   return (
@@ -40,7 +40,7 @@ export default function ForgotPassword() {
         />
         <AuthSubmit>Continue →</AuthSubmit>
         <p className="sf-auth-foot">
-          Remembered it? <Link href="/signin">Back to sign in</Link>
+          Remembered it? <Link href="/login">Back to sign in</Link>
         </p>
       </form>
     </AuthScreen>

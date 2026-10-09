@@ -2,16 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Btn, Hero, useV3Toast } from "@/components/v3/V3Shell";
-import PageSkeleton from "@/components/v3/PageSkeleton";
+import Link from "next/link";
 import { getUser } from "@/utils/users/Helpers";
+import "@/styles/results-board.css";
 import { approveChange, changePath, executeChange, listChanges } from "@/lib/v1Api";
 
 export default function ConfirmPage() {
   const { id } = useParams();
   const router = useRouter();
-  const toast = useV3Toast();
   const [change, setChange] = useState(null);
+  const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [booted, setBooted] = useState(false);
 
@@ -26,14 +26,14 @@ export default function ConfirmPage() {
     load();
   }, [load]);
 
-  if (!booted) return <PageSkeleton />;
+  if (!booted) return <section className="dash-view"><p className="w-footnote">Loading this publication…</p></section>;
 
   if (!change) {
     return (
-      <div className="sf-empty">
-        <h2>Change not found</h2>
-        <Btn href="/app/queue">← Work queue</Btn>
-      </div>
+      <section className="dash-view">
+        <header className="w-head"><div><h1>Change not found.</h1></div></header>
+        <Link className="w-button" href="/app/queue">Back to approvals</Link>
+      </section>
     );
   }
 
@@ -45,47 +45,42 @@ export default function ConfirmPage() {
     const appr = await approveChange(change.id);
     if (!appr.ok) {
       setBusy(false);
-      toast(appr.data?.detail || "Could not approve.");
+      setNotice(typeof appr.data?.detail === "string" ? appr.data.detail : "Could not approve.");
       return;
     }
     const exec = await executeChange(change.id, { forceDryRun: false });
     setBusy(false);
     if (!exec.ok) {
-      toast(exec.data?.detail || exec.data?.execution?.detail || "Publish failed.");
+      const detail = exec.data?.detail || exec.data?.execution?.detail;
+      setNotice(typeof detail === "string" ? detail : "Publish failed.");
       return;
-    }
-    if (exec.data?.execution?.dryRun) {
-      toast("Recorded as dry-run — add WordPress credentials + post/page id for live publish.");
     }
     router.push(`/app/queue/${change.id}/published`);
   };
 
   return (
-    <>
-      <Hero label="Publication review" line1="CONFIRM" line2="THIS UPDATE." sub="Review the exact values before the WordPress update." />
-      <div className="sf-box">
+    <section className="dash-view extension-view">
+      <header className="w-head">
+        <div>
+          <div className="dash-eyebrow">PUBLICATION REVIEW</div>
+          <h1>Confirm this update.</h1>
+          <p>Review the exact values before the WordPress update.</p>
+        </div>
+      </header>
+      {notice ? <p className="w-inset">{notice}</p> : null}
+      <article className="w-panel">
         <h2>{changePath(change)}</h2>
-        <div className="sf-before">
-          <div className="sf-label">Approved title</div>
-          <h3>{title}</h3>
-          <div className="sf-label sf-gap">Approved description</div>
-          <p>{description}</p>
+        <div className="change-pair">
+          <div className="change-cell suggested"><small>Approved title</small><span>{title}</span></div>
+          <div className="change-cell suggested"><small>Approved description</small><span>{description}</span></div>
         </div>
-        <div className="sf-divider" />
-        <p>
-          1 page · Metadata only · Previous values retained · Approver{" "}
-          {getUser()?.result?.username || getUser()?.data?.username || "signed-in user"}
-        </p>
-        <div className="sf-row sf-gap">
-          <Btn href={`/app/queue/${change.id}`}>Back to draft</Btn>
-          <Btn primary onClick={publish} disabled={busy}>
-            {busy ? "Publishing…" : "Confirm publication"}
-          </Btn>
+        <p>One page · titles and descriptions only · previous values retained · approver {getUser()?.result?.username || getUser()?.data?.username || "signed-in user"}.</p>
+        <div className="w-actions">
+          <Link className="w-button" href={`/app/queue/${change.id}`}>Back to draft</Link>
+          <button className="w-button primary" type="button" onClick={publish} disabled={busy}>{busy ? "Publishing…" : "Confirm publication"}</button>
         </div>
-      </div>
-      <div className="sf-note sf-gap">
-        The workflow stops if the page has changed since review. Conflict check, write, and read-back verification run on publish.
-      </div>
-    </>
+      </article>
+      <p className="w-footnote">Publishing stops if the page changed since review. The write is checked after it is applied.</p>
+    </section>
   );
 }

@@ -1,7 +1,5 @@
-﻿import ContentPage from "@/components/v3/pages/ContentPage";
-
-export const metadata = { title: "Content" };
+﻿import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <ContentPage screen="Brief" />;
+  redirect("/app");
 }

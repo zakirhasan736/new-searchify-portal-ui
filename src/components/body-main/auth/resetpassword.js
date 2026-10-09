@@ -44,7 +44,7 @@ export default function ResetPassword() {
     setPending(false);
     if (response.ok) {
       notice("Password updated. Sign in with the new password.", "ok");
-      setTimeout(() => router.push("/signin"), 800);
+      setTimeout(() => router.push("/login"), 800);
       return;
     }
     const data = await response.json().catch(() => ({}));
@@ -95,9 +95,9 @@ export default function ResetPassword() {
         />
         <AuthSubmit disabled={pending}>{pending ? "Updating…" : "Update password →"}</AuthSubmit>
         <p className="sf-auth-foot">
-          <Link href="/forgotpassword">Change account</Link>
+          <Link href="/forgot">Change account</Link>
           {" · "}
-          <Link href="/signin">Sign in</Link>
+          <Link href="/login">Sign in</Link>
         </p>
       </form>
     </AuthScreen>

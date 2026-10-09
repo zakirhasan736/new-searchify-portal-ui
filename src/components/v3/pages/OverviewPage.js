@@ -17,6 +17,7 @@ import {
   queueItems,
   syncGoogleLive,
 } from "@/lib/v1Api";
+import { activeJourneySite, beginAnotherWebsite, loadJourney, planById, recommendationsFor } from "@/lib/journey";
 
 function todayLabel() {
   return "Overview";
@@ -33,6 +34,13 @@ export default function OverviewPage() {
   const [siteLimit, setSiteLimit] = useState(5);
   const [busy, setBusy] = useState(false);
   const [booted, setBooted] = usePageBoot((s) => s.getChanges());
+  const [brief, setBrief] = useState(null);
+
+  useEffect(() => {
+    const state = loadJourney();
+    const site = activeJourneySite(state);
+    setBrief({ site, plan: planById(state.planId), items: recommendationsFor(site) });
+  }, []);
 
   const load = useCallback(async () => {
     const [{ data: ch }, organic, pages, google, cms] = await Promise.all([
@@ -90,6 +98,25 @@ export default function OverviewPage() {
 
   return (
     <>
+      {brief?.site ? (
+        <div className="sf-focus" style={{ marginBottom: 22 }}>
+          <Pill>{brief.plan ? `${brief.plan.name} plan` : "From your setup"}</Pill>
+          <h2 style={{ marginTop: 12 }}>Results for {String(brief.site.answers?.site || "this website").replace(/^https?:\/\//, "")}</h2>
+          <p>These recommendations come from the questions you answered. Live Search Console items appear below once that connection is on. Nothing is published until you approve it.</p>
+          <div className="sf-list" style={{ marginTop: 16 }}>
+            {brief.items.map((item) => (
+              <div className="sf-listrow" key={item.title}>
+                <div>
+                  <h3>{item.title}</h3>
+                  <div className="sf-small">{item.detail}</div>
+                </div>
+                <Link className="sf-link" href="/app/queue">Review →</Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <Hero
         label={todayLabel()}
         line1="YOUR NEXT"
@@ -187,7 +214,7 @@ export default function OverviewPage() {
 
       <div className="sf-row sf-between sf-gap" style={{ marginBottom: 13 }}>
         <h2>Your projects · {sites.length} / {siteLimit}</h2>
-        <Btn href="/app/connections">{sites.length < siteLimit ? "Add website →" : "Manage →"}</Btn>
+        <Btn onClick={() => router.push(beginAnotherWebsite())}>Add website →</Btn>
       </div>
       <div className="sf-list sf-gap">
         {sites.length ? (

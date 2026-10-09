@@ -1,13 +1,13 @@
 import { pageMeta } from "@/lib/seo";
-import Screen from "@/components/body-main/auth/signin";
+import HomeView from "@/components/landing/HomeView";
 
 export const metadata = pageMeta({
-  title: "Sign in",
-  description: "Sign in to Searchify to open projects, site optimization, and SEO analytics.",
+  title: "SEO that gets done",
+  description:
+    "Find the next SEO opportunity. Review the recommendation. Publish approved changes and verify the result with Searchify.",
   path: "/",
-  index: false,
 });
 
 export default function Page() {
-  return <Screen />;
+  return <HomeView />;
 }

@@ -1,15 +1,17 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, useTransition } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { getUser, userIsAuthenticated, userLogout } from "@/utils/users/Helpers";
+import { beginAnotherWebsite, requiredJourneyPath } from "@/lib/journey";
 import { getActiveSite, getBusinessProfile, getGoogleStatus, listCmsConnections, loadWorkspace, prefetchHotData, setActiveSite } from "@/lib/v1Api";
 import PageSkeleton from "@/components/v3/PageSkeleton";
 import BrandMark from "@/components/v3/BrandMark";
 import "@/styles/searchify-v3.css";
 
-const AUTH = new Set(["/", "/signin", "/signup", "/forgotpassword", "/resetpassword"]);
+const AUTH = new Set(["/login", "/signin", "/signup", "/forgot", "/forgotpassword", "/reset", "/reset-password", "/resetpassword"]);
 
 export const V3ToastContext = createContext(() => {});
 export function useV3Toast() {
@@ -279,6 +281,7 @@ export function SectionTabs({ section }) {
 }
 
 export default function V3Shell({ children }) {
+  const reduce = useReducedMotion();
   const pathname = usePathname() || "/";
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -298,7 +301,12 @@ export default function V3Shell({ children }) {
       return;
     }
     if (!userIsAuthenticated()) {
-      router.replace("/signin");
+      router.replace("/login");
+      return;
+    }
+    const gate = requiredJourneyPath(pathname);
+    if (gate) {
+      router.replace(gate);
       return;
     }
     setReady(true);
@@ -443,9 +451,9 @@ export default function V3Shell({ children }) {
             ) : (
               <div className="sf-workspace-name">{workspace.site || "No website yet"}</div>
             )}
-            <Link href="/app/connections" className="sf-link" style={{ display: "inline-block", marginTop: 8, fontSize: 12 }}>
-              {workspace.sites.length ? "Manage projects →" : "Add a website →"}
-            </Link>
+            <button type="button" className="sf-link" style={{ display: "inline-block", marginTop: 8, fontSize: 12 }} onClick={() => router.push(beginAnotherWebsite())}>
+              Add a website →
+            </button>
           </div>
           <nav className="sf-nav sf-nav-desk" aria-label="Main navigation">
             {SECTIONS.map((s) => {
@@ -479,7 +487,7 @@ export default function V3Shell({ children }) {
                   className="sf-link"
                   onClick={() => {
                     userLogout();
-                    router.replace("/signin");
+                    router.replace("/login");
                   }}
                 >
                   Sign out
@@ -503,9 +511,15 @@ export default function V3Shell({ children }) {
           <main className="sf-content">
             <V3ToastContext.Provider value={setToast}>
               <SectionTabs section={active} />
-              <div className="sf-page" key={pathname}>
+              <motion.div
+                className="sf-page"
+                key={pathname}
+                initial={reduce ? false : { opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+              >
                 {children}
-              </div>
+              </motion.div>
             </V3ToastContext.Provider>
             <div className="sf-foot">
               <span>Every live change requires your approval</span>
@@ -587,7 +601,7 @@ export default function V3Shell({ children }) {
           className="sf-sheet-signout"
           onClick={() => {
             userLogout();
-            router.replace("/signin");
+            router.replace("/login");
           }}
         >
           Sign out

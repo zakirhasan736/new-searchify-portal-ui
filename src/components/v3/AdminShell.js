@@ -57,7 +57,7 @@ export default function AdminShell({ children }) {
               className="sf-link"
               onClick={() => {
                 userLogout();
-                router.replace("/signin");
+                router.replace("/login");
               }}
             >
               Sign out

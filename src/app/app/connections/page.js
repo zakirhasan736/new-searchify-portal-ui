@@ -1,7 +1,12 @@
-import ConnectionsPage from "@/components/v3/pages/ConnectionsPage";
+import { Suspense } from "react";
+import { ConnectionsView } from "@/components/board/WorkspaceViews";
 
 export const metadata = { title: "Connections" };
 
 export default function Page() {
-  return <ConnectionsPage />;
+  return (
+    <Suspense fallback={null}>
+      <ConnectionsView />
+    </Suspense>
+  );
 }

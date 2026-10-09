@@ -1,5 +1,7 @@
 import { authHeaders } from "@/utils/users/Helpers";
 import { HOT_FEATURES, invalidateV3Cache, useV3Store } from "@/lib/v3Store";
+import { briefFromAnswers } from "@/lib/businessBrief";
+import { activeJourneySite } from "@/lib/journey";
 
 async function json(res) {
   const data = await res.json().catch(() => ({}));
@@ -39,12 +41,13 @@ export async function getGoogleStatus({ force = false } = {}) {
   );
 }
 
-export async function startGoogleOAuth(services = "gsc,ga4,ads") {
+export async function startGoogleOAuth(services = "gsc,ga4,ads", options = {}) {
   const value =
     typeof services === "string" && services && !services.includes("[object")
       ? services
       : "gsc,ga4,ads";
-  const qs = new URLSearchParams({ services: value }).toString();
+  const qs = new URLSearchParams({ services: value });
+  if (options.add) qs.set("add", "1");
   const res = await json(await fetch(`/api/v1/oauth/google/start?${qs}`, { headers: authHeaders() }));
   if (res.ok && res.data && !res.data.url && res.data.authUrl) {
     return { ...res, data: { ...res.data, url: res.data.authUrl } };
@@ -106,6 +109,30 @@ export async function disconnectAds(cmsConnectionId = null) {
     }),
   );
   if (res.ok) invalidateV3Cache(["google", "google-ads", "paid-search"]);
+  return res;
+}
+
+export async function useGoogleAccount(email) {
+  const res = await json(
+    await fetch("/api/v1/oauth/google/accounts/use", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ email }),
+    }),
+  );
+  if (res.ok) invalidateV3Cache(["google"]);
+  return res;
+}
+
+export async function removeGoogleAccount(email) {
+  const res = await json(
+    await fetch("/api/v1/oauth/google/accounts/remove", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ email }),
+    }),
+  );
+  if (res.ok) invalidateV3Cache(["google"]);
   return res;
 }
 
@@ -249,8 +276,121 @@ export async function listChanges({ force = false } = {}) {
   );
 }
 
-export async function proposeFromGsc() {
-  const res = await json(await fetch("/api/v1/operator/changes/from-gsc", { method: "POST", headers: authHeaders() }));
+export async function askAssistant(body) {
+  return json(
+    await fetch("/api/v1/operator/assistant", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(body),
+    }),
+  );
+}
+
+export async function createChange(body) {
+  const res = await json(await fetch("/api/v1/operator/changes", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  }));
+  if (res.ok) invalidateV3Cache(["changes"]);
+  return res;
+}
+
+export function scanBrief(site = activeJourneySite()) {
+  const answers = site?.answers || {};
+  const brief = briefFromAnswers(answers);
+  return {
+    site: brief.siteUrl,
+    brief: {
+      businessType: brief.businessType,
+      market: brief.market,
+      reach: brief.reach,
+      goal: brief.goal,
+      avoid: brief.avoid,
+      sensitive: brief.sensitive,
+      competitors: String(answers.competitors || ""),
+    },
+  };
+}
+
+export async function proposeFromGsc({ breadth = "balanced", site = null, limit = 8, rescan = false } = {}) {
+  const scope = typeof window === "undefined" ? { site: "", brief: {} } : scanBrief(site || undefined);
+  const res = await json(await fetch("/api/v1/operator/changes/from-gsc", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ breadth, limit, rescan, ...scope }),
+  }));
+  if (res.ok) invalidateV3Cache(["changes"]);
+  return res;
+}
+
+export async function runSiteScan({ site = null, force = false } = {}) {
+  return json(await fetch("/api/v1/operator/site-scan", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ force, ...scanBrief(site || undefined) }),
+  }));
+}
+
+export async function researchStatus() {
+  return json(await fetch("/api/v1/research/status", { headers: authHeaders() }));
+}
+
+async function research(kind, body) {
+  return json(await fetch(`/api/v1/research/${kind}`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  }));
+}
+
+export function researchKeywords({ site, terms = [], country = "", force = false }) {
+  return research("keywords", { site, terms, country, force });
+}
+
+export function researchBacklinks({ site, force = false }) {
+  return research("backlinks", { site, force });
+}
+
+export function researchAudit({ site, force = false }) {
+  return research("audit", { site, force });
+}
+
+export function researchVisibility({ site, brand = "", country = "", prompts = [], force = false }) {
+  return research("visibility", { site, brand, country, prompts, force });
+}
+
+export async function getSiteScan(siteUrl = "") {
+  const query = siteUrl ? `?site=${encodeURIComponent(siteUrl)}` : "";
+  return json(await fetch(`/api/v1/operator/site-scan${query}`, { headers: authHeaders() }));
+}
+
+export async function getAiVisibility({ force = false } = {}) {
+  return cachedFetch(
+    "ai-visibility-report",
+    async () => json(await fetch("/api/v1/operator/ai-visibility", { headers: authHeaders() })),
+    {
+      force,
+      getter: (s) => s.getFeature("ai-visibility-report"),
+      setter: (s, res) => s.setFeature("ai-visibility-report", res),
+    },
+  );
+}
+
+export async function runAiVisibility() {
+  const res = await json(await fetch("/api/v1/operator/ai-visibility", { method: "POST", headers: authHeaders() }));
+  if (res.ok) invalidateV3Cache(["ai-visibility", "ai-visibility-report"]);
+  return res;
+}
+
+export async function queueAiVisibilityFix(body) {
+  const res = await json(
+    await fetch("/api/v1/operator/ai-visibility/queue", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(body),
+    }),
+  );
   if (res.ok) invalidateV3Cache(["changes"]);
   return res;
 }
@@ -307,12 +447,12 @@ export async function generateMeta(id) {
   return res;
 }
 
-export async function generateMetaCopy(id, { tone = "" } = {}) {
+export async function generateMetaCopy(id, { tone = "", breadth = "balanced" } = {}) {
   const res = await json(
     await fetch(`/api/v1/operator/changes/${id}/generate-meta`, {
       method: "POST",
       headers: authHeaders(),
-      body: JSON.stringify({ tone }),
+      body: JSON.stringify({ tone, breadth }),
     }),
   );
   if (res.ok) invalidateV3Cache(["changes"]);

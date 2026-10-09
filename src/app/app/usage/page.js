@@ -1,7 +1,5 @@
-import UsagePage from "@/components/v3/pages/UsagePage";
-
-export const metadata = { title: "Usage" };
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <UsagePage />;
+  redirect("/app/billing");
 }

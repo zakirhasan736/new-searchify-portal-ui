@@ -1,7 +1,5 @@
-import OperationsPage from "@/components/v3/pages/OperationsPage";
-
-export const metadata = { title: "Operations" };
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <OperationsPage />;
+  redirect("/app/admin-preview");
 }

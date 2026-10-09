@@ -1,9 +1,9 @@
 import { Manrope, Barlow_Condensed } from "next/font/google";
 import ProductShell from "@/components/v3/ProductShell";
-import ClientOnly from "@/components/shell/ClientOnly";
 import { absoluteUrl } from "@/lib/seo";
 import "../index.css";
 import "./tailwind.css";
+import "../styles/landing.css";
 import "../components/share/accordion/accordion.css";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -11,14 +11,14 @@ const manrope = Manrope({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-manrope",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 const barlow = Barlow_Condensed({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-barlow",
-  weight: ["600", "700"],
+  weight: ["600", "700", "800"],
 });
 
 export const metadata = {
@@ -68,9 +68,7 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${manrope.variable} ${barlow.variable}`}>
       <body className={manrope.className} style={{ margin: 0, background: "#101112" }}>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-        <ProductShell>
-          <ClientOnly>{children}</ClientOnly>
-        </ProductShell>
+        <ProductShell>{children}</ProductShell>
       </body>
     </html>
   );

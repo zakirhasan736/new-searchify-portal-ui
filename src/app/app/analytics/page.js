@@ -1,7 +1,5 @@
-﻿import AnalyticsPage from "@/components/v3/pages/AnalyticsPage";
-
-export const metadata = { title: "AI analytics" };
+﻿import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <AnalyticsPage />;
+  redirect("/app/results");
 }

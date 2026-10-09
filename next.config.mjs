@@ -3,8 +3,15 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  output: "standalone",
   async redirects() {
-    return [{ source: "/favicon.ico", destination: "/icon.png", permanent: false }];
+    return [
+      { source: "/favicon.ico", destination: "/icon.png", permanent: false },
+      { source: "/signin", destination: "/login", permanent: false },
+      { source: "/forgotpassword", destination: "/forgot", permanent: false },
+      { source: "/resetpassword", destination: "/reset-password", permanent: false },
+      { source: "/reset", destination: "/reset-password", permanent: false },
+    ];
   },
   images: {
     // Keep CRA-style `import img from './x.png'` as a URL string for <img src>.

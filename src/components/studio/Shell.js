@@ -7,7 +7,7 @@ import { NAV, activeRailId, flatNavItems } from "@/lib/navCatalog";
 import brandLogo from "@/assets/img/Searchify-logo.png";
 import { userIsAuthenticated, userLogout } from "@/utils/users/Helpers";
 
-const AUTH = new Set(["/", "/signin", "/signup", "/forgotpassword"]);
+const AUTH = new Set(["/", "/login", "/signin", "/signup", "/forgot", "/forgotpassword", "/about", "/pricing", "/contact"]);
 
 const ICONS = {
   home: (
@@ -94,7 +94,7 @@ export default function Shell({ children }) {
     userLogout();
     setSignedIn(false);
     setMobileOpen(false);
-    router.push("/signin");
+    router.push("/login");
   };
 
   useEffect(() => {
@@ -338,7 +338,7 @@ export default function Shell({ children }) {
                   Log out
                 </button>
               ) : (
-                <Link href="/signin" onClick={() => setMobileOpen(false)} className="mt-1 flex h-8 w-full items-center justify-center rounded-lg bg-brand/15 text-[11.5px] font-medium text-brand transition hover:bg-brand/25">
+                <Link href="/login" onClick={() => setMobileOpen(false)} className="mt-1 flex h-8 w-full items-center justify-center rounded-lg bg-brand/15 text-[11.5px] font-medium text-brand transition hover:bg-brand/25">
                   Sign in
                 </Link>
               )}

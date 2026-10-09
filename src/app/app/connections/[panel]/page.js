@@ -1,9 +1,12 @@
-import ConnectionsPage from "@/components/v3/pages/ConnectionsPage";
+import { Suspense } from "react";
+import { ConnectionsView } from "@/components/board/WorkspaceViews";
 
-export const metadata = { title: "Connections · Manage" };
+export const metadata = { title: "Connections" };
 
-export default async function Page({ params }) {
-  const resolved = await params;
-  const panel = resolved?.panel || null;
-  return <ConnectionsPage panel={panel} />;
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <ConnectionsView />
+    </Suspense>
+  );
 }

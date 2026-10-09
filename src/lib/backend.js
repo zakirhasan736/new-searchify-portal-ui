@@ -10,8 +10,14 @@ export async function forward(request, path) {
     init.body = await request.text();
   }
 
+  let upstream;
   try {
-    const upstream = await fetch(`${apiUrl}${path}`, init);
+    try {
+      upstream = await fetch(`${apiUrl}${path}`, init);
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      upstream = await fetch(`${apiUrl}${path}`, init);
+    }
     const text = await upstream.text();
     const headers = { "Content-Type": "application/json" };
     if (request.method === "GET" || request.method === "HEAD") {

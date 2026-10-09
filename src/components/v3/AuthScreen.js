@@ -15,7 +15,7 @@ export function passwordIssues(value) {
 
 export function AuthScreen({ label, line1, line2, sub, children, toast, toastKind }) {
   return (
-    <div className="sf-auth-inner">
+    <div className="sf-auth-inner sf-auth-enter">
       <header className="sf-auth-head">
         <div className="sf-auth-brandrow">
           <BrandMark className="sf-auth-logo" />

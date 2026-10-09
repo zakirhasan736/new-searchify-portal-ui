@@ -1,7 +1,5 @@
-﻿import LocalPage from "@/components/v3/pages/LocalPage";
-
-export const metadata = { title: "Local · Business details" };
+﻿import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <LocalPage screen="Business details" />;
+  redirect("/app");
 }

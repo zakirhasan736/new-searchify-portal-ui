@@ -14,7 +14,7 @@ const User = () => {
 
   const logOut = () => {
     userLogout();
-    navigate("/signin");
+    navigate("/login");
   }
   useEffect(() => {
     const fetchUser = () => {

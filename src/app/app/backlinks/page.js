@@ -1,7 +1,7 @@
-﻿import BacklinksPage from "@/components/v3/pages/BacklinksPage";
+﻿import { BacklinksView } from "@/components/board/WorkspaceViews";
 
 export const metadata = { title: "Backlinks" };
 
 export default function Page() {
-  return <BacklinksPage />;
+  return <BacklinksView />;
 }
