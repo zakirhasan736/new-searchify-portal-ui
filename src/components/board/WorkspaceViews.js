@@ -29,6 +29,7 @@ import {
   listCmsConnections,
   loadFeature,
   removeGoogleAccount,
+  researchStatus,
   researchVisibility,
   startGoogleOAuth,
   useGoogleAccount,
@@ -57,16 +58,44 @@ function quotaText(error, fallback) {
   return rtkErrorCode(error) === "quota_exceeded" ? text + UPGRADE_HINT : text;
 }
 
+function ProviderStatus() {
+  const [note, setNote] = useState("");
+  useEffect(() => {
+    let alive = true;
+    researchStatus()
+      .then((res) => {
+        if (!alive || !res.ok) return;
+        const data = res.data || {};
+        if (data.code === "provider_balance" || data.ready === false) {
+          setNote(data.message || "Live research is paused until Searchify SEO credit is topped up.");
+        } else if (data.code === "provider_balance_low") {
+          setNote(data.message || "");
+        } else {
+          setNote("");
+        }
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  if (!note) return null;
+  return <p className="w-inset" role="status">{note}</p>;
+}
+
 function PlanUsage({ feature }) {
   const { data } = useUsageQuery();
   const item = data?.features?.[feature];
-  if (!item) return null;
-  if (item.limit == null) return <p className="w-footnote plan-usage">{`${item.label}: no monthly limit on this account (${item.used} used this month).`}</p>;
   return (
-    <p className={`w-footnote plan-usage${item.left === 0 ? " out" : ""}`}>
-      {`${item.label} this month: ${item.used} of ${item.limit} used on the ${data.planLabel} plan. Resets ${data.resetsOn}. Results reused from the cache are free.`}
-      {item.left === 0 ? <> <Link href="/app/plans">See plans</Link></> : null}
-    </p>
+    <>
+      <ProviderStatus />
+      {!item ? null : item.limit == null ? (
+        <p className="w-footnote plan-usage">{`${item.label}: no monthly limit on this account (${item.used} used this month).`}</p>
+      ) : (
+        <p className={`w-footnote plan-usage${item.left === 0 ? " out" : ""}`}>
+          {`${item.label} this month: ${item.used} of ${item.limit} used on the ${data.planLabel} plan. Resets ${data.resetsOn}. Results reused from the cache are free.`}
+          {item.left === 0 ? <> <Link href="/app/plans">See plans</Link></> : null}
+        </p>
+      )}
+    </>
   );
 }
 
@@ -500,7 +529,7 @@ export function KeywordsView() {
 
   return (
     <section className="dash-view extension-view">
-      <Head eyebrow="SEARCH DEMAND" title="Know what to target." text={live ? `Google positions and monthly volume for ${live.host} in ${placeLabel(live)}, from DataForSEO.` : brief.ready ? `Starting terms for ${brief.focus || brief.hostname}. Positions fill in when live keyword data loads.` : "Finish setup to fill this list from your offer and market. You can still add a term yourself."} action={<button className="w-button primary" type="button" onClick={() => { setNotice(""); setAdding(true); }}>Add keyword</button>} />
+      <Head eyebrow="SEARCH DEMAND" title="Know what to target." text={live ? `Google positions and monthly volume for ${live.host} in ${placeLabel(live)}, from Searchify SEO.` : brief.ready ? `Starting terms for ${brief.focus || brief.hostname}. Positions fill in when live keyword data loads.` : "Finish setup to fill this list from your offer and market. You can still add a term yourself."} action={<button className="w-button primary" type="button" onClick={() => { setNotice(""); setAdding(true); }}>Add keyword</button>} />
       <div className="w-metrics">
         <Metric label="Tracked" value={String(keywords.length)} note={allowanceNote} />
         <Metric label="Top 10" value={String(topTen)} note={live ? "Tracked terms in Google's top 10" : "Counted only when a position exists"} />
@@ -564,7 +593,7 @@ export function KeywordsView() {
       ) : null}
       {live?.ideas?.length ? (
         <div className="w-panel below">
-          <div className="w-toolbar"><strong>Keyword ideas</strong><span className="w-muted">{`DataForSEO keyword suggestions for ${placeLabel(live)}`}</span></div>
+          <div className="w-toolbar"><strong>Keyword ideas</strong><span className="w-muted">{`Searchify SEO keyword suggestions for ${placeLabel(live)}`}</span></div>
           <div className="table-scroll">
             <table className="w-table">
               <thead><tr><th>Idea</th><th>Monthly volume</th><th>Difficulty</th><th>Intent</th><th>Action</th></tr></thead>
@@ -585,7 +614,7 @@ export function KeywordsView() {
         </div>
       ) : null}
       {notice ? <p className="w-footnote">{notice}</p> : null}
-      <p className="w-footnote">{live ? `Positions, volume, difficulty, and ideas come from DataForSEO Labs at country level for ${placeLabel(live)}${live.place?.city ? " (Labs has no city-level data)" : ""}. "Not in top 100" means the site does not rank for that search yet. An empty volume means DataForSEO has no figure, not zero. Data is reused for 24 hours unless you refresh it.` : brief.ready ? `These starting terms come from your setup for ${brief.hostname || "this website"}. Rank and volume stay empty until live keyword data loads. Nothing here is invented.` : "No setup answers yet, so this list does not invent a sample business. Add your website, offer, and market, or type a term yourself."}</p>
+      <p className="w-footnote">{live ? `Positions, volume, difficulty, and ideas come from Searchify SEO at country level for ${placeLabel(live)}${live.place?.city ? " (Labs has no city-level data)" : ""}. "Not in top 100" means the site does not rank for that search yet. An empty volume means Searchify SEO has no figure, not zero. Data is reused for 24 hours unless you refresh it.` : brief.ready ? `These starting terms come from your setup for ${brief.hostname || "this website"}. Rank and volume stay empty until live keyword data loads. Nothing here is invented.` : "No setup answers yet, so this list does not invent a sample business. Add your website, offer, and market, or type a term yourself."}</p>
       {adding ? (
         <Modal title="Track a keyword" onClose={() => setAdding(false)}>
           <form onSubmit={add}>
@@ -820,7 +849,7 @@ export function VisibilityView() {
         </div>
         <Paginator pager={promptPager} label="questions" />
       </div>
-      <p className="w-footnote">{sample ? `Prepared from your setup${brief.hostname ? ` for ${brief.hostname}` : ""}. "Not checked" means the question has not been asked yet. Each live check uses one lookup from today's research limit.` : "Live answers through DataForSEO, with web search on. Answers can change with the model, wording, location, and day. A check is reused for 7 days unless you check again."}</p>
+      <p className="w-footnote">{sample ? `Prepared from your setup${brief.hostname ? ` for ${brief.hostname}` : ""}. "Not checked" means the question has not been asked yet. Each live check uses one lookup from today's research limit.` : "Live answers through Searchify SEO, with web search on. Answers can change with the model, wording, location, and day. A check is reused for 7 days unless you check again."}</p>
       {adding ? (
         <Modal title="Add a visibility prompt" onClose={() => setAdding(false)}>
           <form onSubmit={add}>
@@ -930,10 +959,10 @@ export function BacklinksView() {
   const lost = links.filter((link) => link.state === "Lost").length;
   return (
     <section className="dash-view extension-view">
-      <Head eyebrow="OFF-SITE SIGNALS" title="See who points to you." text={live ? `Links pointing to ${live.host}, from the DataForSEO link index.` : brief.hostname ? `Links that point to ${brief.hostname} show up here when live link data loads. None are invented from the setup answers.` : "Links show up here after a link source is connected. Setup answers do not invent referring domains."} action={<button className="w-button" type="button" onClick={() => exportLinks(shown)}>Export CSV</button>} />
+      <Head eyebrow="OFF-SITE SIGNALS" title="See who points to you." text={live ? `Links pointing to ${live.host}, from the Searchify SEO link index.` : brief.hostname ? `Links that point to ${brief.hostname} show up here when live link data loads. None are invented from the setup answers.` : "Links show up here after a link source is connected. Setup answers do not invent referring domains."} action={<button className="w-button" type="button" onClick={() => exportLinks(shown)}>Export CSV</button>} />
       <div className="w-metrics">
-        <Metric label="Referring domains" value={domains == null ? "—" : Number(domains).toLocaleString("en-US")} note={live ? "Live domains, whole DataForSEO index" : "Loads with live data"} />
-        <Metric label="Backlinks" value={live?.summary?.backlinks == null ? "—" : Number(live.summary.backlinks).toLocaleString("en-US")} note={live ? "Live links, whole DataForSEO index" : "Loads with live data"} />
+        <Metric label="Referring domains" value={domains == null ? "—" : Number(domains).toLocaleString("en-US")} note={live ? "Live domains, whole Searchify SEO index" : "Loads with live data"} />
+        <Metric label="Backlinks" value={live?.summary?.backlinks == null ? "—" : Number(live.summary.backlinks).toLocaleString("en-US")} note={live ? "Live links, whole Searchify SEO index" : "Loads with live data"} />
         <Metric label="New links" value={live ? String(newer) : "—"} note={live ? `Among the ${links.length} domains listed below` : "Loads with live data"} />
         <Metric label="Lost links" value={live ? String(lost) : "—"} note={live ? `Among the ${links.length} domains listed below. Verify before outreach.` : "Loads with live data"} />
       </div>
@@ -987,7 +1016,7 @@ export function BacklinksView() {
             <dt>Relationship</dt><dd>{open.follow}</dd>
             <dt>Status</dt><dd>{open.state}{open.lostDate ? ` · lost ${open.lostDate}` : ""}</dd>
             <dt>Seen</dt><dd>{[open.firstSeen && `first ${open.firstSeen}`, open.lastSeen && `last ${open.lastSeen}`].filter(Boolean).join(" · ") || "—"}</dd>
-            <dt>Domain rank</dt><dd>{open.domainRank == null && open.rank == null ? "—" : `${open.domainRank ?? open.rank} (${live?.summary?.rankScale || "DataForSEO domain rank, 0 to 1000"})`}</dd>
+            <dt>Domain rank</dt><dd>{open.domainRank == null && open.rank == null ? "—" : `${open.domainRank ?? open.rank} (${live?.summary?.rankScale || "Searchify SEO domain rank, 0 to 1000"})`}</dd>
             <dt>Spam score</dt><dd>{open.spamScore == null ? "—" : open.spamScore}</dd>
             <dt>Source page</dt><dd>{open.pageTitle || "—"}</dd>
           </dl>
@@ -1113,7 +1142,7 @@ export function AuditView() {
         </div>
       ) : (
         <div className="w-metrics">
-          <Metric label="Site health" value={report?.health == null ? "—" : String(Math.round(report.health))} note={report?.health == null ? "Loads with the site crawl" : "DataForSEO, out of 100"} />
+          <Metric label="Site health" value={report?.health == null ? "—" : String(Math.round(report.health))} note={report?.health == null ? "Loads with the site crawl" : "Searchify SEO, out of 100"} />
           <Metric label="SEO score" value={report?.seoScore ?? "—"} note={report?.seoSource || "PageSpeed or site crawl"} />
           <Metric label="Pages crawled" value={report?.crawled ? String(report.crawled) : "—"} note={report?.crawled ? "Whole site" : "Loads with the site crawl"} />
           <Metric label="Critical findings" value={String(critical)} note={`${findings.length} findings in total`} />

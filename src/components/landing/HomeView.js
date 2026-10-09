@@ -323,7 +323,7 @@ export default function HomeView() {
                   <span className="logoicon g">G</span>Search Console
                 </div>
                 <div>
-                  <span className="logoicon dfs">D</span>DataForSEO
+                  <span className="logoicon dfs">S</span>Searchify SEO
                 </div>
                 <div>
                   <span className="logoicon dfs">✳</span>AI recommendations

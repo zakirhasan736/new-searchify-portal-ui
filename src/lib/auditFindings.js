@@ -49,7 +49,7 @@ export function resolveSeoScore(auditPayload = {}, crawlReport = null) {
   const text = scoreText(fromPsi) ?? scoreText(fromCrawl);
   return {
     seoScore: text,
-    seoSource: scoreText(fromPsi) != null ? "PageSpeed, home page" : fromCrawl != null ? "DataForSEO on-page score" : "Loads after PageSpeed sync or a site crawl",
+    seoSource: scoreText(fromPsi) != null ? "PageSpeed, home page" : fromCrawl != null ? "Searchify SEO on-page score" : "Loads after PageSpeed sync or a site crawl",
   };
 }
 
@@ -68,7 +68,7 @@ function crawlFindings(report, { impressions, sessions, open }) {
     const visits = pages.reduce((sum, page) => sum + page.sessions, 0);
     let severity = issue.severity || "Notice";
     if ((seen || visits) && severity === "Notice") severity = "Warning";
-    const bits = [`DataForSEO crawled ${report.pagesCrawled || "the"} pages and found this on ${issue.count}.`];
+    const bits = [`Searchify SEO crawled ${report.pagesCrawled || "the"} pages and found this on ${issue.count}.`];
     if (seen) bits.push(`Search Console: these pages had ${seen.toLocaleString("en-US")} impressions.`);
     if (visits) bits.push(`Analytics: ${visits.toLocaleString("en-US")} sessions landed on them.`);
     const lead = pages[0];
@@ -109,7 +109,7 @@ export function buildAuditFindings({ audit, pages, queries, landings, places, ch
   if (landingRows.length) sources.push("Analytics");
   if (auditPayload.scores || (auditPayload.kpis || []).length) sources.push("PageSpeed");
   if (placeRows.length) sources.push("Places");
-  if (crawlReport) sources.unshift("DataForSEO site crawl");
+  if (crawlReport) sources.unshift("Searchify SEO site crawl");
 
   open.forEach((change) => {
     const proposed = change.proposed || {};

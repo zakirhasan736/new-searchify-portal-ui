@@ -32,6 +32,7 @@ function writeThread(key, rows) {
 }
 
 const PROMPTS = [
+  { q: "What should I do next?", keys: ["next", "start", "help", "what should", "begin"] },
   { q: "Why should I use Searchify?", keys: ["why", "benefit", "searchify", "use", "help me"] },
   { q: "Connect my Google account", keys: ["google", "search console", "analytics", "gsc", "connect"] },
   { q: "Add another Google account", keys: ["another google", "multiple google", "second account", "google login"] },
@@ -39,10 +40,10 @@ const PROMPTS = [
   { q: "Add another website", keys: ["another site", "multiple site", "add website", "second website"] },
   { q: "How are titles and descriptions written?", keys: ["title", "description", "generate", "draft", "suggestion"] },
   { q: "What happens when I approve?", keys: ["approve", "publish", "live", "draft"] },
-  { q: "Explain keywords", keys: ["keyword", "query", "rank"] },
-  { q: "Explain backlinks", keys: ["backlink", "referring", "link"] },
-  { q: "Explain AI visibility", keys: ["visibility", "ai ", "prompt", "answer engine"] },
-  { q: "Which plan do I need?", keys: ["plan", "subscription", "usage", "billing", "package"] },
+  { q: "Walk me through keywords", keys: ["keyword", "query", "rank"] },
+  { q: "Walk me through backlinks", keys: ["backlink", "referring", "link"] },
+  { q: "Walk me through AI visibility", keys: ["visibility", "ai ", "prompt", "answer engine"] },
+  { q: "Which plan fits me?", keys: ["plan", "subscription", "usage", "billing", "package"] },
   { q: "Contact the team", keys: ["admin", "contact", "support", "person", "help me talk"] },
   { q: "Show me the tour", keys: ["tour", "guide", "show me"] },
 ];
@@ -51,14 +52,14 @@ function greeting(brief, name) {
   if (!brief.ready) {
     return {
       role: "assistant",
-      text: `I’m here with you on ${name}. Searchify can draft a title and description from your setup, then wait for you to approve it. Tell me what you want to do, or tap a question below. I can also open Connections or the contact page if you want.`,
+      text: `Hi — I’m Searchify assistance, right here with you on ${name}. Think of me as a calm co-pilot: I can draft a clearer title and description from your setup, then wait for your say-so. Ask me anything, tap a suggestion below, or say “what should I do next?” Nothing goes live from this chat.`,
       note: "Searchify assistance",
     };
   }
-  const aim = brief.goal ? ` You said the 90-day aim is: ${brief.goal}` : "";
+  const aim = brief.goal ? ` Your 90-day aim — “${brief.goal}” — is already in mind.` : "";
   return {
     role: "assistant",
-    text: `Your setup is in for ${brief.focus || name}.${aim} I can talk through a suggestion, how Google and WordPress connect, or why a step is worth doing. Nothing is published from this chat.`,
+    text: `Welcome back. I’ve got your setup for ${brief.focus || name}.${aim} Ask about a draft, Google, WordPress, keywords, or the next gentle step — I’ll keep it clear, honest, and unhurried. Nothing is published from this chat.`,
     note: "Using your setup brief",
   };
 }
@@ -68,75 +69,75 @@ function guideReply(text, brief) {
   const site = brief.hostname || "this website";
   if (/\b(admin|contact|support|talk to (a |the )?(person|team|human))\b/.test(lower)) {
     return {
-      text: "I can open the contact page so you can write to the Searchify team. Mention the website and what you were trying to do. I don’t send the message myself.",
+      text: "Of course — I can open the contact page so you can write to the Searchify team. Mention the website and what you were hoping to finish; that helps them help you. I don’t send the message myself.",
       href: "/contact",
       label: "Contact the team",
     };
   }
   if (/another google|multiple google|second google|different google|google login/.test(lower)) {
     return {
-      text: `Each website can keep its own Google login. Open Manage workspace, choose Add Google account, sign in with the next login, then pick that email on the website it belongs to. Searchify switches to that login when you open the site. I can’t sign in for you.`,
+      text: `Each website can keep its own Google login — neat and separate. Open Manage workspace, choose Add Google account, sign in with the next login, then attach that email to the site it belongs to. Searchify switches with you when you open the site. I can’t sign in for you, but I’ll keep the path clear.`,
       href: "/app/workspace",
       label: "Open Manage workspace",
     };
   }
   if (/another (website|site)|multiple (website|site)|add (a |another )?(website|site)/.test(lower)) {
     return {
-      text: "Add a website from Manage workspace. Setup asks the same questions again, and the plan limits how many sites you can keep. Overview and Settings then follow whichever site you select.",
+      text: "Add another website from Manage workspace — setup asks the same calm questions again. Your plan sets how many sites you can keep. Overview and Settings then follow whichever site you select.",
       href: "/app/workspace",
       label: "Open Manage workspace",
     };
   }
   if (/wordpress|publish the site|connect (my |the )?site|connect (my |the )?website/.test(lower)) {
     return {
-      text: `WordPress is how an approved title and description can be published to ${site}. Open Connections and connect WordPress for that address. Connecting does not publish the page. You still approve the draft first. I can’t enter the site password for you.`,
+      text: `WordPress is the bridge from an approved draft to ${site}. Open Connections and connect WordPress for that address — connecting alone never publishes. You still approve the draft first. I can’t enter the password for you.`,
       href: "/app/connections",
       label: "Open Connections",
     };
   }
   if (/google|search console|analytics|gsc/.test(lower)) {
     return {
-      text: `Search Console shows the queries people already use to find ${site}, and Analytics shows which pages they open. Open Connections, continue with Google, then choose this website’s property. A dash on the overview stays a dash until that property is selected. I can’t sign in for you.`,
+      text: `Search Console shows the searches people already use to find ${site}; Analytics shows which pages they open. Open Connections, continue with Google, then choose this website’s property. A dash on the overview stays a dash until that property is selected — honest, not empty inventing. I can’t sign in for you.`,
       href: "/app/connections",
       label: "Open Connections",
     };
   }
   if (/keyword/.test(lower)) {
     return {
-      text: "Keywords start from what you sell and where you serve. The Keywords page loads real Google positions, monthly volume, difficulty, and new ideas for your website. Track an idea with one tap. Nothing is invented: a blank means there is no data yet.",
+      text: "Keywords grow from what you sell and where you serve. The Keywords page loads real Google positions, monthly volume, difficulty, and fresh ideas — nothing invented. A blank simply means there’s no data yet. Want me to open it?",
       href: "/app/keywords",
       label: "Open Keywords",
     };
   }
   if (/backlink|referring/.test(lower)) {
     return {
-      text: "Backlinks are referring domains stored for the selected website. If the list is empty, none are stored yet. A lost link is only a cue to review it. Searchify does not disavow a link for you.",
+      text: "Backlinks are the referring domains stored for the selected website. An empty list means none are stored yet — not a failure. A lost link is a gentle cue to review; Searchify never disavows for you.",
       href: "/app/backlinks",
       label: "Open Backlinks",
     };
   }
   if (/visibility|answer engine|\bai prompt/.test(lower)) {
     return {
-      text: "AI visibility is a short list of questions a customer might ask about your business. Run live checks and Searchify asks ChatGPT, Gemini, Perplexity, or Claude, then shows whether your business is named or your site is cited, with the full answer and its sources.",
+      text: "AI visibility is a short, curious list of questions a customer might ask about your business. Live checks ask ChatGPT, Gemini, Perplexity, or Claude, then show whether you’re named or cited — with the full answer and its sources.",
       href: "/app/visibility",
       label: "Open AI visibility",
     };
   }
   if (/plan|subscription|package|billing|usage|how many site/.test(lower)) {
     return {
-      text: "Subscription shows the plan and what it includes: websites, keywords, prompts, and audits. The usage line is how much of that this workspace has used. Change the plan there when you need room for another site.",
+      text: "Subscription shows your plan — websites, keywords, prompts, and audits — plus what this workspace has already used. Change the package when you need room for another site. Happy to help you choose a path.",
       href: "/app/billing",
       label: "Open Subscription",
     };
   }
   if (/why|benefit|what('?s| is) searchify|should i use/.test(lower)) {
     return {
-      text: `Searchify prepares the next title and description for ${site} from your setup, and from Google once it is connected. You still read each card and approve it. The useful part is that the draft is ready, and the live page does not change until you say so.`,
+      text: `Searchify prepares a clearer title and description for ${site} from your setup — and from Google once it’s connected. You still read each card and approve it. The useful part: the draft is ready, and the live page stays untouched until you say so.`,
     };
   }
   if (/approve|publish|draft|title|description|suggest/.test(lower)) {
     return {
-      text: "A suggestion is a draft. Open the card to see the current title and the suggested one, plus the description. Approve keeps it for the next step. Dismiss sets it aside. Publishing happens later, and only after approval. This chat cannot publish the page.",
+      text: "A suggestion is just a draft — open the card to compare the current title with the proposed one, plus the description. Approve keeps it for the next step; dismiss sets it aside. Publishing happens later, and only after approval. This chat never publishes the page.",
       href: "/app/queue",
       label: "Open the approval queue",
     };
@@ -148,13 +149,13 @@ function followUps(text) {
   const lower = String(text || "").toLowerCase();
   if (/google/.test(lower)) return ["Add another Google account", "How are titles and descriptions written?"];
   if (/wordpress|publish/.test(lower)) return ["What happens when I approve?", "Connect my Google account"];
-  if (/keyword/.test(lower)) return ["Connect my Google account", "Explain backlinks"];
-  if (/backlink/.test(lower)) return ["Explain AI visibility", "Which plan do I need?"];
-  if (/visibility/.test(lower)) return ["Explain keywords", "Why should I use Searchify?"];
+  if (/keyword/.test(lower)) return ["Connect my Google account", "Walk me through backlinks"];
+  if (/backlink/.test(lower)) return ["Walk me through AI visibility", "Which plan fits me?"];
+  if (/visibility/.test(lower)) return ["Walk me through keywords", "Why should I use Searchify?"];
   if (/plan|subscription|usage/.test(lower)) return ["Add another website", "Contact the team"];
   if (/approve|title|description|draft/.test(lower)) return ["Connect WordPress", "Connect my Google account"];
-  if (/why|benefit/.test(lower)) return ["Connect my Google account", "Show me the tour"];
-  if (/contact|admin|support/.test(lower)) return ["Show me the tour", "Which plan do I need?"];
+  if (/why|benefit/.test(lower)) return ["What should I do next?", "Show me the tour"];
+  if (/contact|admin|support/.test(lower)) return ["Show me the tour", "Which plan fits me?"];
   return ["What should I do next?", "Show me the tour"];
 }
 
@@ -229,20 +230,20 @@ export default function AssistantDock({ pathname }) {
       return `I’d start with “${target.title}” on ${target.url}. Current title: “${target.before}”. Suggestion: “${target.after}”. ${origin} The brief is ${offer} in ${market}.`;
     }
     if (lower.includes("cost") || lower.includes("price") || lower.includes("how much")) {
-      return "Writing the title and description is the small part. One page is under a cent. Five pages is about 3 cents, and ten pages is about 6 cents. If a draft is rewritten, that page costs about twice. That is the writing step only. If you want, I can walk you through the next card.";
+      return "Happy to demystify that. Writing is the light part — under a cent for one page, about 3 cents for five, about 6 cents for ten. A rewrite is roughly twice. That’s only the writing step; this chat never publishes. Want me to walk you through the next card?";
     }
     if (lower.includes("next") || lower.includes("how") || lower.includes("help") || lower.includes("start")) {
       return pendingCards.length
-        ? `You have ${pendingCards.length} suggestion${pendingCards.length === 1 ? "" : "s"} waiting. I’d open “${target?.title || "the first card"}” first, then dismiss it or approve it on the card. Writing again skips pages already in the queue.`
-        : `For ${offer} in ${market}, connect Search Console and sync, then press Generate. You’ll get one title and one description per page. You still approve each card.`;
+        ? `You have ${pendingCards.length} suggestion${pendingCards.length === 1 ? "" : "s"} waiting — lovely progress. I’d open “${target?.title || "the first card"}” first, then keep or dismiss it on the card. Writing again skips pages already in the queue.`
+        : `For ${offer} in ${market}, a calm next step is Connections: pick Search Console, sync, then press Generate. You’ll get one title and one description per page — and you still approve each card.`;
     }
     if (lower.includes("approve") || lower.includes("publish")) {
-      return "Approving here does not publish from the chat. Use Approve draft on the card. A live recommendation still waits for the publishing step, and brief-only cards stay in review until Search Console is connected.";
+      return "Good instinct to check — approving here never publishes the site. Use Approve draft on the card. Live recommendations still wait for a separate publishing step, and brief-only cards stay in review until Search Console is connected.";
     }
     const count = pendingCards.length;
     return count
-      ? `There are ${count} open item${count === 1 ? "" : "s"} for ${offer} in ${market}. Want me to start with the first one, or talk through what approve does?`
-      : `The brief I have is ${offer} in ${market}. This queue is clear. Connect Search Console when you want live pages in these cards.`;
+      ? `There are ${count} open item${count === 1 ? "" : "s"} for ${offer} in ${market}. Want me to start with the first one, or talk through what approve does — no rush either way?`
+      : `I’ve got your brief for ${offer} in ${market}, and the queue is quiet. Connect Search Console when you’re ready for live pages in these cards — I’ll stay with you.`;
   };
 
   const sendChat = async (event, preset) => {
@@ -252,7 +253,7 @@ export default function AssistantDock({ pathname }) {
     if (wantsTour(text)) {
       const history = [...chat.filter((message) => !message.pending), { role: "user", text, note: "You" }];
       setDraft("");
-      const next = [...history, { role: "assistant", text: "I’ll walk you through the workspace: the website, Google, drafts, keywords, backlinks, AI visibility, and the plan. Ask for the tour any time.", note: "Searchify assistance" }];
+      const next = [...history, { role: "assistant", text: "Gladly — I’ll walk you through the workspace: the website, Google, drafts, keywords, backlinks, AI visibility, and the plan. Ask for the tour any time; I’m happy to start again.", note: "Searchify assistance" }];
       setChat(next);
       window.dispatchEvent(new CustomEvent("sf-start-tour"));
       setOpen(false);
@@ -268,7 +269,7 @@ export default function AssistantDock({ pathname }) {
     const history = [...chat.filter((message) => !message.pending), { role: "user", text, note: "You" }];
     setDraft("");
     setAsking(true);
-    setChat([...history, { role: "assistant", text: "Looking at your workspace…", note: "Searchify assistance", pending: true }]);
+    setChat([...history, { role: "assistant", text: "One moment — I’m looking at your workspace…", note: "Searchify assistance", pending: true }]);
     const res = await askAssistant({
       messages: history.slice(-8).map((message) => ({ role: message.role, text: message.text })),
       queue: cards.slice(0, 8).map((card) => ({
@@ -314,11 +315,11 @@ export default function AssistantDock({ pathname }) {
         <div className="assistant-sheet-head">
           <span className="mobile-more-handle" aria-hidden="true" />
           <div>
-            <div className="dash-eyebrow">CONTEXTUAL ASSISTANT</div>
+            <div className="dash-eyebrow">YOUR GUIDE</div>
             <h2>Ask Searchify</h2>
           </div>
           <div className="assistant-sheet-actions">
-            <button type="button" onClick={clearChat}>Clear</button>
+            <button type="button" onClick={clearChat}>Fresh chat</button>
             <button type="button" onClick={() => setOpen(false)} aria-label="Close assistant">×</button>
           </div>
         </div>
@@ -343,7 +344,7 @@ export default function AssistantDock({ pathname }) {
         ) : null}
         {nextQuestions.length ? (
           <div className="assistant-suggest" aria-label="Next questions">
-            <span className="assistant-next">Next</span>
+            <span className="assistant-next">You might ask</span>
             {nextQuestions.map((item) => (
               <button key={item} type="button" onClick={() => sendChat(null, item)}>{item}</button>
             ))}
@@ -354,7 +355,7 @@ export default function AssistantDock({ pathname }) {
           <textarea
             id="assistant-input"
             rows={1}
-            placeholder="Ask, or start typing a question…"
+            placeholder="Ask anything — or start typing…"
             value={draft}
             disabled={asking}
             onChange={(event) => setDraft(event.target.value)}
@@ -367,7 +368,7 @@ export default function AssistantDock({ pathname }) {
           />
           <button type="submit" disabled={asking || !draft.trim()}>{asking ? "…" : "Send"} <span aria-hidden="true">↗</span></button>
         </form>
-        <p className="chat-note">Kept for this visit. Approving a card still does not publish the website.</p>
+        <p className="chat-note">Kept for this visit. Approving a card still never publishes the website — you’re always in control.</p>
       </section>
       <button className="assistant-fab" type="button" data-tour="assistant" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
         <span aria-hidden="true">s</span>

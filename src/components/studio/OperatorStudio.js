@@ -207,7 +207,7 @@ export default function OperatorStudio() {
               <li>Google Search Console → real search performance</li>
               <li>Website / CMS → actual pages and content</li>
               <li>
-                DataForSEO → keywords, SERPs, backlinks{" "}
+                Searchify SEO → keywords, SERPs, backlinks{" "}
                 <span className="text-white/35">(connector slot — waiting_for_provider)</span>
               </li>
               <li>AI → analysis, reasoning, generation</li>
@@ -215,7 +215,7 @@ export default function OperatorStudio() {
               <li>Searchify → approval, automation, history, monitoring</li>
             </ul>
             <div className="mt-4 rounded-xl border border-dashed border-line bg-ink/50 px-3 py-3 text-xs text-white/45">
-              DataForSEO is part of the operator architecture for competitive intelligence. Until keys are connected,
+              Searchify SEO powers competitive intelligence in the operator. Until it is connected,
               Searchify uses owned GSC/GA4 + crawl facts only — no invented ranks or volumes.
             </div>
           </div>

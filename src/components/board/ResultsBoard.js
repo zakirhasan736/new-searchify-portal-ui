@@ -188,7 +188,7 @@ export default function ResultsBoard() {
                       <div className="w-metric"><span>Site audit</span><strong>{live.score ? `${live.score} / 100` : "—"}</strong><small>{live.score ? `PageSpeed for ${displayName}` : `No score stored for ${displayName}`}</small></div>
                       <div className="w-metric"><span>Tracked keywords</span><strong>{live.keywords ?? (brief.ready ? preparedKeywords : "—")}</strong><small>{live.keywords ? `Search Console queries for ${displayName}` : "From this website’s setup until Search Console has queries"}</small></div>
                       <div className="w-metric"><span>AI prompts</span><strong>{brief.ready ? preparedPrompts : "—"}</strong><small>{brief.ready ? `Prepared for ${displayName}` : `Add setup answers for ${displayName}`}</small></div>
-                      <div className="w-metric"><span>Referring domains</span><strong>{live.domains ?? "—"}</strong><small>{live.domains != null ? `DataForSEO live total${live.domainsAt ? `, checked ${live.domainsAt.slice(0, 10)}` : ""}` : `No backlink report stored for ${displayName}`}</small></div>
+                      <div className="w-metric"><span>Referring domains</span><strong>{live.domains ?? "—"}</strong><small>{live.domains != null ? `Searchify SEO live total${live.domainsAt ? `, checked ${live.domainsAt.slice(0, 10)}` : ""}` : `No backlink report stored for ${displayName}`}</small></div>
                     </>
                   )}
                 </div>
