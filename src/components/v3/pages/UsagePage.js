@@ -26,6 +26,7 @@ export default function UsagePage() {
   const [sites, setSites] = useState([]);
   const [scanHours, setScanHours] = useState(6);
   const [costCap, setCostCap] = useState(0);
+  const [siteLimitDraft, setSiteLimitDraft] = useState(5);
   const [busy, setBusy] = useState(false);
   const [booted, setBooted] = usePageBoot((s) => s.getCms());
 
@@ -50,6 +51,7 @@ export default function UsagePage() {
     });
     setScanHours(u.scanHours || 6);
     setCostCap(Number(u.costCapUsd) || 0);
+    setSiteLimitDraft(u.limit || cms.data?.limit || 5);
     setBooted(true);
   }, [setBooted]);
 
@@ -65,7 +67,19 @@ export default function UsagePage() {
       toast(res.data?.detail || "Could not update plan.");
       return;
     }
-    toast(`Plan set to ${res.data?.plan} · ${res.data?.limit} websites`);
+    toast(`Package set to ${res.data?.plan}. Website limit stays at ${res.data?.limit}.`);
+    await load();
+  };
+
+  const saveSiteLimit = async () => {
+    setBusy(true);
+    const res = await setWorkspacePlan({ site_limit: Math.max(1, Math.min(Number(siteLimitDraft) || 1, 100)) });
+    setBusy(false);
+    if (!res.ok) {
+      toast(res.data?.detail || "Could not update website limit.");
+      return;
+    }
+    toast(`Website limit set to ${res.data?.limit}.`);
     await load();
   };
 
@@ -106,20 +120,38 @@ export default function UsagePage() {
           </Pill>
         </div>
         <p style={{ fontSize: 13 }}>
-          Starter is 5 websites, Agency is 10, Scale is 15. Scan frequency and a spend cap sit on top of the site limit.
+          Package labels (Starter / Agency / Scale) do not reset the website limit. Change the limit separately below.
+          Scan frequency and a spend cap sit on top of that limit.
         </p>
         {stats.canSetLimit ? (
-          <div className="sf-row sf-gap">
-            <Btn onClick={() => changePlan("starter")} disabled={busy}>
-              Starter · 5
-            </Btn>
-            <Btn onClick={() => changePlan("agency")} disabled={busy}>
-              Agency · 10
-            </Btn>
-            <Btn onClick={() => changePlan("scale")} disabled={busy}>
-              Scale · 15
-            </Btn>
-          </div>
+          <>
+            <div className="sf-row sf-gap">
+              <Btn onClick={() => changePlan("starter")} disabled={busy || stats.plan === "starter"}>
+                Starter
+              </Btn>
+              <Btn onClick={() => changePlan("agency")} disabled={busy || stats.plan === "agency"}>
+                Agency
+              </Btn>
+              <Btn onClick={() => changePlan("scale")} disabled={busy || stats.plan === "scale"}>
+                Scale
+              </Btn>
+            </div>
+            <div className="sf-row sf-gap" style={{ alignItems: "end" }}>
+              <label className="sf-field" style={{ minWidth: 160 }}>
+                Website limit
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={siteLimitDraft}
+                  onChange={(e) => setSiteLimitDraft(Number(e.target.value) || 1)}
+                />
+              </label>
+              <Btn primary onClick={saveSiteLimit} disabled={busy || siteLimitDraft === stats.siteLimit}>
+                Save website limit
+              </Btn>
+            </div>
+          </>
         ) : null}
         <div className="sf-divider" />
         <div className="sf-row sf-between">

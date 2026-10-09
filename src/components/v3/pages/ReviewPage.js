@@ -149,15 +149,16 @@ export default function ReviewPage() {
         <div className="w-panel below">
           <h2>Try a stronger title.</h2>
           <p>Generate alternatives from this page’s service and location. Nothing is published from this step.</p>
-          <div className="w-actions">
+          <div className="rewrite-toolbar">
             <label>Writing style
               <select value={tone} onChange={(e) => setTone(e.target.value)}>
                 <option>Clear & direct</option>
                 <option>Service focused</option>
               </select>
             </label>
-            <button className="w-button primary" type="button" onClick={onGenerate} disabled={busy}>
-              {options.length ? "Generate again" : "Generate title and description"}
+            <button className="rewrite-generate" type="button" onClick={onGenerate} disabled={busy}>
+              <span className="rewrite-generate-mark" aria-hidden="true">✧</span>
+              {busy ? "Generating…" : options.length ? "Generate again" : "Generate title and description"}
             </button>
           </div>
           {options.map((opt, i) => (
@@ -181,10 +182,16 @@ export default function ReviewPage() {
         </article>
         <article className="w-panel">
           <div className="dash-eyebrow">SUGGESTED UPDATE</div>
-          <label>Page title<input value={title} readOnly={!editable} onChange={(e) => setTitle(e.target.value)} /></label>
-          <small className="w-muted">{`${title.length} characters`}</small>
-          <label>Meta description<textarea value={description} readOnly={!editable} onChange={(e) => setDescription(e.target.value)} /></label>
-          <small className="w-muted">{`${description.length} characters`}</small>
+          <div className="suggested-fields">
+            <label>Page title
+              <input value={title} readOnly={!editable} onChange={(e) => setTitle(e.target.value)} />
+              <span className="field-meta"><small className="w-muted">{`${title.length} characters`}</small></span>
+            </label>
+            <label>Meta description
+              <textarea value={description} readOnly={!editable} rows={4} onChange={(e) => setDescription(e.target.value)} />
+              <span className="field-meta"><small className="w-muted">{`${description.length} characters`}</small></span>
+            </label>
+          </div>
           {p.reason ? <p className="suggestion-reason">{p.reason}</p> : null}
         </article>
       </div>
