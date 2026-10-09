@@ -11,6 +11,7 @@ import {
   deleteCmsConnection,
   disconnectAds,
   disconnectGoogle,
+  errorText,
   featureKpi,
   featurePayload,
   getGoogleStatus,
@@ -193,7 +194,7 @@ export default function ConnectionsPage({ panel: panelProp = null }) {
     const res = await disconnectGoogle();
     setBusy(false);
     if (!res.ok) {
-      toast(res.data?.detail || "Could not disconnect Google.");
+      toast(errorText(res, "Could not disconnect Google."));
       return;
     }
     toast(`Google disconnected. Work queue cleared${res.data?.queueCleared != null ? ` · ${res.data.queueCleared} items` : ""}.`);
@@ -346,7 +347,7 @@ export default function ConnectionsPage({ panel: panelProp = null }) {
     const res = await deleteCmsConnection(site.id);
     setBusy(false);
     if (!res.ok) {
-      toast(res.data?.detail || "Could not disconnect WordPress.");
+      toast(errorText(res, "Could not disconnect WordPress."));
       return;
     }
     toast("WordPress disconnected.");

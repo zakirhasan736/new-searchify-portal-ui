@@ -153,7 +153,13 @@ export async function removeGoogleAccount(email) {
 }
 
 export async function disconnectGoogle() {
-  const res = await json(await fetch("/api/v1/oauth/google/disconnect", { method: "POST", headers: authHeaders() }));
+  const res = await json(
+    await fetch("/api/v1/oauth/google/disconnect", {
+      method: "POST",
+      headers: authHeaders(),
+      body: "{}",
+    }),
+  );
   invalidateV3Cache("all");
   return res;
 }
@@ -275,8 +281,14 @@ export async function saveCmsConnection(body) {
 }
 
 export async function deleteCmsConnection(id) {
-  const res = await json(await fetch(`/api/v1/operator/connections/${id}`, { method: "DELETE", headers: authHeaders() }));
-  if (res.ok) invalidateV3Cache(["cms"]);
+  const res = await json(
+    await fetch(`/api/v1/operator/connections/${id}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+      body: "{}",
+    }),
+  );
+  if (res.ok) invalidateV3Cache(["cms", "google", "changes"]);
   return res;
 }
 
