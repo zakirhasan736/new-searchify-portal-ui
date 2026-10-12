@@ -94,7 +94,9 @@ function crawlFindings(report, { impressions, sessions, open }) {
     const lead = pages[0];
     if (issue.meta && lead?.title) bits.push(`Example: ${pathOf(lead.url)} has the title "${lead.title}" (${lead.title.length} characters).`);
     if (issue.meta && lead && !lead.title && issue.key === "no_description") bits.push(`Example: ${pathOf(lead.url)}.`);
+    if (lead?.detail) bits.push(`${pathOf(lead.url)}: ${lead.detail}`);
     const queued = issue.meta ? open.find((change) => keyOf(change.targetUrl) === keyOf(lead?.url)) : null;
+    const pageNotes = pages.map((page) => (page.detail ? `${pathOf(page.url)}: ${page.detail}` : pathOf(page.url))).filter(Boolean);
     return {
       id: `crawl-${issue.key}`,
       severity,
@@ -103,6 +105,7 @@ function crawlFindings(report, { impressions, sessions, open }) {
       detail: issue.meta ? "Searchify can prepare this" : "Update on the page",
       count: issue.count,
       pages: pages.map((page) => page.url).filter(Boolean),
+      pageNotes,
       evidence: bits.join(" "),
       fix: issue.fix,
       steps: issue.steps || [],

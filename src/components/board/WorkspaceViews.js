@@ -1332,8 +1332,8 @@ export function AuditView() {
             </button>
           </div>
           {open.manual ? <p className="w-footnote">This change is on the page or the theme. The steps above are the fix. Searchify does not change image files, FAQ answers, or video uploads.</p> : <p className="w-footnote">Searchify can draft the title and description, including Open Graph and JSON-LD. Nothing is published until you approve it.</p>}
-          <h3>Affected paths</h3>
-          <ul className="path-list">{open.pages.map((page) => <li key={page}><code>{page}</code></li>)}</ul>
+          <h3>Affected pages</h3>
+          <ul className="path-list">{(open.pageNotes?.length ? open.pageNotes : open.pages).map((page) => <li key={page}><code>{page}</code></li>)}</ul>
           <p className="w-footnote">Nothing is published from this window. A prepared title still waits for your approval.</p>
         </Modal>
       ) : null}
