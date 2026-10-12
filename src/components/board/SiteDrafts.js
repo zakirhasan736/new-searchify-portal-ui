@@ -5,13 +5,36 @@ import Link from "next/link";
 import { hostnameOf } from "@/lib/businessBrief";
 import { breadthKey, loadGuardrails } from "@/lib/guardrails";
 import { setSiteAnswer } from "@/lib/journey";
-import { errorText, getSiteScan, listChanges, proposeFromGsc, runSiteScan } from "@/lib/v1Api";
-import DraftChecks, { isHomepage, pageTypeLabel, statusLabel } from "@/components/board/DraftChecks";
+import { errorText, getSiteScan, listChanges, loadFeature, proposeFromGsc, runSiteScan } from "@/lib/v1Api";
+import DraftChecks, { isHomepage, ListingPackage, pageTypeLabel, statusLabel } from "@/components/board/DraftChecks";
 
 const OPEN = new Set(["awaiting_approval", "proposed", "approved", "failed", "needs_review"]);
 
 function detail(res, fallback) {
   return errorText(res, fallback);
+}
+
+function watchFrom(pagesRes, auditRes) {
+  const rows = pagesRes?.data?.payload?.rows || [];
+  const home = rows.find((row) => {
+    try {
+      return !new URL(String(row[0] || "")).pathname.replace(/\/+$/, "");
+    } catch {
+      return false;
+    }
+  }) || null;
+  const audit = auditRes?.data?.payload || {};
+  const seo = audit.scores?.mobile?.seo ?? audit.scores?.seo ?? audit.kpis?.find?.((row) => String(row?.[0] || "").toLowerCase() === "seo")?.[1];
+  const performance = audit.scores?.mobile?.performance ?? audit.scores?.performance;
+  if (!home && seo == null && performance == null) return null;
+  return {
+    url: home?.[0] || "",
+    clicks: home?.[1],
+    impressions: home?.[2],
+    position: home?.[4],
+    seo: seo ?? null,
+    performance: performance ?? null,
+  };
 }
 
 function homeFirst(rows) {
@@ -27,13 +50,17 @@ export default function SiteDrafts({ site, brief, onCount, showScanDetails = tru
   const [note, setNote] = useState("");
   const [rivals, setRivals] = useState(String(site?.answers?.competitors || ""));
   const [failed, setFailed] = useState([]);
+  const [watch, setWatch] = useState(null);
 
   const load = async () => {
-    const [scanRes, changesRes] = await Promise.all([
+    const [scanRes, changesRes, pagesRes, auditRes] = await Promise.all([
       brief.siteUrl ? getSiteScan(brief.siteUrl) : Promise.resolve({ ok: true, data: { scan: null } }),
       listChanges({ force: true }),
+      loadFeature("top-pages", { force: true }).catch(() => null),
+      loadFeature("site-audit", { force: true }).catch(() => null),
     ]);
     setScan(scanRes.ok ? scanRes.data?.scan || null : null);
+    setWatch(watchFrom(pagesRes, auditRes));
     const rows = Array.isArray(changesRes.data) ? changesRes.data : [];
     const mine = rows.filter((row) => OPEN.has(row.status) && row.changeType === "meta" && (!host || hostnameOf(row.targetUrl) === host));
     setDrafts(homeFirst(mine));
@@ -115,6 +142,14 @@ export default function SiteDrafts({ site, brief, onCount, showScanDetails = tru
                 ) : null}
                 {scan.proof?.length ? (
                   <p className="w-footnote">Facts the drafts may use: {scan.proof.join(" · ")}</p>
+                ) : null}
+                {watch ? (
+                  <p className="w-footnote">
+                    Homepage in Search Console: position {watch.position ?? "—"}, {watch.impressions ?? "—"} impressions, {watch.clicks ?? "—"} clicks.
+                    {watch.performance != null ? ` PageSpeed performance ${watch.performance}.` : ""}
+                    {watch.seo != null ? ` SEO score ${watch.seo}.` : ""}
+                    {" "}Speed, images, scripts, and CSS are in the <Link href="/app/results">site audit</Link>. This updates when Search Console and PageSpeed are synced.
+                  </p>
                 ) : null}
                 {scan.stale ? <p className="w-inset" role="status">Your setup answers changed after this read. Read the site again so new drafts use them.</p> : null}
                 {scan.conflicts?.length ? (
@@ -200,6 +235,7 @@ export default function SiteDrafts({ site, brief, onCount, showScanDetails = tru
                       <div className="change-cell suggested"><small>Suggested description</small><span>{p.metaDescription || "Not written yet"}</span></div>
                     </div>
                     {p.reason ? <p className="w-footnote">{p.reason}</p> : null}
+                    <ListingPackage proposed={p} />
                     <DraftChecks proposed={p} compact />
                     <div className="evidence-row">
                       <span className="source-caption">READ FROM</span>

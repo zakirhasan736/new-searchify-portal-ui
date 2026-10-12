@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import "@/styles/results-board.css";
-import DraftChecks, { pageTypeLabel, statusLabel } from "@/components/board/DraftChecks";
+import DraftChecks, { ListingPackage, pageTypeLabel, statusLabel } from "@/components/board/DraftChecks";
 import {
   changePath,
   dismissChange,
@@ -178,6 +178,8 @@ export default function ReviewPage() {
           <div className="change-pair">
             <div className="change-cell"><small>Title</small><span>{beforeTitle}</span></div>
             <div className="change-cell"><small>Description</small><span>{beforeDesc}</span></div>
+            <div className="change-cell"><small>Open Graph</small><span>{p.beforeOpenGraphTitle || beforeTitle}</span><small>{p.beforeOpenGraphDescription || "No Open Graph description on the page."}</small></div>
+            <div className="change-cell"><small>JSON-LD</small><span>{(p.beforeSchemaTypes || []).join(", ") || "No schema found"}</span><small>{p.beforeSchemaName || p.beforeSchemaDescription || "The scraper did not find a name in the page schema."}</small></div>
           </div>
         </article>
         <article className="w-panel">
@@ -193,6 +195,7 @@ export default function ReviewPage() {
             </label>
           </div>
           {p.reason ? <p className="suggestion-reason">{p.reason}</p> : null}
+          <ListingPackage proposed={{ ...p, title, metaDescription: description }} title={title} description={description} />
         </article>
       </div>
       <div className="w-panel below">

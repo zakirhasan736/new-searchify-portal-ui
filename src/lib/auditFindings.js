@@ -55,6 +55,26 @@ export function resolveSeoScore(auditPayload = {}, crawlReport = null) {
 
 const SEVERITY_RANK = { Critical: 0, Warning: 1, Notice: 2 };
 
+function areaCount(findings, area) {
+  return findings.filter((item) => item.area === area).length;
+}
+
+export function starterPackage(findings, report = {}) {
+  const gap = (area) => areaCount(findings, area);
+  return [
+    { name: "Meta title and description", state: gap("Meta") ? `${gap("Meta")} to review` : "Drafted from the page when you generate", href: "/app/queue", note: "Searchify writes the title and description. You approve before publishing." },
+    { name: "Keywords", state: report.queries ? "Search Console queries are in" : "Open Keywords", href: "/app/keywords", note: "A title uses the keyword that matches that page." },
+    { name: "Competitors", state: "Compared when a title is drafted", href: "/app/keywords", note: "Competitor titles keep the draft from copying them." },
+    { name: "AI visibility", state: "Checked on its own screen", href: "/app/visibility", note: "Shows whether answer engines mention the business." },
+    { name: "Google Places", state: report.places ? "Connected" : "Connect on Local", href: "/app/local", note: "A place name is used only when the page is about that place." },
+    { name: "Backlinks", state: "Review referring domains", href: "/app/backlinks", note: "Searchify lists links. It does not buy or exchange them." },
+    { name: "Open Graph and JSON-LD", state: gap("Social") || gap("Schema") ? "Missing on some pages" : "Written with the approved title", href: "/app/queue", note: "Publishing with the switch on uses the same title and description." },
+    { name: "Images", state: gap("Images") ? `${gap("Images")} image finding${gap("Images") === 1 ? "" : "s"}` : "No missing alt text in this crawl", href: "/app/results", note: "You add the alt text. Searchify points at the pages." },
+    { name: "FAQ", state: gap("FAQ") ? "Questions need answers on the page" : "No FAQ gap in this crawl", href: "/app/results", note: "Searchify does not invent answers that are not on the page." },
+    { name: "Video", state: gap("Video") ? "A video page needs a description" : "No video gap in this crawl", href: "/app/results", note: "Describe the video in the title and the first paragraph." },
+  ];
+}
+
 const PSI_CRITICAL = /document title|title element|http status|is.?crawlable|robots\.txt|canonical|indexability|noindex|blocked/i;
 
 function crawlFindings(report, { impressions, sessions, open }) {
@@ -79,11 +99,13 @@ function crawlFindings(report, { impressions, sessions, open }) {
       id: `crawl-${issue.key}`,
       severity,
       name: issue.name,
-      detail: issue.meta ? "Metadata draft supported" : "Manual investigation",
+      area: issue.area || (issue.meta ? "Meta" : "Page"),
+      detail: issue.meta ? "Searchify can prepare this" : "Update on the page",
       count: issue.count,
       pages: pages.map((page) => page.url).filter(Boolean),
       evidence: bits.join(" "),
       fix: issue.fix,
+      steps: issue.steps || [],
       manual: !issue.meta,
       changeId: queued?.id || null,
       suggestion: null,
@@ -123,11 +145,17 @@ export function buildAuditFindings({ audit, pages, queries, landings, places, ch
       id: `change-${change.id}`,
       severity: proposed.title ? "Warning" : "Critical",
       name: proposed.title ? "Title and description are ready to review" : "This page still needs a title and description",
+      area: "Meta",
       detail: pathOf(change.targetUrl),
       count: 1,
       pages: [change.targetUrl],
       evidence: evidenceBits.join(" "),
       fix: proposed.reason || "Review the suggested title and description, then approve the draft before anything is published.",
+      steps: [
+        "Read the suggested title and description.",
+        "Edit them if a fact is wrong.",
+        "Approve publishing. Leave Open Graph and JSON-LD on so the social card and the page schema use the same words.",
+      ],
       manual: false,
       changeId: change.id,
       suggestion: proposed.title ? {
@@ -254,8 +282,10 @@ export function buildAuditFindings({ audit, pages, queries, landings, places, ch
 
   const critical = findings.filter((item) => item.severity === "Critical").length;
   const used = sources.filter(Boolean);
+  const packageRows = starterPackage(findings, { pages: pageRows.length, queries: queryRows.length, places: placeRows.length });
   return {
     findings,
+    packageRows,
     report: {
       seoScore,
       seoSource,

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { hostnameOf } from "@/lib/businessBrief";
 import { breadthKey, loadGuardrails } from "@/lib/guardrails";
 import { errorText, listChanges, proposeFromGsc } from "@/lib/v1Api";
-import DraftChecks, { isHomepage, statusLabel } from "@/components/board/DraftChecks";
+import DraftChecks, { isHomepage, ListingPackage, statusLabel } from "@/components/board/DraftChecks";
 
 const OPEN = new Set(["proposed", "awaiting_approval", "approved", "failed", "needs_review"]);
 
@@ -82,6 +82,7 @@ export default function HomepageReview({ brief, onSetup }) {
               <div className="change-cell suggested"><small>Recommended description</small><span>{p.metaDescription || "Not written yet"}</span></div>
             </div>
             <DraftChecks proposed={p} compact />
+            <ListingPackage proposed={p} />
             <div className="w-actions">
               <Link className="w-button primary" href={`/app/queue/${row.id}`}>{OPEN.has(row.status) ? "Review in the approval queue" : "Open"}</Link>
             </div>

@@ -19,7 +19,7 @@ export default function ConfirmPage() {
   const [busy, setBusy] = useState(false);
   const [booted, setBooted] = useState(false);
   const [sentBack, setSentBack] = useState(false);
-  const [includeSocialSchema, setIncludeSocialSchema] = useState(false);
+  const [includeSocialSchema, setIncludeSocialSchema] = useState(true);
 
   const load = useCallback(async () => {
     const { data } = await listChanges({ force: true });
@@ -115,7 +115,7 @@ export default function ConfirmPage() {
             </span>
             <span className="publish-extra-copy">
               <strong>Also write Open Graph + JSON-LD</strong>
-              <small>Uses this meta title and description for social previews and WebPage schema. Off by default.</small>
+              <small>Uses this meta title and description for the social preview and the WebPage schema.</small>
             </span>
           </label>
         ) : null}

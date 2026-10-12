@@ -359,6 +359,57 @@ function volumeLabel(value) {
   return value == null ? "—" : Number(value).toLocaleString("en-US");
 }
 
+function ConceptPanel({ title, note, rows, action }) {
+  if (!rows?.length && !note) return null;
+  return (
+    <div className="w-panel below">
+      <div className="w-toolbar">
+        <strong>{title}</strong>
+        {rows?.length && note ? <span className="w-muted">{note}</span> : null}
+      </div>
+      {rows?.length ? (
+        <div className="table-scroll">
+          <table className="w-table">
+            <thead>
+              <tr>
+                <th>Suggestion</th>
+                <th>Why it belongs</th>
+                {action ? <th>Action</th> : null}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={`${row.title}-${row.concept || ""}`}>
+                  <td data-label="Suggestion"><strong>{row.title}</strong>{row.concept ? <small>{row.concept}</small> : null}</td>
+                  <td data-label="Why">{row.why}</td>
+                  {action ? <td data-label="">{action(row)}</td> : null}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : <p className="w-inset">{note}</p>}
+    </div>
+  );
+}
+
+function visibilityReading(item, offer) {
+  if (item?.reading) return { reading: item.reading, next: item.next || "" };
+  if (!item?.live || item.mention == null || (item.status === "error" && !item.stale)) return { reading: "", next: "" };
+  const concept = item.concept || offer || "this question";
+  const other = item.sources?.[0]?.title || item.sources?.[0]?.url || "";
+  if (item.mention && item.citation) {
+    return { reading: "The answer names the business and links to the site.", next: "Keep the page that was cited. A later check shows whether that mention stays." };
+  }
+  if (item.mention) {
+    return { reading: "The answer names the business, without a link to the site.", next: `The page about ${concept} needs a title and description that match this question, so the answer has a page to cite.` };
+  }
+  return {
+    reading: other ? `The answer does not name the business. It points at ${other}.` : "The answer does not name the business.",
+    next: `This question is about ${concept}. The matching page should say that in the title and the opening paragraph.`,
+  };
+}
+
 function exportKeywords(rows) {
   const lines = [["Keyword", "Position", "Change", "Monthly volume", "Target page", "Country", "Device"], ...rows.map((item) => {
     const change = keywordChange(item);
@@ -540,6 +591,18 @@ export function KeywordsView() {
       {liveNote ? <p className="w-inset" role="status">{liveNote}</p> : null}
       {live?.termsDropped?.length ? <p className="w-inset" role="status">{`${live.termsDropped.length} tracked term${live.termsDropped.length === 1 ? " was" : "s were"} left out of live data because the plan covers ${live.termLimit} tracked keywords: ${live.termsDropped.slice(0, 5).join(", ")}${live.termsDropped.length > 5 ? "…" : ""}`}</p> : null}
       <PlanUsage feature="keywords" />
+      {live ? (
+        <ConceptPanel
+          title="Suggestions for this business"
+          note={live.conceptNote || "Searches that match the offer, from Searchify SEO."}
+          rows={live.concepts}
+          action={(row) => (
+            <button className="w-button" type="button" onClick={() => trackIdea({ ...row, keyword: row.keyword || row.title })}>
+              {keywords.some((item) => item.term.toLowerCase() === String(row.keyword || row.title).toLowerCase()) ? "Tracked" : "Track"}
+            </button>
+          )}
+        />
+      ) : null}
       <div className="w-panel">
         <div className="w-toolbar">
           <label>Find a keyword<input id="keyword-filter" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tracked terms…" type="search" /></label>
@@ -593,7 +656,7 @@ export function KeywordsView() {
       ) : null}
       {live?.ideas?.length ? (
         <div className="w-panel below">
-          <div className="w-toolbar"><strong>Keyword ideas</strong><span className="w-muted">{`Searchify SEO keyword suggestions for ${placeLabel(live)}`}</span></div>
+          <div className="w-toolbar"><strong>All stored searches</strong><span className="w-muted">The full Searchify SEO list. The suggestions above keep the ones that match this business.</span></div>
           <div className="table-scroll">
             <table className="w-table">
               <thead><tr><th>Idea</th><th>Monthly volume</th><th>Difficulty</th><th>Intent</th><th>Action</th></tr></thead>
@@ -782,6 +845,9 @@ export function VisibilityView() {
           stale: Boolean(hit.stale),
           applied: hit.location?.applied || null,
           sample: false,
+          reading: hit.reading || "",
+          next: hit.next || "",
+          concept: hit.concept || "",
           live: true,
         };
       });
@@ -830,9 +896,11 @@ export function VisibilityView() {
           <table className="w-table">
             <thead><tr><th>Prompt</th><th>Engine</th><th>Mention</th><th>Citation</th><th>Evidence</th></tr></thead>
             <tbody>
-              {promptPager.rows.map((item) => (
+              {promptPager.rows.map((item) => {
+                const reading = visibilityReading(item, brief.focus || brief.businessType);
+                return (
                 <tr key={item.id}>
-                  <td data-label="Prompt">{item.text}</td>
+                  <td data-label="Prompt">{item.text}{reading.reading ? <small>{`${reading.reading} ${reading.next}`}</small> : null}</td>
                   <td data-label="Engine">{item.model}</td>
                   <td data-label="Mention">
                     {item.status === "error" && !item.stale ? <span className="w-pill danger">Check failed</span>
@@ -843,7 +911,8 @@ export function VisibilityView() {
                   <td data-label="Citation">{item.citation || "—"}</td>
                   <td data-label=""><button className="w-button" type="button" onClick={() => setOpen(item)}>View response</button></td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -869,6 +938,7 @@ export function VisibilityView() {
       {open ? (
         <Modal title="Prompt evidence" onClose={() => setOpen(null)}>
           <blockquote>{open.text}</blockquote>
+          {visibilityReading(open, brief.focus || brief.businessType).reading ? <p>{`${visibilityReading(open, brief.focus || brief.businessType).reading} ${visibilityReading(open, brief.focus || brief.businessType).next}`}</p> : null}
           <p>{open.model}{open.modelName ? ` · ${open.modelName}` : ""} · {open.live ? `Checked ${fetchedLabel(open.checkedAt)}` : open.mention === null ? "Not checked" : "Earlier sample"}</p>
           {open.applied ? <p className="w-muted">{open.applied.country ? `Asked as a user in ${open.applied.city ? `${open.applied.city}, ` : ""}${open.applied.country}` : "Asked without a location"}{open.applied.note ? `. ${open.applied.note}` : ""}</p> : null}
           {open.status === "error" ? <p className="w-inset" role="alert">{`Latest check failed: ${open.error}`}</p> : null}
@@ -969,6 +1039,7 @@ export function BacklinksView() {
       {busy ? <div className="audit-loading" role="status"><span className="audit-loading-mark" aria-hidden="true" /><strong>Loading live backlink data</strong><p>Referring domains for {brief.hostname || "this website"}.</p></div> : null}
       {note ? <p className="w-inset" role="status">{note}</p> : null}
       <PlanUsage feature="backlinks" />
+      {live ? <ConceptPanel title="What these links mean" note={live.conceptNote || ""} rows={live.concepts} /> : null}
       <div className="w-panel">
         <div className="w-toolbar">
           <label>Link status
@@ -1029,6 +1100,11 @@ export function BacklinksView() {
   );
 }
 
+function severityLabel(severity) {
+  if (severity === "Critical") return "Error";
+  return severity || "Notice";
+}
+
 function severityClass(severity) {
   if (severity === "Critical") return "danger";
   if (severity === "Warning") return "warn";
@@ -1041,6 +1117,7 @@ export function AuditView() {
   const [filter, setFilter] = useState("All severities");
   const [findings, setFindings] = useState([]);
   const [report, setReport] = useState(null);
+  const [packageRows, setPackageRows] = useState([]);
   const [open, setOpen] = useState(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -1093,11 +1170,16 @@ export function AuditView() {
     const next = buildAuditFindings({ ...base, crawl });
     setFindings(next.findings);
     setReport(next.report);
+    setPackageRows(next.packageRows || []);
   }, [base, crawl]);
 
   const crawling = crawl?.state === "crawling";
 
-  const shown = findings.filter((item) => filter === "All severities" || item.severity === filter);
+  const shown = findings.filter((item) => {
+    if (filter === "All severities") return true;
+    if (filter === "Error") return item.severity === "Critical";
+    return item.severity === filter;
+  });
   const findingPager = usePagination("audit", shown, `${brief.siteUrl}|${filter}`);
   const critical = report?.critical ?? findings.filter((item) => item.severity === "Critical").length;
 
@@ -1145,15 +1227,13 @@ export function AuditView() {
           <Metric label="Site health" value={report?.health == null ? "—" : String(Math.round(report.health))} note={report?.health == null ? "Loads with the site crawl" : "Searchify SEO, out of 100"} />
           <Metric label="SEO score" value={report?.seoScore ?? "—"} note={report?.seoSource || "PageSpeed or site crawl"} />
           <Metric label="Pages crawled" value={report?.crawled ? String(report.crawled) : "—"} note={report?.crawled ? "Whole site" : "Loads with the site crawl"} />
-          <Metric label="Critical findings" value={String(critical)} note={`${findings.length} findings in total`} />
+          <Metric label="Errors" value={String(critical)} note={`${findings.length} findings in total`} />
         </div>
       )}
       <p className="w-footnote">
         {loading
           ? "Loading audit data for the selected website."
-          : report?.sources?.length
-            ? `This report uses ${report.sources.join(", ")}. A score is context. The action is the suggested title and description.`
-            : "Connect Search Console, Analytics, PageSpeed, and Places, then sync. Findings appear here from those sources."}
+          : "Searchify prepares the title, description, Open Graph, and page schema. You approve them. Images, FAQ answers, and video files stay edits you make on the page, with the steps in Help."}
       </p>
       {crawling ? (
         <div className="audit-loading" role="status">
@@ -1165,6 +1245,26 @@ export function AuditView() {
       {crawlNote ? <p className="w-inset" role="status">{crawlNote}</p> : null}
       <PlanUsage feature="audits" />
       {note ? <p className="w-inset">{note}</p> : null}
+      {packageRows.length ? (
+        <div className="w-panel">
+          <h2>Starter SEO package</h2>
+          <p>These are the pieces that put a site in a stronger starting position. Searchify drafts the listing. Images, FAQ answers, and video files are finished with the Help steps.</p>
+          <div className="table-scroll">
+            <table className="w-table">
+              <thead><tr><th>Piece</th><th>Status</th><th>What Searchify does</th></tr></thead>
+              <tbody>
+                {packageRows.map((row) => (
+                  <tr key={row.name}>
+                    <td data-label="Piece"><strong>{row.name}</strong></td>
+                    <td data-label="Status">{row.href ? <Link href={row.href}>{row.state}</Link> : row.state}</td>
+                    <td data-label="What Searchify does">{row.note}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
       <div className="w-panel">
         {loading ? (
           <div className="audit-loading" role="status">
@@ -1178,7 +1278,7 @@ export function AuditView() {
           <label>Severity
             <select id="audit-filter" value={filter} onChange={(event) => setFilter(event.target.value)}>
               <option>All severities</option>
-              <option>Critical</option>
+              <option>Error</option>
               <option>Warning</option>
               <option>Notice</option>
             </select>
@@ -1192,10 +1292,10 @@ export function AuditView() {
             <tbody>
               {shown.length ? findingPager.rows.map((item) => (
                 <tr key={item.id}>
-                  <td data-label="Severity"><span className={`w-pill ${severityClass(item.severity)}`.trim()}>{item.severity}</span></td>
-                  <td data-label="Finding"><strong>{item.name}</strong><small>{item.manual ? "Manual investigation" : "Metadata draft supported"}</small></td>
+                  <td data-label="Severity"><span className={`w-pill ${severityClass(item.severity)}`.trim()}>{severityLabel(item.severity)}</span></td>
+                  <td data-label="Finding"><strong>{item.name}</strong><small>{item.area || (item.manual ? "Update on the page" : "Searchify can prepare this")}</small></td>
                   <td data-label="Pages">{item.count}</td>
-                  <td data-label=""><button className="w-button" type="button" onClick={() => setOpen(item)}>{item.changeId ? "View queued finding" : "View finding"}</button></td>
+                  <td data-label=""><button className="w-button" type="button" onClick={() => setOpen(item)}>Help</button></td>
                 </tr>
               )) : <tr><td className="app-span" colSpan={4} data-label="">No findings for this filter. Sync Google, then generate titles from the overview.</td></tr>}
             </tbody>
@@ -1207,9 +1307,10 @@ export function AuditView() {
       </div>
       {open ? (
         <Modal title={open.name} onClose={() => setOpen(null)}>
-          <span className={`w-pill ${severityClass(open.severity)}`.trim()}>{open.severity}</span>
+          <span className={`w-pill ${severityClass(open.severity)}`.trim()}>{severityLabel(open.severity)}</span>
+          {open.area ? <span className="w-pill">{open.area}</span> : null}
           <p>{open.fix}</p>
-          <div className="w-inset"><strong>Evidence</strong><p>{open.evidence}</p></div>
+          <div className="w-inset"><strong>What Searchify found</strong><p>{open.evidence}</p></div>
           {open.suggestion ? (
             <div className="change-pair">
               <div className="change-cell"><small>Current title</small><span>{open.suggestion.beforeTitle}</span></div>
@@ -1218,10 +1319,22 @@ export function AuditView() {
               <div className="change-cell suggested"><small>Suggested description</small><span>{open.suggestion.description || "Not written yet"}</span></div>
             </div>
           ) : null}
+          <div className="w-inset">
+            <strong>How to update this yourself</strong>
+            <ol className="path-list">
+              {(open.steps && open.steps.length ? open.steps : [open.fix]).map((step) => <li key={step}>{step}</li>)}
+            </ol>
+          </div>
+          <div className="w-actions">
+            <button className="w-button" type="button" onClick={() => setOpen(null)}>I’ll update this myself</button>
+            <button className="w-button primary" type="button" disabled={busy || open.manual} onClick={() => sendToQueue(open)}>
+              {busy ? "Preparing…" : open.manual ? "Searchify cannot edit this on the page" : open.changeId ? "Open the prepared draft" : "Let Searchify prepare it"}
+            </button>
+          </div>
+          {open.manual ? <p className="w-footnote">This change is on the page or the theme. The steps above are the fix. Searchify does not change image files, FAQ answers, or video uploads.</p> : <p className="w-footnote">Searchify can draft the title and description, including Open Graph and JSON-LD. Nothing is published until you approve it.</p>}
           <h3>Affected paths</h3>
           <ul className="path-list">{open.pages.map((page) => <li key={page}><code>{page}</code></li>)}</ul>
-          <p className="w-footnote">{open.manual ? "This stays an investigation until you decide it needs a draft." : "A person still reviews the title and description before publishing."}</p>
-          <button className="w-button primary" type="button" disabled={busy} onClick={() => sendToQueue(open)}>{busy ? "Preparing the draft…" : open.changeId ? "Open approval queue" : "Send to approval queue"}</button>
+          <p className="w-footnote">Nothing is published from this window. A prepared title still waits for your approval.</p>
         </Modal>
       ) : null}
     </section>

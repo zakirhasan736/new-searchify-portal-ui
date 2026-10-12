@@ -87,3 +87,32 @@ export default function DraftChecks({ proposed, compact = false }) {
     </div>
   );
 }
+
+export function ListingPackage({ proposed, title = "", description = "" }) {
+  const p = proposed || {};
+  const ogTitle = p.openGraphTitle || title || p.title || "";
+  const ogDesc = p.openGraphDescription || description || p.metaDescription || "";
+  const schema = p.jsonLd || {};
+  const missing = (p.images || []).filter((img) => img && img.needsAlt && img.suggestedAlt).slice(0, 3);
+  const hasSignals = p.canonical || (p.nav || []).length || (p.faqs || []).length || (p.videos || []).length || p.reviewRating || p.reviewCount;
+  if (!ogTitle && !schema["@type"] && !missing.length && !p.shareImage && !hasSignals) return null;
+  return (
+    <div className="change-pair">
+      <div className="change-cell"><small>Open Graph</small><span>{ogTitle || "Uses the suggested title"}</span><small>{ogDesc || "Uses the suggested description"}</small></div>
+      <div className="change-cell"><small>JSON-LD</small><span>{schema["@type"] || "WebPage"}</span><small>{schema.name || ogTitle || "Uses the suggested title"}</small></div>
+      {p.shareImage ? <div className="change-cell"><small>Share image</small><span>{p.shareImage}</span><small>Used for the social card and the schema image.</small></div> : null}
+      {missing.map((img) => (
+        <div className="change-cell" key={img.src}>
+          <small>Image text</small>
+          <span>{img.suggestedAlt}</span>
+          <small>Add this as the image alt text. The picture file stays as it is.</small>
+        </div>
+      ))}
+      {p.canonical ? <div className="change-cell"><small>Canonical</small><span>{p.canonical}</span></div> : null}
+      {(p.nav || []).length ? <div className="change-cell"><small>Navigation</small><span>{p.nav.slice(0, 8).join(" · ")}</span></div> : null}
+      {(p.faqs || []).length ? <div className="change-cell"><small>FAQ</small><span>{p.faqs.slice(0, 4).join(" ")}</span></div> : null}
+      {(p.videos || []).length ? <div className="change-cell"><small>Video</small><span>{p.videos[0]}</span><small>{p.videos.length === 1 ? "One video on this page." : `${p.videos.length} videos on this page.`}</small></div> : null}
+      {p.reviewRating || p.reviewCount ? <div className="change-cell"><small>Reviews</small><span>{p.reviewRating ? `${p.reviewRating} stars` : "Reviews on the page"}</span><small>{p.reviewCount ? `${p.reviewCount} in the page schema` : "Shown only when the page publishes a rating."}</small></div> : null}
+    </div>
+  );
+}
