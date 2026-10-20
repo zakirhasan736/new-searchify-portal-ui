@@ -50,18 +50,76 @@ export function pageTypeLabel(proposed) {
   return TYPES[proposed?.pageType] || (proposed?.pageRole ? `${proposed.pageRole} page` : "Page");
 }
 
+function jevBandClass(band) {
+  if (band === "auto") return "good";
+  if (band === "reject") return "danger";
+  return "warn";
+}
+
+function jevBandLabel(band) {
+  if (band === "auto") return "JEV auto-safe";
+  if (band === "reject") return "JEV reject · regenerate";
+  if (band === "inbox") return "JEV inbox · human review";
+  return "JEV not scored";
+}
+
+export function WhyThisDraft({ proposed, evidence = null, compact = false }) {
+  const p = proposed || {};
+  const analysis = p.analysis || {};
+  const jev = p.jev || {};
+  const sources = (analysis.sources || []).filter(Boolean);
+  const keyword = analysis.keyword || p.target || "";
+  const meet = analysis.meetCompetitor || p.meetCompetitor?.title || "";
+  const gsc = evidence || p.evidence || {};
+  if (!sources.length && !keyword && !jev.score && !p.reason) return null;
+  return (
+    <div className="why-draft">
+      <div className="dash-eyebrow">Why this draft (analysis, not a paste)</div>
+      <p>
+        Built from live page signals plus keyword, competitor, and Searchify SEO research — not by copying the H1 word for word.
+        Open Graph and JSON-LD use the same title and description.
+      </p>
+      <div className="evidence-row">
+        {keyword ? <span className="w-pill">{`Keyword · ${keyword}`}</span> : null}
+        {meet ? <span className="w-pill">{`Meet · ${meet}`}</span> : <span className="w-pill">No same-keyword competitor stored</span>}
+        {p.beatsLive ? <span className="w-pill good">Beats live</span> : p.beatsLive === false ? <span className="w-pill warn">Not stronger than live yet</span> : null}
+        {analysis.contentWriter ? <span className="w-pill">Searchify SEO content writer used</span> : null}
+        {jev.score != null ? <span className={`w-pill ${jevBandClass(jev.band)}`}>{`JEV ${jev.score}/100 · ${jev.band || "inbox"}`}</span> : null}
+        {gsc.clicks != null && gsc.clicks !== "—" ? <span className="w-pill">{`GSC clicks · ${gsc.clicks}`}</span> : null}
+        {gsc.impressions != null && gsc.impressions !== "—" ? <span className="w-pill">{`GSC reach · ${gsc.impressions}`}</span> : null}
+      </div>
+      {!compact && sources.length ? (
+        <ul className="claim-list">
+          {sources.map((source) => <li key={source}>{source}</li>)}
+        </ul>
+      ) : null}
+      {!compact && Array.isArray(jev.reasons) && jev.reasons.length ? (
+        <p className="w-footnote">{`JEV: ${jev.reasons.slice(0, 3).join(" · ")}`}</p>
+      ) : null}
+      {!compact && p.reason ? <p className="suggestion-reason">{p.reason}</p> : null}
+    </div>
+  );
+}
+
 export default function DraftChecks({ proposed, compact = false }) {
   const p = proposed || {};
   const validation = p.validation || null;
   const [tone, label] = VALIDATION[validation?.status] || [];
   const confidence = p.confidence || null;
   const flagged = (validation?.claims || []).filter((claim) => claim.status !== "verified");
+  const meet = p.meetCompetitor?.title || "";
+  const target = p.target || "";
+  const jev = p.jev || {};
   return (
     <div className="draft-checks">
       <div className="evidence-row">
         <span className="source-caption">CHECKS</span>
+        {p.beatsLive ? <span className="w-pill good">Beats the live listing</span> : p.beatsLive === false ? <span className="w-pill warn">Not stronger than live yet</span> : null}
+        {jev.score != null ? <span className={`w-pill ${jevBandClass(jev.band)}`}>{jevBandLabel(jev.band)} · {jev.score}</span> : null}
         {label ? <span className={`w-pill ${tone}`}>{label}</span> : <span className="w-pill">Claims not checked</span>}
         {confidence ? <span className="w-pill">{`Evidence: ${confidence.level}${confidence.basis?.length ? ` · ${confidence.basis.join(", ")}` : ""}`}</span> : null}
+        {target ? <span className="w-pill">{`Keyword · ${target}`}</span> : null}
+        {meet ? <span className="w-pill">{`Meet · ${meet}`}</span> : null}
         {p.pageType === "case_study" ? <span className="w-pill warn">Case study · written as your work for a client</span> : null}
       </div>
       {p.sourceChanged ? (

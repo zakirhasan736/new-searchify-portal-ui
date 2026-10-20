@@ -8,7 +8,7 @@ import { skipToken } from "@reduxjs/toolkit/query";
 import ConnectDialog, { useConnectionStatus } from "@/components/board/ConnectDialog";
 import Paginator, { usePagination } from "@/components/board/Paginator";
 import PropertyPicker from "@/components/board/PropertyPicker";
-import { buildAuditFindings } from "@/lib/auditFindings";
+import { buildAuditFindings, weekMovement } from "@/lib/auditFindings";
 import { breadthKey, BREADTH_LABELS, loadGuardrails, saveGuardrails } from "@/lib/guardrails";
 import SiteDrafts from "@/components/board/SiteDrafts";
 import { useBusinessBrief, useWorkspaceSite } from "@/components/board/useBusinessBrief";
@@ -19,6 +19,7 @@ import { PLANS, activeJourneySite, assignGoogleAccount, beginAnotherWebsite, cho
 import { completionEntries, recordActivity } from "@/lib/previewQueue";
 import {
   createChange,
+  prepareWeightFix,
   deleteCmsConnection,
   disconnectGoogle,
   errorCode,
@@ -1100,6 +1101,51 @@ export function BacklinksView() {
   );
 }
 
+const ISSUE_DONE = "sf-issues-done";
+
+function readIssueDone(siteKey) {
+  if (!siteKey || typeof window === "undefined") return [];
+  try {
+    const all = JSON.parse(window.localStorage.getItem(ISSUE_DONE) || "{}");
+    return Array.isArray(all[siteKey]) ? all[siteKey] : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeIssueDone(siteKey, rows) {
+  const all = JSON.parse(window.localStorage.getItem(ISSUE_DONE) || "{}");
+  all[siteKey] = rows.slice(0, 40);
+  window.localStorage.setItem(ISSUE_DONE, JSON.stringify(all));
+}
+
+function visibilityLine(siteKey) {
+  const prompts = rowsFor("prompts", siteKey).filter((row) => row.live && row.mention != null && row.status !== "error");
+  if (!prompts.length) return "AI visibility: no stored check yet.";
+  const named = (value) => value === true || value === "Mentioned" || value === "Cited";
+  const mentioned = prompts.filter((row) => named(row.mention)).length;
+  const cited = prompts.filter((row) => row.citation === true || row.citation === "Cited").length;
+  return `AI visibility: ${mentioned} of ${prompts.length} stored answers name the business, and ${cited} link to the site.`;
+}
+
+function weeklyEmail({ host, weeks, openFindings, doneCount, waiting = 0, visibility = "" }) {
+  const count = (value) => Number(value || 0).toLocaleString("en-US");
+  const lines = [`Weekly Searchify report for ${host || "this site"}`, ""];
+  if (weeks) {
+    lines.push(`Clicks: ${count(weeks.current.clicks)} this week, ${count(weeks.previous.clicks)} last week.`);
+    lines.push(`Impressions: ${count(weeks.current.impressions)} this week, ${count(weeks.previous.impressions)} last week.`);
+    lines.push(`Average position: ${weeks.current.position ?? "—"} this week, ${weeks.previous.position ?? "—"} last week. This is where the site showed, not a promise it will rank.`);
+  } else {
+    lines.push("Clicks, impressions, and average position appear after Search Console has at least 14 days stored.");
+  }
+  lines.push("", `Open issues: ${openFindings.length}. Marked done by you: ${doneCount}. Fixes waiting for approval: ${waiting}.`);
+  if (openFindings.length) lines.push(...openFindings.slice(0, 8).map((item) => `- ${severityLabel(item.severity)}: ${item.name}`));
+  else lines.push("- None open");
+  lines.push("", visibility || "AI visibility: no stored check yet.");
+  lines.push("", "Nothing in this report is published. Title drafts still wait for approval.");
+  return lines.join("\n");
+}
+
 function severityLabel(severity) {
   if (severity === "Critical") return "Error";
   return severity || "Notice";
@@ -1122,6 +1168,7 @@ export function AuditView() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState("");
+  const [done, setDone] = useState([]);
   const [base, setBase] = useState(null);
   const dispatch = useDispatch();
   const crawlArgs = brief.siteUrl ? { site: brief.siteUrl } : null;
@@ -1159,6 +1206,7 @@ export function AuditView() {
   };
 
   useEffect(() => { load(); }, [siteKey, brief.siteUrl]);
+  useEffect(() => { setDone(readIssueDone(siteKey)); }, [siteKey]);
   useEffect(() => {
     refreshState.reset();
   }, [brief.siteUrl]);
@@ -1175,13 +1223,45 @@ export function AuditView() {
 
   const crawling = crawl?.state === "crawling";
 
-  const shown = findings.filter((item) => {
+  const openFindings = findings.filter((item) => !done.some((row) => row.id === item.id));
+  const shown = openFindings.filter((item) => {
     if (filter === "All severities") return true;
     if (filter === "Error") return item.severity === "Critical";
     return item.severity === filter;
   });
-  const findingPager = usePagination("audit", shown, `${brief.siteUrl}|${filter}`);
-  const critical = report?.critical ?? findings.filter((item) => item.severity === "Critical").length;
+  const findingPager = usePagination("audit", shown, `${brief.siteUrl}|${filter}|${done.map((row) => row.id).join(",")}`);
+  const critical = openFindings.filter((item) => item.severity === "Critical").length;
+  const weeks = weekMovement(base?.queries?.data?.payload?.daily);
+  const waiting = (base?.changes || []).filter((change) => ["proposed", "awaiting_approval"].includes(change.status)).length;
+
+  const markDone = (finding) => {
+    const next = [{
+      id: finding.id,
+      name: finding.name,
+      severity: finding.severity,
+      at: new Date().toISOString(),
+    }, ...done.filter((row) => row.id !== finding.id)].slice(0, 40);
+    setDone(next);
+    if (siteKey) writeIssueDone(siteKey, next);
+    recordActivity({ title: "Issue marked done", detail: `${severityLabel(finding.severity)} · ${finding.name}`, siteKey });
+    setOpen(null);
+  };
+
+  const restoreIssue = (id) => {
+    const next = done.filter((row) => row.id !== id);
+    setDone(next);
+    if (siteKey) writeIssueDone(siteKey, next);
+  };
+
+  const copyReport = async () => {
+    const text = weeklyEmail({ host: brief.hostname, weeks, openFindings, doneCount: done.length, waiting, visibility: visibilityLine(siteKey) });
+    try {
+      await navigator.clipboard.writeText(text);
+      setNote("Weekly email copied. Paste it into your mail. Searchify does not send it from this screen.");
+    } catch {
+      setNote(text);
+    }
+  };
 
   const sendToQueue = async (finding) => {
     if (finding.changeId) {
@@ -1194,6 +1274,23 @@ export function AuditView() {
       return;
     }
     setBusy(true);
+    if (finding.prepare) {
+      const created = await prepareWeightFix({
+        kind: finding.prepare,
+        url,
+        images_bytes: finding.weight?.imagesBytes || 0,
+        scripts_bytes: finding.weight?.scriptsBytes || 0,
+        css_bytes: finding.weight?.cssBytes || 0,
+      });
+      setBusy(false);
+      if (!created.ok) {
+        setNote(typeof created.data?.detail === "string" ? created.data.detail : "The weight card could not be queued.");
+        return;
+      }
+      setOpen(null);
+      router.push(`/app/queue/${created.data.id}`);
+      return;
+    }
     const created = await createChange({
       opportunity: finding.name,
       target_url: url,
@@ -1227,7 +1324,7 @@ export function AuditView() {
           <Metric label="Site health" value={report?.health == null ? "—" : String(Math.round(report.health))} note={report?.health == null ? "Loads with the site crawl" : "Searchify SEO, out of 100"} />
           <Metric label="SEO score" value={report?.seoScore ?? "—"} note={report?.seoSource || "PageSpeed or site crawl"} />
           <Metric label="Pages crawled" value={report?.crawled ? String(report.crawled) : "—"} note={report?.crawled ? "Whole site" : "Loads with the site crawl"} />
-          <Metric label="Errors" value={String(critical)} note={`${findings.length} findings in total`} />
+          <Metric label="Errors" value={String(critical)} note={`${openFindings.length} open · ${done.length} done by you`} />
         </div>
       )}
       <p className="w-footnote">
@@ -1245,6 +1342,23 @@ export function AuditView() {
       {crawlNote ? <p className="w-inset" role="status">{crawlNote}</p> : null}
       <PlanUsage feature="audits" />
       {note ? <p className="w-inset">{note}</p> : null}
+      <div className="w-panel">
+        <div className="w-toolbar">
+          <strong>This week and last week</strong>
+          <button className="w-button" type="button" onClick={copyReport}>Copy the weekly email</button>
+        </div>
+        {weeks ? (
+          <div className="w-metrics">
+            <Metric label="Clicks" value={weeks.current.clicks.toLocaleString("en-US")} note={`Last week ${weeks.previous.clicks.toLocaleString("en-US")}`} />
+            <Metric label="Impressions" value={weeks.current.impressions.toLocaleString("en-US")} note={`Last week ${weeks.previous.impressions.toLocaleString("en-US")}`} />
+            <Metric label="Average position" value={weeks.current.position == null ? "—" : String(weeks.current.position)} note={`Last week ${weeks.previous.position == null ? "—" : weeks.previous.position}. Where the site showed, not a ranking promise.`} />
+            <Metric label="Open issues" value={String(openFindings.length)} note={`${openFindings.filter((item) => item.severity === "Warning").length} warnings · ${openFindings.filter((item) => item.severity === "Notice").length} notices · ${waiting} waiting for approval`} />
+          </div>
+        ) : (
+          <p className="w-inset">Search Console needs 14 stored days before this week can sit beside last week. Sync Google, then open this page again.</p>
+        )}
+        <p className="w-footnote">{visibilityLine(siteKey)} This report does not send itself. Copy it into mail.</p>
+      </div>
       {packageRows.length ? (
         <div className="w-panel">
           <h2>Starter SEO package</h2>
@@ -1283,7 +1397,7 @@ export function AuditView() {
               <option>Notice</option>
             </select>
           </label>
-          <span className="w-muted">{crawl?.fetchedAt ? `Site crawled ${fetchedLabel(crawl.fetchedAt)}` : findings.length ? "Live findings from the connected sources" : "No findings stored yet"}</span>
+          <span className="w-muted">{crawl?.fetchedAt ? `Site crawled ${fetchedLabel(crawl.fetchedAt)}` : openFindings.length ? "Open findings from the connected sources" : "No open findings stored yet"}</span>
           <button className="w-button" type="button" disabled={crawlBusy || crawling || !brief.siteUrl} onClick={recrawl}>{crawling ? "Crawling…" : "Crawl the site again"}</button>
         </div>
         <div className="table-scroll">
@@ -1297,11 +1411,25 @@ export function AuditView() {
                   <td data-label="Pages">{item.count}</td>
                   <td data-label=""><button className="w-button" type="button" onClick={() => setOpen(item)}>Help</button></td>
                 </tr>
-              )) : <tr><td className="app-span" colSpan={4} data-label="">No findings for this filter. Sync Google, then generate titles from the overview.</td></tr>}
+              )) : <tr><td className="app-span" colSpan={4} data-label="">No open findings for this filter. Sync Google, then generate titles from the overview.</td></tr>}
             </tbody>
           </table>
         </div>
         <Paginator pager={findingPager} label="findings" />
+        {done.length ? (
+          <div className="w-inset below">
+            <strong>Done by you</strong>
+            <ul className="path-list">
+              {done.map((row) => (
+                <li key={row.id}>
+                  <span className={`w-pill ${severityClass(row.severity)}`.trim()}>{severityLabel(row.severity)}</span>
+                  {" "}{row.name}
+                  {" "}<button className="w-button" type="button" onClick={() => restoreIssue(row.id)}>Put back</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         </>
         )}
       </div>
@@ -1326,9 +1454,9 @@ export function AuditView() {
             </ol>
           </div>
           <div className="w-actions">
-            <button className="w-button" type="button" onClick={() => setOpen(null)}>I’ll update this myself</button>
+            <button className="w-button" type="button" onClick={() => markDone(open)}>I’ll update this myself</button>
             <button className="w-button primary" type="button" disabled={busy || open.manual} onClick={() => sendToQueue(open)}>
-              {busy ? "Preparing…" : open.manual ? "Searchify cannot edit this on the page" : open.changeId ? "Open the prepared draft" : "Let Searchify prepare it"}
+              {busy ? "Preparing…" : open.manual ? "Searchify cannot edit this on the page" : open.changeId ? "Open the prepared card" : open.prepare === "image" ? "Prepare a smaller image" : open.prepare === "assets" ? "Prepare a fix" : "Let Searchify prepare it"}
             </button>
           </div>
           {open.manual ? <p className="w-footnote">This change is on the page or the theme. The steps above are the fix. Searchify does not change image files, FAQ answers, or video uploads.</p> : <p className="w-footnote">Searchify can draft the title and description, including Open Graph and JSON-LD. Nothing is published until you approve it.</p>}

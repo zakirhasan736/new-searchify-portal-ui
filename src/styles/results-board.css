@@ -102,6 +102,13 @@ dialog.workspace-dialog::backdrop{background:#030702d6;backdrop-filter:blur(5px)
 .message.assistant>div{max-width:100%}
 .message.assistant p{padding:8px 10px;border-radius:7px;background:#1c221c;border:1px solid #354033}
 .message.pending p{color:#9aa892}
+.assistant-typing{display:inline-flex;align-items:center;gap:5px;min-height:18px;padding:10px 12px}
+.assistant-typing span{width:6px;height:6px;border-radius:50%;background:#9aa892;animation:assistant-dot 1s ease-in-out infinite}
+.assistant-typing span:nth-child(2){animation-delay:.15s}
+.assistant-typing span:nth-child(3){animation-delay:.3s}
+@keyframes assistant-dot{0%,80%,100%{opacity:.28;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
+.assistant-caret{display:inline-block;width:7px;height:1em;margin-left:2px;vertical-align:-2px;background:#d5f879;animation:assistant-caret .8s steps(1) infinite}
+@keyframes assistant-caret{50%{opacity:0}}
 .chat-prompts{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}
 .chat-prompts button{border:1px solid #44523a;background:#1b201a;color:#d5e4c4;border-radius:99px;padding:6px 10px;font-size:11px;line-height:1.3;cursor:pointer;text-align:left}
 .chat-prompts button:hover{border-color:var(--lime);color:#f3f8ea}
@@ -540,6 +547,10 @@ dialog.workspace-dialog::backdrop{background:#030702d6;backdrop-filter:blur(5px)
 }
 .draft-checks{display:grid;gap:8px;margin-top:10px}
 .draft-checks .evidence-row{flex-wrap:wrap}
+.why-draft{display:grid;gap:8px;margin:14px 0 10px;padding:12px 14px;border:1px solid #3a4733;border-radius:8px;background:#141b12}
+.why-draft p{margin:0;color:#c9d7bc;font-size:13px;line-height:1.45}
+.why-draft .claim-list{color:#b7c7a8}
+.why-draft .suggestion-reason{margin-top:4px}
 .claim-list{margin:0;padding-left:18px;display:grid;gap:4px;color:#f3ca82;font-size:13px;line-height:1.5}
 .claim-list strong{color:#ffe1a8}
 .skip-list{margin:0;padding-left:18px;display:grid;gap:6px;color:#bccdae;font-size:13px;line-height:1.5}

@@ -2,6 +2,51 @@ function payloadOf(res) {
   return res?.data?.payload || {};
 }
 
+function asCount(value) {
+  const num = Number(String(value ?? "").replace(/[^\d.]/g, ""));
+  return Number.isFinite(num) ? num : 0;
+}
+
+/** Last seven stored Search Console days beside the seven days before them. */
+export function weekMovement(daily) {
+  const rows = (Array.isArray(daily) ? daily : [])
+    .map((row) => ({
+      date: String(row?.[0] || ""),
+      clicks: asCount(row?.[1]),
+      impressions: asCount(row?.[2]),
+      position: asCount(row?.[4]),
+    }))
+    .filter((row) => row.date)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  if (rows.length < 8) return null;
+  const latest = rows[rows.length - 1].date;
+  const end = new Date(`${latest}T00:00:00Z`);
+  const thisStart = new Date(end);
+  thisStart.setUTCDate(end.getUTCDate() - 6);
+  const prevEnd = new Date(thisStart);
+  prevEnd.setUTCDate(thisStart.getUTCDate() - 1);
+  const prevStart = new Date(prevEnd);
+  prevStart.setUTCDate(prevEnd.getUTCDate() - 6);
+  const between = (row, from, to) => {
+    const time = new Date(`${row.date}T00:00:00Z`).getTime();
+    return time >= from.getTime() && time <= to.getTime();
+  };
+  const sum = (list) => {
+    const clicks = list.reduce((total, row) => total + row.clicks, 0);
+    const impressions = list.reduce((total, row) => total + row.impressions, 0);
+    const weighted = list.reduce((total, row) => total + row.position * row.impressions, 0);
+    return {
+      clicks,
+      impressions,
+      position: impressions ? Math.round((weighted / impressions) * 10) / 10 : null,
+    };
+  };
+  return {
+    current: sum(rows.filter((row) => between(row, thisStart, end))),
+    previous: sum(rows.filter((row) => between(row, prevStart, prevEnd))),
+  };
+}
+
 function pathOf(url) {
   try {
     return new URL(url).pathname || "/";
@@ -95,21 +140,28 @@ function crawlFindings(report, { impressions, sessions, open }) {
     if (issue.meta && lead?.title) bits.push(`Example: ${pathOf(lead.url)} has the title "${lead.title}" (${lead.title.length} characters).`);
     if (issue.meta && lead && !lead.title && issue.key === "no_description") bits.push(`Example: ${pathOf(lead.url)}.`);
     if (lead?.detail) bits.push(`${pathOf(lead.url)}: ${lead.detail}`);
-    const queued = issue.meta ? open.find((change) => keyOf(change.targetUrl) === keyOf(lead?.url)) : null;
+    const queued = open.find((change) => {
+      if (keyOf(change.targetUrl) !== keyOf(lead?.url)) return false;
+      if (issue.prepare === "image") return change.changeType === "image";
+      if (issue.prepare === "assets") return change.changeType === "performance";
+      return Boolean(issue.meta);
+    });
     const pageNotes = pages.map((page) => (page.detail ? `${pathOf(page.url)}: ${page.detail}` : pathOf(page.url))).filter(Boolean);
     return {
       id: `crawl-${issue.key}`,
       severity,
       name: issue.name,
       area: issue.area || (issue.meta ? "Meta" : "Page"),
-      detail: issue.meta ? "Searchify can prepare this" : "Update on the page",
+      detail: issue.prepare === "image" ? "Searchify can prepare a smaller image" : issue.prepare === "assets" ? "Searchify can queue this weight" : issue.meta ? "Searchify can prepare this" : "Update on the page",
       count: issue.count,
       pages: pages.map((page) => page.url).filter(Boolean),
       pageNotes,
       evidence: bits.join(" "),
       fix: issue.fix,
       steps: issue.steps || [],
-      manual: !issue.meta,
+      prepare: issue.prepare || "",
+      weight: issue.weight || null,
+      manual: issue.prepare ? false : !issue.meta,
       changeId: queued?.id || null,
       suggestion: null,
       traffic: seen + visits,

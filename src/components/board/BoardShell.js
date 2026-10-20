@@ -12,6 +12,8 @@ import "@/styles/results-board.css";
 
 const NAV = [
   { href: "/app", label: "Overview", icon: "◫", exact: true },
+  { href: "/app/phone", label: "Phone report", icon: "▢" },
+  { href: "/app/month", label: "Month", icon: "▤" },
   { href: "/app/queue", label: "Needs human approval", icon: "◷", count: true },
   { href: "/app/connections", label: "Connections", icon: "◎" },
   { href: "/app/keywords", label: "Keywords", icon: "⌕" },

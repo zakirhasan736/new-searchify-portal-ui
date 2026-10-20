@@ -304,6 +304,22 @@ export async function listChanges({ force = false } = {}) {
   );
 }
 
+export async function pushPublicKey() {
+  return json(await fetch("/api/v1/push/public-key", { headers: authHeaders() }));
+}
+
+export async function pushSubscribe(subscription) {
+  return json(await fetch("/api/v1/push/subscribe", {
+    method: "POST",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(subscription),
+  }));
+}
+
+export async function pushWeekly() {
+  return json(await fetch("/api/v1/push/weekly", { method: "POST", headers: authHeaders() }));
+}
+
 export async function askAssistant(body) {
   return json(
     await fetch("/api/v1/operator/assistant", {
@@ -312,6 +328,14 @@ export async function askAssistant(body) {
       body: JSON.stringify(body),
     }),
   );
+}
+
+export async function prepareWeightFix(body) {
+  return json(await fetch("/api/v1/operator/changes/from-weight", {
+    method: "POST",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }));
 }
 
 export async function createChange(body) {
@@ -372,8 +396,8 @@ async function research(kind, body) {
   }));
 }
 
-export function researchKeywords({ site, terms = [], country = "", reach = "", force = false }) {
-  return research("keywords", { site, terms, country, reach, force });
+export function researchKeywords({ site, terms = [], country = "", reach = "", force = false, storedOnly = false }) {
+  return research("keywords", { site, terms, country, reach, force, stored_only: storedOnly });
 }
 
 export function researchBacklinks({ site, force = false, storedOnly = false }) {

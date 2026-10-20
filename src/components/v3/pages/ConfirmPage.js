@@ -48,6 +48,7 @@ export default function ConfirmPage() {
 
   const published = PUBLISHED.has(change.status);
   const publishable = PUBLISHABLE.has(change.status) && !sentBack;
+  const held = change.changeType === "image" || change.changeType === "performance";
 
   const publish = async () => {
     setBusy(true);
@@ -56,6 +57,14 @@ export default function ConfirmPage() {
     if (!appr.ok) {
       setBusy(false);
       setNotice(errorText(appr, "Could not approve this update. Nothing was published."));
+      return;
+    }
+    if (held) {
+      setBusy(false);
+      setNotice(change.changeType === "image"
+        ? "Approved. The smaller image stays on this card. Nothing was published to the site."
+        : "Approved. The script and CSS weight is recorded. Theme files were not changed.");
+      await load();
       return;
     }
     const exec = await executeChange(change.id, {
@@ -84,7 +93,9 @@ export default function ConfirmPage() {
         <div>
           <div className="dash-eyebrow">PUBLICATION REVIEW</div>
           <h1>Confirm this update.</h1>
-          <p>Review the exact meta title and meta description before the WordPress update.</p>
+          <p>{held
+            ? "This card records the file or the weight. Approving it does not change the website."
+            : "Review the exact meta title and meta description before the WordPress update."}</p>
         </div>
       </header>
       {notice ? <p className="w-inset" role="alert">{notice}</p> : null}
@@ -100,8 +111,11 @@ export default function ConfirmPage() {
           <div className="change-cell suggested"><small>Approved meta title</small><span>{title}</span></div>
           <div className="change-cell suggested"><small>Approved meta description</small><span>{description}</span></div>
         </div>
+        {held && change.proposed?.smallerImage ? (
+          <img alt="Smaller image prepared for approval" src={`data:${change.proposed.smallerType || "image/jpeg"};base64,${change.proposed.smallerImage}`} style={{ maxWidth: "100%", height: "auto" }} />
+        ) : null}
         <DraftChecks proposed={change.proposed} compact />
-        {publishable ? (
+        {publishable && !held ? (
           <label className={`publish-extra${includeSocialSchema ? " on" : ""}${busy ? " disabled" : ""}`}>
             <input
               type="checkbox"
@@ -120,9 +134,10 @@ export default function ConfirmPage() {
           </label>
         ) : null}
         <p>
-          One page · meta title and meta description
-          {includeSocialSchema ? " · Open Graph + JSON-LD" : ""}
-          {" "}· previous values retained · approver {getUser()?.result?.username || getUser()?.data?.username || "signed-in user"}.
+          {held
+            ? (change.changeType === "image" ? "Smaller image on this card. The site file is unchanged." : "Script and CSS weight on this card. The theme is unchanged.")
+            : `One page · meta title and meta description${includeSocialSchema ? " · Open Graph + JSON-LD" : ""} · previous values retained`}
+          {" "}· approver {getUser()?.result?.username || getUser()?.data?.username || "signed-in user"}.
         </p>
         <div className="w-actions">
           <Link className="w-button" href={`/app/queue/${change.id}`}>Back to draft</Link>
@@ -131,9 +146,9 @@ export default function ConfirmPage() {
               className="w-button primary"
               type="button"
               onClick={publish}
-              disabled={busy || !title.trim() || !description.trim()}
+              disabled={busy || (!held && (!title.trim() || !description.trim()))}
             >
-              {busy ? "Publishing…" : change.status === "failed" ? "Try publishing again" : "Approve and publish"}
+              {busy ? "Saving…" : held ? "Approve this card" : change.status === "failed" ? "Try publishing again" : "Approve and publish"}
             </button>
           ) : null}
         </div>
