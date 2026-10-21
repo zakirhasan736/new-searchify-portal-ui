@@ -107,8 +107,8 @@ const META = {
     next: "Open Visibility Overview, then Prompt Tracking on a schedule.",
   },
   "visibility-overview": {
-    tip: "Search Console plus stored AI mentions in one surface map.",
-    next: "Deep-dive Prompt Research for unanswered queries.",
+    tip: "Google Search Console, Analytics, and PageSpeed for this property — not live AI answer-engine mentions.",
+    next: "For AI answer engines, run DataForSEO live checks or open the AI Visibility estimate report.",
   },
   "competitor-research": {
     tip: "Competitor keywords and AI prompt overlap for this project.",

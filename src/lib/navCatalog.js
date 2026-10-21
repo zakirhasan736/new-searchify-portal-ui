@@ -81,7 +81,7 @@ export const NAV = [
         title: "AI Visibility",
         items: [
           { title: "AI Analysis", path: "/visibility/analysis", kind: "ai-analysis" },
-          { title: "Visibility Overview", path: "/visibility/overview", kind: "visibility-overview" },
+          { title: "Google Visibility Snapshot", path: "/visibility/overview", kind: "visibility-overview" },
           { title: "Competitor Research", path: "/visibility/competitors", kind: "competitor-research" },
           { title: "Prompt Research", path: "/visibility/prompts", kind: "prompt-research" },
         ],

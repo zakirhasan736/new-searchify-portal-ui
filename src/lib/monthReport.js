@@ -1,19 +1,23 @@
 const PUBLISHED = new Set(["applied", "monitoring", "published_unverified", "closed"]);
 const PLAN = new Set(["proposed", "awaiting_approval", "approved", "failed", "needs_review"]);
 
+/** Parse a countable metric. Missing / blank stays null — never invent zero. */
 function asCount(value) {
-  const num = Number(String(value ?? "").replace(/[^\d.]/g, ""));
-  return Number.isFinite(num) ? num : 0;
+  if (value == null || value === "" || value === "—" || value === "n/a") return null;
+  const num = Number(String(value).replace(/[^\d.]/g, ""));
+  return Number.isFinite(num) ? num : null;
 }
 
 function sumWindow(rows) {
-  const clicks = rows.reduce((total, row) => total + row.clicks, 0);
-  const impressions = rows.reduce((total, row) => total + row.impressions, 0);
-  const weighted = rows.reduce((total, row) => total + row.position * row.impressions, 0);
+  const clicks = rows.reduce((total, row) => total + (row.clicks || 0), 0);
+  const impressions = rows.reduce((total, row) => total + (row.impressions || 0), 0);
+  const withPos = rows.filter((row) => row.position != null && row.impressions);
+  const weighted = withPos.reduce((total, row) => total + row.position * row.impressions, 0);
+  const posImpr = withPos.reduce((total, row) => total + row.impressions, 0);
   return {
     clicks,
     impressions,
-    position: impressions ? Math.round((weighted / impressions) * 10) / 10 : null,
+    position: posImpr ? Math.round((weighted / posImpr) * 10) / 10 : null,
     days: rows.length,
   };
 }
@@ -27,7 +31,7 @@ export function clickHalves(daily) {
       impressions: asCount(row?.[2]),
       position: asCount(row?.[4]),
     }))
-    .filter((row) => row.date)
+    .filter((row) => row.date && row.clicks != null && row.impressions != null)
     .sort((a, b) => a.date.localeCompare(b.date));
   if (rows.length < 28) return null;
   return {

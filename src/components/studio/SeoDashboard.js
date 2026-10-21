@@ -191,36 +191,24 @@ export default function SeoDashboard() {
   const rankings = payloadOf(data, "keyword-ranking");
   const backlinks = payloadOf(data, "backlinks");
 
-  const aiKpis = panels.aiKpis || [
-    ["AI Visibility", visibility.rows?.find((r) => String(r[0]).toLowerCase().includes("ai"))?.[2] || "7"],
-    ["Mentions", "7"],
-    ["Cited pages", "3"],
+  const gscQueries = visibility.rows?.find((r) => String(r[0]).toLowerCase().includes("gsc quer"));
+  const gaSessions = visibility.rows?.find((r) => String(r[0]).toLowerCase().includes("ga4 session"));
+  const googleKpis = panels.googleKpis || [
+    ["GSC queries", gscQueries?.[1] ?? "—"],
+    ["GA4 sessions", gaSessions?.[1] ?? "—"],
+    ["PageSpeed", visibility.rows?.find((r) => String(r[0]).toLowerCase().includes("mobile"))?.[1] ?? "—"],
   ];
-  const platforms = panels.aiPlatforms || [
-    ["ChatGPT", "4"],
-    ["AI Overview", "1"],
-    ["AI Mode", "1"],
-    ["Gemini", "1"],
-  ];
+  const aiKpis = panels.aiKpis || googleKpis;
+  const platforms = panels.aiPlatforms || [];
   const seoKpis = panels.seoKpis || [
-    ["Authority", domainSnap.panels?.score ?? "42"],
-    ["Organic traffic", domainSnap.rows?.find((r) => String(r[0]).toLowerCase().includes("traffic"))?.[1] || "18420"],
-    ["Organic keywords", domainSnap.rows?.find((r) => String(r[0]).toLowerCase().includes("keyword"))?.[1] || "1280"],
-    ["Paid keywords", "24"],
-    ["Ref. domains", domainSnap.rows?.find((r) => String(r[0]).toLowerCase().includes("referring"))?.[1] || "86"],
+    ["Authority", domainSnap.panels?.score ?? "—"],
+    ["Organic traffic", domainSnap.rows?.find((r) => String(r[0]).toLowerCase().includes("traffic"))?.[1] || "—"],
+    ["Organic keywords", domainSnap.rows?.find((r) => String(r[0]).toLowerCase().includes("keyword"))?.[1] || "—"],
+    ["Paid keywords", "—"],
+    ["Ref. domains", domainSnap.rows?.find((r) => String(r[0]).toLowerCase().includes("referring"))?.[1] || "—"],
   ];
-  const visibilityTrend = panels.visibilityTrend || positions.panels?.trend || [
-    ["Sep 1", 0.08],
-    ["Sep 8", 0.09],
-    ["Sep 15", 0.11],
-    ["Sep 22", 0.12],
-  ];
-  const buckets = panels.rankBuckets || positions.panels?.distribution || [
-    ["Top 3", "12"],
-    ["Top 10", "48"],
-    ["Top 20", "96"],
-    ["Top 100", "310"],
-  ];
+  const visibilityTrend = panels.visibilityTrend || positions.panels?.trend || [];
+  const buckets = panels.rankBuckets || positions.panels?.distribution || [];
   const topKeywords = panels.topKeywords || (positions.rows || rankings.rows || []).slice(0, 5).map((row) => [row[0], row[1], row[2] || "—"]);
   const health = panels.healthScore ?? audit.panels?.score ?? 72;
   const auditCounts = panels.auditCounts || audit.panels?.audit || [
@@ -314,7 +302,17 @@ export default function SeoDashboard() {
         </header>
 
         {visible.includes("ai") ? (
-          <Band id="ai" eyebrow="01 · AI answers" title="Where the brand shows up in AI" href="/visibility/overview" onHide={() => setHidden((c) => [...c, "ai"])} actions={<Menu label="Location" value={place} options={PLACES} onChange={setPlace} />}>
+          <Band
+            id="ai"
+            eyebrow="01 · Google visibility"
+            title="Search Console and Analytics snapshot"
+            href="/visibility/overview"
+            onHide={() => setHidden((c) => [...c, "ai"])}
+            actions={<Menu label="Location" value={place} options={PLACES} onChange={setPlace} />}
+          >
+            <p className="mb-3 text-sm text-white/50">
+              Connected Google property metrics only. For AI answer engines, open live DataForSEO checks.
+            </p>
             <div className="grid gap-4 lg:grid-cols-[1fr_1.1fr]">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {aiKpis.map((row) => (
@@ -324,14 +322,20 @@ export default function SeoDashboard() {
                   </div>
                 ))}
               </div>
-              <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {platforms.map((row) => (
-                  <li key={row[0]} className="flex items-center justify-between rounded-[1.25rem] border border-white/10 px-4 py-3 text-sm">
-                    <span className="text-white/60">{row[0]}</span>
-                    <span className="font-semibold text-brand">{row[1]}</span>
-                  </li>
-                ))}
-              </ul>
+              {platforms.length ? (
+                <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {platforms.map((row) => (
+                    <li key={row[0]} className="flex items-center justify-between rounded-[1.25rem] border border-white/10 px-4 py-3 text-sm">
+                      <span className="text-white/60">{row[0]}</span>
+                      <span className="font-semibold text-brand">{row[1]}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="rounded-[1.25rem] border border-white/10 px-4 py-3 text-sm text-white/50">
+                  No fabricated AI mention counts. Run AI Visibility live checks when you need engine results.
+                </p>
+              )}
             </div>
           </Band>
         ) : null}
@@ -418,8 +422,8 @@ export default function SeoDashboard() {
         <div className="my-2 rounded-[1.75rem] border border-brand/25 bg-gradient-to-r from-blush/20 via-transparent to-brand/25 px-6 py-6">
           <p className="font-sans text-2xl font-semibold">Ranks are covered — extend into AI answers</p>
           <p className="mt-2 max-w-xl text-sm text-white/65">Prompts for this project are already stored. Answers wait for a provider.</p>
-          <Link href="/visibility/overview" className="mt-4 inline-flex h-11 items-center rounded-2xl bg-white px-5 text-sm font-semibold text-ink">
-            Jump to AI Visibility
+          <Link href="/app/visibility" className="mt-4 inline-flex h-11 items-center rounded-2xl bg-white px-5 text-sm font-semibold text-ink">
+            Open AI Visibility
           </Link>
         </div>
 

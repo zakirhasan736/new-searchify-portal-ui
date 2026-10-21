@@ -29,17 +29,14 @@ function buildRows(sites, features) {
     return hit?.[1] || "—";
   });
   const backlinks = metric(features, "backlinks", (p) => String((p.rows || []).length || "—"));
-  const mentions = metric(features, "visibility-overview", (p) => {
-    const hit = (p.rows || []).find((r) => String(r[0]).toLowerCase().includes("ai") || String(r[1]).toLowerCase().includes("mention"));
-    return hit?.[2] || hit?.[1] || "n/a";
-  });
+  const mentions = "—";
   const traffic = metric(features, "domain-snapshot", (p) => {
     const hit = (p.rows || []).find((r) => String(r[0]).toLowerCase().includes("traffic"));
     return hit?.[1] || "—";
   });
   const visibility = metric(features, "visibility-overview", (p) => {
-    const hit = (p.rows || []).find((r) => String(r[0]).toLowerCase().includes("search"));
-    return hit?.[2] || "n/a";
+    const hit = (p.rows || []).find((r) => String(r[0]).toLowerCase().includes("gsc quer"));
+    return hit?.[1] || "—";
   });
 
   if (sites.length) {

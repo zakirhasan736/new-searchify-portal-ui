@@ -2,9 +2,11 @@ function payloadOf(res) {
   return res?.data?.payload || {};
 }
 
+/** Parse a countable metric. Missing / blank stays null — never invent zero. */
 function asCount(value) {
-  const num = Number(String(value ?? "").replace(/[^\d.]/g, ""));
-  return Number.isFinite(num) ? num : 0;
+  if (value == null || value === "" || value === "—" || value === "n/a") return null;
+  const num = Number(String(value).replace(/[^\d.]/g, ""));
+  return Number.isFinite(num) ? num : null;
 }
 
 /** Last seven stored Search Console days beside the seven days before them. */
@@ -16,7 +18,7 @@ export function weekMovement(daily) {
       impressions: asCount(row?.[2]),
       position: asCount(row?.[4]),
     }))
-    .filter((row) => row.date)
+    .filter((row) => row.date && row.clicks != null && row.impressions != null)
     .sort((a, b) => a.date.localeCompare(b.date));
   if (rows.length < 8) return null;
   const latest = rows[rows.length - 1].date;
@@ -32,13 +34,15 @@ export function weekMovement(daily) {
     return time >= from.getTime() && time <= to.getTime();
   };
   const sum = (list) => {
-    const clicks = list.reduce((total, row) => total + row.clicks, 0);
-    const impressions = list.reduce((total, row) => total + row.impressions, 0);
-    const weighted = list.reduce((total, row) => total + row.position * row.impressions, 0);
+    const clicks = list.reduce((total, row) => total + (row.clicks || 0), 0);
+    const impressions = list.reduce((total, row) => total + (row.impressions || 0), 0);
+    const withPos = list.filter((row) => row.position != null && row.impressions);
+    const weighted = withPos.reduce((total, row) => total + row.position * row.impressions, 0);
+    const posImpr = withPos.reduce((total, row) => total + row.impressions, 0);
     return {
       clicks,
       impressions,
-      position: impressions ? Math.round((weighted / impressions) * 10) / 10 : null,
+      position: posImpr ? Math.round((weighted / posImpr) * 10) / 10 : null,
     };
   };
   return {

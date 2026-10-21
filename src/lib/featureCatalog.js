@@ -30,7 +30,7 @@ export const FEATURES = [
   { group: "Site", path: "/operator", kind: "change-history", title: "Change History", description: "Recorded site actions Searchify applied after approval." },
   { group: "Site", path: "/operator", kind: "outcome-monitor", title: "Outcome Monitor", description: "Track GSC outcomes after a CMS change is applied." },
   { group: "AI Visibility", path: "/visibility/analysis", kind: "ai-analysis", title: "AI Analysis", description: "A stored summary of prompt runs and AI answers." },
-  { group: "AI Visibility", path: "/visibility/overview", kind: "visibility-overview", title: "Visibility Overview", description: "Search Console plus stored AI answers." },
+  { group: "Monitor", path: "/visibility/overview", kind: "visibility-overview", title: "Google Visibility Snapshot", description: "Search Console, GA4, and PageSpeed for the connected property — not AI answer-engine checks." },
   { group: "AI Visibility", path: "/visibility/competitors", kind: "competitor-research", title: "Competitor Research", description: "What competitors rank for." },
   { group: "AI Visibility", path: "/visibility/prompts", kind: "prompt-research", title: "Prompt Research", description: "Suggested prompts. The answers are stored." },
   { group: "Monitor", path: "/monitor/prompts", kind: "prompt-tracking", title: "Prompt Tracking", description: "The same prompts run on a schedule. The trend is stored." },
