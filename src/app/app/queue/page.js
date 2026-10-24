@@ -1,12 +1,8 @@
-import { Suspense } from "react";
-import { ApprovalsView } from "@/components/board/WorkspaceViews";
+import QueueScreen from "@/components/v8/screens/QueueScreen";
 
-export const metadata = { title: "Needs human approval" };
+export const metadata = { title: "Edit queue" };
 
+/** Pending drafts → Edit.dc.html at /app/queue/[id]. */
 export default function Page() {
-  return (
-    <Suspense fallback={null}>
-      <ApprovalsView />
-    </Suspense>
-  );
+  return <QueueScreen />;
 }

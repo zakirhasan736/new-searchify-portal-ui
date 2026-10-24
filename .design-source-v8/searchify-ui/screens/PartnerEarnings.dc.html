@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — Partner earnings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+select:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
+@keyframes sfy-rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 1250px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 22px clamp(16px, 4vw, 56px) 56px; display: flex; flex-direction: column; gap: 22px">
+
+  <header style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+    <span style="display: flex; align-items: center; gap: 10px; margin-right: auto">
+      <svg width="30" height="30" viewBox="0 0 32 32" role="img" aria-label="Searchify"><rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="#131519" stroke="#2E333B"></rect><circle cx="9" cy="12.5" r="2.9" fill="#FF5A4E"></circle><circle cx="16" cy="12.5" r="2.9" fill="#FF9F43"></circle><circle cx="23" cy="12.5" r="2.9" fill="#FFC53D"></circle><circle cx="9" cy="19.5" r="2.9" fill="#3DDC84"></circle><circle cx="16" cy="19.5" r="2.9" fill="#2CC7C0"></circle><circle cx="23" cy="19.5" r="2.9" fill="#4DA3FF"></circle></svg>
+      <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.4px">searchify</span>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 6px; border: 1px solid #D5F879; color: #D5F879">PARTNER CENTRE</span>
+    </span>
+    <span role="group" aria-label="Preview as" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #7D848E">Preview as
+      <span style="display: inline-flex; padding: 3px; border-radius: 10px; background: #131519; border: 1px solid #262A31">
+        <sc-for list="{{types}}" as="t" hint-placeholder-count="2">
+          <sc-if value="{{t.on}}" hint-placeholder-val="{{false}}"><button type="button" aria-pressed="true" onClick="{{t.pick}}" style="min-height: 32px; padding: 0 10px; border-radius: 8px; border: 0; background: #262A31; color: #F2F4F5; font-size: 12px; font-weight: 600">{{t.label}}</button></sc-if>
+          <sc-if value="{{t.off}}" hint-placeholder-val="{{true}}"><button type="button" aria-pressed="false" onClick="{{t.pick}}" style="min-height: 32px; padding: 0 10px; border-radius: 8px; border: 0; background: transparent; color: #9AA1AB; font-size: 12px">{{t.label}}</button></sc-if>
+        </sc-for>
+      </span>
+    </span>
+    <span style="display: flex; align-items: center; gap: 10px">
+      <span style="width: 36px; height: 36px; border-radius: 50%; background: #262A31; display: grid; place-items: center; font-size: 13px; font-weight: 600">{{me.initials}}</span>
+      <span style="display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 500">{{me.name}}</span><span style="font-size: 12px; color: #9AA1AB">{{me.sub}}</span></span>
+    </span>
+  </header>
+
+  <nav aria-label="Partner centre" style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid #1A1D22; padding-bottom: 12px">
+    <a href="Affiliate.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Overview</a>
+    <a href="PartnerEarnings.dc.html" aria-current="page" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; background: #1A1D22; color: #F2F4F5; text-decoration: none; font-size: 14px; font-weight: 600">Earnings</a>
+    <a href="PartnerPayout.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Payout and tax</a>
+    <a href="PartnerTerms.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Agreement and rules</a>
+  </nav>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 6px">
+    <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(30px, 3.6vw, 44px); line-height: 1.04; letter-spacing: -1.2px; font-weight: 700"><span style="color: #D5F879">{{cleared}}</span> cleared. {{hold}} still in the 30-day hold.</h1>
+    <span style="font-size: 15px; color: #9AA1AB">Each commission waits 30 days in case the customer asks for a refund, then it clears and goes into the next payout on the 15th.</span>
+  </div>
+
+  <section aria-label="Totals" style="max-width: 1180px; width: 100%; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px">
+    <sc-for list="{{totals}}" as="k" hint-placeholder-count="4">
+      <div style="border-radius: 18px; padding: 16px 18px; background: #101215; border: 1px solid #1A1D22; display: flex; flex-direction: column; gap: 6px">
+        <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #9AA1AB"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{k.dot}}"></span>{{k.label}}</span>
+        <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 30px; font-weight: 800; letter-spacing: -1px; line-height: 1; color: {{k.color}}">{{k.value}}</span>
+        <span style="font-size: 12px; color: #7D848E">{{k.sub}}</span>
+      </div>
+    </sc-for>
+  </section>
+
+  <section aria-labelledby="min-h" style="max-width: 1180px; width: 100%; box-sizing: border-box; margin: 0 auto; border-radius: 18px; background: #101215; border: 1px solid #1A1D22; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px">
+    <span style="display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 14px"><span id="min-h" style="font-weight: 600">$50 minimum payout</span><span style="color: #3DDC84">{{minNote}}</span></span>
+    <div style="height: 10px; border-radius: 5px; background: #1A1D22; overflow: hidden"><div style="height: 100%; width: 100%; border-radius: 5px; background: #3DDC84"></div></div>
+    <span style="font-size: 12px; color: #7D848E">If a month comes in under $50, it rolls into the next one. Nothing is lost.</span>
+  </section>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+    <section aria-labelledby="led-h" style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap">
+        <h2 id="led-h" style="margin: 0; font-size: 17px; font-weight: 600">Every commission</h2>
+        <div role="group" aria-label="Filter" style="display: flex; gap: 6px; flex-wrap: wrap">
+          <sc-for list="{{filters}}" as="f" hint-placeholder-count="5">
+            <sc-if value="{{f.on}}" hint-placeholder-val="{{false}}"><button type="button" aria-pressed="true" onClick="{{f.pick}}" style="min-height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid #D5F879; background: rgba(213,248,121,.1); color: #F2F4F5; font-size: 13px; font-weight: 600">{{f.label}}</button></sc-if>
+            <sc-if value="{{f.off}}" hint-placeholder-val="{{true}}"><button type="button" aria-pressed="false" onClick="{{f.pick}}" style="min-height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 13px">{{f.label}}</button></sc-if>
+          </sc-for>
+        </div>
+      </div>
+      <div style="border-radius: 20px; background: #101215; border: 1px solid #1A1D22; overflow-x: auto">
+        <div style="min-width: 720px">
+          <div aria-hidden="true" style="display: grid; grid-template-columns: 80px minmax(0, 1.6fr) 80px 90px 60px 100px 150px; gap: 10px; padding: 12px 18px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #7D848E; border-bottom: 1px solid #1A1D22">
+            <span>DATE</span><span>CUSTOMER</span><span>PLAN</span><span style="text-align: right">PAYMENT</span><span style="text-align: right">RATE</span><span style="text-align: right">YOU EARN</span><span>STATUS</span>
+          </div>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="10">
+            <div style="display: grid; grid-template-columns: 80px minmax(0, 1.6fr) 80px 90px 60px 100px 150px; gap: 10px; align-items: center; padding: 11px 18px; border-bottom: 1px solid #16181C; font-size: 14px">
+              <span style="font-size: 13px; color: #9AA1AB">{{r.date}}</span>
+              <span style="min-width: 0">{{r.who}}</span>
+              <span style="font-size: 13px">{{r.plan}}</span>
+              <span style="text-align: right; font-family: 'Geist Mono', monospace; font-size: 13px; color: #9AA1AB">{{r.pay}}</span>
+              <span style="text-align: right; font-size: 13px; color: #9AA1AB">{{r.rate}}</span>
+              <span style="text-align: right; font-family: 'Geist Mono', monospace; font-size: 13px; color: {{r.earnColor}}; text-decoration: {{r.strike}}">{{r.earn}}</span>
+              <span style="display: flex; flex-direction: column"><span style="font-size: 12px; font-weight: 600; color: {{r.color}}">{{r.status}}</span><span style="font-size: 11px; color: #7D848E">{{r.note}}</span></span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <aside aria-label="Statements" style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+      <div style="border-radius: 20px; background: #101215; border: 1px solid #1A1D22; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 16px; font-weight: 600">Earnings statement for your taxes</h2>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">Year
+          <select onChange="{{setYear}}" style="min-height: 42px; padding: 0 10px; border-radius: 10px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 14px">
+            <option value="2026">2026 (so far)</option>
+          </select>
+        </label>
+        <button type="button" onClick="{{getPdf}}" style="min-height: 44px; border-radius: 12px; border: 0; background: #D5F879; color: #0A0B0D; font-size: 14px; font-weight: 600">Download statement (PDF)</button>
+        <button type="button" onClick="{{getCsv}}" style="min-height: 44px; border-radius: 12px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 14px">Download every commission (CSV)</button>
+        <sc-if value="{{stmtShow}}" hint-placeholder-val="{{false}}"><span role="status" style="font-size: 13px; color: #3DDC84">{{stmtText}}</span></sc-if>
+        <span style="font-size: 12px; color: #7D848E; line-height: 1.5">{{taxNote}}</span>
+      </div>
+      <div style="border-radius: 20px; background: #101215; border: 1px solid #1A1D22; padding: 18px; display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-size: 16px; font-weight: 600">Why a commission was reversed</h2>
+        <span style="font-size: 13px; color: #9AA1AB; line-height: 1.5">When a customer gets a refund or their bank reverses a charge, the commission on that payment comes back out. If it was already paid, it's taken from your next payout.</span>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1250}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    let t = 'standard';
+    try { t = sessionStorage.getItem('searchify-partner-type') || 'standard'; } catch (e) {}
+    this.state = { ptype: t, filter: 'all', stmt: '' };
+  }
+  renderVals() {
+    const F = this.state.ptype === 'founding';
+    const RATE = F ? 0.35 : 0.30;
+    const PRICE = { Solo: 29, Pro: 79, Premium: 399 };
+    const money = (v) => (v < 0 ? '−$' : '$') + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const L = F
+      ? [['Oct 19', 'Agency · Austin, TX', 'Premium', 'hold', 'Clears Nov 18'], ['Oct 16', 'Med spa · Irvine, CA', 'Pro', 'hold', 'Clears Nov 15'], ['Oct 12', 'Agency · Denver, CO', 'Premium', 'hold', 'Clears Nov 11'],
+         ['Oct 8', 'Gym · Pasadena, CA', 'Solo', 'cleared', 'In Nov 15 payout'], ['Oct 2', 'Agency · Fresno, CA', 'Premium', 'cleared', 'In Nov 15 payout'], ['Sep 29', 'Agency · Austin, TX', 'Premium', 'cleared', 'In Nov 15 payout'],
+         ['Sep 21', 'Café · Burbank, CA', 'Solo', 'reversed', 'Customer refunded'], ['Sep 19', 'Agency · Denver, CO', 'Premium', 'paid', 'Paid Oct 15'], ['Sep 6', 'Med spa · Irvine, CA', 'Pro', 'paid', 'Paid Oct 15'], ['Aug 29', 'Agency · Austin, TX', 'Premium', 'paid', 'Paid Sep 15']]
+      : [['Oct 20', 'Agency · Toronto, ON', 'Premium', 'hold', 'Clears Nov 19'], ['Oct 14', 'Dental clinic · Tampa, FL', 'Solo', 'hold', 'Clears Nov 13'], ['Oct 9', 'Agency · Leeds, UK', 'Pro', 'hold', 'Clears Nov 8'],
+         ['Oct 2', 'Plumber · Austin, TX', 'Solo', 'cleared', 'In Nov 15 payout'], ['Sep 30', 'Agency · Melbourne, AU', 'Premium', 'cleared', 'In Nov 15 payout'], ['Sep 27', 'Agency · Toronto, ON', 'Premium', 'cleared', 'In Nov 15 payout'],
+         ['Sep 19', 'Law firm · Phoenix, AZ', 'Pro', 'reversed', 'Customer refunded'], ['Sep 3', 'Roofer · Calgary, AB', 'Solo', 'paid', 'Paid Oct 15'], ['Aug 30', 'Agency · Melbourne, AU', 'Premium', 'paid', 'Paid Sep 15'], ['Aug 27', 'Agency · Toronto, ON', 'Premium', 'paid', 'Paid Sep 15']];
+    const STY = { hold: ['In 30-day hold', '#4DA3FF'], cleared: ['Cleared', '#3DDC84'], reversed: ['Reversed', '#FFC53D'], paid: ['Paid', '#9AA1AB'] };
+    const FL = this.state.filter;
+    const rows = L.filter((r) => FL === 'all' || r.at(3) === FL).map((r) => {
+      const p = PRICE[r.at(2)], c = p * RATE, rev = r.at(3) === 'reversed';
+      return { date: r.at(0), who: r.at(1), plan: r.at(2), pay: money(p), rate: Math.round(RATE * 100) + '%', earn: rev ? money(-c) : money(c),
+        earnColor: rev ? '#FFC53D' : (r.at(3) === 'paid' ? '#9AA1AB' : '#D5F879'), strike: 'none', status: STY[r.at(3)].at(0), color: STY[r.at(3)].at(1), note: r.at(4) };
+    });
+    const D = F ? { cleared: 961.45, hold: 279.65, rev: -27.65, paid: 1541.25, since: 'Jul' } : { cleared: 1469.70, hold: 214.50, rev: -42.60, paid: 4415.80, since: 'May' };
+    const setType = (t) => { try { sessionStorage.setItem('searchify-partner-type', t); } catch (e) {} this.setState({ ptype: t }); };
+    return {
+      types: [['standard', 'Partner'], ['founding', 'Founding partner']].map((t) => ({ label: t.at(1), on: this.state.ptype === t.at(0), off: this.state.ptype !== t.at(0), pick: () => setType(t.at(0)) })),
+      me: F ? { name: 'Nicholas Petitt', initials: 'NP', sub: 'Founding partner' } : { name: 'Sam Ortiz', initials: 'SO', sub: 'Partner since May 2026' },
+      cleared: money(D.cleared), hold: money(D.hold),
+      totals: [
+        { label: 'Cleared', value: money(D.cleared), sub: 'paying on Nov 15', color: '#D5F879', dot: '#3DDC84' },
+        { label: 'In the 30-day hold', value: money(D.hold), sub: 'clears over the next 4 weeks', color: '#F2F4F5', dot: '#4DA3FF' },
+        { label: 'Reversed this month', value: money(D.rev), sub: '1 refund', color: '#FFC53D', dot: '#FFC53D' },
+        { label: 'Paid out so far', value: money(D.paid), sub: 'since ' + D.since + ' 2026', color: '#F2F4F5', dot: '#8A93A3' }
+      ],
+      minNote: 'You’re over the minimum: ' + money(D.cleared) + ' goes out Nov 15.',
+      filters: [['all', 'All'], ['hold', 'In hold'], ['cleared', 'Cleared'], ['reversed', 'Reversed'], ['paid', 'Paid']].map((f) => ({ label: f.at(1), on: FL === f.at(0), off: FL !== f.at(0), pick: () => this.setState({ filter: f.at(0) }) })),
+      rows: rows,
+      setYear: () => {},
+      getPdf: () => this.setState({ stmt: 'Your 2026 statement is ready. We’ve also emailed it to you.' }),
+      getCsv: () => this.setState({ stmt: 'CSV of every 2026 commission downloaded.' }),
+      stmtShow: !!this.state.stmt, stmtText: this.state.stmt,
+      taxNote: F ? 'Commissions are fees for your referral work, separate from any dividends on your shares. You report them on your own tax return.' : 'Commissions are fees for your referral work. You report them on your own tax return. Canadian partners paid over $500 in a year also get a T4A slip.'
+    };
+  }
+}
+</script>
+<script>window.__DC_FACTORY = function (DCLogic, React) {
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    let t = 'standard';
+    try { t = sessionStorage.getItem('searchify-partner-type') || 'standard'; } catch (e) {}
+    this.state = { ptype: t, filter: 'all', stmt: '' };
+  }
+  renderVals() {
+    const F = this.state.ptype === 'founding';
+    const RATE = F ? 0.35 : 0.30;
+    const PRICE = { Solo: 29, Pro: 79, Premium: 399 };
+    const money = (v) => (v < 0 ? '−$' : '$') + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const L = F
+      ? [['Oct 19', 'Agency · Austin, TX', 'Premium', 'hold', 'Clears Nov 18'], ['Oct 16', 'Med spa · Irvine, CA', 'Pro', 'hold', 'Clears Nov 15'], ['Oct 12', 'Agency · Denver, CO', 'Premium', 'hold', 'Clears Nov 11'],
+         ['Oct 8', 'Gym · Pasadena, CA', 'Solo', 'cleared', 'In Nov 15 payout'], ['Oct 2', 'Agency · Fresno, CA', 'Premium', 'cleared', 'In Nov 15 payout'], ['Sep 29', 'Agency · Austin, TX', 'Premium', 'cleared', 'In Nov 15 payout'],
+         ['Sep 21', 'Café · Burbank, CA', 'Solo', 'reversed', 'Customer refunded'], ['Sep 19', 'Agency · Denver, CO', 'Premium', 'paid', 'Paid Oct 15'], ['Sep 6', 'Med spa · Irvine, CA', 'Pro', 'paid', 'Paid Oct 15'], ['Aug 29', 'Agency · Austin, TX', 'Premium', 'paid', 'Paid Sep 15']]
+      : [['Oct 20', 'Agency · Toronto, ON', 'Premium', 'hold', 'Clears Nov 19'], ['Oct 14', 'Dental clinic · Tampa, FL', 'Solo', 'hold', 'Clears Nov 13'], ['Oct 9', 'Agency · Leeds, UK', 'Pro', 'hold', 'Clears Nov 8'],
+         ['Oct 2', 'Plumber · Austin, TX', 'Solo', 'cleared', 'In Nov 15 payout'], ['Sep 30', 'Agency · Melbourne, AU', 'Premium', 'cleared', 'In Nov 15 payout'], ['Sep 27', 'Agency · Toronto, ON', 'Premium', 'cleared', 'In Nov 15 payout'],
+         ['Sep 19', 'Law firm · Phoenix, AZ', 'Pro', 'reversed', 'Customer refunded'], ['Sep 3', 'Roofer · Calgary, AB', 'Solo', 'paid', 'Paid Oct 15'], ['Aug 30', 'Agency · Melbourne, AU', 'Premium', 'paid', 'Paid Sep 15'], ['Aug 27', 'Agency · Toronto, ON', 'Premium', 'paid', 'Paid Sep 15']];
+    const STY = { hold: ['In 30-day hold', '#4DA3FF'], cleared: ['Cleared', '#3DDC84'], reversed: ['Reversed', '#FFC53D'], paid: ['Paid', '#9AA1AB'] };
+    const FL = this.state.filter;
+    const rows = L.filter((r) => FL === 'all' || r.at(3) === FL).map((r) => {
+      const p = PRICE[r.at(2)], c = p * RATE, rev = r.at(3) === 'reversed';
+      return { date: r.at(0), who: r.at(1), plan: r.at(2), pay: money(p), rate: Math.round(RATE * 100) + '%', earn: rev ? money(-c) : money(c),
+        earnColor: rev ? '#FFC53D' : (r.at(3) === 'paid' ? '#9AA1AB' : '#D5F879'), strike: 'none', status: STY[r.at(3)].at(0), color: STY[r.at(3)].at(1), note: r.at(4) };
+    });
+    const D = F ? { cleared: 961.45, hold: 279.65, rev: -27.65, paid: 1541.25, since: 'Jul' } : { cleared: 1469.70, hold: 214.50, rev: -42.60, paid: 4415.80, since: 'May' };
+    const setType = (t) => { try { sessionStorage.setItem('searchify-partner-type', t); } catch (e) {} this.setState({ ptype: t }); };
+    return {
+      types: [['standard', 'Partner'], ['founding', 'Founding partner']].map((t) => ({ label: t.at(1), on: this.state.ptype === t.at(0), off: this.state.ptype !== t.at(0), pick: () => setType(t.at(0)) })),
+      me: F ? { name: 'Nicholas Petitt', initials: 'NP', sub: 'Founding partner' } : { name: 'Sam Ortiz', initials: 'SO', sub: 'Partner since May 2026' },
+      cleared: money(D.cleared), hold: money(D.hold),
+      totals: [
+        { label: 'Cleared', value: money(D.cleared), sub: 'paying on Nov 15', color: '#D5F879', dot: '#3DDC84' },
+        { label: 'In the 30-day hold', value: money(D.hold), sub: 'clears over the next 4 weeks', color: '#F2F4F5', dot: '#4DA3FF' },
+        { label: 'Reversed this month', value: money(D.rev), sub: '1 refund', color: '#FFC53D', dot: '#FFC53D' },
+        { label: 'Paid out so far', value: money(D.paid), sub: 'since ' + D.since + ' 2026', color: '#F2F4F5', dot: '#8A93A3' }
+      ],
+      minNote: 'You’re over the minimum: ' + money(D.cleared) + ' goes out Nov 15.',
+      filters: [['all', 'All'], ['hold', 'In hold'], ['cleared', 'Cleared'], ['reversed', 'Reversed'], ['paid', 'Paid']].map((f) => ({ label: f.at(1), on: FL === f.at(0), off: FL !== f.at(0), pick: () => this.setState({ filter: f.at(0) }) })),
+      rows: rows,
+      setYear: () => {},
+      getPdf: () => this.setState({ stmt: 'Your 2026 statement is ready. We’ve also emailed it to you.' }),
+      getCsv: () => this.setState({ stmt: 'CSV of every 2026 commission downloaded.' }),
+      stmtShow: !!this.state.stmt, stmtText: this.state.stmt,
+      taxNote: F ? 'Commissions are fees for your referral work, separate from any dividends on your shares. You report them on your own tax return.' : 'Commissions are fees for your referral work. You report them on your own tax return. Canadian partners paid over $500 in a year also get a T4A slip.'
+    };
+  }
+}
+
+return Component;
+};</script>
+</body>
+</html>

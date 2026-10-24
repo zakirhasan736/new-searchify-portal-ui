@@ -3,17 +3,21 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useNavigate } from "@/lib/navigation";
-import { parseJwt, userLogin } from "../../../utils/users/Helpers";
+import { parseJwt, userLogin, userLogout } from "../../../utils/users/Helpers";
 import { fetchProjectByUserId } from "../../../utils/users/ProjectUtil";
-import { AuthField, AuthScreen, AuthSubmit } from "@/components/v3/AuthScreen";
-import { hydrateJourney, postLoginPath } from "@/lib/journey";
-import SocialLoginButtons from "./SocialLoginButtons";
+import { AuthField, AuthScreen, AuthSubmit } from "@/components/v8/AuthScreen";
+import { hydrateJourney, normalizeSiteUrl, postLoginPath, seedDraftSite, stashPendingSite } from "@/lib/journey";
+import { PARTNER_KEY, PREVIEW_KEY, clearSessionFlag, isAdminUser, writeSessionFlag } from "@/lib/authRoles";
 
+
+/**
+ * Customer sign-in — presentation/signin.html layout 100%.
+ * Auth hits /api/v1/auth/signin (real JWT). Demo credentials only unlock /skins preview.
+ */
 export default function Signin() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
-  const [show, setShow] = useState(false);
   const [pending, setPending] = useState(false);
   const [toast, setToast] = useState("");
   const [toastKind, setToastKind] = useState("");
@@ -23,9 +27,22 @@ export default function Signin() {
     setToastKind(kind);
   };
 
+  const safeNext = () => {
+    if (typeof window === "undefined") return "";
+    try {
+      const n = new URLSearchParams(window.location.search).get("next") || "";
+      if (n.startsWith("/") && !n.startsWith("//")) return n;
+    } catch {
+      /* ignore */
+    }
+    return "";
+  };
+
   const finishLogin = async (result) => {
     const data = parseJwt(result.token);
     const user = { data, result };
+    clearSessionFlag(PARTNER_KEY);
+    clearSessionFlag(PREVIEW_KEY);
     userLogin(user);
     try {
       const resProject = await fetchProjectByUserId(user.data.sub);
@@ -34,9 +51,37 @@ export default function Signin() {
     } catch {
       localStorage.setItem("project", "{}");
     }
-    if (result.userType === "admin") navigate("/admin/tagmgmt");
+    const next = safeNext();
+    if (next === "/skins" || next.startsWith("/skins?")) {
+      writeSessionFlag(PREVIEW_KEY, true);
+      navigate(next);
+      return;
+    }
+    if (next.startsWith("/partners")) {
+      navigate("/partners/login");
+      return;
+    }
+    if (next.startsWith("/admin") && !isAdminUser(user) && result.userType !== "admin") {
+      navigate("/app");
+      return;
+    }
+    if (next) {
+      try {
+        const site = normalizeSiteUrl(new URLSearchParams(window.location.search).get("site") || "");
+        if (site) {
+          stashPendingSite(site);
+          if (next.startsWith("/app/start")) seedDraftSite(site);
+        }
+      } catch {
+        /* ignore */
+      }
+      navigate(next);
+      return;
+    }
+    if (result.userType === "admin" || isAdminUser(user)) navigate("/admin");
     else {
       await hydrateJourney({ force: true });
+      // Presentation default after sign-in is Connect (Plug in).
       navigate(postLoginPath());
     }
   };
@@ -44,6 +89,8 @@ export default function Signin() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
+    const mail = params.get("email") || "";
+    if (mail) setEmail(mail);
     if (params.get("social") === "error") {
       notice(params.get("detail") || "Social login failed.");
       return;
@@ -62,18 +109,33 @@ export default function Signin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!username.trim()) return notice("Enter your username or email.");
+    if (!email.trim()) return notice("Enter your email.");
     if (!pwd) return notice("Enter your password.");
     setPending(true);
+    setToast("");
     try {
+      const normalized = email.trim().toLowerCase();
+      // Preview wall only — never unlocks /app, /partners, or /admin.
+      if (normalized === "demo@searchify.io" && pwd === "Northline-2026") {
+        userLogout();
+        clearSessionFlag(PARTNER_KEY);
+        writeSessionFlag(PREVIEW_KEY, true);
+        const next = safeNext();
+        navigate(next === "/skins" || next.startsWith("/skins") ? next : "/skins");
+        return;
+      }
       const res = await fetch("/api/v1/auth/signin", {
         headers: { "Content-Type": "application/json" },
         method: "POST",
-        body: JSON.stringify({ username: username.trim(), password: pwd }),
+        body: JSON.stringify({ username: email.trim(), password: pwd }),
       });
       const result = await res.json().catch(() => ({}));
       if (!res.ok || !result.token) {
-        notice(typeof result.detail === "string" ? result.detail : "Sign in failed. Use the same username and password as before.");
+        notice(
+          typeof result.detail === "string"
+            ? result.detail
+            : "That email and password don't match. Check both and try again.",
+        );
         return;
       }
       await finishLogin(result);
@@ -86,48 +148,41 @@ export default function Signin() {
 
   return (
     <AuthScreen
-      label="Workspace access"
-      line1="SIGN"
-      line2="IN."
-      sub="Open the work queue, review title and description updates, then approve what goes live."
+      line1="Welcome back."
+      sub="Use the email and password for this workspace."
+      title="Sign in"
       toast={toast}
       toastKind={toastKind}
-    >
-      <form onSubmit={handleSubmit}>
-        <AuthField
-          label="Username or email"
-          type="text"
-          name="username"
-          autoComplete="username"
-          placeholder="you@agency.com"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <AuthField label="Password">
-          <div className="sf-auth-pass">
-            <input
-              type={show ? "text" : "password"}
-              name="password"
-              autoComplete="current-password"
-              placeholder="Your password"
-              value={pwd}
-              onChange={(e) => setPwd(e.target.value)}
-            />
-            <button type="button" className="sf-link" onClick={() => setShow((v) => !v)}>
-              {show ? "Hide" : "Show"}
-            </button>
-          </div>
-        </AuthField>
-        <div className="sf-auth-row">
-          <Link className="sf-link" href="/forgot">
-            Forgot password
-          </Link>
+      foot={
+        <div className="v8-auth-foot">
+          <Link href="/forgot">Forgot password</Link>
+          <Link href="/signup">Create access</Link>
+          <Link href="/partners/login">Partner centre</Link>
         </div>
-        <AuthSubmit disabled={pending}>{pending ? "Signing in…" : "Sign in →"}</AuthSubmit>
-        <SocialLoginButtons onError={notice} />
-        <p className="sf-auth-foot">
-          New workspace? <Link href="/signup">Create access</Link>
-        </p>
+      }
+    >
+      <form onSubmit={handleSubmit} noValidate>
+        <AuthField
+          label="Email"
+          id="email"
+          type="email"
+          name="email"
+          autoComplete="username"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <AuthField
+          label="Password"
+          id="password"
+          type="password"
+          name="password"
+          autoComplete="current-password"
+          required
+          value={pwd}
+          onChange={(e) => setPwd(e.target.value)}
+        />
+        <AuthSubmit disabled={pending}>{pending ? "Signing in…" : "Sign in"}</AuthSubmit>
       </form>
     </AuthScreen>
   );

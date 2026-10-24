@@ -5,9 +5,11 @@ import { usePathname, useRouter } from "next/navigation";
 import BoardShell from "@/components/board/BoardShell";
 import AdminShell from "@/components/v3/AdminShell";
 import ClientOnly from "@/components/shell/ClientOnly";
+import SkinWallPill from "@/components/v8/SkinWallPill";
 import { userIsAuthenticated } from "@/utils/users/Helpers";
 
-const MARKETING = new Set(["/", "/about", "/pricing", "/contact", "/terms", "/privacy"]);
+const MARKETING = new Set(["/", "/about", "/pricing", "/contact", "/terms", "/privacy", "/skins", "/brand"]);
+
 const AUTH = new Set([
   "/login",
   "/signin",
@@ -18,10 +20,15 @@ const AUTH = new Set([
   "/reset-password",
   "/resetpassword",
 ]);
+const PARTNERS = (pathname) => pathname === "/partners" || pathname.startsWith("/partners/");
+const HQ = (pathname) => pathname === "/admin" || pathname.startsWith("/admin/hq");
+const SKINS = (pathname) => pathname === "/skins" || pathname.startsWith("/skins/");
+/** Presentation Phone.dc.html / States.dc.html are full-bleed — no left Nav. */
+const STANDALONE_APP = (pathname) => pathname === "/app/phone" || pathname === "/app/states";
 
 /**
- * First-release shell: V3 UI for /app*.
- * Admin tools stay on /admin and never appear in customer navigation.
+ * Post-login + marketing shell. HQ uses HqPanel only (no v3 AdminShell).
+ * Wall pill mirrors presentation/support.js (preview/dev).
  */
 export default function ProductShell({ children }) {
   const pathname = usePathname() || "/";
@@ -31,6 +38,9 @@ export default function ProductShell({ children }) {
     if (
       MARKETING.has(pathname) ||
       AUTH.has(pathname) ||
+      PARTNERS(pathname) ||
+      HQ(pathname) ||
+      SKINS(pathname) ||
       pathname.startsWith("/app") ||
       pathname.startsWith("/admin") ||
       pathname.startsWith("/api")
@@ -40,8 +50,20 @@ export default function ProductShell({ children }) {
     if (userIsAuthenticated()) router.replace("/app");
   }, [pathname, router]);
 
-  if (MARKETING.has(pathname)) return children;
-  if (pathname === "/app/start" || pathname === "/app/plans") return <ClientOnly>{children}</ClientOnly>;
+  const withWall = (node) => (
+    <>
+      {node}
+      <SkinWallPill />
+    </>
+  );
+
+  if (SKINS(pathname)) return <ClientOnly>{children}</ClientOnly>;
+  if (MARKETING.has(pathname) || PARTNERS(pathname) || HQ(pathname)) {
+    return <ClientOnly>{withWall(children)}</ClientOnly>;
+  }
+  if (pathname === "/app/start" || pathname === "/app/plans" || STANDALONE_APP(pathname)) {
+    return <ClientOnly>{withWall(children)}</ClientOnly>;
+  }
 
   const inner = AUTH.has(pathname) ? (
     <div id="sf-app" className="sf-auth">
@@ -55,5 +77,5 @@ export default function ProductShell({ children }) {
     children
   );
 
-  return <ClientOnly>{inner}</ClientOnly>;
+  return <ClientOnly>{withWall(inner)}</ClientOnly>;
 }

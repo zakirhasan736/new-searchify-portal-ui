@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — Problem and empty states</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+@keyframes sfy-breathe{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes sfy-flow{to{stroke-dashoffset:-38}}
+@keyframes sfy-spark{0%,100%{opacity:0}30%,60%{opacity:1}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 1100px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 28px clamp(16px, 4vw, 56px) 56px; display: flex; flex-direction: column; gap: 28px">
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 8px">
+    <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(32px, 4vw, 48px); letter-spacing: -1.4px; font-weight: 700">When things go sideways</h1>
+    <p style="margin: 0; font-size: 16px; color: #9AA1AB">Every problem says what happened, that nothing was lost, and gives one blue button to fix it.</p>
+  </div>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 16px">
+
+    <section aria-labelledby="s1" style="border-radius: 24px; background: #101215; border: 1px solid {{s1border}}; box-shadow: {{s1shadow}}; padding: 26px; display: flex; flex-direction: column; gap: 16px; transition: border-color .4s ease, box-shadow .4s ease">
+      <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #9AA1AB">A · A CONNECTION BREAKS</span>
+      <svg viewBox="0 0 600 100" role="img" aria-label="{{s1aria}}" style="width: 100%; height: auto; overflow: visible">
+        <g style="transform: translateX({{s1shift}}); transition: transform .5s cubic-bezier(.3,1.4,.5,1); filter: {{s1glow}}">
+          <path d="M-60 50 C 80 50, 140 18, 250 40 S 360 76, 422 50" fill="none" stroke="{{s1cable}}" stroke-width="7" stroke-linecap="round" style="transition: stroke .4s ease"></path>
+          <path d="M-60 50 C 80 50, 140 18, 250 40 S 360 76, 422 50" fill="none" stroke="#CFE6FF" stroke-width="2.5" stroke-dasharray="3 16" style="opacity: {{s1flow}}; animation: sfy-flow .7s linear infinite"></path>
+          <rect x="418" y="30" width="58" height="40" rx="9" fill="{{s1cable}}" style="transition: fill .4s ease"></rect>
+          <rect x="476" y="38" width="24" height="6" rx="2" fill="#8A9099"></rect>
+          <rect x="476" y="56" width="24" height="6" rx="2" fill="#8A9099"></rect>
+        </g>
+        <g style="opacity: {{s1sparkOp}}">
+          <path d="M488 22 l8 -10 M500 24 l2 -14 M510 30 l10 -8" stroke="#FF5A4E" stroke-width="2.5" stroke-linecap="round" style="animation: sfy-spark 1.2s ease-in-out infinite"></path>
+        </g>
+        <rect x="506" y="18" width="80" height="64" rx="14" fill="#131519" stroke="{{s1socket}}" stroke-width="2"></rect>
+        <rect x="506" y="37" width="16" height="8" rx="2" fill="#0A0B0D"></rect>
+        <rect x="506" y="55" width="16" height="8" rx="2" fill="#0A0B0D"></rect>
+        <circle cx="564" cy="50" r="6" fill="{{s1socket}}" style="animation: {{s1led}}"></circle>
+      </svg>
+      <h2 id="s1" style="margin: 0; font-size: 20px; font-weight: 600">{{s1title}}</h2>
+      <p style="margin: 0; font-size: 15px; color: #9AA1AB; line-height: 1.5">{{s1body}}</p>
+      <sc-if value="{{s1broken}}" hint-placeholder-val="{{true}}">
+        <button type="button" onClick="{{reconnect}}" style="align-self: flex-start; min-height: 50px; padding: 0 22px; border-radius: 13px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 15px; font-weight: 600; box-shadow: 0 0 22px rgba(77,163,255,.45)">Reconnect WordPress</button>
+      </sc-if>
+      <sc-if value="{{s1fixed}}" hint-placeholder-val="{{false}}">
+        <button type="button" onClick="{{breakIt}}" style="align-self: flex-start; min-height: 44px; padding: 0 14px; border-radius: 11px; border: 1px solid #262A31; background: transparent; color: #9AA1AB; font-size: 13px">Replay the break</button>
+      </sc-if>
+    </section>
+
+    <section aria-labelledby="s2" style="border-radius: 24px; background: #101215; border: 1px solid #1A1D22; padding: 26px; display: flex; flex-direction: column; gap: 16px">
+      <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #9AA1AB">B · INSTALLING THE WORDPRESS PLUGIN</span>
+      <h2 id="s2" style="margin: 0; font-size: 20px; font-weight: 600">Three steps, about two minutes</h2>
+      <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px">
+        <li style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap"><span style="width: 26px; height: 26px; border-radius: 50%; background: #262A31; display: grid; place-items: center; font-size: 13px">1</span><span style="flex: 1 1 200px; font-size: 15px">Download the Searchify plugin</span><button type="button" style="min-height: 38px; padding: 0 12px; border-radius: 10px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 13px">Download .zip</button></li>
+        <li style="display: flex; gap: 12px; align-items: center"><span style="width: 26px; height: 26px; border-radius: 50%; background: #262A31; display: grid; place-items: center; font-size: 13px">2</span><span style="font-size: 15px">In WordPress: Plugins → Add new → Upload → Activate</span></li>
+        <li style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap"><span style="width: 26px; height: 26px; border-radius: 50%; background: #262A31; display: grid; place-items: center; font-size: 13px">3</span><span style="flex: 1 1 200px; font-size: 15px">Paste this site key into the plugin</span><code style="font-family: 'Geist Mono', monospace; font-size: 13px; padding: 8px 10px; border-radius: 9px; background: #0A0B0D; border: 1px solid #262A31">[site key]</code><button type="button" style="min-height: 38px; padding: 0 12px; border-radius: 10px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 13px">Copy</button></li>
+      </ol>
+      <sc-if value="{{s2waiting}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding-top: 4px">
+          <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: #9AA1AB"><span style="width: 8px; height: 8px; border-radius: 50%; background: #FFC53D; animation: sfy-breathe 1s ease-in-out infinite"></span>Waiting for your site to say hello…</span>
+          <button type="button" onClick="{{installed}}" style="min-height: 46px; padding: 0 18px; border-radius: 12px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 14px; font-weight: 600">I've installed it</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{s2done}}" hint-placeholder-val="{{false}}">
+        <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: #4DA3FF"><span style="width: 8px; height: 8px; border-radius: 50%; background: #4DA3FF; box-shadow: 0 0 10px #4DA3FF"></span>Connected · Yoast detected · 48 pages mapped</span>
+      </sc-if>
+    </section>
+
+    <section aria-labelledby="s3" style="border-radius: 24px; background: #101215; border: 1px solid #1A1D22; padding: 26px; display: flex; flex-direction: column; gap: 16px">
+      <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #9AA1AB">C · BRAND-NEW SITE, NO DATA YET</span>
+      <div aria-hidden="true" style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 10px">
+        <sc-for list="{{empty}}" as="e" hint-placeholder-count="24">
+          <div style="aspect-ratio: 1; display: grid; place-items: center"><div style="width: 50%; aspect-ratio: 1; border-radius: 50%; background: #1A1D22; animation: sfy-breathe 2.4s ease-in-out infinite; animation-delay: {{e.delay}}"></div></div>
+        </sc-for>
+      </div>
+      <h2 id="s3" style="margin: 0; font-size: 20px; font-weight: 600">Your board fills in over the next 3 days</h2>
+      <p style="margin: 0; font-size: 15px; color: #9AA1AB; line-height: 1.5">Google takes a few days to start sending data for a newly connected site. Searchify has already read your pages — the colours appear as soon as the search data arrives.</p>
+      <label style="display: flex; align-items: center; gap: 10px; font-size: 14px"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #4DA3FF">Text me when it's ready</label>
+    </section>
+
+    <section aria-labelledby="s4" style="border-radius: 24px; background: #101215; border: 1px solid #1A1D22; padding: 26px; display: flex; flex-direction: column; gap: 16px">
+      <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #9AA1AB">D · THE SCAN CAN'T GET IN</span>
+      <h2 id="s4" style="margin: 0; font-size: 20px; font-weight: 600">Your site blocked our scan</h2>
+      <p style="margin: 0; font-size: 15px; color: #9AA1AB; line-height: 1.5">A security setting on your site turned Searchify away. That's normal for sites with a firewall, and nothing on your site was changed.</p>
+      <div style="padding: 14px 16px; border-radius: 14px; background: #0A0B0D; border: 1px solid #262A31; display: flex; flex-direction: column; gap: 6px; font-size: 14px">
+        <span>Ask your host or web person to allow:</span>
+        <code style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #D7DADE">SearchifyBot</code>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap">
+        <a href="Scan.dc.html" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 20px; border-radius: 12px; background: #4DA3FF; color: #0A0B0D; text-decoration: none; font-size: 15px; font-weight: 600; box-shadow: 0 0 22px rgba(77,163,255,.4)">Try the scan again</a>
+        <button type="button" style="min-height: 48px; padding: 0 16px; border-radius: 12px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 14px">Email these steps to my web person</button>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#D5F879","options":["#D5F879","#9FE7F5","#FFD36E","#C9B8FF"]},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { s1: 'broken', s2: 'waiting' };
+  }
+  renderVals() {
+    const fixed = this.state.s1 === 'fixed';
+    const empty = [];
+    for (let i = 0; i < 24; i++) empty.push({ delay: ((i * 7) % 12) * 0.2 + 's' });
+    return {
+      accent: this.props.accent ?? '#D5F879',
+      s1broken: !fixed, s1fixed: fixed,
+      s1shift: fixed ? '30px' : '-36px',
+      s1cable: fixed ? '#4DA3FF' : '#FF5A4E',
+      s1socket: fixed ? '#4DA3FF' : '#FF5A4E',
+      s1glow: fixed ? 'drop-shadow(0 0 10px rgba(77,163,255,.75))' : 'drop-shadow(0 0 8px rgba(255,90,78,.45))',
+      s1flow: fixed ? '0.9' : '0', s1sparkOp: fixed ? '0' : '1',
+      s1led: fixed ? 'none' : 'sfy-breathe .9s ease-in-out infinite',
+      s1border: fixed ? 'rgba(77,163,255,.45)' : 'rgba(255,90,78,.55)',
+      s1shadow: fixed ? '0 0 26px rgba(77,163,255,.15)' : '0 0 26px rgba(255,90,78,.15)',
+      s1aria: fixed ? 'WordPress cable connected' : 'WordPress cable unplugged',
+      s1title: fixed ? 'WordPress is back. Shipping resumed.' : 'WordPress came unplugged 2 hours ago',
+      s1body: fixed ? 'The 2 changes that were waiting are shipping now.' : 'Your site’s login changed, so Searchify can’t ship changes. Scanning and measuring continue, and nothing was lost.',
+      reconnect: () => this.setState({ s1: 'fixed' }),
+      breakIt: () => this.setState({ s1: 'broken' }),
+      s2waiting: this.state.s2 === 'waiting', s2done: this.state.s2 === 'done',
+      installed: () => this.setState({ s2: 'done' }),
+      empty: empty
+    };
+  }
+}
+</script>
+</body>
+</html>

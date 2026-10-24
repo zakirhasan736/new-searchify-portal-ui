@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — Backlinks</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+input[type=checkbox]{accent-color:#4DA3FF;width:18px;height:18px;flex:none}
+textarea:focus-visible,input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
+@keyframes sfy-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes sfy-draw{from{stroke-dashoffset:1400}to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 1400px; background: #0A0B0D; display: flex; flex-wrap: wrap; align-items: stretch">
+<div style="flex: 1 1 248px; max-width: 100%; display: flex">
+<dc-import name="Nav" current="backlinks" hint-size="248px,1400px"></dc-import>
+</div>
+<div style="flex: 999 1 560px; min-width: 0; min-height: 1400px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 28px clamp(16px, 4vw, 48px) 56px; display: flex; flex-direction: column; gap: 22px">
+
+  <header style="max-width: 1120px; width: 100%; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="display: inline-flex; align-items: center; gap: 8px; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 1.6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2CC7C0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>BACKLINKS</span>
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(30px, 3.6vw, 46px); line-height: 1.04; letter-spacing: -1.3px; font-weight: 700">38 websites link to you. <span style="color: #3DDC84">4 new</span> this month, <span style="color: #FF8A80">2 lost</span>.</h1>
+      <span style="font-size: 15px; color: #9AA1AB">Other websites linking to northline.example. Links from trusted local sites are one of the strongest signs to Google that you're worth ranking.</span>
+    </div>
+    <span style="font-size: 12px; color: #7D848E">Updated weekly · last check Oct 19</span>
+  </header>
+
+  <section aria-label="Totals" style="max-width: 1120px; width: 100%; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px">
+    <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+      <div style="border-radius: 18px; padding: 16px 18px; background: #101215; border: 1px solid #1A1D22; display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 13px; color: #9AA1AB">{{k.label}}</span>
+        <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 32px; font-weight: 800; letter-spacing: -1px; line-height: 1">{{k.value}}</span>
+        <span style="font-size: 12px; font-weight: 600; color: {{k.color}}">{{k.sub}}</span>
+      </div>
+    </sc-for>
+  </section>
+
+  <div style="max-width: 1120px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch">
+    <section aria-labelledby="move-h" style="flex: 1 1 380px; min-width: 0; border-radius: 22px; background: #131519; border: 1.5px solid #4DA3FF; box-shadow: 0 0 26px rgba(77,163,255,.18); padding: 22px; display: flex; flex-direction: column; gap: 14px; animation: sfy-rise .3s ease both">
+      <sc-if value="{{hasMove}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; flex-direction: column; gap: 14px">
+          <span style="display: flex; justify-content: space-between; gap: 10px; align-items: center">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 12px; font-weight: 500; color: #4DA3FF; background: rgba(77,163,255,.1); border: 1px solid rgba(77,163,255,.5); padding: 5px 10px; border-radius: 999px">{{mv.tag}}</span>
+            <span style="font-size: 12px; color: #7D848E">Link move {{mv.pos}} of 3</span>
+          </span>
+          <h2 id="move-h" style="margin: 0; font-size: 21px; font-weight: 600; line-height: 1.3">{{mv.title}}</h2>
+          <span style="font-size: 14px; color: #9AA1AB; line-height: 1.55">{{mv.why}}</span>
+          <sc-if value="{{showDraft}}" hint-placeholder-val="{{false}}">
+            <div style="display: flex; flex-direction: column; gap: 8px; animation: sfy-rise .25s ease both">
+              <span style="font-size: 13px; color: #9AA1AB">To: <span style="color: #F2F4F5">{{mv.to}}</span></span>
+              <span style="font-size: 13px; color: #9AA1AB">Subject: <span style="color: #F2F4F5">{{mv.subject}}</span></span>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">Message (edit anything)
+                <textarea rows="7" style="padding: 12px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 14px; line-height: 1.5; resize: vertical">{{mv.body}}</textarea>
+              </label>
+            </div>
+          </sc-if>
+          <sc-if value="{{showDone}}" hint-placeholder-val="{{false}}"><p role="status" style="margin: 0; font-size: 14px; color: #3DDC84; line-height: 1.5">{{mv.done}}</p></sc-if>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <sc-if value="{{canDraft}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{draft}}" style="min-height: 48px; padding: 0 20px; border-radius: 13px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 15px; font-weight: 600; box-shadow: 0 0 22px rgba(77,163,255,.4)">{{mv.cta}}</button></sc-if>
+            <sc-if value="{{showDraft}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{send}}" style="min-height: 48px; padding: 0 20px; border-radius: 13px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 15px; font-weight: 600; box-shadow: 0 0 22px rgba(77,163,255,.4)">Send from alex@riveradigital.example</button></sc-if>
+            <sc-if value="{{showDone}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{next}}" style="min-height: 48px; padding: 0 20px; border-radius: 13px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 15px; font-weight: 600">Next link move</button></sc-if>
+            <sc-if value="{{notDone}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{skip}}" style="min-height: 48px; padding: 0 18px; border-radius: 13px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 15px">Skip for now</button></sc-if>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{noMove}}" hint-placeholder-val="{{false}}">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <h2 style="margin: 0; font-size: 21px; font-weight: 600">That's every link move for this week.</h2>
+          <span style="font-size: 14px; color: #9AA1AB; line-height: 1.5">{{doneSummary}} We'll check those pages weekly and tell you when a link appears.</span>
+        </div>
+      </sc-if>
+    </section>
+
+    <section aria-labelledby="trend-h" style="flex: 999 1 460px; min-width: 0; border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap">
+        <h2 id="trend-h" style="margin: 0; font-size: 17px; font-weight: 600">Websites linking to you · 12 months</h2>
+        <span style="display: inline-flex; gap: 12px; font-size: 12px; color: #9AA1AB"><span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #3DDC84"></span>New</span><span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #FF5A4E"></span>Lost</span></span>
+      </div>
+      <svg viewBox="0 0 640 230" role="img" aria-label="{{chartAria}}" style="width: 100%; height: auto; display: block">
+        <sc-for list="{{grid}}" as="g" hint-placeholder-count="4">
+          <line x1="40" x2="632" y1="{{g.y}}" y2="{{g.y}}" stroke="#1A1D22"></line>
+          <text x="32" y="{{g.ty}}" text-anchor="end" font-size="11" fill="#7D848E" font-family="Geist Mono, monospace">{{g.label}}</text>
+        </sc-for>
+        <path d="{{area}}" fill="rgba(44,199,192,.12)"></path>
+        <path d="{{line}}" fill="none" stroke="#2CC7C0" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" style="stroke-dasharray: 1400; animation: sfy-draw 1.2s ease both"></path>
+        <sc-for list="{{pts}}" as="p" hint-placeholder-count="12">
+          <circle cx="{{p.x}}" cy="{{p.y}}" r="3" fill="#2CC7C0"></circle>
+          <rect x="{{p.bx}}" y="{{p.ny}}" width="10" height="{{p.nh}}" rx="2" fill="#3DDC84"></rect>
+          <rect x="{{p.bx}}" y="196" width="10" height="{{p.lh}}" rx="2" fill="#FF5A4E"></rect>
+          <text x="{{p.x}}" y="226" text-anchor="middle" font-size="11" fill="#7D848E" font-family="Geist Mono, monospace">{{p.label}}</text>
+        </sc-for>
+        <line x1="40" x2="632" y1="196" y2="196" stroke="#262A31"></line>
+        <text x="{{last.x}}" y="{{last.ty}}" text-anchor="middle" font-size="13" font-weight="600" fill="#F2F4F5" font-family="Geist, sans-serif">38</text>
+      </svg>
+      <span style="font-size: 12px; color: #7D848E">Line: total websites linking to you. Bars: links gained and lost each month.</span>
+    </section>
+  </div>
+
+  <section aria-label="Link details" style="max-width: 1120px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 12px">
+    <div role="tablist" aria-label="Link views" style="display: flex; gap: 6px; flex-wrap: wrap">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+        <sc-if value="{{t.on}}" hint-placeholder-val="{{false}}"><button type="button" role="tab" aria-selected="true" onClick="{{t.pick}}" style="min-height: 40px; padding: 0 15px; border-radius: 999px; border: 1px solid #F2F4F5; background: #F2F4F5; color: #0A0B0D; font-size: 14px; font-weight: 600">{{t.label}}</button></sc-if>
+        <sc-if value="{{t.off}}" hint-placeholder-val="{{true}}"><button type="button" role="tab" aria-selected="false" onClick="{{t.pick}}" style="min-height: 40px; padding: 0 15px; border-radius: 999px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 14px">{{t.label}}</button></sc-if>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{isLinks}}" hint-placeholder-val="{{true}}">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <sc-if value="{{isAll}}" hint-placeholder-val="{{false}}">
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: #D7DADE; min-height: 36px"><input type="checkbox" checked="{{followOnly}}" onChange="{{toggleFollow}}">Only links that pass strength to you (not "nofollow")</label>
+        </sc-if>
+        <div style="border-radius: 20px; background: #101215; border: 1px solid #1A1D22; overflow-x: auto">
+          <div style="min-width: 820px">
+            <div aria-hidden="true" style="display: grid; grid-template-columns: minmax(0, 1.4fr) 90px minmax(0, 1.2fr) minmax(0, 1fr) 90px 150px; gap: 12px; padding: 12px 18px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #7D848E; border-bottom: 1px solid #1A1D22">
+              <span>LINKING WEBSITE</span><span>STRENGTH</span><span>LINKS TO YOUR PAGE</span><span>LINK TEXT</span><span>TYPE</span><span>STATUS</span>
+            </div>
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+              <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) 90px minmax(0, 1.2fr) minmax(0, 1fr) 90px 150px; gap: 12px; align-items: center; padding: 12px 18px; border-bottom: 1px solid #16181C; font-size: 14px">
+                <span style="min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{r.site}}</span><span style="font-size: 12px; color: #7D848E">{{r.kind}}</span></span>
+                <span style="display: flex; align-items: center; gap: 8px"><span style="width: 34px; height: 6px; border-radius: 3px; background: #1A1D22; overflow: hidden"><span style="display: block; height: 100%; width: {{r.bar}}; background: {{r.barColor}}"></span></span><span style="font-family: 'Geist Mono', monospace; font-size: 13px">{{r.str}}</span></span>
+                <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #D7DADE; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{r.page}}</span>
+                <span style="font-size: 13px; color: #9AA1AB; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">“{{r.anchor}}”</span>
+                <span style="font-size: 12px; color: {{r.typeColor}}">{{r.type}}</span>
+                <span style="display: flex; flex-direction: column"><span style="font-size: 12px; font-weight: 600; color: {{r.color}}">{{r.status}}</span><span style="font-size: 11px; color: #7D848E">{{r.when}}</span></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isPages}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+        <div style="flex: 999 1 480px; min-width: 0; border-radius: 20px; background: #101215; border: 1px solid #1A1D22; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+          <h3 style="margin: 0; font-size: 16px; font-weight: 600">Your most-linked pages</h3>
+          <sc-for list="{{pages}}" as="p" hint-placeholder-count="6">
+            <div style="display: flex; flex-direction: column; gap: 6px; padding: 6px 0">
+              <span style="display: flex; justify-content: space-between; gap: 10px; font-size: 14px"><span style="font-family: 'Geist Mono', monospace; font-size: 13px">{{p.path}}</span><span style="color: #9AA1AB">{{p.count}} sites</span></span>
+              <div style="height: 8px; border-radius: 4px; background: #1A1D22; overflow: hidden"><div style="height: 100%; width: {{p.pct}}; border-radius: 4px; background: #2CC7C0"></div></div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex: 1 1 320px; min-width: 0; border-radius: 20px; background: #101215; border: 1px solid rgba(255,197,61,.4); padding: 18px; display: flex; flex-direction: column; gap: 10px">
+          <h3 style="margin: 0; font-size: 16px; font-weight: 600">Important pages no one links to</h3>
+          <sc-for list="{{orphans}}" as="o" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 12px; background: #0A0B0D; border: 1px solid #1A1D22">
+              <span style="font-family: 'Geist Mono', monospace; font-size: 13px">{{o.path}}</span>
+              <span style="font-size: 13px; color: #9AA1AB; line-height: 1.45">{{o.why}}</span>
+            </div>
+          </sc-for>
+          <span style="font-size: 12px; color: #7D848E">Pages that bring in money but have no outside links usually rank lower than they could.</span>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isGap}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <span style="font-size: 14px; color: #9AA1AB">Websites that link to at least 2 of your competitors, but not to you. Compared with Apex Roof Co., Bow River Roofing and Stampede Exteriors.</span>
+        <div style="border-radius: 20px; background: #101215; border: 1px solid #1A1D22; overflow-x: auto">
+          <div style="min-width: 760px">
+            <div aria-hidden="true" style="display: grid; grid-template-columns: minmax(0, 1.4fr) 90px minmax(0, 1.4fr) 110px 170px; gap: 12px; padding: 12px 18px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #7D848E; border-bottom: 1px solid #1A1D22">
+              <span>WEBSITE</span><span>STRENGTH</span><span>LINKS TO</span><span>TYPE</span><span style="text-align: right">NEXT STEP</span>
+            </div>
+            <sc-for list="{{gap}}" as="g" hint-placeholder-count="6">
+              <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) 90px minmax(0, 1.4fr) 110px 170px; gap: 12px; align-items: center; padding: 12px 18px; border-bottom: 1px solid #16181C; font-size: 14px">
+                <span style="font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{g.site}}</span>
+                <span style="font-family: 'Geist Mono', monospace; font-size: 13px">{{g.str}}</span>
+                <span style="font-size: 13px; color: #9AA1AB">{{g.who}}</span>
+                <span style="font-size: 12px; color: #D7DADE">{{g.type}}</span>
+                <span style="display: flex; justify-content: flex-end"><button type="button" onClick="{{g.act}}" style="min-height: 36px; padding: 0 12px; border-radius: 10px; border: {{g.border}}; background: {{g.bg}}; color: {{g.fg}}; font-size: 13px; font-weight: 600">{{g.label}}</button></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isFlag}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+        <div style="flex: 999 1 520px; min-width: 0; border-radius: 20px; background: #101215; border: 1px solid #1A1D22; padding: 6px">
+          <sc-for list="{{flags}}" as="f" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 14px; border-bottom: 1px solid #16181C">
+              <span style="flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 500">{{f.site}}</span><span style="font-size: 12px; color: #9AA1AB">{{f.why}}</span></span>
+              <span style="font-size: 12px; font-weight: 600; color: {{f.color}}">{{f.state}}</span>
+              <sc-if value="{{f.open}}" hint-placeholder-val="{{true}}">
+                <span style="display: flex; gap: 6px">
+                  <button type="button" onClick="{{f.ignore}}" style="min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 13px">Ignore it</button>
+                  <button type="button" onClick="{{f.disavow}}" style="min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid rgba(255,197,61,.5); background: transparent; color: #FFC53D; font-size: 13px">Add to disavow list</button>
+                </span>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex: 1 1 300px; min-width: 0; border-radius: 20px; background: #101215; border: 1px solid #1A1D22; padding: 18px; display: flex; flex-direction: column; gap: 8px">
+          <h3 style="margin: 0; font-size: 16px; font-weight: 600">Should I worry?</h3>
+          <span style="font-size: 14px; color: #9AA1AB; line-height: 1.55">Usually not. Every site picks up some junk links, and Google mostly ignores them. Google's own advice is to use a disavow file only if you've had a manual penalty or bought links in the past. Searchify never uploads one for you.</span>
+        </div>
+      </div>
+    </sc-if>
+    <span style="font-size: 12px; color: #7D848E">Strength is a 0 to 100 score for how much a website is trusted, from our link data provider. It's not a Google number, but it tracks closely with what helps rankings.</span>
+  </section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { move: 0, stage: 'idle', done: [], tab: 'newlost', followOnly: false, gapDone: {}, flagState: {} };
+  }
+  renderVals() {
+    const MOVES = [
+      { tag: 'WIN BACK A LOST LINK', title: 'Calgary Home Guide removed its link to your hail damage guide.', why: 'It was one of your stronger links (strength 41) and sent about 30 visitors a month. The page still mentions you, so the link was probably dropped in a redesign. A short, friendly note usually gets it back.',
+        cta: 'Draft the email', to: 'editor@calgaryhomeguide.example', subject: 'Small fix on your hail damage article',
+        body: 'Hi there,\n\nThanks for mentioning Northline Roofing in your article on hail damage claims. It looks like the link to our guide went missing in your recent site update:\nnorthline.example/blog/hail-damage-insurance\n\nWould you be able to add it back? We just refreshed the guide with the 2026 insurer rules, so it should be useful for your readers.\n\nThanks so much,\nNorthline Roofing',
+        done: 'Sent. We’ll check that page every week and tell you when the link is back.' },
+      { tag: 'TURN A MENTION INTO A LINK', title: 'Alberta Builders News mentioned Northline Roofing without a link.', why: 'Their October article on hail season names you as a local roofer but doesn’t link to your site. Asking to add a link to a mention that’s already there is the easiest link to get.',
+        cta: 'Draft the email', to: 'news@albertabuilders.example', subject: 'Thanks for the mention in your hail season story',
+        body: 'Hi,\n\nThanks for including Northline Roofing in your hail season article. Would you be open to linking our name to northline.example so readers can find us easily?\n\nHappy to share photos or a quote from our crew for future stories.\n\nBest,\nNorthline Roofing',
+        done: 'Sent. Mentions that already name you get a link back more often than any other request.' },
+      { tag: 'GET LISTED', title: 'All 3 competitors are listed in the Calgary Home Builders Association directory. You aren’t.', why: 'It’s a trusted local site (strength 52) that customers browse when they look for contractors. Membership is required for a listing, so check the cost first. Searchify can fill in the application for you.',
+        cta: 'Open the application', to: '', subject: '', body: '',
+        done: 'Application started with your business details filled in. Finish it and pay the membership fee on their site.' }
+    ];
+    const idx = this.state.move;
+    const has = idx < MOVES.length;
+    const mv = has ? MOVES[idx] : MOVES[0];
+    const stage = this.state.stage;
+    const nextMove = (skipped) => this.setState({ move: idx + 1, stage: 'idle', done: skipped ? this.state.done : this.state.done.concat([idx]) });
+    const months = ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+    const TOT = [22, 23, 23, 25, 26, 27, 29, 30, 32, 34, 36, 38];
+    const NEW = [2, 2, 1, 3, 2, 2, 3, 2, 3, 3, 3, 4];
+    const LOST = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2];
+    const X = (i) => 60 + i * (562 / 11);
+    const Y = (v) => 150 - (v / 45) * 140;
+    const line = TOT.map((v, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1)).join(' ');
+    const area = line + ' L' + X(11).toFixed(1) + ' 150 L' + X(0).toFixed(1) + ' 150 Z';
+    const pts = TOT.map((v, i) => ({ x: X(i).toFixed(1), y: Y(v).toFixed(1), label: months.at(i), bx: (X(i) - 5).toFixed(1), ny: (196 - NEW.at(i) * 8).toFixed(1), nh: String(NEW.at(i) * 8), lh: String(LOST.at(i) * 8) }));
+    const grid = [10, 20, 30, 40].map((v) => ({ y: Y(v).toFixed(1), ty: (Y(v) + 4).toFixed(1), label: String(v) }));
+    const L = [
+      ['albertabuilders.example', 'News site', 48, '/blog/hail-damage-insurance', 'hail damage guide', 'follow', 'new', 'Oct 17'],
+      ['calgaryparents.example', 'Local blog', 33, '/services/roof-inspection', 'Northline Roofing', 'follow', 'new', 'Oct 12'],
+      ['shinglesupply.example', 'Supplier', 37, '/', 'certified installer', 'follow', 'new', 'Oct 6'],
+      ['yyc-reddit-mirror.example', 'Forum', 12, '/blog/ice-dams-guide', 'this guide', 'nofollow', 'new', 'Oct 3'],
+      ['calgaryhomeguide.example', 'Local guide', 41, '/blog/hail-damage-insurance', 'Northline’s hail guide', 'follow', 'lost', 'Oct 11'],
+      ['roofquotes-directory.example', 'Directory', 18, '/', 'Northline Roofing', 'nofollow', 'lost', 'Oct 2'],
+      ['calgary-news-daily.example', 'News site', 78, '/blog/hail-damage-insurance', 'local roofers say', 'follow', 'live', 'since Jul'],
+      ['calgary.chamber.example', 'Business group', 56, '/', 'Northline Roofing Ltd.', 'follow', 'live', 'since 2024'],
+      ['reviews-hub.example', 'Review site', 71, '/', 'Website', 'nofollow', 'live', 'since 2023'],
+      ['home-pros-reviews.example', 'Review site', 58, '/', 'northline.example', 'nofollow', 'live', 'since 2023'],
+      ['campus-housing-yyc.example', 'Education site', 64, '/services/roof-inspection', 'roof inspection', 'follow', 'live', 'since Apr'],
+      ['bowness-community.example', 'Community group', 29, '/', 'Northline Roofing', 'follow', 'live', 'since Feb']
+    ];
+    const ST = { new: ['New', '#3DDC84'], lost: ['Lost', '#FF8A80'], live: ['Linking', '#9AA1AB'] };
+    const T = this.state.tab;
+    let src = T === 'newlost' ? L.filter((r) => r.at(6) !== 'live') : L.slice().sort((a, b) => b.at(2) - a.at(2));
+    if (T === 'all' && this.state.followOnly) src = src.filter((r) => r.at(5) === 'follow');
+    const rows = src.map((r) => ({ site: r.at(0), kind: r.at(1), str: String(r.at(2)), bar: r.at(2) + '%', barColor: r.at(2) >= 50 ? '#3DDC84' : (r.at(2) >= 30 ? '#2CC7C0' : '#7D848E'),
+      page: r.at(3), anchor: r.at(4), type: r.at(5) === 'follow' ? 'Passes strength' : 'Nofollow', typeColor: r.at(5) === 'follow' ? '#3DDC84' : '#7D848E',
+      status: ST[r.at(6)].at(0), color: ST[r.at(6)].at(1), when: r.at(7) }));
+    const P = [['/blog/hail-damage-insurance', 11], ['/', 10], ['/services/roof-inspection', 6], ['/blog/ice-dams-guide', 4], ['/services/flat-roofs', 3], ['/blog/metal-vs-asphalt', 2]];
+    const G = [
+      ['chba-calgary.example', 52, 'Apex, Bow River, Stampede', 'Directory', 'apply', 'Open application'],
+      ['calgary-homes-weekly.example', 61, 'Apex, Bow River', 'News site', 'pitch', 'Draft a story pitch'],
+      ['trusted-business-ab.example', 55, 'Apex, Stampede', 'Directory', 'apply', 'Open application'],
+      ['shingle-maker-installers.example', 47, 'Bow River, Stampede', 'Supplier', 'email', 'Ask to be listed'],
+      ['yyc-renovation-blog.example', 34, 'Apex, Bow River, Stampede', 'Local blog', 'email', 'Draft outreach'],
+      ['yyc-housing-charity.example', 45, 'Apex, Bow River', 'Charity', 'email', 'Ask about volunteering']
+    ];
+    const gd = this.state.gapDone;
+    const gap = G.map((g, i) => ({ site: g.at(0), str: String(g.at(1)), who: g.at(2), type: g.at(3),
+      label: gd[i] ? (g.at(4) === 'apply' ? 'Started' : 'Draft saved') : g.at(5),
+      bg: gd[i] ? 'transparent' : '#4DA3FF', fg: gd[i] ? '#3DDC84' : '#0A0B0D', border: gd[i] ? '1px solid rgba(61,220,132,.5)' : '0',
+      act: () => this.setState({ gapDone: Object.assign({}, gd, { [i]: true }) }) }));
+    const FL = [['seo-links-4u.example', 'Link farm: thousands of unrelated links on one page'], ['cheap-roof-deals-xyz.example', 'Copied your page and linked back, likely scraped'], ['casino-bonus-hub.example', 'Unrelated topic, foreign language, low trust']];
+    const fs = this.state.flagState;
+    const flags = FL.map((f, i) => ({ site: f.at(0), why: f.at(1), open: !fs[i], state: fs[i] === 'ignore' ? 'Ignored' : (fs[i] === 'disavow' ? 'On your disavow list' : 'Low trust · 3'),
+      color: fs[i] === 'disavow' ? '#FFC53D' : (fs[i] ? '#9AA1AB' : '#FF8A80'),
+      ignore: () => this.setState({ flagState: Object.assign({}, fs, { [i]: 'ignore' }) }), disavow: () => this.setState({ flagState: Object.assign({}, fs, { [i]: 'disavow' }) }) }));
+    const nd = this.state.done.length;
+    return {
+      kpis: [
+        { label: 'Websites linking to you', value: '38', sub: '+2 this month · +16 this year', color: '#3DDC84' },
+        { label: 'Total links', value: '214', sub: 'many sites link more than once', color: '#9AA1AB' },
+        { label: 'Strong links', value: '11', sub: 'from sites with strength 40+', color: '#3DDC84' },
+        { label: 'Flagged as low trust', value: '3', sub: 'usually nothing to do', color: '#FFC53D' }
+      ],
+      hasMove: has, noMove: !has,
+      mv: { tag: mv.tag, title: mv.title, why: mv.why, cta: mv.cta, to: mv.to, subject: mv.subject, body: mv.body, done: mv.done, pos: String(idx + 1) },
+      canDraft: stage === 'idle', showDraft: stage === 'draft', showDone: stage === 'done', notDone: stage !== 'done',
+      draft: () => this.setState({ stage: mv.body ? 'draft' : 'done' }),
+      send: () => this.setState({ stage: 'done' }),
+      next: () => nextMove(false), skip: () => nextMove(true),
+      doneSummary: nd ? 'You sent or started ' + nd + ' of 3.' : 'You skipped them all; they’ll come back next week.',
+      line: line, area: area, pts: pts, grid: grid, last: { x: X(11).toFixed(1), ty: (Y(38) - 10).toFixed(1) },
+      chartAria: 'Websites linking to you, from 22 last November to 38 this October',
+      tabs: [['newlost', 'New and lost (6)'], ['all', 'All linking websites'], ['pages', 'Your pages'], ['gap', 'Competitor gap (6)'], ['flag', 'Flagged (3)']].map((t) => ({ label: t.at(1), on: T === t.at(0), off: T !== t.at(0), pick: () => this.setState({ tab: t.at(0) }) })),
+      isLinks: T === 'newlost' || T === 'all', isAll: T === 'all', isPages: T === 'pages', isGap: T === 'gap', isFlag: T === 'flag',
+      followOnly: this.state.followOnly, toggleFollow: () => this.setState({ followOnly: !this.state.followOnly }),
+      rows: rows,
+      pages: P.map((p) => ({ path: p.at(0), count: String(p.at(1)), pct: Math.round(p.at(1) / 11 * 100) + '%' })),
+      orphans: [
+        { path: '/services/roof-replacement', why: 'Your biggest-ticket service, with 0 outside links. Ask the shingle supplier you buy from to list you as an installer.' },
+        { path: '/services/roof-repair', why: 'Gets emergency calls but 0 outside links. Local community and neighbourhood pages are a good fit.' },
+        { path: '/service-area/airdrie', why: '0 outside links. The Airdrie business association lists local trades.' }
+      ],
+      gap: gap, flags: flags
+    };
+  }
+}
+</script>
+<script>window.__DC_FACTORY = function (DCLogic, React) {
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { move: 0, stage: 'idle', done: [], tab: 'newlost', followOnly: false, gapDone: {}, flagState: {} };
+  }
+  renderVals() {
+    const MOVES = [
+      { tag: 'WIN BACK A LOST LINK', title: 'Calgary Home Guide removed its link to your hail damage guide.', why: 'It was one of your stronger links (strength 41) and sent about 30 visitors a month. The page still mentions you, so the link was probably dropped in a redesign. A short, friendly note usually gets it back.',
+        cta: 'Draft the email', to: 'editor@calgaryhomeguide.example', subject: 'Small fix on your hail damage article',
+        body: 'Hi there,\n\nThanks for mentioning Northline Roofing in your article on hail damage claims. It looks like the link to our guide went missing in your recent site update:\nnorthline.example/blog/hail-damage-insurance\n\nWould you be able to add it back? We just refreshed the guide with the 2026 insurer rules, so it should be useful for your readers.\n\nThanks so much,\nNorthline Roofing',
+        done: 'Sent. We’ll check that page every week and tell you when the link is back.' },
+      { tag: 'TURN A MENTION INTO A LINK', title: 'Alberta Builders News mentioned Northline Roofing without a link.', why: 'Their October article on hail season names you as a local roofer but doesn’t link to your site. Asking to add a link to a mention that’s already there is the easiest link to get.',
+        cta: 'Draft the email', to: 'news@albertabuilders.example', subject: 'Thanks for the mention in your hail season story',
+        body: 'Hi,\n\nThanks for including Northline Roofing in your hail season article. Would you be open to linking our name to northline.example so readers can find us easily?\n\nHappy to share photos or a quote from our crew for future stories.\n\nBest,\nNorthline Roofing',
+        done: 'Sent. Mentions that already name you get a link back more often than any other request.' },
+      { tag: 'GET LISTED', title: 'All 3 competitors are listed in the Calgary Home Builders Association directory. You aren’t.', why: 'It’s a trusted local site (strength 52) that customers browse when they look for contractors. Membership is required for a listing, so check the cost first. Searchify can fill in the application for you.',
+        cta: 'Open the application', to: '', subject: '', body: '',
+        done: 'Application started with your business details filled in. Finish it and pay the membership fee on their site.' }
+    ];
+    const idx = this.state.move;
+    const has = idx < MOVES.length;
+    const mv = has ? MOVES[idx] : MOVES[0];
+    const stage = this.state.stage;
+    const nextMove = (skipped) => this.setState({ move: idx + 1, stage: 'idle', done: skipped ? this.state.done : this.state.done.concat([idx]) });
+    const months = ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+    const TOT = [22, 23, 23, 25, 26, 27, 29, 30, 32, 34, 36, 38];
+    const NEW = [2, 2, 1, 3, 2, 2, 3, 2, 3, 3, 3, 4];
+    const LOST = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2];
+    const X = (i) => 60 + i * (562 / 11);
+    const Y = (v) => 150 - (v / 45) * 140;
+    const line = TOT.map((v, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1)).join(' ');
+    const area = line + ' L' + X(11).toFixed(1) + ' 150 L' + X(0).toFixed(1) + ' 150 Z';
+    const pts = TOT.map((v, i) => ({ x: X(i).toFixed(1), y: Y(v).toFixed(1), label: months.at(i), bx: (X(i) - 5).toFixed(1), ny: (196 - NEW.at(i) * 8).toFixed(1), nh: String(NEW.at(i) * 8), lh: String(LOST.at(i) * 8) }));
+    const grid = [10, 20, 30, 40].map((v) => ({ y: Y(v).toFixed(1), ty: (Y(v) + 4).toFixed(1), label: String(v) }));
+    const L = [
+      ['albertabuilders.example', 'News site', 48, '/blog/hail-damage-insurance', 'hail damage guide', 'follow', 'new', 'Oct 17'],
+      ['calgaryparents.example', 'Local blog', 33, '/services/roof-inspection', 'Northline Roofing', 'follow', 'new', 'Oct 12'],
+      ['shinglesupply.example', 'Supplier', 37, '/', 'certified installer', 'follow', 'new', 'Oct 6'],
+      ['yyc-reddit-mirror.example', 'Forum', 12, '/blog/ice-dams-guide', 'this guide', 'nofollow', 'new', 'Oct 3'],
+      ['calgaryhomeguide.example', 'Local guide', 41, '/blog/hail-damage-insurance', 'Northline’s hail guide', 'follow', 'lost', 'Oct 11'],
+      ['roofquotes-directory.example', 'Directory', 18, '/', 'Northline Roofing', 'nofollow', 'lost', 'Oct 2'],
+      ['calgary-news-daily.example', 'News site', 78, '/blog/hail-damage-insurance', 'local roofers say', 'follow', 'live', 'since Jul'],
+      ['calgary.chamber.example', 'Business group', 56, '/', 'Northline Roofing Ltd.', 'follow', 'live', 'since 2024'],
+      ['reviews-hub.example', 'Review site', 71, '/', 'Website', 'nofollow', 'live', 'since 2023'],
+      ['home-pros-reviews.example', 'Review site', 58, '/', 'northline.example', 'nofollow', 'live', 'since 2023'],
+      ['campus-housing-yyc.example', 'Education site', 64, '/services/roof-inspection', 'roof inspection', 'follow', 'live', 'since Apr'],
+      ['bowness-community.example', 'Community group', 29, '/', 'Northline Roofing', 'follow', 'live', 'since Feb']
+    ];
+    const ST = { new: ['New', '#3DDC84'], lost: ['Lost', '#FF8A80'], live: ['Linking', '#9AA1AB'] };
+    const T = this.state.tab;
+    let src = T === 'newlost' ? L.filter((r) => r.at(6) !== 'live') : L.slice().sort((a, b) => b.at(2) - a.at(2));
+    if (T === 'all' && this.state.followOnly) src = src.filter((r) => r.at(5) === 'follow');
+    const rows = src.map((r) => ({ site: r.at(0), kind: r.at(1), str: String(r.at(2)), bar: r.at(2) + '%', barColor: r.at(2) >= 50 ? '#3DDC84' : (r.at(2) >= 30 ? '#2CC7C0' : '#7D848E'),
+      page: r.at(3), anchor: r.at(4), type: r.at(5) === 'follow' ? 'Passes strength' : 'Nofollow', typeColor: r.at(5) === 'follow' ? '#3DDC84' : '#7D848E',
+      status: ST[r.at(6)].at(0), color: ST[r.at(6)].at(1), when: r.at(7) }));
+    const P = [['/blog/hail-damage-insurance', 11], ['/', 10], ['/services/roof-inspection', 6], ['/blog/ice-dams-guide', 4], ['/services/flat-roofs', 3], ['/blog/metal-vs-asphalt', 2]];
+    const G = [
+      ['chba-calgary.example', 52, 'Apex, Bow River, Stampede', 'Directory', 'apply', 'Open application'],
+      ['calgary-homes-weekly.example', 61, 'Apex, Bow River', 'News site', 'pitch', 'Draft a story pitch'],
+      ['trusted-business-ab.example', 55, 'Apex, Stampede', 'Directory', 'apply', 'Open application'],
+      ['shingle-maker-installers.example', 47, 'Bow River, Stampede', 'Supplier', 'email', 'Ask to be listed'],
+      ['yyc-renovation-blog.example', 34, 'Apex, Bow River, Stampede', 'Local blog', 'email', 'Draft outreach'],
+      ['yyc-housing-charity.example', 45, 'Apex, Bow River', 'Charity', 'email', 'Ask about volunteering']
+    ];
+    const gd = this.state.gapDone;
+    const gap = G.map((g, i) => ({ site: g.at(0), str: String(g.at(1)), who: g.at(2), type: g.at(3),
+      label: gd[i] ? (g.at(4) === 'apply' ? 'Started' : 'Draft saved') : g.at(5),
+      bg: gd[i] ? 'transparent' : '#4DA3FF', fg: gd[i] ? '#3DDC84' : '#0A0B0D', border: gd[i] ? '1px solid rgba(61,220,132,.5)' : '0',
+      act: () => this.setState({ gapDone: Object.assign({}, gd, { [i]: true }) }) }));
+    const FL = [['seo-links-4u.example', 'Link farm: thousands of unrelated links on one page'], ['cheap-roof-deals-xyz.example', 'Copied your page and linked back, likely scraped'], ['casino-bonus-hub.example', 'Unrelated topic, foreign language, low trust']];
+    const fs = this.state.flagState;
+    const flags = FL.map((f, i) => ({ site: f.at(0), why: f.at(1), open: !fs[i], state: fs[i] === 'ignore' ? 'Ignored' : (fs[i] === 'disavow' ? 'On your disavow list' : 'Low trust · 3'),
+      color: fs[i] === 'disavow' ? '#FFC53D' : (fs[i] ? '#9AA1AB' : '#FF8A80'),
+      ignore: () => this.setState({ flagState: Object.assign({}, fs, { [i]: 'ignore' }) }), disavow: () => this.setState({ flagState: Object.assign({}, fs, { [i]: 'disavow' }) }) }));
+    const nd = this.state.done.length;
+    return {
+      kpis: [
+        { label: 'Websites linking to you', value: '38', sub: '+2 this month · +16 this year', color: '#3DDC84' },
+        { label: 'Total links', value: '214', sub: 'many sites link more than once', color: '#9AA1AB' },
+        { label: 'Strong links', value: '11', sub: 'from sites with strength 40+', color: '#3DDC84' },
+        { label: 'Flagged as low trust', value: '3', sub: 'usually nothing to do', color: '#FFC53D' }
+      ],
+      hasMove: has, noMove: !has,
+      mv: { tag: mv.tag, title: mv.title, why: mv.why, cta: mv.cta, to: mv.to, subject: mv.subject, body: mv.body, done: mv.done, pos: String(idx + 1) },
+      canDraft: stage === 'idle', showDraft: stage === 'draft', showDone: stage === 'done', notDone: stage !== 'done',
+      draft: () => this.setState({ stage: mv.body ? 'draft' : 'done' }),
+      send: () => this.setState({ stage: 'done' }),
+      next: () => nextMove(false), skip: () => nextMove(true),
+      doneSummary: nd ? 'You sent or started ' + nd + ' of 3.' : 'You skipped them all; they’ll come back next week.',
+      line: line, area: area, pts: pts, grid: grid, last: { x: X(11).toFixed(1), ty: (Y(38) - 10).toFixed(1) },
+      chartAria: 'Websites linking to you, from 22 last November to 38 this October',
+      tabs: [['newlost', 'New and lost (6)'], ['all', 'All linking websites'], ['pages', 'Your pages'], ['gap', 'Competitor gap (6)'], ['flag', 'Flagged (3)']].map((t) => ({ label: t.at(1), on: T === t.at(0), off: T !== t.at(0), pick: () => this.setState({ tab: t.at(0) }) })),
+      isLinks: T === 'newlost' || T === 'all', isAll: T === 'all', isPages: T === 'pages', isGap: T === 'gap', isFlag: T === 'flag',
+      followOnly: this.state.followOnly, toggleFollow: () => this.setState({ followOnly: !this.state.followOnly }),
+      rows: rows,
+      pages: P.map((p) => ({ path: p.at(0), count: String(p.at(1)), pct: Math.round(p.at(1) / 11 * 100) + '%' })),
+      orphans: [
+        { path: '/services/roof-replacement', why: 'Your biggest-ticket service, with 0 outside links. Ask the shingle supplier you buy from to list you as an installer.' },
+        { path: '/services/roof-repair', why: 'Gets emergency calls but 0 outside links. Local community and neighbourhood pages are a good fit.' },
+        { path: '/service-area/airdrie', why: '0 outside links. The Airdrie business association lists local trades.' }
+      ],
+      gap: gap, flags: flags
+    };
+  }
+}
+
+return Component;
+};</script>
+<template data-dc-component="Nav" data-props='{"current":{"editor":"enum","options":["connect","scan","home","path","tracker","backlinks","results","reports","command","sites","clientreport","settings","billing"],"default":"home"},"$preview":{"width":248,"height":960}}'><x-dc>
+
+<nav aria-label="Main" style="flex: 1; align-self: stretch; width: 100%; min-height: 960px; box-sizing: border-box; padding: 22px 14px; background: #0D0E10; border-right: 1px solid #1A1D22; font-family: Geist, 'Helvetica Neue', sans-serif; color: #F2F4F5; display: flex; flex-direction: column; gap: 22px">
+  <a href="Home.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 0 8px; text-decoration: none; color: #F2F4F5">
+    <svg width="30" height="30" viewBox="0 0 32 32" role="img" aria-label="Searchify"><rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="#131519" stroke="#2E333B"></rect><circle cx="9" cy="12.5" r="2.9" fill="#FF5A4E"></circle><circle cx="16" cy="12.5" r="2.9" fill="#FF9F43"></circle><circle cx="23" cy="12.5" r="2.9" fill="#FFC53D"></circle><circle cx="9" cy="19.5" r="2.9" fill="#3DDC84"></circle><circle cx="16" cy="19.5" r="2.9" fill="#2CC7C0"></circle><circle cx="23" cy="19.5" r="2.9" fill="#4DA3FF"></circle></svg>
+    <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.4px">searchify</span>
+  </a>
+
+  <a href="Portfolio.dc.html" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 48px; padding: 6px 12px; border-radius: 12px; border: 1px solid #262A31; background: #131519; color: #F2F4F5; text-decoration: none">
+    <span style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 12px; color: #9AA1AB">Working on</span><span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">northline.example</span></span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA1AB" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 10l5 5 5-5"></path></svg>
+  </a>
+
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <span style="padding: 0 10px 6px; font-size: 12px; font-weight: 600; color: #7D848E">Core features</span>
+    <sc-for list="{{core}}" as="it" hint-placeholder-count="8">
+      <sc-if value="{{it.on}}" hint-placeholder-val="{{false}}">
+        <a href="{{it.href}}" aria-current="page" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 11px; background: #131519; box-shadow: inset 3px 0 0 #4DA3FF; color: #F2F4F5; text-decoration: none; font-size: 14px; font-weight: 600">
+          <span style="width: 22px; height: 22px; flex: none; border-radius: 50%; background: #4DA3FF; color: #0A0B0D; display: grid; place-items: center; font-family: 'Geist Mono', monospace; font-size: 11px; font-weight: 500; box-shadow: 0 0 10px rgba(77,163,255,.6)">{{it.n}}</span>{{it.label}}
+        </a>
+      </sc-if>
+      <sc-if value="{{it.off}}" hint-placeholder-val="{{true}}">
+        <a href="{{it.href}}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 11px; color: #B4BAC3; text-decoration: none; font-size: 14px">
+          <span style="width: 22px; height: 22px; flex: none; border-radius: 50%; border: 1px solid #3A404A; box-sizing: border-box; display: grid; place-items: center; font-family: 'Geist Mono', monospace; font-size: 11px; color: #9AA1AB">{{it.n}}</span>{{it.label}}
+        </a>
+      </sc-if>
+    </sc-for>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <span style="padding: 0 10px 6px; font-size: 12px; font-weight: 600; color: #7D848E">Profile and sites</span>
+    <sc-for list="{{account}}" as="it" hint-placeholder-count="5">
+      <sc-if value="{{it.on}}" hint-placeholder-val="{{false}}">
+        <a href="{{it.href}}" aria-current="page" style="display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px; border-radius: 11px; background: #131519; box-shadow: inset 3px 0 0 #4DA3FF; color: #F2F4F5; text-decoration: none; font-size: 14px; font-weight: 600">{{it.label}}</a>
+      </sc-if>
+      <sc-if value="{{it.off}}" hint-placeholder-val="{{true}}">
+        <a href="{{it.href}}" style="display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px; border-radius: 11px; color: #B4BAC3; text-decoration: none; font-size: 14px">{{it.label}}</a>
+      </sc-if>
+    </sc-for>
+  </div>
+
+  <div style="flex: 1"></div>
+  <a href="Settings.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; border: 1px solid #1A1D22; color: #F2F4F5; text-decoration: none">
+    <span style="width: 34px; height: 34px; flex: none; border-radius: 50%; background: #262A31; display: grid; place-items: center; font-size: 12px; font-weight: 600">AR</span>
+    <span style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 14px; font-weight: 500">Alex Rivera</span><span style="font-size: 12px; color: #9AA1AB">Rivera Digital · Premium</span></span>
+  </a>
+</nav>
+</x-dc></template>
+<script>window.__DC_COMPONENTS = window.__DC_COMPONENTS || {}; window.__DC_COMPONENTS['Nav'] = function (DCLogic, React) {
+
+class Component extends DCLogic {
+  renderVals() {
+    const cur = this.props.current ?? 'home';
+    const core = [
+      ['connect', 'Plug in', 'Connect.dc.html'],
+      ['scan', 'Site scan', 'Scan.dc.html'],
+      ['home', 'Today’s moves', 'Home.dc.html'],
+      ['path', 'Page progress', 'Path.dc.html'],
+      ['tracker', 'Keyword tracker', 'Win.dc.html'],
+      ['backlinks', 'Backlinks', 'Backlinks.dc.html'],
+      ['results', 'Results', 'Results.dc.html'],
+      ['reports', 'Reports and change log', 'Changelog.dc.html']
+    ].map((d, i) => ({ n: String(i + 1), label: d[1], href: d[2], on: d[0] === cur, off: d[0] !== cur }));
+    const account = [
+      ['command', 'Agency command centre', 'Command.dc.html'],
+      ['sites', 'All client sites', 'Portfolio.dc.html'],
+      ['clientreport', 'Client report', 'Report.dc.html'],
+      ['settings', 'Settings', 'Settings.dc.html'],
+      ['billing', 'Plan and billing', 'Pricing.dc.html']
+    ].map((d) => ({ label: d[1], href: d[2], on: d[0] === cur, off: d[0] !== cur }));
+    return { core: core, account: account };
+  }
+}
+
+return Component;
+};</script>
+</body>
+</html>

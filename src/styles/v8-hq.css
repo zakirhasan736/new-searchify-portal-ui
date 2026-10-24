@@ -1,0 +1,126 @@
+.v8-hq-head {
+  max-width: 1240px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.v8-hq-head .v8-brand {
+  margin-right: auto;
+}
+.v8-hq-sample {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #3a404a;
+  color: #9aa1ab;
+}
+.v8-hq-exit {
+  font-size: 13px;
+  color: var(--muted) !important;
+  text-decoration: none;
+}
+.v8-hq-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255, 90, 78, 0.16);
+  color: #ff8a80;
+  margin-left: 8px;
+}
+.v8-hq-list {
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.v8-hq-row {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+}
+.v8-hq-row.is-on {
+  border-color: var(--blue);
+  background: rgba(77, 163, 255, 0.08);
+}
+.v8-hq-row .av {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 10px;
+  background: #262a31;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+.v8-hq-filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.v8-hq-filters button {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid #262a31;
+  background: transparent;
+  color: #d7dade;
+  font-size: 13px;
+  cursor: pointer;
+}
+.v8-hq-filters button.is-on {
+  border-color: #d5f879;
+  background: rgba(213, 248, 121, 0.1);
+  color: #f2f4f5;
+  font-weight: 600;
+}
+.v8-hq-detail {
+  border-radius: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.v8-hq-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+.v8-hq-kpi {
+  border-radius: 16px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.v8-hq-kpi strong {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+.v8-hq-kpi span {
+  font-size: 12px;
+  color: var(--muted);
+}

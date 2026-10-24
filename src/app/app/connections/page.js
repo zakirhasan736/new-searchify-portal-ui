@@ -1,12 +1,7 @@
-import { Suspense } from "react";
-import { ConnectionsView } from "@/components/board/WorkspaceViews";
+"use client";
 
-export const metadata = { title: "Connections" };
+import ConnectScreen from "@/components/v8/screens/ConnectScreen";
 
 export default function Page() {
-  return (
-    <Suspense fallback={null}>
-      <ConnectionsView />
-    </Suspense>
-  );
+  return <ConnectScreen />;
 }

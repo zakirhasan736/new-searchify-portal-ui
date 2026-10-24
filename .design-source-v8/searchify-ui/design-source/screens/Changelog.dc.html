@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — Reports and change log</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+@keyframes sfy-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes sfy-breathe{0%,100%{opacity:1}50%{opacity:.5}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 1240px; background: #0A0B0D; display: flex; flex-wrap: wrap; align-items: stretch">
+<div style="flex: 1 1 248px; max-width: 100%; display: flex">
+<dc-import name="Nav" current="reports" hint-size="248px,1240px"></dc-import>
+</div>
+<div style="flex: 999 1 560px; min-width: 0; min-height: 1240px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 22px clamp(16px, 4vw, 56px) 56px; display: flex; flex-direction: column; gap: 28px">
+  <header style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+    <a href="Home.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #262A31; color: #F2F4F5; text-decoration: none; font-size: 13px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+      Home
+    </a>
+    <a href="Portfolio.dc.html" style="display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 10px; color: #F2F4F5; text-decoration: none; font-weight: 600; font-size: 15px">northline.example
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA1AB" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 10l5 5 5-5"></path></svg>
+    </a>
+  </header>
+
+  <div style="max-width: 1120px; width: 100%; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(36px, 4.6vw, 58px); line-height: 1; letter-spacing: -1.6px; font-weight: 700">Reports and change log</h1>
+      <div style="display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; color: #9AA1AB">
+        <span><strong style="color: #F2F4F5">11</strong> changes shipped</span>
+        <span><strong style="color: {{accent}}">+376</strong> visitors / mo captured</span>
+        <span><strong style="color: #F2F4F5">1</strong> undone automatically</span>
+      </div>
+    </div>
+    <div role="tablist" aria-label="View" style="display: inline-flex; padding: 4px; border-radius: 14px; background: #131519; border: 1px solid #262A31">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+        <sc-if value="{{t.on}}" hint-placeholder-val="{{false}}"><button type="button" role="tab" aria-selected="true" onClick="{{t.pick}}" style="min-height: 42px; padding: 0 18px; border-radius: 10px; border: 0; background: #262A31; color: #F2F4F5; font-size: 14px; font-weight: 600">{{t.label}}</button></sc-if>
+        <sc-if value="{{t.off}}" hint-placeholder-val="{{true}}"><button type="button" role="tab" aria-selected="false" onClick="{{t.pick}}" style="min-height: 42px; padding: 0 18px; border-radius: 10px; border: 0; background: transparent; color: #9AA1AB; font-size: 14px">{{t.label}}</button></sc-if>
+      </sc-for>
+    </div>
+  </div>
+
+  <sc-if value="{{isLog}}" hint-placeholder-val="{{true}}">
+    <div style="max-width: 1120px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; animation: sfy-rise .25s ease both">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap">
+        <div style="display: flex; flex-direction: column; gap: 10px; flex: 1 1 560px">
+          <div role="group" aria-label="Filter by what changed" style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #7D848E; width: 64px">CHANGED</span>
+            <sc-for list="{{types}}" as="f" hint-placeholder-count="7">
+              <sc-if value="{{f.on}}" hint-placeholder-val="{{false}}"><button type="button" aria-pressed="true" onClick="{{f.pick}}" style="display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 13px; border-radius: 999px; border: 1px solid #4DA3FF; background: rgba(77,163,255,.12); color: #F2F4F5; font-size: 13px; font-weight: 600; box-shadow: 0 0 18px rgba(77,163,255,.3)">{{f.label}} <span style="font-family: 'Geist Mono', monospace">{{f.count}}</span></button></sc-if>
+              <sc-if value="{{f.off}}" hint-placeholder-val="{{true}}"><button type="button" aria-pressed="false" onClick="{{f.pick}}" style="display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 13px; border-radius: 999px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 13px">{{f.label}} <span style="font-family: 'Geist Mono', monospace; color: #9AA1AB">{{f.count}}</span></button></sc-if>
+            </sc-for>
+          </div>
+          <div role="group" aria-label="Filter by result" style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #7D848E; width: 64px">RESULT</span>
+            <sc-for list="{{results}}" as="f" hint-placeholder-count="5">
+              <sc-if value="{{f.on}}" hint-placeholder-val="{{false}}"><button type="button" aria-pressed="true" onClick="{{f.pick}}" style="display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid #F2F4F5; background: #F2F4F5; color: #0A0B0D; font-size: 12px; font-weight: 600"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{f.dot}}"></span>{{f.label}}</button></sc-if>
+              <sc-if value="{{f.off}}" hint-placeholder-val="{{true}}"><button type="button" aria-pressed="false" onClick="{{f.pick}}" style="display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 12px"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{f.dot}}"></span>{{f.label}}</button></sc-if>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
+          <button type="button" onClick="{{csv}}" style="min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 14px">{{csvLabel}}</button>
+          <button type="button" onClick="{{goReports}}" style="min-height: 44px; padding: 0 18px; border-radius: 12px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 14px; font-weight: 600; box-shadow: 0 0 20px rgba(77,163,255,.4)">Create report</button>
+        </div>
+      </div>
+
+      <div style="font-size: 13px; color: #9AA1AB">{{showingLabel}}</div>
+
+      <div style="border-radius: 22px; background: #101215; border: 1px solid #1A1D22; overflow: hidden">
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+          <div style="border-bottom: 1px solid #1A1D22">
+            <button type="button" onClick="{{r.toggle}}" aria-expanded="{{r.openStr}}" style="width: 100%; text-align: left; background: transparent; border: 0; color: #F2F4F5; padding: 16px 22px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap">
+              <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #7D848E; width: 52px">{{r.date}}</span>
+              <span style="font-family: 'Geist Mono', monospace; font-size: 11px; padding: 4px 8px; border-radius: 6px; border: 1px solid #262A31; color: #D7DADE; width: 104px; text-align: center; box-sizing: border-box">{{r.typeLabel}}</span>
+              <span style="flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+                <span style="font-size: 15px">{{r.change}}</span>
+                <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #9AA1AB">{{r.page}}</span>
+              </span>
+              <span style="display: inline-flex; align-items: center; gap: 8px; width: 190px">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: {{r.dot}}"></span>
+                <span style="font-size: 14px; color: {{r.resultColor}}">{{r.result}}</span>
+              </span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9AA1AB" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="transform: {{r.chev}}; transition: transform .2s ease"><path d="M7 10l5 5 5-5"></path></svg>
+            </button>
+            <sc-if value="{{r.open}}" hint-placeholder-val="{{false}}">
+              <div style="padding: 0 22px 20px 90px; display: flex; flex-direction: column; gap: 12px; animation: sfy-rise .2s ease both">
+                <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+                  <div style="border-radius: 12px; background: #0A0B0D; border: 1px solid #1A1D22; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #7D848E">BEFORE</span><span style="font-size: 14px; color: #9AA1AB">{{r.before}}</span></div>
+                  <div style="border-radius: 12px; background: rgba(77,163,255,.06); border: 1px solid #4DA3FF; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #4DA3FF">AFTER</span><span style="font-size: 14px">{{r.after}}</span></div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: #9AA1AB">
+                  <span>Approved by {{r.by}} · checked live {{r.date}}</span>
+                  <span style="color: #3A404A">|</span>
+                  <span style="display: inline-flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M8 15l4-4 3 3 5-6"></path></svg>{{r.bench}}</span>
+                  <span style="margin-left: auto"></span>
+                  <sc-if value="{{r.canUndo}}" hint-placeholder-val="{{true}}"><button type="button" style="min-height: 36px; padding: 0 12px; border-radius: 9px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 13px">Undo this change</button></sc-if>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isReports}}" hint-placeholder-val="{{false}}">
+    <div style="max-width: 1120px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; animation: sfy-rise .25s ease both">
+      <section aria-label="Create a report" style="flex: 999 1 520px; min-width: 0; border-radius: 24px; background: #131519; border: 1px solid #262A31; padding: 26px; display: flex; flex-direction: column; gap: 20px">
+        <h2 style="margin: 0; font-size: 22px; font-weight: 600">Create a report</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">Period
+            <select style="min-height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 15px"><option>October 2026</option><option>Last 90 days</option><option>Since we started</option></select>
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">Branding
+            <select style="min-height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 15px"><option>Rivera Digital</option><option>Searchify (default)</option></select>
+          </label>
+        </div>
+        <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px">
+          <legend style="font-size: 13px; color: #9AA1AB; margin-bottom: 8px">Include</legend>
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 15px"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #4DA3FF">Results: visitors and calls gained</label>
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 15px"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #4DA3FF">Change log with before and after</label>
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 15px"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #4DA3FF">Site health board</label>
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 15px"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #4DA3FF">How you compare with similar businesses</label>
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 15px"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #4DA3FF">Coming up next month</label>
+        </fieldset>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center">
+          <sc-if value="{{canMake}}" hint-placeholder-val="{{true}}">
+            <button type="button" onClick="{{make}}" style="min-height: 52px; padding: 0 24px; border-radius: 13px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 15px; font-weight: 600; box-shadow: 0 0 22px rgba(77,163,255,.45)">Generate branded PDF</button>
+          </sc-if>
+          <sc-if value="{{atLimit}}" hint-placeholder-val="{{false}}">
+            <a href="Pricing.dc.html" style="display: inline-flex; align-items: center; min-height: 52px; padding: 0 22px; border-radius: 13px; background: #4DA3FF; color: #0A0B0D; text-decoration: none; font-size: 15px; font-weight: 600">Upgrade for unlimited reports</a>
+          </sc-if>
+          <a href="Report.dc.html" style="display: inline-flex; align-items: center; min-height: 52px; padding: 0 18px; border-radius: 13px; border: 1px solid #262A31; color: #F2F4F5; text-decoration: none; font-size: 15px">Preview as client</a>
+        </div>
+        <sc-if value="{{justMade}}" hint-placeholder-val="{{false}}">
+          <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: #4DA3FF"><span style="width: 8px; height: 8px; border-radius: 50%; background: #4DA3FF; box-shadow: 0 0 10px #4DA3FF"></span>October report ready · added to the list</span>
+        </sc-if>
+      </section>
+
+      <aside style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <div style="border-radius: 24px; background: #101215; border: 1px solid #1A1D22; padding: 22px; display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 16px; font-weight: 600">Your exports</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #9AA1AB">PRO · THIS SITE · OCTOBER</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Branded PDF reports</span><span style="font-family: 'Geist Mono', monospace; color: {{quotaColor}}">{{used}} of 5</span></div>
+            <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px">
+              <sc-for list="{{slots}}" as="s" hint-placeholder-count="5"><div style="height: 8px; border-radius: 4px; background: {{s.color}}; box-shadow: {{s.glow}}"></div></sc-for>
+            </div>
+            <span style="font-size: 12px; color: #7D848E">Resets November 1</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 1px solid #1A1D22; font-size: 14px">
+            <div style="display: flex; justify-content: space-between; gap: 10px"><span>Scheduled client sends</span><span style="font-family: 'Geist Mono', monospace; color: #9AA1AB">1 of 1</span></div>
+            <div style="display: flex; justify-content: space-between; gap: 10px"><span>Client logins</span><span style="font-family: 'Geist Mono', monospace; color: #9AA1AB">2 of 3</span></div>
+            <div style="display: flex; justify-content: space-between; gap: 10px"><span>CSV of your change log</span><span style="color: #3DDC84">Unlimited, always</span></div>
+            <div style="display: flex; justify-content: space-between; gap: 10px"><span>White-label (no Searchify name)</span><a href="Pricing.dc.html" style="color: #9AA1AB; font-size: 13px">Premium</a></div>
+          </div>
+        </div>
+
+        <div style="border-radius: 24px; background: #101215; border: 1px solid #1A1D22; padding: 8px 22px">
+          <sc-for list="{{reports}}" as="rp" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid #1A1D22">
+              <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px">{{rp.name}}</span><span style="font-size: 12px; color: #9AA1AB">{{rp.meta}}</span></span>
+              <a href="Report.dc.html" style="color: #4DA3FF; font-size: 13px; text-decoration: none">Open</a>
+            </div>
+          </sc-for>
+        </div>
+      </aside>
+    </div>
+  </sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#D5F879","options":["#D5F879","#9FE7F5","#FFD36E","#C9B8FF"]},"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'log', type: 'all', result: 'all', open: 'sep15', used: 3, made: false, csv: false };
+  }
+  renderVals() {
+    const A = this.props.accent ?? '#D5F879';
+    const TYPES = { title: 'TITLE TAG', desc: 'DESCRIPTION', image: 'IMAGES', schema: 'SCHEMA', links: 'LINKS', content: 'CONTENT' };
+    const BENCH = {
+      title: 'Similar title changes on local-service sites: median +18% clicks · 412 changes',
+      desc: 'Similar description changes: median +7% clicks · 389 changes',
+      image: 'Similar image alt-text changes: median +4% image-search visits · 120 changes',
+      schema: 'Similar FAQ schema changes: median +2% clicks · 97 changes',
+      links: 'Similar internal-link changes: median +9% clicks · 203 changes',
+      content: 'Similar guide refreshes: median +22% clicks · 156 changes'
+    };
+    const all = [
+      { id: 'oct14a', date: 'Oct 14', type: 'title', change: 'Title rewritten to mention Calgary', page: '/services/roof-replacement', res: 'measuring', result: 'Measuring · day 5 of 28', by: 'you', before: 'Roof Replacement | Northline Roofing', after: 'Roof Replacement in Calgary — Free Written Quotes | Northline' },
+      { id: 'oct14b', date: 'Oct 14', type: 'desc', change: 'Description rewritten', page: '/services/roof-replacement', res: 'measuring', result: 'Measuring · day 5 of 28', by: 'you', before: 'We replace roofs.', after: 'Asphalt, metal and flat roof replacement across Calgary, Airdrie and Cochrane. Written quote before any work starts.' },
+      { id: 'oct09', date: 'Oct 09', type: 'links', change: 'Linked from 2 popular posts', page: '/services/skylights', res: 'measuring', result: 'Measuring · day 10 of 28', by: 'Maya (client)', before: 'No links from /blog/skylight-leaks or /blog/winter-prep', after: 'One contextual link added in each post' },
+      { id: 'oct02', date: 'Oct 02', type: 'image', change: 'Alt text added to 12 images', page: '/services/gutters', res: 'up', delta: 9, result: '+9 visitors / mo', by: 'you', before: '12 images with empty alt text', after: 'Descriptive alt text, e.g. “seamless aluminum gutter on a Calgary bungalow”' },
+      { id: 'sep22', date: 'Sep 22', type: 'content', change: 'Guide refreshed for hail season', page: '/blog/hail-damage-insurance', res: 'up', delta: 118, result: '+118 visitors / mo', by: 'you', before: 'Version from March 2024', after: 'Updated claim steps, 2026 insurer rules, photo checklist' },
+      { id: 'sep15', date: 'Sep 15', type: 'title', change: 'Title rewritten', page: '/services/flat-roofs', res: 'up', delta: 64, result: '+64 visitors / mo', by: 'you', before: 'Flat Roofs | Northline Roofing', after: 'Flat Roof Repair & Replacement in Calgary | Northline' },
+      { id: 'sep08', date: 'Sep 08', type: 'schema', change: 'FAQ schema added', page: '/services/gutters', res: 'flat', result: 'No clear effect', by: 'Maya (client)', before: 'No structured data', after: 'FAQ markup for 5 questions' },
+      { id: 'sep01', date: 'Sep 01', type: 'desc', change: 'Description rewritten', page: '/services/siding', res: 'up', delta: 21, result: '+21 visitors / mo', by: 'you', before: '(empty)', after: 'Vinyl and fibre-cement siding installed and repaired in Calgary. Same-week quotes.' },
+      { id: 'aug30', date: 'Aug 30', type: 'desc', change: 'Description rewritten', page: '/about', res: 'undone', result: '−21 visitors · auto-undone', by: 'you', before: 'About Northline Roofing — family-owned since 1998.', after: 'Calgary’s trusted roofers. (Restored to the original on Sep 27)' },
+      { id: 'aug21', date: 'Aug 21', type: 'title', change: 'Title rewritten', page: '/services/roof-inspection', res: 'up', delta: 130, result: '+130 visitors / mo', by: 'you', before: 'Roof Inspections | Northline Roofing', after: 'Roof Inspection in Calgary — Report in 24 Hours | Northline' },
+      { id: 'aug12', date: 'Aug 12', type: 'title', change: 'Title rewritten', page: '/service-area/airdrie', res: 'up', delta: 34, result: '+34 visitors / mo', by: 'you', before: 'Airdrie | Northline', after: 'Roofers in Airdrie — Repairs, Replacements, Inspections | Northline' }
+    ];
+    const LOOK = { up: { dot: '#3DDC84', color: '#F2F4F5' }, measuring: { dot: '#4DA3FF', color: '#9AA1AB' }, flat: { dot: '#3A404A', color: '#9AA1AB' }, undone: { dot: '#FF5A4E', color: '#9AA1AB' } };
+    const st = this.state;
+    const rows = all.filter((r) => (st.type === 'all' || r.type === st.type) && (st.result === 'all' || r.res === st.result)).map((r) => {
+      const open = st.open === r.id;
+      return Object.assign({}, r, {
+        typeLabel: TYPES[r.type], bench: BENCH[r.type], dot: LOOK[r.res].dot, resultColor: LOOK[r.res].color,
+        open: open, openStr: String(open), chev: open ? 'rotate(180deg)' : 'none', canUndo: r.res !== 'undone',
+        toggle: () => this.setState({ open: open ? null : r.id })
+      });
+    });
+    const tdefs = [['all', 'All'], ['title', 'Title tags'], ['desc', 'Descriptions'], ['image', 'Images'], ['schema', 'Schema'], ['links', 'Links'], ['content', 'Content']];
+    const types = tdefs.map((d) => ({ label: d[1], count: String(d[0] === 'all' ? all.length : all.filter((r) => r.type === d[0]).length), on: st.type === d[0], off: st.type !== d[0], pick: () => this.setState({ type: d[0] }) }));
+    const rdefs = [['all', 'Any result', '#9AA1AB'], ['up', 'Worked', '#3DDC84'], ['measuring', 'Measuring', '#4DA3FF'], ['flat', 'No effect', '#3A404A'], ['undone', 'Undone', '#FF5A4E']];
+    const results = rdefs.map((d) => ({ label: d[1], dot: d[2], on: st.result === d[0], off: st.result !== d[0], pick: () => this.setState({ result: d[0] }) }));
+    const gained = rows.reduce((a, r) => a + (r.delta || 0), 0);
+    const used = st.used;
+    const slots = [0, 1, 2, 3, 4].map((i) => ({ color: i < used ? '#4DA3FF' : '#262A31', glow: i < used ? '0 0 8px rgba(77,163,255,.5)' : 'none' }));
+    const reports = (st.made ? [{ name: 'October 2026 · monthly', meta: 'Branded PDF · just now' }] : []).concat([
+      { name: 'September 2026 · monthly', meta: 'Sent to Maya · opened twice' },
+      { name: 'Q3 2026 · quarterly', meta: 'Branded PDF · Oct 1' },
+      { name: 'August 2026 · monthly', meta: 'Sent to Maya · opened' }
+    ]);
+    return {
+      accent: A, rows: rows, types: types, results: results,
+      showingLabel: 'Showing ' + rows.length + (rows.length === 1 ? ' change' : ' changes') + (gained > 0 ? ' · +' + gained + ' visitors / mo from these' : ''),
+      tabs: [['log', 'Change log'], ['reports', 'Reports']].map((t) => ({ label: t[1], on: st.tab === t[0], off: st.tab !== t[0], pick: () => this.setState({ tab: t[0] }) })),
+      isLog: st.tab === 'log', isReports: st.tab === 'reports',
+      goReports: () => this.setState({ tab: 'reports' }),
+      csv: () => this.setState({ csv: true }), csvLabel: st.csv ? 'CSV downloaded' : 'Export CSV',
+      used: String(used), slots: slots, quotaColor: used >= 5 ? '#FFC53D' : '#F2F4F5',
+      canMake: used < 5, atLimit: used >= 5, justMade: st.made,
+      make: () => this.setState({ used: Math.min(5, used + 1), made: true }),
+      reports: reports
+    };
+  }
+}
+</script>
+</body>
+</html>

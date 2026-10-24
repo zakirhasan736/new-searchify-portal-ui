@@ -1,7 +1,7 @@
-﻿import { BacklinksView } from "@/components/board/WorkspaceViews";
+"use client";
 
-export const metadata = { title: "Backlinks" };
+import BacklinksScreen from "@/components/v8/screens/BacklinksScreen";
 
 export default function Page() {
-  return <BacklinksView />;
+  return <BacklinksScreen />;
 }

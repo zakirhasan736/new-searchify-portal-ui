@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — HQ shareholders</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.45}
+input[type=range]{accent-color:#D5F879}
+input[type=checkbox]{accent-color:#D5F879;width:18px;height:18px}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
+@keyframes sfy-rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 1500px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 22px clamp(16px, 4vw, 56px) 56px; display: flex; flex-direction: column; gap: 22px">
+
+  <header style="max-width: 1240px; width: 100%; margin: 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+    <span style="display: flex; align-items: center; gap: 10px; margin-right: auto">
+      <svg width="30" height="30" viewBox="0 0 32 32" role="img" aria-label="Searchify"><rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="#131519" stroke="#2E333B"></rect><circle cx="9" cy="12.5" r="2.9" fill="#FF5A4E"></circle><circle cx="16" cy="12.5" r="2.9" fill="#FF9F43"></circle><circle cx="23" cy="12.5" r="2.9" fill="#FFC53D"></circle><circle cx="9" cy="19.5" r="2.9" fill="#3DDC84"></circle><circle cx="16" cy="19.5" r="2.9" fill="#2CC7C0"></circle><circle cx="23" cy="19.5" r="2.9" fill="#4DA3FF"></circle></svg>
+      <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.4px">searchify</span>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 6px; background: #D5F879; color: #0A0B0D; font-weight: 600">HQ</span>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 6px; border: 1px solid #3A404A; color: #9AA1AB">SAMPLE DATA</span>
+    </span>
+    <a href="screens.html" style="font-size: 13px; color: #9AA1AB; text-decoration: none">Exit HQ</a>
+  </header>
+
+  <nav aria-label="HQ sections" style="max-width: 1240px; width: 100%; margin: 0 auto; display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid #1A1D22; padding-bottom: 12px">
+    <a href="Admin.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Overview</a>
+    <a href="HQCustomers.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Customers</a>
+    <a href="HQPartners.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Partners and payouts</a>
+    <a href="HQProblems.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Problems <span style="font-family: 'Geist Mono', monospace; font-size: 11px; padding: 2px 7px; border-radius: 999px; background: rgba(255,90,78,.16); color: #FF8A80">9</span></a>
+    <a href="HQShareholders.dc.html" aria-current="page" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; background: #1A1D22; color: #F2F4F5; text-decoration: none; font-size: 14px; font-weight: 600">Shareholders</a>
+  </nav>
+
+  <div style="max-width: 1240px; width: 100%; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(30px, 3.4vw, 42px); line-height: 1.04; letter-spacing: -1.2px; font-weight: 700">{{headline}}</h1>
+      <span style="font-size: 15px; color: #9AA1AB">The dividend rules from the shareholder agreements, checked against the books.</span>
+    </div>
+    <div role="group" aria-label="Which numbers to show" style="display: inline-flex; padding: 4px; border-radius: 12px; background: #131519; border: 1px solid #262A31">
+      <sc-for list="{{scenarios}}" as="s" hint-placeholder-count="2">
+        <sc-if value="{{s.on}}" hint-placeholder-val="{{false}}"><button type="button" aria-pressed="true" onClick="{{s.pick}}" style="min-height: 36px; padding: 0 14px; border-radius: 9px; border: 0; background: #262A31; color: #F2F4F5; font-size: 13px; font-weight: 600">{{s.label}}</button></sc-if>
+        <sc-if value="{{s.off}}" hint-placeholder-val="{{true}}"><button type="button" aria-pressed="false" onClick="{{s.pick}}" style="min-height: 36px; padding: 0 14px; border-radius: 9px; border: 0; background: transparent; color: #9AA1AB; font-size: 13px">{{s.label}}</button></sc-if>
+      </sc-for>
+    </div>
+  </div>
+
+  <section aria-labelledby="test-h" style="max-width: 1240px; width: 100%; box-sizing: border-box; margin: 0 auto; border-radius: 22px; background: #101215; border: 1px solid {{verdictBorder}}; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+      <h2 id="test-h" style="margin: 0; font-size: 18px; font-weight: 600">Can we pay a dividend?</h2>
+      <span style="font-size: 14px; font-weight: 600; padding: 6px 12px; border-radius: 999px; color: {{verdictColor}}; background: {{verdictBg}}">{{verdict}}</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px">
+      <div style="border-radius: 16px; background: #0A0B0D; border: 1px solid #1A1D22; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+        <span style="display: flex; justify-content: space-between; gap: 8px; font-size: 14px; font-weight: 600"><span>1 · Six profitable months in a row</span><span style="color: {{t1.color}}">{{t1.mark}}</span></span>
+        <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px">
+          <sc-for list="{{months}}" as="m" hint-placeholder-count="6">
+            <div style="border-radius: 10px; padding: 8px 4px; text-align: center; background: {{m.bg}}; display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 11px; color: #9AA1AB">{{m.label}}</span>
+              <span style="font-family: 'Geist Mono', monospace; font-size: 12px; font-weight: 600; color: {{m.color}}">{{m.value}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <span style="font-size: 12px; color: #7D848E">Profit after all expenses, your pay and a provision for income tax.</span>
+      </div>
+      <div style="border-radius: 16px; background: #0A0B0D; border: 1px solid #1A1D22; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+        <span style="display: flex; justify-content: space-between; gap: 8px; font-size: 14px; font-weight: 600"><span>2 · Three months of expenses kept in the bank</span><span style="color: {{t2.color}}">{{t2.mark}}</span></span>
+        <span style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: #9AA1AB">Cash in the bank</span><span style="font-family: 'Geist Mono', monospace">{{cash}}</span></span>
+        <span style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: #9AA1AB">Must keep (3 × {{avgExp}} average)</span><span style="font-family: 'Geist Mono', monospace">{{reserve}}</span></span>
+        <span style="display: flex; justify-content: space-between; font-size: 13px; padding-top: 8px; border-top: 1px solid #1A1D22"><span>Available above the reserve</span><span style="font-family: 'Geist Mono', monospace; color: {{t2.color}}">{{spare}}</span></span>
+      </div>
+      <div style="border-radius: 16px; background: #0A0B0D; border: 1px solid #1A1D22; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+        <span style="display: flex; justify-content: space-between; gap: 8px; font-size: 14px; font-weight: 600"><span>3 · Legal solvency test</span><span style="color: {{t3.color}}">{{t3.mark}}</span></span>
+        <span style="font-size: 13px; color: #9AA1AB; line-height: 1.5">Alberta law: after the dividend, the company must still be able to pay its debts as they come due, and its assets must be worth more than its debts.</span>
+        <label style="display: flex; align-items: center; gap: 10px; font-size: 14px; min-height: 40px">
+          <input type="checkbox" checked="{{solvent}}" onChange="{{toggleSolvent}}">
+          The accountant confirmed this for the dividend below
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <div style="max-width: 1240px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch">
+    <section aria-labelledby="calc-h" style="flex: 999 1 560px; min-width: 0; border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+      <h2 id="calc-h" style="margin: 0; font-size: 17px; font-weight: 600">Split a dividend</h2>
+      <sc-if value="{{canPay}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; flex-direction: column; gap: 14px">
+          <label style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #9AA1AB">Total dividend to declare (up to {{maxDiv}}: half of last quarter's after-tax profit, and no more than the cash above the reserve)
+            <span style="display: flex; align-items: center; gap: 14px">
+              <input type="range" min="0" max="{{maxRaw}}" step="100" value="{{amountRaw}}" onInput="{{setAmount}}" style="flex: 1">
+              <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 28px; font-weight: 800; color: #D5F879; min-width: 120px; text-align: right">{{amount}}</span>
+            </span>
+          </label>
+          <div style="border-radius: 14px; border: 1px solid #1A1D22; overflow-x: auto">
+            <div style="min-width: 620px">
+              <div aria-hidden="true" style="display: grid; grid-template-columns: minmax(0, 1.4fr) 70px 110px 150px 110px; gap: 10px; padding: 10px 14px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #7D848E; border-bottom: 1px solid #1A1D22">
+                <span>SHAREHOLDER</span><span style="text-align: right">SHARE</span><span style="text-align: right">DIVIDEND</span><span style="text-align: right">CANADIAN TAX WITHHELD</span><span style="text-align: right">THEY RECEIVE</span>
+              </div>
+              <sc-for list="{{split}}" as="s" hint-placeholder-count="4">
+                <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) 70px 110px 150px 110px; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid #16181C; font-size: 14px">
+                  <span style="display: flex; flex-direction: column; min-width: 0"><span>{{s.name}}</span><span style="font-size: 12px; color: {{s.noteColor}}">{{s.note}}</span></span>
+                  <span style="text-align: right; color: #9AA1AB">{{s.pct}}</span>
+                  <span style="text-align: right; font-family: 'Geist Mono', monospace; font-size: 13px">{{s.gross}}</span>
+                  <span style="text-align: right; font-family: 'Geist Mono', monospace; font-size: 13px; color: #FFC53D">{{s.wh}}</span>
+                  <span style="text-align: right; font-family: 'Geist Mono', monospace; font-size: 13px; color: #D5F879">{{s.net}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <span style="font-size: 12px; color: #7D848E; line-height: 1.5">US shareholders: 15% is withheld when their NR301 form is on file, 25% without it, sent to CRA by the 15th of the next month. Slips: T5 for Canadian shareholders by the end of February, NR4 for US shareholders by March 31.</span>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
+            <button type="button" onClick="{{prepare}}" disabled="{{prepDisabled}}" style="min-height: 46px; padding: 0 18px; border-radius: 12px; border: 0; background: #D5F879; color: #0A0B0D; font-size: 14px; font-weight: 600">Prepare board resolution</button>
+            <span role="status" style="font-size: 13px; color: {{prepColor}}">{{prepNote}}</span>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{cannotPay}}" hint-placeholder-val="{{false}}">
+        <div style="border-radius: 14px; background: #0A0B0D; border: 1px solid #1A1D22; padding: 16px; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 15px; font-weight: 600">Not yet.</span>
+          <span style="font-size: 14px; color: #9AA1AB; line-height: 1.5">{{whyNot}}</span>
+        </div>
+      </sc-if>
+    </section>
+
+    <section aria-labelledby="cap-h" style="flex: 1 1 340px; min-width: 0; border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+      <h2 id="cap-h" style="margin: 0; font-size: 17px; font-weight: 600">Who owns the company</h2>
+      <sc-for list="{{cap}}" as="c" hint-placeholder-count="4">
+        <div style="display: flex; flex-direction: column; gap: 6px; padding: 8px 0; border-top: 1px solid #16181C">
+          <span style="display: flex; justify-content: space-between; gap: 8px; font-size: 14px"><span>{{c.name}}</span><span style="font-family: 'Geist Mono', monospace">{{c.pct}}</span></span>
+          <div style="height: 8px; border-radius: 4px; background: #1A1D22; overflow: hidden"><div style="height: 100%; width: {{c.pct}}; background: {{c.color}}; border-radius: 4px"></div></div>
+          <span style="font-size: 12px; color: #7D848E">{{c.shares}} Class A shares · {{c.where}}</span>
+        </div>
+      </sc-for>
+      <span style="font-size: 12px; color: #7D848E">10,000,000 shares issued. One class: same vote and same dividend per share.</span>
+    </section>
+  </div>
+
+  <div style="max-width: 1240px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch">
+    <section aria-labelledby="qu-h" style="flex: 999 1 560px; min-width: 0; border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap">
+        <h2 id="qu-h" style="margin: 0; font-size: 17px; font-weight: 600">Quarterly shareholder update</h2>
+        <span style="font-size: 13px; color: {{quColor}}">{{quStatus}}</span>
+      </div>
+      <span style="font-size: 14px; color: #9AA1AB">July to September. Due within 45 days of the quarter end: <span style="color: #F2F4F5">November 14</span>.</span>
+      <sc-if value="{{quNotStarted}}" hint-placeholder-val="{{true}}">
+        <button type="button" onClick="{{buildUpdate}}" style="align-self: flex-start; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 14px; font-weight: 600">Build the draft from the books</button>
+      </sc-if>
+      <sc-if value="{{quHasDraft}}" hint-placeholder-val="{{false}}">
+        <div style="border-radius: 14px; background: #0A0B0D; border: 1px solid #1A1D22; padding: 16px; display: flex; flex-direction: column; gap: 8px; animation: sfy-rise .25s ease both">
+          <sc-for list="{{update}}" as="u" hint-placeholder-count="6">
+            <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 14px; padding: 4px 0; border-bottom: 1px solid #16181C"><span style="color: #9AA1AB">{{u.label}}</span><span style="text-align: right">{{u.value}}</span></div>
+          </sc-for>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB; margin-top: 4px">Your note to shareholders
+            <textarea rows="3" style="padding: 10px 12px; border-radius: 10px; border: 1px solid #262A31; background: #101215; color: #F2F4F5; font: inherit; font-size: 14px; resize: vertical">Strong quarter: Premium agencies are now a third of revenue. Next quarter we focus on lowering the undo rate below 3%.</textarea>
+          </label>
+          <sc-if value="{{quNotSent}}" hint-placeholder-val="{{true}}">
+            <button type="button" onClick="{{sendUpdate}}" style="align-self: flex-start; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 0; background: #D5F879; color: #0A0B0D; font-size: 14px; font-weight: 600">Send to Nicholas, Emin and Howard</button>
+          </sc-if>
+        </div>
+      </sc-if>
+    </section>
+
+    <section aria-labelledby="hw-h" style="flex: 1 1 340px; min-width: 0; border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <h2 id="hw-h" style="margin: 0; font-size: 17px; font-weight: 600">Your repayment to Howard</h2>
+      <span style="display: flex; justify-content: space-between; font-size: 14px"><span style="color: #9AA1AB">Left to repay</span><span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 24px; font-weight: 800">{{hwLeft}}</span></span>
+      <div style="height: 10px; border-radius: 5px; background: #1A1D22; overflow: hidden"><div style="height: 100%; width: {{hwPct}}; background: #3DDC84; border-radius: 5px"></div></div>
+      <span style="font-size: 13px; color: #9AA1AB">{{hwLine}}</span>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">Record a payment (CA$)
+        <span style="display: flex; gap: 8px">
+          <input type="number" min="1" step="1" value="{{hwInput}}" onInput="{{setHw}}" style="flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 15px">
+          <button type="button" onClick="{{addHw}}" disabled="{{hwDone}}" style="min-height: 44px; padding: 0 16px; border-radius: 12px; border: 0; background: #3DDC84; color: #0A0B0D; font-size: 14px; font-weight: 600">Record</button>
+        </span>
+      </label>
+      <sc-for list="{{hwPays}}" as="h" hint-placeholder-count="2">
+        <div style="display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-top: 1px solid #16181C"><span style="color: #9AA1AB">{{h.date}}</span><span style="font-family: 'Geist Mono', monospace">{{h.amount}}</span></div>
+      </sc-for>
+      <span style="font-size: 12px; color: #7D848E; line-height: 1.5">This is your personal debt, paid from your own account. It never holds up a dividend. No interest.</span>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sc: 'sample', amount: 6000, solvent: false, prepared: false, qu: 'none', hw: [], hwInput: '1000' };
+  }
+  renderVals() {
+    const S = this.state.sc;
+    const money = (v) => (v < 0 ? '−$' : '$') + Math.abs(Math.round(v)).toLocaleString('en-US');
+    const cents = (v) => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const D = S === 'sample'
+      ? { m: [['Apr', 1840], ['May', 2310], ['Jun', 2950], ['Jul', 3420], ['Aug', 4180], ['Sep', 4960]], cash: 58400, exp: 14200 }
+      : { m: [['Apr', -2350], ['May', -1980], ['Jun', -2600], ['Jul', -2140], ['Aug', -2410], ['Sep', -2200]], cash: 3200, exp: 2250 };
+    const allProfit = D.m.every((x) => x.at(1) > 0);
+    const reserve = D.exp * 3, spare = D.cash - reserve;
+    const lastQ = D.m.slice(3).reduce((a, x) => a + x.at(1), 0);
+    const cap = Math.max(0, Math.floor(Math.min(spare, lastQ * 0.5) / 100) * 100);
+    const t1ok = allProfit, t2ok = spare > 0, t3ok = this.state.solvent;
+    const can = t1ok && t2ok;
+    const amount = Math.min(this.state.amount, cap);
+    const HOLD = [
+      { name: 'Aadle Mohammad Faqiryar', pct: 0.80, shares: '8,000,000', where: 'Canada', wh: 0, note: 'Canada · T5 slip', noteColor: '#7D848E', color: '#D5F879' },
+      { name: 'Nicholas Petitt', pct: 0.10, shares: '1,000,000', where: 'United States', wh: 0.15, note: 'US · NR301 on file · NR4 slip', noteColor: '#7D848E', color: '#9FE7F5' },
+      { name: 'Emin Navasartian', pct: 0.05, shares: '500,000', where: 'United States', wh: 0.25, note: 'US · NR301 missing: 25% until it arrives', noteColor: '#FFC53D', color: '#4DA3FF' },
+      { name: 'Howard Wang', pct: 0.05, shares: '500,000', where: 'Canada', wh: 0, note: 'Canada · T5 slip', noteColor: '#7D848E', color: '#8A93A3' }
+    ];
+    const split = HOLD.map((h) => { const g = amount * h.pct, w = g * h.wh; return { name: h.name, note: h.note, noteColor: h.noteColor, pct: Math.round(h.pct * 100) + '%', gross: cents(g), wh: w ? cents(w) + ' · ' + Math.round(h.wh * 100) + '%' : '—', net: cents(g - w) }; });
+    const whyParts = [];
+    if (!t1ok) whyParts.push(D.m.filter((x) => x.at(1) > 0).length + ' of the last 6 months were profitable (all 6 must be)');
+    if (!t2ok) whyParts.push('cash is ' + money(D.cash) + ' against a ' + money(reserve) + ' reserve');
+    const hwPaid = this.state.hw.reduce((a, h) => a + h.amount, 0);
+    const left = Math.max(0, 7500 - hwPaid);
+    const prepDisabled = !t3ok || amount <= 0 || this.state.prepared;
+    const QD = S === 'sample'
+      ? [['Revenue', '$71,240'], ['Expenses (incl. your pay)', '$58,680'], ['Profit after tax provision', money(lastQ)], ['Cash at Sep 30', money(D.cash)], ['Paying customers', '131 (+19)'], ['Dealings with your other businesses', 'None'], ['Change in ownership', 'None']]
+      : [['Revenue', '$0 (pre-launch)'], ['Expenses (incl. your pay)', money(-lastQ)], ['Loss', money(lastQ)], ['Cash at Sep 30', money(D.cash)], ['Paying customers', '0 · launch planned Feb 2027'], ['Dealings with your other businesses', 'None'], ['Change in ownership', 'None']];
+    const qu = this.state.qu;
+    return {
+      headline: can ? 'A dividend of up to ' + money(cap) + ' is allowed this quarter.' : 'No dividend yet. Here’s what’s missing.',
+      scenarios: [['sample', 'Sample: a profitable year'], ['today', 'Today: pre-launch']].map((s) => ({ label: s.at(1), on: S === s.at(0), off: S !== s.at(0), pick: () => this.setState({ sc: s.at(0), prepared: false }) })),
+      verdict: can ? (t3ok ? 'Yes, all three rules pass' : 'Rules 1 and 2 pass · confirm rule 3') : 'Not yet',
+      verdictColor: can ? (t3ok ? '#3DDC84' : '#FFC53D') : '#FF8A80', verdictBg: can ? (t3ok ? 'rgba(61,220,132,.12)' : 'rgba(255,197,61,.12)') : 'rgba(255,90,78,.14)',
+      verdictBorder: can && t3ok ? 'rgba(61,220,132,.4)' : '#1A1D22',
+      t1: { mark: t1ok ? 'Pass' : 'Not yet', color: t1ok ? '#3DDC84' : '#FF8A80' },
+      t2: { mark: t2ok ? 'Pass' : 'Not yet', color: t2ok ? '#3DDC84' : '#FF8A80' },
+      t3: { mark: t3ok ? 'Confirmed' : 'Needs the accountant', color: t3ok ? '#3DDC84' : '#FFC53D' },
+      months: D.m.map((x) => ({ label: x.at(0), value: money(x.at(1)), color: x.at(1) > 0 ? '#3DDC84' : '#FF8A80', bg: x.at(1) > 0 ? 'rgba(61,220,132,.08)' : 'rgba(255,90,78,.08)' })),
+      cash: money(D.cash), avgExp: money(D.exp), reserve: money(reserve), spare: money(spare),
+      solvent: this.state.solvent, toggleSolvent: () => this.setState({ solvent: !this.state.solvent, prepared: false }),
+      canPay: can, cannotPay: !can, whyNot: 'Right now ' + whyParts.join(', and ') + '. The page turns green on its own when the books meet both rules.',
+      maxDiv: money(cap), maxRaw: cap, amountRaw: amount, amount: money(amount),
+      setAmount: (e) => this.setState({ amount: Number(e.target.value), prepared: false }),
+      split: split,
+      prepare: () => this.setState({ prepared: true }), prepDisabled: prepDisabled,
+      prepNote: this.state.prepared ? 'Board resolution drafted for ' + money(amount) + '. Sign it, then pay within 30 days.' : (t3ok ? 'Ready to draft.' : 'Tick rule 3 once the accountant has confirmed it.'),
+      prepColor: this.state.prepared ? '#3DDC84' : '#9AA1AB',
+      cap: HOLD.map((h) => ({ name: h.name, pct: Math.round(h.pct * 100) + '%', shares: h.shares, where: h.where, color: h.color })),
+      quStatus: qu === 'sent' ? 'Sent Oct 20' : (qu === 'draft' ? 'Draft ready' : '25 days left'), quColor: qu === 'sent' ? '#3DDC84' : (qu === 'draft' ? '#4DA3FF' : '#FFC53D'),
+      quNotStarted: qu === 'none', quHasDraft: qu !== 'none', quNotSent: qu === 'draft',
+      buildUpdate: () => this.setState({ qu: 'draft' }), sendUpdate: () => this.setState({ qu: 'sent' }),
+      update: QD.map((u) => ({ label: u.at(0), value: u.at(1) })),
+      hwLeft: 'CA' + money(left), hwPct: Math.round((7500 + hwPaid) / 15000 * 100) + '%',
+      hwLine: left === 0 ? 'Repaid in full. Nothing more is owed.' : 'CA$7,500 already repaid of CA$15,000. The rest is due by December 31, 2027, in one payment or in parts.',
+      hwInput: this.state.hwInput, setHw: (e) => this.setState({ hwInput: e.target.value }), hwDone: left === 0,
+      addHw: () => { const v = Math.min(left, Math.max(0, Math.round(Number(this.state.hwInput) || 0))); if (v > 0) this.setState({ hw: this.state.hw.concat([{ date: 'Oct 20', amount: v }]) }); },
+      hwPays: this.state.hw.slice().reverse().map((h) => ({ date: h.date + ' · e-transfer', amount: 'CA' + money(h.amount) })).concat([{ date: 'Already repaid (earlier payments)', amount: 'CA$7,500' }])
+    };
+  }
+}
+</script>
+</body>
+</html>

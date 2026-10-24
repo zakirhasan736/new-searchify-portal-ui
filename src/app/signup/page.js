@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { pageMeta } from "@/lib/seo";
 import Screen from "@/components/body-main/auth/signup";
 
@@ -9,5 +10,9 @@ export const metadata = pageMeta({
 });
 
 export default function Page() {
-  return <Screen />;
+  return (
+    <Suspense fallback={null}>
+      <Screen />
+    </Suspense>
+  );
 }

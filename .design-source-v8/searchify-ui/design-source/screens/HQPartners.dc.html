@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — HQ partners and payouts</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.45}
+select:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
+@keyframes sfy-rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 1200px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 22px clamp(16px, 4vw, 56px) 56px; display: flex; flex-direction: column; gap: 22px">
+
+  <header style="max-width: 1240px; width: 100%; margin: 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+    <span style="display: flex; align-items: center; gap: 10px; margin-right: auto">
+      <svg width="30" height="30" viewBox="0 0 32 32" role="img" aria-label="Searchify"><rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="#131519" stroke="#2E333B"></rect><circle cx="9" cy="12.5" r="2.9" fill="#FF5A4E"></circle><circle cx="16" cy="12.5" r="2.9" fill="#FF9F43"></circle><circle cx="23" cy="12.5" r="2.9" fill="#FFC53D"></circle><circle cx="9" cy="19.5" r="2.9" fill="#3DDC84"></circle><circle cx="16" cy="19.5" r="2.9" fill="#2CC7C0"></circle><circle cx="23" cy="19.5" r="2.9" fill="#4DA3FF"></circle></svg>
+      <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.4px">searchify</span>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 6px; background: #D5F879; color: #0A0B0D; font-weight: 600">HQ</span>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 6px; border: 1px solid #3A404A; color: #9AA1AB">SAMPLE DATA</span>
+    </span>
+    <a href="screens.html" style="font-size: 13px; color: #9AA1AB; text-decoration: none">Exit HQ</a>
+  </header>
+
+  <nav aria-label="HQ sections" style="max-width: 1240px; width: 100%; margin: 0 auto; display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid #1A1D22; padding-bottom: 12px">
+    <a href="Admin.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Overview</a>
+    <a href="HQCustomers.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Customers</a>
+    <a href="HQPartners.dc.html" aria-current="page" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; background: #1A1D22; color: #F2F4F5; text-decoration: none; font-size: 14px; font-weight: 600">Partners and payouts</a>
+    <a href="HQProblems.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Problems <span style="font-family: 'Geist Mono', monospace; font-size: 11px; padding: 2px 7px; border-radius: 999px; background: rgba(255,90,78,.16); color: #FF8A80">9</span></a>
+    <a href="HQShareholders.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Shareholders</a>
+  </nav>
+
+  <div style="max-width: 1240px; width: 100%; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(30px, 3.4vw, 42px); line-height: 1.04; letter-spacing: -1.2px; font-weight: 700">{{headline}}</h1>
+      <span style="font-size: 15px; color: #9AA1AB">{{subline}}</span>
+    </div>
+    <div role="tablist" aria-label="Partner tools" style="display: inline-flex; flex-wrap: wrap; padding: 4px; border-radius: 12px; background: #131519; border: 1px solid #262A31">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+        <sc-if value="{{t.on}}" hint-placeholder-val="{{false}}"><button type="button" role="tab" aria-selected="true" onClick="{{t.pick}}" style="min-height: 38px; padding: 0 14px; border-radius: 9px; border: 0; background: #262A31; color: #F2F4F5; font-size: 13px; font-weight: 600">{{t.label}}</button></sc-if>
+        <sc-if value="{{t.off}}" hint-placeholder-val="{{true}}"><button type="button" role="tab" aria-selected="false" onClick="{{t.pick}}" style="min-height: 38px; padding: 0 14px; border-radius: 9px; border: 0; background: transparent; color: #9AA1AB; font-size: 13px">{{t.label}}</button></sc-if>
+      </sc-for>
+    </div>
+  </div>
+
+  <sc-if value="{{isPayout}}" hint-placeholder-val="{{true}}">
+    <div style="max-width: 1240px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; animation: sfy-rise .3s ease both">
+      <section aria-label="Payout totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px">
+        <sc-for list="{{totals}}" as="k" hint-placeholder-count="4">
+          <div style="border-radius: 18px; padding: 16px 18px; background: #101215; border: 1px solid #1A1D22; display: flex; flex-direction: column; gap: 6px">
+            <span style="font-size: 13px; color: #9AA1AB">{{k.label}}</span>
+            <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -1px; line-height: 1; color: {{k.color}}">{{k.value}}</span>
+            <span style="font-size: 12px; color: #7D848E">{{k.sub}}</span>
+          </div>
+        </sc-for>
+      </section>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px">
+        <span style="padding: 6px 10px; border-radius: 999px; border: 1px solid #262A31; color: #D7DADE">Only commissions past the 30-day hold</span>
+        <span style="padding: 6px 10px; border-radius: 999px; border: 1px solid #262A31; color: #D7DADE">$50 minimum, smaller balances carry over</span>
+        <span style="padding: 6px 10px; border-radius: 999px; border: 1px solid #262A31; color: #D7DADE">Refunds reverse commission automatically</span>
+        <span style="padding: 6px 10px; border-radius: 999px; border: 1px solid #262A31; color: #D7DADE">Tax details on file before any payout</span>
+      </div>
+      <div style="border-radius: 20px; background: #101215; border: 1px solid #1A1D22; overflow-x: auto">
+        <div style="min-width: 900px">
+          <div aria-hidden="true" style="display: grid; grid-template-columns: minmax(0, 1.5fr) 100px 100px 110px 120px minmax(0, 1.3fr) 190px; gap: 10px; padding: 12px 18px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #7D848E; border-bottom: 1px solid #1A1D22">
+            <span>PARTNER</span><span style="text-align: right">CLEARED</span><span style="text-align: right">REVERSED</span><span style="text-align: right">TO PAY</span><span>METHOD</span><span>CHECK</span><span style="text-align: right">ACTION</span>
+          </div>
+          <sc-for list="{{run}}" as="r" hint-placeholder-count="7">
+            <div style="display: grid; grid-template-columns: minmax(0, 1.5fr) 100px 100px 110px 120px minmax(0, 1.3fr) 190px; gap: 10px; align-items: center; padding: 12px 18px; border-bottom: 1px solid #16181C; font-size: 14px">
+              <span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 500">{{r.name}}</span><span style="font-size: 12px; color: #7D848E">{{r.type}}</span></span>
+              <span style="text-align: right; font-family: 'Geist Mono', monospace; font-size: 13px">{{r.cleared}}</span>
+              <span style="text-align: right; font-family: 'Geist Mono', monospace; font-size: 13px; color: #FFC53D">{{r.reversed}}</span>
+              <span style="text-align: right; font-family: 'Geist Mono', monospace; font-size: 13px; font-weight: 600; color: #D5F879">{{r.net}}</span>
+              <span style="font-size: 13px; color: #9AA1AB">{{r.method}}</span>
+              <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: {{r.checkColor}}"><span style="width: 7px; height: 7px; flex: none; border-radius: 50%; background: {{r.checkColor}}"></span>{{r.check}}</span>
+              <span style="display: flex; justify-content: flex-end; gap: 6px">
+                <sc-if value="{{r.canAct}}" hint-placeholder-val="{{true}}">
+                  <button type="button" onClick="{{r.hold}}" aria-pressed="{{r.heldPressed}}" style="min-height: 34px; padding: 0 12px; border-radius: 10px; border: 1px solid #262A31; background: {{r.holdBg}}; color: #F2F4F5; font-size: 13px">{{r.holdLabel}}</button>
+                  <button type="button" onClick="{{r.approve}}" aria-pressed="{{r.approvedPressed}}" style="min-height: 34px; padding: 0 12px; border-radius: 10px; border: 0; background: {{r.approveBg}}; color: #0A0B0D; font-size: 13px; font-weight: 600">{{r.approveLabel}}</button>
+                </sc-if>
+                <sc-if value="{{r.locked}}" hint-placeholder-val="{{false}}"><span style="font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 999px; color: {{r.lockColor}}; background: {{r.lockBg}}">{{r.lockLabel}}</span></sc-if>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+        <button type="button" onClick="{{approveAll}}" disabled="{{runDone}}" style="min-height: 46px; padding: 0 18px; border-radius: 12px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 14px">Approve everything that passes the checks</button>
+        <button type="button" onClick="{{payNow}}" disabled="{{payDisabled}}" style="min-height: 46px; padding: 0 20px; border-radius: 12px; border: 0; background: #D5F879; color: #0A0B0D; font-size: 15px; font-weight: 600; box-shadow: 0 0 22px rgba(213,248,121,.3)">{{payLabel}}</button>
+        <span role="status" style="font-size: 14px; color: {{payNoteColor}}">{{payNote}}</span>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isApps}}" hint-placeholder-val="{{false}}">
+    <section aria-label="Applications" style="max-width: 1240px; width: 100%; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; animation: sfy-rise .3s ease both">
+      <sc-for list="{{apps}}" as="a" hint-placeholder-count="4">
+        <div style="border-radius: 20px; background: #101215; border: 1px solid {{a.border}}; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span style="width: 36px; height: 36px; flex: none; border-radius: 50%; background: #262A31; display: grid; place-items: center; font-size: 13px; font-weight: 600">{{a.initials}}</span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 600">{{a.name}}</span><span style="font-size: 12px; color: #7D848E">{{a.email}} · {{a.country}} · applied {{a.when}}</span></span>
+          </div>
+          <span style="font-size: 13px; color: #9AA1AB">Will share Searchify on</span>
+          <span style="font-size: 14px; line-height: 1.5">{{a.where}}</span>
+          <span style="font-size: 13px; color: {{a.noteColor}}">{{a.note}}</span>
+          <sc-if value="{{a.open}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; gap: 8px">
+              <button type="button" onClick="{{a.approve}}" style="min-height: 42px; padding: 0 16px; border-radius: 12px; border: 0; background: #D5F879; color: #0A0B0D; font-size: 14px; font-weight: 600">Approve at 30%</button>
+              <button type="button" onClick="{{a.reject}}" style="min-height: 42px; padding: 0 16px; border-radius: 12px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 14px">Decline</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{a.closed}}" hint-placeholder-val="{{false}}"><span style="font-size: 14px; font-weight: 600; color: {{a.doneColor}}">{{a.doneLabel}}</span></sc-if>
+        </div>
+      </sc-for>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{isAll}}" hint-placeholder-val="{{false}}">
+    <section aria-label="All partners" style="max-width: 1240px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; animation: sfy-rise .3s ease both">
+      <div style="border-radius: 20px; background: #101215; border: 1px solid #1A1D22; overflow-x: auto">
+        <div style="min-width: 880px">
+          <div aria-hidden="true" style="display: grid; grid-template-columns: minmax(0, 1.5fr) 120px 130px 100px 120px minmax(0, 1.4fr); gap: 10px; padding: 12px 18px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #7D848E; border-bottom: 1px solid #1A1D22">
+            <span>PARTNER</span><span>RATE</span><span style="text-align: right">QUALIFIED · 6 MO</span><span style="text-align: right">PAYING</span><span style="text-align: right">LIFETIME</span><span>FLAGS</span>
+          </div>
+          <sc-for list="{{partners}}" as="p" hint-placeholder-count="7">
+            <div style="display: grid; grid-template-columns: minmax(0, 1.5fr) 120px 130px 100px 120px minmax(0, 1.4fr); gap: 10px; align-items: center; padding: 12px 18px; border-bottom: 1px solid #16181C; font-size: 14px">
+              <span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 500">{{p.name}}</span><span style="font-size: 12px; color: #7D848E">{{p.type}}</span></span>
+              <label style="display: flex; flex-direction: column; font-size: 11px; color: #7D848E">
+                <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Commission rate for {{p.name}}</span>
+                <select onChange="{{p.setRate}}" value="{{p.rate}}" style="min-height: 36px; padding: 0 8px; border-radius: 10px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 14px">
+                  <sc-for list="{{p.opts}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.label}}</option></sc-for>
+                </select>
+              </label>
+              <span style="text-align: right; font-family: 'Geist Mono', monospace; font-size: 13px">{{p.qual}}</span>
+              <span style="text-align: right; font-family: 'Geist Mono', monospace; font-size: 13px">{{p.paying}}</span>
+              <span style="text-align: right; font-family: 'Geist Mono', monospace; font-size: 13px">{{p.life}}</span>
+              <span style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: {{p.flagColor}}">{{p.flag}}
+                <sc-if value="{{p.hasFlag}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{p.clear}}" style="min-height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 12px">Reviewed, clear it</button></sc-if>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <span style="font-size: 12px; color: #7D848E">Founding partners can only be moved up. Their agreement says the rate can't be lowered without their written consent.</span>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{isFounding}}" hint-placeholder-val="{{false}}">
+    <section aria-label="Founding partners" style="max-width: 1240px; width: 100%; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; animation: sfy-rise .3s ease both">
+      <sc-for list="{{founders}}" as="f" hint-placeholder-count="3">
+        <div style="border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
+            <span style="display: flex; flex-direction: column"><span style="font-size: 17px; font-weight: 600">{{f.name}}</span><span style="font-size: 12px; color: #7D848E">{{f.sub}}</span></span>
+            <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 30px; font-weight: 800; color: #D5F879">{{f.rate}}</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span style="display: flex; justify-content: space-between; font-size: 13px"><span>Qualified referrals, last 6 months</span><span style="font-family: 'Geist Mono', monospace">{{f.qual}} / 10</span></span>
+            <div style="height: 10px; border-radius: 5px; background: #1A1D22; overflow: hidden"><div style="height: 100%; width: {{f.qualPct}}; border-radius: 5px; background: #4DA3FF"></div></div>
+            <span style="font-size: 12px; color: #7D848E">{{f.qualNote}}</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span style="display: flex; justify-content: space-between; font-size: 13px"><span>Monthly revenue from their referrals</span><span style="font-family: 'Geist Mono', monospace">{{f.mrr}}</span></span>
+            <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px">
+              <sc-for list="{{f.steps}}" as="s" hint-placeholder-count="5">
+                <div style="border-radius: 10px; padding: 8px 6px; text-align: center; background: {{s.bg}}; border: 1px solid {{s.border}}; display: flex; flex-direction: column; gap: 2px">
+                  <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #9AA1AB">{{s.at}}</span>
+                  <span style="font-size: 12px; font-weight: 600; color: {{s.color}}">{{s.label}}</span>
+                </div>
+              </sc-for>
+            </div>
+            <span style="font-size: 12px; color: #7D848E">Each step is 0.5% of the company once that level holds for 3 months in a row. Window ends {{f.window}}.</span>
+          </div>
+          <sc-if value="{{f.canGrant}}" hint-placeholder-val="{{false}}">
+            <button type="button" onClick="{{f.grant}}" style="min-height: 44px; border-radius: 12px; border: 0; background: #D5F879; color: #0A0B0D; font-size: 14px; font-weight: 600">Prepare board approval for step {{f.nextGrant}}</button>
+          </sc-if>
+          <sc-if value="{{f.granted}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; color: #3DDC84">{{f.grantedNote}}</span></sc-if>
+        </div>
+      </sc-for>
+    </section>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'payout', run: {}, paid: false, apps: {}, rates: {}, cleared: {}, grants: {} };
+  }
+  renderVals() {
+    const money = (v) => (v < 0 ? '−$' : '$') + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const T = this.state.tab;
+    const RUN = [
+      { id: 'sam', name: 'Sam Ortiz', type: 'Partner · 30%', cleared: 1512.30, rev: -42.60, method: 'PayPal', tax: true, flag: '' },
+      { id: 'wp', name: 'WP Agency Collective', type: 'Partner · 30%', cleared: 861.30, rev: -19.20, method: 'Wise · GBP', tax: true, flag: '' },
+      { id: 'lml', name: 'Local Marketing Lab', type: 'Partner · 30%', cleared: 318.00, rev: 0, method: 'Bank · CAD', tax: false, flag: '' },
+      { id: 'nick', name: 'Nicholas Petitt', type: 'Founding partner · 35%', cleared: 961.45, rev: 0, method: 'PayPal', tax: true, flag: '' },
+      { id: 'emin', name: 'Emin Navasartian', type: 'Founding partner · 35%', cleared: 96.95, rev: 0, method: 'Wise · USD', tax: true, flag: '' },
+      { id: 'dana', name: 'Dana Kim', type: 'Partner · 30%', cleared: 64.20, rev: 0, method: 'PayPal', tax: true, flag: 'Possible self-referral' },
+      { id: 'howard', name: 'Howard Wang', type: 'Founding partner · 35%', cleared: 41.65, rev: 0, method: 'Bank · CAD', tax: true, flag: '' }
+    ];
+    const st = this.state.run;
+    const paid = this.state.paid;
+    const rows = RUN.map((r) => {
+      const net = r.cleared + r.rev;
+      let check = 'Passes all checks', cc = '#3DDC84', lock = '';
+      if (!r.tax) { check = 'No tax details yet: held automatically'; cc = '#FFC53D'; lock = 'Held'; }
+      else if (net < 50) { check = 'Under $50: carries to Dec 15'; cc = '#9AA1AB'; lock = 'Carried over'; }
+      else if (r.flag && !st[r.id]) { check = r.flag + ': review first'; cc = '#FF8A80'; }
+      const s = lock ? 'locked' : (st[r.id] || (r.flag ? 'held' : 'ready'));
+      return Object.assign({}, r, { net: net, s: s, check: check, cc: cc, lock: lock });
+    });
+    const approved = rows.filter((r) => r.s === 'approved');
+    const sumA = approved.reduce((a, r) => a + r.net, 0);
+    const held = rows.filter((r) => r.s === 'held' || r.lock === 'Held').reduce((a, r) => a + r.net, 0);
+    const carried = rows.filter((r) => r.lock === 'Carried over').reduce((a, r) => a + r.net, 0);
+    const reversed = rows.reduce((a, r) => a + r.rev, 0);
+    const setRun = (id, v) => this.setState({ run: Object.assign({}, this.state.run, { [id]: v }) });
+    const run = rows.map((r) => {
+      const isPaid = paid && r.s === 'approved';
+      return { name: r.name, type: r.type, cleared: money(r.cleared), reversed: r.rev ? money(r.rev) : '—', net: money(r.net), method: r.method,
+        check: r.check, checkColor: r.cc,
+        canAct: !r.lock && !paid, locked: !!r.lock || paid,
+        lockLabel: isPaid ? 'Paid Nov 15' : (r.lock || (r.s === 'held' ? 'Held' : 'Not in this run')),
+        lockColor: isPaid ? '#3DDC84' : (r.lock === 'Held' || r.s === 'held' ? '#FFC53D' : '#9AA1AB'),
+        lockBg: isPaid ? 'rgba(61,220,132,.12)' : (r.lock === 'Held' || r.s === 'held' ? 'rgba(255,197,61,.12)' : 'rgba(154,161,171,.12)'),
+        holdLabel: r.s === 'held' ? 'Held' : 'Hold', heldPressed: r.s === 'held' ? 'true' : 'false', holdBg: r.s === 'held' ? 'rgba(255,197,61,.16)' : 'transparent',
+        approveLabel: r.s === 'approved' ? 'Approved' : 'Approve', approvedPressed: r.s === 'approved' ? 'true' : 'false', approveBg: r.s === 'approved' ? '#3DDC84' : '#D5F879',
+        hold: () => setRun(r.id, r.s === 'held' ? 'ready' : 'held'),
+        approve: () => setRun(r.id, r.s === 'approved' ? 'ready' : 'approved') };
+    });
+    const totals = [
+      { label: 'Approved to pay Nov 15', value: money(sumA), sub: approved.length + ' partner' + (approved.length === 1 ? '' : 's'), color: '#D5F879' },
+      { label: 'On hold', value: money(held), sub: 'missing tax details or under review', color: '#FFC53D' },
+      { label: 'Carried to December', value: money(carried), sub: 'balances under $50', color: '#F2F4F5' },
+      { label: 'Reversed this month', value: money(reversed), sub: 'refunds and chargebacks', color: '#F2F4F5' }
+    ];
+    const APPS = [
+      { id: 'a1', name: 'Marisol Vega', email: 'marisol@wpstudio.example', country: 'Mexico', when: 'Oct 18', where: 'YouTube channel on WordPress for small businesses, 42k subscribers', note: 'Looks like a strong fit.', noteColor: '#3DDC84' },
+      { id: 'a2', name: 'Ben Carter', email: 'ben@bestdeals.example', country: 'United States', when: 'Oct 17', where: 'Coupon and discount code website', note: 'Coupon sites tend to claim sales that would have happened anyway.', noteColor: '#FFC53D' },
+      { id: 'a3', name: 'Grace Liu', email: 'grace@growthlocal.example', country: 'Canada', when: 'Oct 15', where: 'Local SEO newsletter, 6,800 readers, plus client referrals', note: 'Looks like a strong fit.', noteColor: '#3DDC84' }
+    ];
+    const ini = (n) => n.split(' ').slice(0, 2).map((w) => w.charAt(0)).join('').toUpperCase();
+    const apps = APPS.map((a) => {
+      const s = this.state.apps[a.id];
+      return Object.assign({}, a, { initials: ini(a.name), open: !s, closed: !!s, border: s === 'ok' ? 'rgba(61,220,132,.4)' : '#1A1D22',
+        doneLabel: s === 'ok' ? 'Approved. Welcome email and partner link sent.' : 'Declined. A polite email was sent.', doneColor: s === 'ok' ? '#3DDC84' : '#9AA1AB',
+        approve: () => this.setState({ apps: Object.assign({}, this.state.apps, { [a.id]: 'ok' }) }),
+        reject: () => this.setState({ apps: Object.assign({}, this.state.apps, { [a.id]: 'no' }) }) });
+    });
+    const openApps = apps.filter((a) => a.open).length;
+    const P = [
+      { id: 'sam', name: 'Sam Ortiz', type: 'Partner since May 2026', rate: 30, founding: false, qual: 38, paying: 41, life: 5779.70, flag: '' },
+      { id: 'wp', name: 'WP Agency Collective', type: 'Partner since Jun 2026', rate: 30, founding: false, qual: 15, paying: 17, life: 2104.90, flag: '' },
+      { id: 'lml', name: 'Local Marketing Lab', type: 'Partner since Jul 2026', rate: 30, founding: false, qual: 8, paying: 9, life: 744.00, flag: 'Tax details missing' },
+      { id: 'dana', name: 'Dana Kim', type: 'Partner since Aug 2026', rate: 30, founding: false, qual: 4, paying: 4, life: 128.40, flag: '2 sign-ups used Dana’s card' },
+      { id: 'nick', name: 'Nicholas Petitt', type: 'Founding partner', rate: 35, founding: true, qual: 8, paying: 13, life: 2502.70, flag: '' },
+      { id: 'emin', name: 'Emin Navasartian', type: 'Founding partner', rate: 35, founding: true, qual: 3, paying: 4, life: 188.10, flag: '' },
+      { id: 'howard', name: 'Howard Wang', type: 'Founding partner', rate: 35, founding: true, qual: 2, paying: 2, life: 83.30, flag: '' }
+    ];
+    const partners = P.map((p) => {
+      const rate = this.state.rates[p.id] || p.rate;
+      const base = p.founding ? p.rate : 30;
+      const opts = [30, 35, 40].filter((v) => v >= base).map((v) => ({ v: String(v), label: v + '%' }));
+      const cleared = this.state.cleared[p.id];
+      const flag = cleared ? 'Reviewed' : (p.flag || 'None');
+      return { name: p.name, type: p.type, rate: String(rate), opts: opts, qual: String(p.qual), paying: String(p.paying), life: money(p.life),
+        flag: flag, hasFlag: !!p.flag && !cleared && p.flag !== 'Tax details missing', flagColor: (p.flag && !cleared) ? '#FFC53D' : '#7D848E',
+        setRate: (e) => this.setState({ rates: Object.assign({}, this.state.rates, { [p.id]: Number(e.target.value) }) }),
+        clear: () => { this.setState({ cleared: Object.assign({}, this.state.cleared, { [p.id]: true }) }); } };
+    });
+    const STEPS = [2500, 5000, 10000, 20000, 40000];
+    const F = [
+      { id: 'nick', name: 'Nicholas Petitt', qual: 8, mrr: 2747, held: 3 },
+      { id: 'emin', name: 'Emin Navasartian', qual: 3, mrr: 1210, held: 0 },
+      { id: 'howard', name: 'Howard Wang', qual: 2, mrr: 540, held: 0 }
+    ];
+    const founders = F.map((f) => {
+      const rate = (this.state.rates[f.id] || 35) >= 40 || f.qual >= 10 ? 40 : 35;
+      const reached = STEPS.filter((s) => f.mrr >= s).length;
+      const granted = this.state.grants[f.id] || 0;
+      const earned = f.held >= 3 ? reached : 0;
+      const steps = STEPS.map((s, i) => {
+        const done = i < granted, ok = i < earned, near = i < reached;
+        return { at: '$' + (s / 1000) + 'k', label: done ? 'Granted' : (ok ? 'Earned' : (near ? 'Holding' : '0.5%')),
+          color: done ? '#0A0B0D' : (ok ? '#D5F879' : (near ? '#4DA3FF' : '#7D848E')),
+          bg: done ? '#D5F879' : (ok ? 'rgba(213,248,121,.1)' : '#0A0B0D'), border: ok || done ? '#D5F879' : (near ? '#4DA3FF' : '#1A1D22') };
+      });
+      return { name: f.name, sub: 'Founding Partner Agreement · signed at closing', rate: rate + '%', qual: String(f.qual), qualPct: Math.min(100, f.qual * 10) + '%',
+        qualNote: rate >= 40 ? 'Unlocked: 40% for good.' : (10 - f.qual) + ' more qualified referrals within 6 months unlocks 40% for good.',
+        mrr: '$' + f.mrr.toLocaleString('en-US') + ' / mo', steps: steps, window: 'Feb 26, 2030',
+        canGrant: earned > granted, nextGrant: String(granted + 1), granted: granted > 0,
+        grantedNote: 'Step ' + granted + ' prepared for board approval: 0.5% as options under the partner plan. Lawyer to confirm the paperwork.',
+        grant: () => this.setState({ grants: Object.assign({}, this.state.grants, { [f.id]: granted + 1 }) }) };
+    });
+    const HEAD = {
+      payout: [paid ? 'Paid ' + money(sumA) + ' to ' + approved.length + ' partners.' : 'November payout run: ' + money(rows.filter((r) => !r.lock).reduce((a, r) => a + r.net, 0)) + ' to review.', 'Runs on the 15th. Approve each partner, or hold anyone who needs a look.'],
+      apps: [openApps + ' application' + (openApps === 1 ? '' : 's') + ' waiting.', 'Approved partners start at the public rate of 30%.'],
+      all: ['7 active partners.', 'Rates, results and anything that needs a second look.'],
+      founding: ['Founding partners.', '35% now, 40% for good after 10 qualified referrals in any 6 months, plus performance shares.']
+    }[T];
+    return {
+      headline: HEAD.at(0), subline: HEAD.at(1),
+      tabs: [['payout', 'Payout run'], ['apps', 'Applications (' + openApps + ')'], ['all', 'All partners'], ['founding', 'Founding partners']].map((t) => ({ label: t.at(1), on: T === t.at(0), off: T !== t.at(0), pick: () => this.setState({ tab: t.at(0) }) })),
+      isPayout: T === 'payout', isApps: T === 'apps', isAll: T === 'all', isFounding: T === 'founding',
+      totals: totals, run: run, runDone: paid,
+      approveAll: () => { const n = Object.assign({}, this.state.run); rows.forEach((r) => { if (!r.lock && r.s === 'ready') n[r.id] = 'approved'; }); this.setState({ run: n }); },
+      payNow: () => this.setState({ paid: true }),
+      payDisabled: paid || approved.length === 0,
+      payLabel: paid ? 'Payout sent' : 'Pay ' + approved.length + ' approved · ' + money(sumA),
+      payNote: paid ? 'Sent through PayPal, Wise and bank transfer. Partners get an email and see it in their centre.' : (approved.length ? 'Nothing is sent until you press Pay.' : 'Approve partners to build the run.'),
+      payNoteColor: paid ? '#3DDC84' : '#9AA1AB',
+      apps: apps, partners: partners, founders: founders
+    };
+  }
+}
+</script>
+</body>
+</html>

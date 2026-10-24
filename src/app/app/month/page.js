@@ -1,7 +1,10 @@
-import MonthView from "@/components/board/MonthView";
-
-export const metadata = { title: "Month" };
+import { Suspense } from "react";
+import ReportScreen from "@/components/v8/screens/ReportScreen";
 
 export default function Page() {
-  return <MonthView />;
+  return (
+    <Suspense fallback={null}>
+      <ReportScreen />
+    </Suspense>
+  );
 }

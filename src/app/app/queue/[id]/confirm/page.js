@@ -1,7 +1,14 @@
-import ConfirmPage from "@/components/v3/pages/ConfirmPage";
+"use client";
 
-export const metadata = { title: "Confirm publication" };
+import { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 
+/** V8 ships from Edit → published; confirm is no longer a separate step. */
 export default function Page() {
-  return <ConfirmPage />;
+  const { id } = useParams();
+  const router = useRouter();
+  useEffect(() => {
+    router.replace(id ? `/app/queue/${id}` : "/app/queue");
+  }, [id, router]);
+  return null;
 }

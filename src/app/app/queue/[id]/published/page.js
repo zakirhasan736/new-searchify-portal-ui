@@ -1,7 +1,7 @@
-import PublishedPage from "@/components/v3/pages/PublishedPage";
+"use client";
 
-export const metadata = { title: "Published" };
+import PublishedScreen from "@/components/v8/screens/PublishedScreen";
 
 export default function Page() {
-  return <PublishedPage />;
+  return <PublishedScreen />;
 }

@@ -1,4 +1,4 @@
-import { Manrope, Barlow_Condensed } from "next/font/google";
+import { Bricolage_Grotesque, Manrope, Barlow_Condensed } from "next/font/google";
 import ProductShell from "@/components/v3/ProductShell";
 import StoreProvider from "@/store/StoreProvider";
 import { absoluteUrl } from "@/lib/seo";
@@ -13,6 +13,13 @@ const manrope = Manrope({
   display: "swap",
   variable: "--font-manrope",
   weight: ["400", "500", "600", "700", "800"],
+});
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-bricolage",
+  weight: ["500", "700", "800"],
 });
 
 const barlow = Barlow_Condensed({
@@ -45,7 +52,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#101112",
+  themeColor: "#0A0B0D",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -66,8 +73,24 @@ export default function RootLayout({ children }) {
   };
 
   return (
-    <html lang="en" className={`${manrope.variable} ${barlow.variable}`}>
-      <body className={manrope.className} style={{ margin: 0, background: "#101112" }}>
+    <html lang="en" className={`${manrope.variable} ${bricolage.variable} ${barlow.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Caveat:wght@600;700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body
+        className={manrope.className}
+        style={{
+          margin: 0,
+          background: "#0A0B0D",
+          ["--font-geist"]: "Geist, Helvetica Neue, sans-serif",
+          ["--font-geist-mono"]: "Geist Mono, ui-monospace, monospace",
+        }}
+      >
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         <StoreProvider>
           <ProductShell>{children}</ProductShell>

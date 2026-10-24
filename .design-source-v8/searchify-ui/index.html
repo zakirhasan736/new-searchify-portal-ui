@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Searchify UI — screens</title>
+<style>
+:root{--bg:#0A0B0D;--card:#101215;--line:#1A1D22;--text:#F2F4F5;--muted:#9AA1AB;--blue:#4DA3FF;--lime:#D5F879}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1080px;margin:0 auto;padding:48px 16px 80px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:18px}
+.mark{width:28px;height:28px;border-radius:8px;background:var(--lime);color:var(--bg);display:grid;place-items:center;font-weight:700}
+h1{font-size:clamp(32px,5vw,52px);line-height:1;letter-spacing:-1.5px;margin:36px 0 10px}
+p{color:var(--muted);margin:0 0 32px;max-width:640px}
+h2{font-size:13px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:36px 0 12px;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+a.card{display:flex;flex-direction:column;gap:4px;padding:16px 18px;border-radius:16px;background:var(--card);border:1px solid var(--line);color:var(--text);text-decoration:none;min-height:44px}
+a.card:hover{border-color:var(--blue);box-shadow:0 0 22px rgba(77,163,255,.2)}
+.n{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--muted)}
+.t{font-weight:600}
+.d{font-size:14px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true" style="flex:none"><rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="#131519" stroke="#2E333B"></rect><circle cx="9" cy="12.5" r="2.9" fill="#FF5A4E"></circle><circle cx="16" cy="12.5" r="2.9" fill="#FF9F43"></circle><circle cx="23" cy="12.5" r="2.9" fill="#FFC53D"></circle><circle cx="9" cy="19.5" r="2.9" fill="#3DDC84"></circle><circle cx="16" cy="19.5" r="2.9" fill="#2CC7C0"></circle><circle cx="23" cy="19.5" r="2.9" fill="#4DA3FF"></circle></svg>searchify</div>
+  <h1>Searchify UI prototype</h1>
+  <p>Every screen is clickable and links to the others. All names, sites and numbers are sample data. Start with the landing page or the plug-in screen.</p>
+
+  <h2>V2 · The core loop</h2>
+  <div class="grid">
+    <a class="card" href="screens/Connect.dc.html"><span class="n">01</span><span class="t">Plug in</span><span class="d">Connect Google and WordPress</span></a>
+    <a class="card" href="screens/Scan.dc.html"><span class="n">02</span><span class="t">The scan</span><span class="d">What it costs + colour-coded task board</span></a>
+    <a class="card" href="screens/Home.dc.html"><span class="n">03</span><span class="t">Home</span><span class="d">One move at a time</span></a>
+    <a class="card" href="screens/Path.dc.html"><span class="n">04</span><span class="t">Page progress</span><span class="d">Poor to Excellent, page by page</span></a>
+    <a class="card" href="screens/Win.dc.html"><span class="n">05</span><span class="t">Keyword tracker</span><span class="d">Did the change work, keyword by keyword</span></a>
+    <a class="card" href="screens/Backlinks.dc.html"><span class="n">05b</span><span class="t">Backlinks</span><span class="d">New and lost links, competitor gap, outreach drafts</span></a>
+    <a class="card" href="screens/Phone.dc.html"><span class="n">06</span><span class="t">Phone</span><span class="d">Approve on the go (view at phone width)</span></a>
+  </div>
+
+  <h2>V2 · Around the loop</h2>
+  <div class="grid">
+    <a class="card" href="screens/Landing.dc.html"><span class="n">07</span><span class="t">Landing page</span><span class="d">Public site with the scan as the hero</span></a>
+    <a class="card" href="screens/Pricing.dc.html"><span class="n">08</span><span class="t">Pricing + checkout</span><span class="d">Solo, Pro, Premium</span></a>
+    <a class="card" href="screens/Edit.dc.html"><span class="n">09</span><span class="t">Edit before shipping</span><span class="d">Live Google preview and checks</span></a>
+    <a class="card" href="screens/Changelog.dc.html"><span class="n">10</span><span class="t">Reports + change log</span><span class="d">Filter every change, export reports</span></a>
+    <a class="card" href="screens/Settings.dc.html"><span class="n">11</span><span class="t">Settings</span><span class="d">Profile, team, notifications, autonomy, billing</span></a>
+    <a class="card" href="screens/Portfolio.dc.html"><span class="n">12</span><span class="t">All client sites</span><span class="d">Agency view</span></a>
+    <a class="card" href="screens/Report.dc.html"><span class="n">13</span><span class="t">Client report</span><span class="d">Shareable monthly report</span></a>
+    <a class="card" href="screens/States.dc.html"><span class="n">14</span><span class="t">Problem + empty states</span><span class="d">Broken cable, plugin install, new site, blocked scan</span></a>
+  </div>
+
+  <h2>Dashboards and partners</h2>
+  <div class="grid">
+    <a class="card" href="screens/Results.dc.html"><span class="n">15</span><span class="t">Results</span><span class="d">Clicks, position and leads over time, changes marked</span></a>
+    <a class="card" href="screens/Command.dc.html"><span class="n">16</span><span class="t">Agency command centre</span><span class="d">Every client's approvals, alerts and reports</span></a>
+    <a class="card" href="screens/Admin.dc.html"><span class="n">17</span><span class="t">Searchify HQ</span><span class="d">Internal business dashboard</span></a>
+    <a class="card" href="screens/AffiliateLogin.dc.html"><span class="n">18</span><span class="t">Partner sign in</span><span class="d">Sign in or apply</span></a>
+    <a class="card" href="screens/Affiliate.dc.html"><span class="n">19</span><span class="t">Partner centre</span><span class="d">Rate progress, link clicks, sign-ups, payouts</span></a>
+    <a class="card" href="screens/PartnerEarnings.dc.html"><span class="n">20</span><span class="t">Partner earnings</span><span class="d">Cleared, in the 30-day hold, reversed, statements</span></a>
+    <a class="card" href="screens/PartnerPayout.dc.html"><span class="n">21</span><span class="t">Partner payout + tax</span><span class="d">Payout method and tax details</span></a>
+    <a class="card" href="screens/PartnerTerms.dc.html"><span class="n">22</span><span class="t">Partner agreement + rules</span><span class="d">Terms, performance shares, disclosure wording, kit</span></a>
+  </div>
+
+  <h2>Searchify HQ (internal)</h2>
+  <div class="grid">
+    <a class="card" href="screens/HQCustomers.dc.html"><span class="n">23</span><span class="t">Customers</span><span class="d">Look up an account, refund, free month, cancel</span></a>
+    <a class="card" href="screens/HQPartners.dc.html"><span class="n">24</span><span class="t">Partners + payouts</span><span class="d">Payout run, applications, rates, founding partners</span></a>
+    <a class="card" href="screens/HQProblems.dc.html"><span class="n">25</span><span class="t">Problems</span><span class="d">Failed payments, chargebacks, broken connections</span></a>
+    <a class="card" href="screens/HQShareholders.dc.html"><span class="n">26</span><span class="t">Shareholders</span><span class="d">Dividend test, split, quarterly update, Howard repayment</span></a>
+  </div>
+
+  <h2>V1 · Earlier workspace direction (for reference)</h2>
+  <div class="grid">
+    <a class="card" href="screens/Main.dc.html"><span class="t">Today</span></a>
+    <a class="card" href="screens/Review.dc.html"><span class="t">Review a move</span></a>
+    <a class="card" href="screens/Ledger.dc.html"><span class="t">Proof ledger</span></a>
+    <a class="card" href="screens/Connections.dc.html"><span class="t">Connections</span></a>
+    <a class="card" href="screens/Setup.dc.html"><span class="t">60-second setup</span></a>
+  </div>
+</main>
+</body>
+</html>

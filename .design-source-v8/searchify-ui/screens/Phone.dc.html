@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — Phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;family=Caveat:wght@600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+@keyframes sfy-rise{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes sfy-fill{from{width:0}to{width:17%}}
+@keyframes sfy-sheen{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+@keyframes sfy-march{to{background-position:22.6px 0}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; padding: 24px 18px 22px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+  <div style="display: flex; align-items: center; justify-content: space-between">
+    <div style="display: flex; align-items: center; gap: 8px">
+      <svg width="26" height="26" viewBox="0 0 32 32" role="img" aria-label="Searchify" style="flex: none"><rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="#131519" stroke="#2E333B"></rect><circle cx="9" cy="12.5" r="2.9" fill="#FF5A4E"></circle><circle cx="16" cy="12.5" r="2.9" fill="#FF9F43"></circle><circle cx="23" cy="12.5" r="2.9" fill="#FFC53D"></circle><circle cx="9" cy="19.5" r="2.9" fill="#3DDC84"></circle><circle cx="16" cy="19.5" r="2.9" fill="#2CC7C0"></circle><circle cx="23" cy="19.5" r="2.9" fill="#4DA3FF"></circle></svg>
+      <span style="font-weight: 600; font-size: 15px">northline</span>
+    </div>
+    <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #9AA1AB">{{counter}}</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; align-items: baseline; gap: 8px">
+      <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 40px; font-weight: 800; letter-spacing: -1.4px; line-height: 1">312</span>
+      <span style="font-size: 13px; color: #9AA1AB">of 1,840 clicks / mo captured</span>
+    </div>
+    <div style="display: flex; height: 8px; border-radius: 5px; overflow: hidden; background: #1A1D22; gap: 2px">
+      <div style="width: 17%; position: relative; overflow: hidden; background: #3DDC84; box-shadow: 0 0 14px rgba(61,220,132,.75); animation: sfy-fill 1.4s cubic-bezier(.2,.8,.2,1) both"><div style="position: absolute; top: 0; bottom: 0; left: 0; width: 35%; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.6), rgba(255,255,255,0)); animation: sfy-sheen 1.9s ease-in-out infinite"></div></div>
+      <div style="width: {{pendingWidth}}; background: repeating-linear-gradient(135deg, #3DDC84 0 4px, transparent 4px 8px); background-size: 22.6px 8px; opacity: .6; transition: width .4s ease; animation: sfy-march 1s linear infinite"></div>
+    </div>
+  </div>
+
+  <sc-if value="{{hasMove}}" hint-placeholder-val="{{true}}">
+    <article style="flex: 1; min-height: 0; background: #131519; border: 1px solid #262A31; border-radius: 26px; padding: 22px; display: flex; flex-direction: column; gap: 16px; animation: sfy-rise .4s cubic-bezier(.2,.8,.2,1) both">
+      <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #9AA1AB">{{m.kind}} · {{m.page}}</span>
+      <div style="font-family: 'Caveat', cursive; font-size: 30px; font-weight: 700; line-height: 1; color: {{accent}}; margin-bottom: -10px; transform: rotate(-2deg); transform-origin: left center">We suggest…</div>
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 30px; line-height: 1.02; letter-spacing: -1px; font-weight: 700">{{m.title}}</h1>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="border-radius: 14px; background: #0E1013; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px">
+          <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #7D848E">NOW</span>
+          <span style="font-size: 15px; color: #9AA1AB; line-height: 1.35">{{m.before}}</span>
+        </div>
+        <div style="border-radius: 14px; background: rgba(77,163,255,.07); border: 1.5px solid #4DA3FF; box-shadow: 0 0 20px rgba(77,163,255,.35); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px">
+          <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #4DA3FF">AFTER</span>
+          <span style="font-size: 15px; line-height: 1.35">{{m.after}}</span>
+        </div>
+      </div>
+      <div style="flex: 1"></div>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 26px; font-weight: 700; color: {{accent}}">{{m.gain}}</span>
+        <span style="font-size: 13px; color: #9AA1AB">Checked live after shipping · one-tap undo</span>
+      </div>
+    </article>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+      <button type="button" onClick="{{later}}" style="min-height: 60px; border-radius: 18px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 16px">Skip it</button>
+      <button type="button" onClick="{{ship}}" style="min-height: 60px; border-radius: 18px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 16px; font-weight: 600; box-shadow: 0 0 22px rgba(77,163,255,.45)">Ship it</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{done}}" hint-placeholder-val="{{false}}">
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 14px; animation: sfy-rise .4s ease both">
+      <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: {{accent}}">WEEK CLEARED · 4-WEEK STREAK</span>
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 38px; line-height: 1; letter-spacing: -1.2px; font-weight: 700">Done in under two minutes.</h1>
+      <p style="margin: 0; font-size: 16px; color: #9AA1AB; line-height: 1.5">We'll message you when the results land.</p>
+      <button type="button" onClick="{{reset}}" style="align-self: flex-start; min-height: 48px; padding: 0 18px; border-radius: 14px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 14px">Replay</button>
+    </div>
+  </sc-if>
+
+  <nav aria-label="Main" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; margin: 0 -6px -8px; padding-top: 10px; border-top: 1px solid #1A1D22">
+    <a href="Home.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 48px; justify-content: center; color: #4DA3FF; text-decoration: none; font-size: 11px; font-weight: 600"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h4l2 3h4l2-3h4"></path><path d="M5 5h14l1 8v6H4v-6z"></path></svg>Moves</a>
+    <a href="Scan.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 48px; justify-content: center; color: #9AA1AB; text-decoration: none; font-size: 11px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="8" r="2"></circle><circle cx="12" cy="8" r="2"></circle><circle cx="18" cy="8" r="2"></circle><circle cx="6" cy="16" r="2"></circle><circle cx="12" cy="16" r="2"></circle><circle cx="18" cy="16" r="2"></circle></svg>Board</a>
+    <a href="Path.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 48px; justify-content: center; color: #9AA1AB; text-decoration: none; font-size: 11px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 20V10"></path><path d="M12 20V4"></path><path d="M18 20v-7"></path></svg>Progress</a>
+    <a href="Win.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 48px; justify-content: center; color: #9AA1AB; text-decoration: none; font-size: 11px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"></path><path d="M15 7h6v6"></path></svg>Keywords</a>
+    <a href="Portfolio.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 48px; justify-content: center; color: #9AA1AB; text-decoration: none; font-size: 11px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>Sites</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#D5F879","options":["#D5F879","#9FE7F5","#FFD36E","#C9B8FF"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { i: 0, pending: 0 };
+  }
+  renderVals() {
+    const moves = [
+      { kind: 'TITLE', page: '/roof-repair', title: 'Put “Calgary” and “24/7” in the title.', before: 'Roof Repair Services | Northline Roofing', after: 'Roof Repair in Calgary — 24/7 Emergency Leaks', gain: '+40–90 clicks / mo', mid: 65 },
+      { kind: 'REFRESH', page: '/ice-dams-guide', title: 'Win back the ice dam guide.', before: 'Last updated 2023', after: 'Step-by-step removal + safety checklist', gain: '+~60 clicks / mo', mid: 60 },
+      { kind: 'LINKS', page: '/gutter-guards', title: 'Point three posts at gutter guards.', before: '1 page links here', after: '4 pages link here', gain: '+10–25 clicks / mo', mid: 18 },
+      { kind: 'SHARE', page: '/ice-dams-guide', title: 'Post the new guide to 3 channels.', before: 'Only on your site', after: 'LinkedIn, Facebook, Instagram', gain: 'Reach, not clicks', mid: 0 }
+    ];
+    const i = this.state.i;
+    const done = i >= moves.length;
+    const m = done ? moves[0] : moves[i];
+    return {
+      accent: this.props.accent ?? '#D5F879',
+      m: m, hasMove: !done, done: done,
+      counter: done ? 'ALL CLEAR' : (i + 1) + ' / 4',
+      pendingWidth: (this.state.pending / 1840 * 100).toFixed(1) + '%',
+      ship: () => this.setState({ i: i + 1, pending: this.state.pending + m.mid }),
+      later: () => this.setState({ i: i + 1 }),
+      reset: () => this.setState({ i: 0, pending: 0 })
+    };
+  }
+}
+</script>
+<script>window.__DC_FACTORY = function (DCLogic, React) {
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { i: 0, pending: 0 };
+  }
+  renderVals() {
+    const moves = [
+      { kind: 'TITLE', page: '/roof-repair', title: 'Put “Calgary” and “24/7” in the title.', before: 'Roof Repair Services | Northline Roofing', after: 'Roof Repair in Calgary — 24/7 Emergency Leaks', gain: '+40–90 clicks / mo', mid: 65 },
+      { kind: 'REFRESH', page: '/ice-dams-guide', title: 'Win back the ice dam guide.', before: 'Last updated 2023', after: 'Step-by-step removal + safety checklist', gain: '+~60 clicks / mo', mid: 60 },
+      { kind: 'LINKS', page: '/gutter-guards', title: 'Point three posts at gutter guards.', before: '1 page links here', after: '4 pages link here', gain: '+10–25 clicks / mo', mid: 18 },
+      { kind: 'SHARE', page: '/ice-dams-guide', title: 'Post the new guide to 3 channels.', before: 'Only on your site', after: 'LinkedIn, Facebook, Instagram', gain: 'Reach, not clicks', mid: 0 }
+    ];
+    const i = this.state.i;
+    const done = i >= moves.length;
+    const m = done ? moves[0] : moves[i];
+    return {
+      accent: this.props.accent ?? '#D5F879',
+      m: m, hasMove: !done, done: done,
+      counter: done ? 'ALL CLEAR' : (i + 1) + ' / 4',
+      pendingWidth: (this.state.pending / 1840 * 100).toFixed(1) + '%',
+      ship: () => this.setState({ i: i + 1, pending: this.state.pending + m.mid }),
+      later: () => this.setState({ i: i + 1 }),
+      reset: () => this.setState({ i: 0, pending: 0 })
+    };
+  }
+}
+
+return Component;
+};</script>
+</body>
+</html>

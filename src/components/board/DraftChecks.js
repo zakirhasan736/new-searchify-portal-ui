@@ -71,23 +71,33 @@ export function WhyThisDraft({ proposed, evidence = null, compact = false }) {
   const keyword = analysis.keyword || p.target || "";
   const meet = analysis.meetCompetitor || p.meetCompetitor?.title || "";
   const gsc = evidence || p.evidence || {};
+  const keep = p.recommendKeep || analysis.recommendKeep;
   if (!sources.length && !keyword && !jev.score && !p.reason) return null;
   return (
     <div className="why-draft">
-      <div className="dash-eyebrow">Why this draft (analysis, not a paste)</div>
+      <div className="dash-eyebrow">Why this recommendation</div>
       <p>
-        Built from live page signals plus keyword, competitor, and Searchify SEO research — not by copying the H1 word for word.
-        Open Graph and JSON-LD use the same title and description.
+        {keep
+          ? "Analysis compared candidates to the published listing and recommends keeping the current title and description."
+          : "Built from live page signals plus keyword, competitor, and Searchify SEO research — not by copying the H1 word for word."}
+        {" "}Open Graph stays aligned with the listing. JSON-LD updates WebPage name/description without removing other live schema types.
       </p>
       <div className="evidence-row">
+        {analysis.objective || p.objective ? <span className="w-pill">{`Objective · ${analysis.objective || p.objective}`}</span> : null}
+        {pageTypeLabel(p) ? <span className="w-pill">{`Page · ${pageTypeLabel(p)}`}</span> : null}
         {keyword ? <span className="w-pill">{`Keyword · ${keyword}`}</span> : null}
+        {analysis.keywordSource ? <span className="w-pill">{`Keyword source · ${analysis.keywordSource}`}</span> : null}
         {meet ? <span className="w-pill">{`Meet · ${meet}`}</span> : <span className="w-pill">No same-keyword competitor stored</span>}
-        {p.beatsLive ? <span className="w-pill good">Beats live</span> : p.beatsLive === false ? <span className="w-pill warn">Not stronger than live yet</span> : null}
+        {keep ? <span className="w-pill good">Keep published listing</span> : p.beatsLive ? <span className="w-pill good">Beats live</span> : p.beatsLive === false ? <span className="w-pill warn">Not stronger than live yet</span> : null}
         {analysis.contentWriter ? <span className="w-pill">Searchify SEO content writer used</span> : null}
-        {jev.score != null ? <span className={`w-pill ${jevBandClass(jev.band)}`}>{`JEV ${jev.score}/100 · ${jev.band || "inbox"}`}</span> : null}
+        {jev.score != null ? <span className={`w-pill ${jevBandClass(jev.band)}`}>{`JEV ${jev.score}/100 · ${jev.band || "inbox"}`}</span> : <span className="w-pill warn">JEV not scored</span>}
         {gsc.clicks != null && gsc.clicks !== "—" ? <span className="w-pill">{`GSC clicks · ${gsc.clicks}`}</span> : null}
         {gsc.impressions != null && gsc.impressions !== "—" ? <span className="w-pill">{`GSC reach · ${gsc.impressions}`}</span> : null}
       </div>
+      {!compact && analysis.currentAssessment ? <p className="w-footnote"><strong>Current listing:</strong> {analysis.currentAssessment}</p> : null}
+      {!compact && analysis.improvement ? <p className="w-footnote"><strong>Improvement:</strong> {analysis.improvement}</p> : null}
+      {!compact && analysis.tradeOff ? <p className="w-footnote"><strong>Trade-off:</strong> {analysis.tradeOff}</p> : null}
+      {!compact && analysis.schemaNote ? <p className="w-footnote">{analysis.schemaNote}</p> : null}
       {!compact && sources.length ? (
         <ul className="claim-list">
           {sources.map((source) => <li key={source}>{source}</li>)}
@@ -151,25 +161,45 @@ export function ListingPackage({ proposed, title = "", description = "" }) {
   const ogTitle = p.openGraphTitle || title || p.title || "";
   const ogDesc = p.openGraphDescription || description || p.metaDescription || "";
   const schema = p.jsonLd || {};
-  const missing = (p.images || []).filter((img) => img && img.needsAlt && img.suggestedAlt).slice(0, 3);
+  const schemaType = schema["@type"] || (Array.isArray(schema["@graph"]) ? "Graph" : "");
+  const schemaName = schema.name || schema["@graph"]?.[0]?.name || ogTitle || "";
+  const preserved = (p.schemaTypesPreserved || p.beforeSchemaTypes || []).filter(Boolean);
+  const missing = [];
+  const seenImg = new Set();
+  for (const img of p.images || []) {
+    if (!img?.needsAlt || !img?.suggestedAlt) continue;
+    const key = String(img.id || img.src || "").split("?")[0];
+    if (!key || seenImg.has(key)) continue;
+    seenImg.add(key);
+    missing.push(img);
+    if (missing.length >= 3) break;
+  }
   const hasSignals = p.canonical || (p.nav || []).length || (p.faqs || []).length || (p.videos || []).length || p.reviewRating || p.reviewCount;
-  if (!ogTitle && !schema["@type"] && !missing.length && !p.shareImage && !hasSignals) return null;
+  if (!ogTitle && !schemaType && !missing.length && !p.shareImage && !hasSignals) return null;
   return (
     <div className="change-pair">
-      <div className="change-cell"><small>Open Graph</small><span>{ogTitle || "Uses the suggested title"}</span><small>{ogDesc || "Uses the suggested description"}</small></div>
-      <div className="change-cell"><small>JSON-LD</small><span>{schema["@type"] || "WebPage"}</span><small>{schema.name || ogTitle || "Uses the suggested title"}</small></div>
+      <div className="change-cell"><small>Open Graph {p.recommendKeep ? "(unchanged messaging)" : "(aligned with listing)"}</small><span>{ogTitle || "Uses the suggested title"}</span><small>{ogDesc || "Uses the suggested description"}</small></div>
+      <div className="change-cell">
+        <small>JSON-LD {schemaType || "WebPage"}</small>
+        <span>{schemaName || "Uses the suggested title"}</span>
+        <small>
+          {preserved.length
+            ? `Updates WebPage name/description. Live types noted: ${preserved.slice(0, 6).join(", ")}.`
+            : "Updates WebPage name/description to match this listing."}
+        </small>
+      </div>
       {p.shareImage ? <div className="change-cell"><small>Share image</small><span>{p.shareImage}</span><small>Used for the social card and the schema image.</small></div> : null}
       {missing.map((img) => (
-        <div className="change-cell" key={img.src}>
-          <small>Image text</small>
+        <div className="change-cell" key={img.id || img.src}>
+          <small>Image alt {img.changed === false ? "(kept)" : "(suggested)"}</small>
           <span>{img.suggestedAlt}</span>
-          <small>Add this as the image alt text. The picture file stays as it is.</small>
+          <small>{img.src ? `${img.src.slice(0, 72)}${img.src.length > 72 ? "…" : ""}` : "Image file unchanged."}</small>
         </div>
       ))}
-      {p.canonical ? <div className="change-cell"><small>Canonical</small><span>{p.canonical}</span></div> : null}
-      {(p.nav || []).length ? <div className="change-cell"><small>Navigation</small><span>{p.nav.slice(0, 8).join(" · ")}</span></div> : null}
+      {p.canonical ? <div className="change-cell"><small>Canonical (preserved)</small><span>{p.canonical}</span></div> : null}
+      {(p.nav || []).length ? <div className="change-cell"><small>Navigation (context only)</small><span>{p.nav.slice(0, 8).join(" · ")}</span></div> : null}
       {(p.faqs || []).length ? <div className="change-cell"><small>FAQ</small><span>{p.faqs.slice(0, 4).join(" ")}</span></div> : null}
-      {(p.videos || []).length ? <div className="change-cell"><small>Video</small><span>{p.videos[0]}</span><small>{p.videos.length === 1 ? "One video on this page." : `${p.videos.length} videos on this page.`}</small></div> : null}
+      {(p.videos || []).length ? <div className="change-cell"><small>Video (context only)</small><span>{p.videos[0]}</span><small>{p.videos.length === 1 ? "One video on this page." : `${p.videos.length} videos on this page.`}</small></div> : null}
       {p.reviewRating || p.reviewCount ? <div className="change-cell"><small>Reviews</small><span>{p.reviewRating ? `${p.reviewRating} stars` : "Reviews on the page"}</span><small>{p.reviewCount ? `${p.reviewCount} in the page schema` : "Shown only when the page publishes a rating."}</small></div> : null}
     </div>
   );

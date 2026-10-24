@@ -1,11 +1,13 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { userLogout } from "@/utils/users/Helpers";
-import BrandMark from "@/components/v3/BrandMark";
+import { PARTNER_KEY, PREVIEW_KEY, clearSessionFlag, isAdminAuthenticated } from "@/lib/authRoles";
+import SearchifyMark from "@/components/landing/SearchifyMark";
 import "@/styles/searchify-v3.css";
+import "@/styles/v8-kit.css";
 
 const ToastCtx = createContext(() => {});
 export function useAdminToast() {
@@ -15,23 +17,48 @@ export function useAdminToast() {
 const ADMIN_NAV = [
   { label: "Admin home", path: "/admin" },
   { label: "Tag management", path: "/admin/tagmgmt" },
+  { label: "HQ customers", path: "/admin/hq/customers" },
+  { label: "HQ partners", path: "/admin/hq/partners" },
+  { label: "HQ problems", path: "/admin/hq/problems" },
+  { label: "HQ shareholders", path: "/admin/hq/shareholders" },
 ];
 
 export default function AdminShell({ children }) {
   const pathname = usePathname() || "/admin";
   const router = useRouter();
   const [toast, setToast] = useState("");
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!isAdminAuthenticated()) {
+      router.replace("/login?next=" + encodeURIComponent(pathname || "/admin"));
+      return;
+    }
+    setReady(true);
+  }, [pathname, router]);
 
   const show = (msg) => {
     setToast(String(msg || ""));
     window.setTimeout(() => setToast(""), 2800);
   };
 
+  if (!ready) {
+    return (
+      <div style={{ minHeight: "40vh", background: "#0A0B0D", color: "#9AA1AB", padding: 28 }}>
+        Checking admin access…
+      </div>
+    );
+  }
+
   return (
-    <div id="sf-app" className="sf-admin">
+    <div id="sf-app" className="sf-admin v8-admin">
       <div className="sf-shell">
         <aside className="sf-side">
-          <BrandMark href="/admin" className="sf-side-logo" />
+          <Link href="/admin" className="v8-brand" style={{ padding: "4px 2px 12px" }}>
+            <SearchifyMark size={28} />
+            <span>searchify</span>
+            <span className="v8-tag">HQ</span>
+          </Link>
           <div className="sf-appbar-site">
             <span className="sf-avatar">AD</span>
             <strong>Admin</strong>
@@ -42,11 +69,16 @@ export default function AdminShell({ children }) {
           </div>
           <nav className="sf-nav sf-nav-desk" aria-label="Admin">
             {ADMIN_NAV.map((item) => (
-              <Link key={item.path} href={item.path} className={pathname === item.path ? "active" : undefined}>
+              <Link
+                key={item.path}
+                href={item.path}
+                className={pathname === item.path || pathname.startsWith(`${item.path}/`) ? "active" : undefined}
+              >
                 {item.label}
               </Link>
             ))}
             <Link href="/app">Workspace</Link>
+            <Link href="/partners">Partner centre</Link>
           </nav>
           <div style={{ marginTop: "auto", display: "grid", gap: 10 }}>
             <Link href="/app" className="sf-link">
@@ -56,8 +88,10 @@ export default function AdminShell({ children }) {
               type="button"
               className="sf-link"
               onClick={() => {
+                clearSessionFlag(PARTNER_KEY);
+                clearSessionFlag(PREVIEW_KEY);
                 userLogout();
-                router.replace("/login");
+                router.replace("/login?next=" + encodeURIComponent("/admin"));
               }}
             >
               Sign out
@@ -68,7 +102,7 @@ export default function AdminShell({ children }) {
           <header className="sf-top">
             <div>
               <div className="sf-label">Administration</div>
-              <strong>Tag management stays out of customer navigation</strong>
+              <strong>HQ stays out of customer navigation</strong>
             </div>
           </header>
           <main className="sf-content">

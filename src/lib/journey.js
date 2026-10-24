@@ -1,20 +1,123 @@
 import { authHeaders, getUser } from "@/utils/users/Helpers";
 
 const KEY = "sf_journey_v1";
+const PENDING_SITE_KEY = "sf_pending_site_v1";
 const SYNC_DELAY = 500;
 let syncTimer = null;
 let hydrated = null;
+
+/** Normalize a marketing-form URL into https://… for setup / scan. */
+export function normalizeSiteUrl(raw) {
+  const text = String(raw || "").trim();
+  if (!text) return "";
+  if (/^https?:\/\//i.test(text)) return text;
+  return `https://${text.replace(/^\/+/, "")}`;
+}
+
+/** Stash a site from the public landing hero until signup → setup. */
+export function stashPendingSite(url) {
+  if (typeof window === "undefined") return;
+  const normalized = normalizeSiteUrl(url);
+  try {
+    if (!normalized) sessionStorage.removeItem(PENDING_SITE_KEY);
+    else sessionStorage.setItem(PENDING_SITE_KEY, normalized);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function peekPendingSite() {
+  if (typeof window === "undefined") return "";
+  try {
+    return sessionStorage.getItem(PENDING_SITE_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+export function takePendingSite() {
+  const value = peekPendingSite();
+  if (typeof window !== "undefined") {
+    try {
+      sessionStorage.removeItem(PENDING_SITE_KEY);
+    } catch {
+      /* ignore */
+    }
+  }
+  return value;
+}
+
+/** Put a pending / query site onto the active draft so /app/start opens prefilled. */
+export function seedDraftSite(url) {
+  const siteUrl = normalizeSiteUrl(url);
+  if (!siteUrl) return null;
+  const state = loadJourney();
+  let draft = state.sites.find((site) => site.status === "draft");
+  if (!draft) {
+    const id = Date.now();
+    draft = { id, answers: {}, status: "draft", createdAt: id };
+    state.sites.push(draft);
+  }
+  draft.answers = { ...(draft.answers || {}), site: siteUrl };
+  state.activeId = draft.id;
+  save(state);
+  stashPendingSite("");
+  return draft;
+}
 
 function ownerKey() {
   const user = typeof window === "undefined" ? null : getUser();
   return String(user?.result?.username || user?.data?.username || user?.result?.email || "");
 }
 
+/** V8 public names (Solo / Pro / Premium). Ids stay starter/growth/agency for quotas + stored journeys. */
 export const PLANS = [
-  { id: "starter", name: "Starter", price: 29, annual: 24, sites: 1, keywords: 10, prompts: 5, audits: 2, desc: "One site. A clear next step." },
-  { id: "growth", name: "Growth", price: 79, annual: 65, sites: 3, keywords: 50, prompts: 30, audits: 8, desc: "More coverage as you grow." },
-  { id: "agency", name: "Agency", price: 199, annual: 165, sites: 10, keywords: 200, prompts: 100, audits: 30, desc: "A workspace for your clients." },
+  {
+    id: "starter",
+    alias: "solo",
+    name: "Solo",
+    price: 29,
+    annual: 24,
+    sites: 1,
+    keywords: 10,
+    prompts: 5,
+    audits: 2,
+    desc: "One business. One website.",
+  },
+  {
+    id: "growth",
+    alias: "pro",
+    name: "Pro",
+    price: 79,
+    annual: 66,
+    sites: 5,
+    keywords: 50,
+    prompts: 30,
+    audits: 8,
+    desc: "Growing teams. Up to five websites.",
+  },
+  {
+    id: "agency",
+    alias: "premium",
+    name: "Premium",
+    price: 399,
+    annual: 332,
+    sites: 25,
+    keywords: 200,
+    prompts: 100,
+    audits: 30,
+    desc: "Agencies. Up to 25 websites.",
+  },
 ];
+
+export const PLAN_ALIAS = {
+  solo: "starter",
+  pro: "growth",
+  premium: "agency",
+  starter: "starter",
+  growth: "growth",
+  agency: "agency",
+};
 
 function empty() {
   return { planId: null, billing: "monthly", sites: [], activeId: null };
@@ -123,7 +226,8 @@ export function hydrateJourney({ force = false } = {}) {
 }
 
 export function planById(id) {
-  return PLANS.find((plan) => plan.id === id) || null;
+  const canonical = PLAN_ALIAS[String(id || "").toLowerCase()] || id;
+  return PLANS.find((plan) => plan.id === canonical || plan.alias === id) || null;
 }
 
 export function readySites(state = loadJourney()) {

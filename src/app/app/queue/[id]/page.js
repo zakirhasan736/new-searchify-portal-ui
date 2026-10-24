@@ -1,7 +1,7 @@
-import ReviewPage from "@/components/v3/pages/ReviewPage";
+"use client";
 
-export const metadata = { title: "Review" };
+import ReviewScreen from "@/components/v8/screens/ReviewScreen";
 
 export default function Page() {
-  return <ReviewPage />;
+  return <ReviewScreen />;
 }

@@ -1,7 +1,7 @@
-import { SettingsView } from "@/components/board/WorkspaceViews";
+"use client";
 
-export const metadata = { title: "Settings" };
+import SettingsScreen from "@/components/v8/screens/SettingsScreen";
 
 export default function Page() {
-  return <SettingsView />;
+  return <SettingsScreen />;
 }

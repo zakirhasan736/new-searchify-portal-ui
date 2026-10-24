@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — HQ problems</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
+@keyframes sfy-rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 1200px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 22px clamp(16px, 4vw, 56px) 56px; display: flex; flex-direction: column; gap: 22px">
+
+  <header style="max-width: 1240px; width: 100%; margin: 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+    <span style="display: flex; align-items: center; gap: 10px; margin-right: auto">
+      <svg width="30" height="30" viewBox="0 0 32 32" role="img" aria-label="Searchify"><rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="#131519" stroke="#2E333B"></rect><circle cx="9" cy="12.5" r="2.9" fill="#FF5A4E"></circle><circle cx="16" cy="12.5" r="2.9" fill="#FF9F43"></circle><circle cx="23" cy="12.5" r="2.9" fill="#FFC53D"></circle><circle cx="9" cy="19.5" r="2.9" fill="#3DDC84"></circle><circle cx="16" cy="19.5" r="2.9" fill="#2CC7C0"></circle><circle cx="23" cy="19.5" r="2.9" fill="#4DA3FF"></circle></svg>
+      <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.4px">searchify</span>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 6px; background: #D5F879; color: #0A0B0D; font-weight: 600">HQ</span>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 6px; border: 1px solid #3A404A; color: #9AA1AB">SAMPLE DATA</span>
+    </span>
+    <a href="screens.html" style="font-size: 13px; color: #9AA1AB; text-decoration: none">Exit HQ</a>
+  </header>
+
+  <nav aria-label="HQ sections" style="max-width: 1240px; width: 100%; margin: 0 auto; display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid #1A1D22; padding-bottom: 12px">
+    <a href="Admin.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Overview</a>
+    <a href="HQCustomers.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Customers</a>
+    <a href="HQPartners.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Partners and payouts</a>
+    <a href="HQProblems.dc.html" aria-current="page" style="min-height: 38px; display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; border-radius: 10px; background: #1A1D22; color: #F2F4F5; text-decoration: none; font-size: 14px; font-weight: 600">Problems <span style="font-family: 'Geist Mono', monospace; font-size: 11px; padding: 2px 7px; border-radius: 999px; background: rgba(255,90,78,.16); color: #FF8A80">{{openCount}}</span></a>
+    <a href="HQShareholders.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Shareholders</a>
+  </nav>
+
+  <div style="max-width: 1240px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 6px">
+    <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(30px, 3.4vw, 42px); line-height: 1.04; letter-spacing: -1.2px; font-weight: 700">{{headline}}</h1>
+    <span style="font-size: 15px; color: #9AA1AB">Billing, connections and automation problems, worst first. Customers see a friendly version of each one in their own dashboard.</span>
+  </div>
+
+  <section aria-label="Problem types" style="max-width: 1240px; width: 100%; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px">
+    <sc-for list="{{cats}}" as="k" hint-placeholder-count="6">
+      <button type="button" onClick="{{k.pick}}" aria-pressed="{{k.pressed}}" style="text-align: left; font: inherit; color: #F2F4F5; border-radius: 16px; padding: 14px 16px; background: {{k.bg}}; border: 1px solid {{k.border}}; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 13px; color: #9AA1AB">{{k.label}}</span>
+        <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 28px; font-weight: 800; line-height: 1; color: {{k.color}}">{{k.count}}</span>
+      </button>
+    </sc-for>
+  </section>
+
+  <div style="max-width: 1240px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+    <section aria-label="Queue" style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+      <sc-for list="{{items}}" as="i" hint-placeholder-count="6">
+        <article style="border-radius: 18px; background: #101215; border: 1px solid #1A1D22; padding: 16px 18px; display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; animation: sfy-rise .25s ease both">
+          <span style="flex: none; margin-top: 2px; font-family: 'Geist Mono', monospace; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; color: {{i.sevColor}}; background: {{i.sevBg}}">{{i.sev}}</span>
+          <div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 15px; font-weight: 600">{{i.title}}</span>
+            <span style="font-size: 13px; color: #9AA1AB">{{i.who}} · {{i.since}}</span>
+            <span style="font-size: 14px; line-height: 1.5; color: #D7DADE">{{i.detail}}</span>
+            <sc-if value="{{i.isDone}}" hint-placeholder-val="{{false}}"><span role="status" style="font-size: 13px; color: #3DDC84">{{i.doneText}}</span></sc-if>
+          </div>
+          <sc-if value="{{i.isOpen}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
+              <button type="button" onClick="{{i.primary}}" style="min-height: 40px; padding: 0 14px; border-radius: 11px; border: 0; background: #D5F879; color: #0A0B0D; font-size: 13px; font-weight: 600">{{i.primaryLabel}}</button>
+              <button type="button" onClick="{{i.email}}" style="min-height: 40px; padding: 0 14px; border-radius: 11px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 13px">Email customer</button>
+              <a href="HQCustomers.dc.html" style="min-height: 40px; display: inline-flex; align-items: center; padding: 0 12px; font-size: 13px; color: #9AA1AB">Open account</a>
+            </div>
+          </sc-if>
+        </article>
+      </sc-for>
+      <sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><p style="margin: 0; padding: 24px; border-radius: 18px; background: #101215; border: 1px solid #1A1D22; font-size: 15px; color: #3DDC84">Nothing open here.</p></sc-if>
+    </section>
+
+    <aside aria-label="Rules" style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+      <div style="border-radius: 20px; background: #101215; border: 1px solid #1A1D22; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 16px; font-weight: 600">When a card is declined</h2>
+        <sc-for list="{{dunning}}" as="d" hint-placeholder-count="4">
+          <div style="display: flex; gap: 12px; font-size: 13px; line-height: 1.45">
+            <span style="width: 54px; flex: none; font-family: 'Geist Mono', monospace; color: #D5F879">{{d.day}}</span>
+            <span style="color: #D7DADE">{{d.what}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="border-radius: 20px; background: #101215; border: 1px solid #1A1D22; padding: 18px; display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-size: 16px; font-weight: 600">Today</h2>
+        <span style="font-size: 14px; color: #D7DADE">{{resolvedLine}}</span>
+        <span style="font-size: 13px; color: #7D848E">Every action here is saved to the customer's account log with your name.</span>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { cat: 'all', done: {}, emailed: {} };
+  }
+  renderVals() {
+    const ITEMS = [
+      { id: 'cb1', cat: 'chargeback', sev: 'URGENT', title: 'Chargeback opened: $399.00', who: 'Southbank Creative', since: '2 days ago · respond by Oct 27', detail: 'The bank says the charge wasn’t recognized. They’ve used Searchify daily (96 moves shipped), so the evidence is strong. The partner commission on this payment is on hold until it’s decided.', primaryLabel: 'Send evidence pack', doneText: 'Evidence sent to Stripe: invoice, usage log and sign-up record.' },
+      { id: 'pf1', cat: 'payment', sev: 'HIGH', title: 'Card declined: $79.00 Pro renewal', who: 'Wharf Street Agency', since: 'today · retry 2 of 4 on Oct 23', detail: 'Visa ending 2200, insufficient funds. They’ve had 2 reminder emails. Access continues until day 14.', primaryLabel: 'Retry the charge now', doneText: 'Charge retried: $79.00 paid.' },
+      { id: 'pf2', cat: 'payment', sev: 'HIGH', title: 'Card expired: $29.00 Solo renewal', who: 'Kirkgate Café', since: '4 days ago · retry 3 of 4 on Oct 24', detail: 'Mastercard ending 3391 expired in September. A new card is needed; retrying will fail.', primaryLabel: 'Send update-card link', doneText: 'Secure update-card link sent.' },
+      { id: 'cn1', cat: 'connection', sev: 'HIGH', title: 'WordPress connection broken', who: 'Rivera Digital · northline-roofing.example', since: '6 hours ago', detail: 'The site changed its login plugin and our access key stopped working. 4 approved moves are waiting to ship.', primaryLabel: 'Send reconnect steps', doneText: 'Reconnect steps sent. The moves ship once the key works.' },
+      { id: 'cn2', cat: 'connection', sev: 'MEDIUM', title: 'Search Console access removed', who: 'Wharf Street Agency · kirkgate-cafe.example', since: '1 day ago', detail: 'Their Google account removed Searchify. Rankings and clicks stop updating until it’s reconnected.', primaryLabel: 'Send reconnect steps', doneText: 'Reconnect steps sent.' },
+      { id: 'jb1', cat: 'job', sev: 'MEDIUM', title: 'Weekly scan stuck for 3 hours', who: 'Maple & Main Media', since: '3 hours ago', detail: 'The scan stopped at page 214 of 380. The site started returning slow responses, likely a hosting limit.', primaryLabel: 'Restart at a slower pace', doneText: 'Restarted at half speed. Finishes in about 40 minutes.' },
+      { id: 'jb2', cat: 'job', sev: 'LOW', title: '2 drafted moves failed to save', who: 'Bright Smile Dental', since: 'yesterday', detail: 'Their page builder locked the pages while drafts were saving. Nothing changed on the live site.', primaryLabel: 'Try again', doneText: 'Saved. Both moves are back in their approval queue.' },
+      { id: 'rb1', cat: 'rollback', sev: 'MEDIUM', title: 'Change rolled back automatically', who: 'Summit Roofing · /roof-repair', since: 'yesterday', detail: 'A title change was followed by a 38% drop in clicks over 5 days, so Searchify restored the old title. Worth a look before a similar move ships elsewhere.', primaryLabel: 'Mark as reviewed', doneText: 'Reviewed. Added to the learning notes for title changes.' },
+      { id: 'rb2', cat: 'rollback', sev: 'LOW', title: 'Customer undid 3 moves in a row', who: 'Desert Law Group', since: '3 days ago', detail: 'They undid three internal-link moves, then cancelled. The reason given: "links went to the wrong practice areas."', primaryLabel: 'Mark as reviewed', doneText: 'Reviewed and tagged for the product team.' }
+    ];
+    const done = this.state.done;
+    const open = ITEMS.filter((i) => !done[i.id]);
+    const CAT = [['all', 'All open'], ['payment', 'Failed payments'], ['chargeback', 'Chargebacks'], ['connection', 'Broken connections'], ['job', 'Stuck jobs'], ['rollback', 'Rolled back']];
+    const C = this.state.cat;
+    const SEV = { URGENT: ['#FF8A80', 'rgba(255,90,78,.16)'], HIGH: ['#FFC53D', 'rgba(255,197,61,.14)'], MEDIUM: ['#4DA3FF', 'rgba(77,163,255,.14)'], LOW: ['#9AA1AB', 'rgba(154,161,171,.12)'] };
+    const shown = ITEMS.filter((i) => C === 'all' ? true : i.cat === C).filter((i) => C === 'all' ? !done[i.id] : true);
+    const cats = CAT.map((c) => {
+      const n = c.at(0) === 'all' ? open.length : open.filter((i) => i.cat === c.at(0)).length;
+      const on = C === c.at(0);
+      return { label: c.at(1), count: String(n), color: n === 0 ? '#3DDC84' : (c.at(0) === 'chargeback' || c.at(0) === 'payment' ? '#FF8A80' : '#F2F4F5'),
+        pressed: on ? 'true' : 'false', bg: on ? 'rgba(213,248,121,.06)' : '#101215', border: on ? '#D5F879' : '#1A1D22', pick: () => this.setState({ cat: c.at(0) }) };
+    });
+    const items = shown.map((i) => {
+      const d = !!done[i.id], em = !!this.state.emailed[i.id];
+      return { sev: i.sev, sevColor: SEV[i.sev].at(0), sevBg: SEV[i.sev].at(1), title: i.title, who: i.who, since: i.since, detail: i.detail,
+        primaryLabel: i.primaryLabel, isOpen: !d, isDone: d || em, doneText: d ? i.doneText : 'Email sent to the customer with plain-language next steps.',
+        primary: () => this.setState({ done: Object.assign({}, this.state.done, { [i.id]: true }) }),
+        email: () => this.setState({ emailed: Object.assign({}, this.state.emailed, { [i.id]: true }) }) };
+    });
+    const nDone = Object.keys(done).length;
+    return {
+      openCount: String(open.length),
+      headline: open.length ? open.length + ' problems open. ' + (open.filter((i) => i.sev === 'URGENT').length ? '1 needs an answer by Oct 27.' : 'Nothing urgent.') : 'All clear.',
+      cats: cats, items: items, empty: items.length === 0,
+      dunning: [
+        { day: 'Day 0', what: 'Charge fails. Customer gets a friendly email with a one-click card update.' },
+        { day: 'Day 3', what: 'Automatic retry and second email.' },
+        { day: 'Day 7', what: 'Retry, plus a banner inside their dashboard.' },
+        { day: 'Day 14', what: 'Final retry. If it fails, new moves pause. Nothing already shipped is touched.' }
+      ],
+      resolvedLine: nDone ? nDone + ' resolved so far today.' : 'Nothing resolved yet today.'
+    };
+  }
+}
+</script>
+</body>
+</html>

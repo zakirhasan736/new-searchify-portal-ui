@@ -1,0 +1,349 @@
+/* V8 Screens Animations */
+
+@keyframes sfy-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sfy-rise-edit {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sfy-flicker {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  45% {
+    opacity: 0.55;
+    transform: scale(0.9);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes sfy-ping {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(242, 244, 245, 0.5);
+  }
+  60% {
+    box-shadow: 0 0 0 8px rgba(242, 244, 245, 0);
+  }
+}
+
+@keyframes sfy-breathe {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes sfy-fill {
+  from {
+    width: 0;
+  }
+  to {
+    width: 17%;
+  }
+}
+
+@keyframes sfy-sheen {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+@keyframes sfy-march {
+  to {
+    background-position: 22.6px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Global resets for V8 screens */
+.v8-screen {
+  box-sizing: border-box;
+}
+
+.v8-screen *,
+.v8-screen *::before,
+.v8-screen *::after {
+  box-sizing: inherit;
+}
+
+.v8-screen-root {
+  width: 100%;
+  min-height: 100dvh;
+  background: #0a0b0d;
+}
+
+/* —— App chrome: fixed left rail; only the main column scrolls —— */
+html:has(.v8-app-chrome),
+body:has(.v8-app-chrome) {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.v8-app-chrome {
+  display: flex;
+  align-items: stretch;
+  height: 100dvh;
+  max-height: 100dvh;
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden;
+  background: #0a0b0d;
+  color: #f2f4f5;
+  font-family: var(--font-geist, Geist), "Helvetica Neue", sans-serif;
+}
+
+.v8-app-nav-col {
+  position: fixed;
+  top: 0;
+  left: 0;
+  flex: 0 0 248px;
+  width: 248px;
+  max-width: 248px;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: #0d0e10;
+  border-right: 1px solid #1a1d22;
+}
+
+.v8-app-nav-head,
+.v8-app-nav-foot {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 14px;
+  background: #0d0e10;
+}
+
+.v8-app-nav-foot {
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #1a1d22;
+}
+
+.v8-app-nav {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  padding: 8px 14px 16px;
+  background: #0d0e10;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #262a31 transparent;
+  color: #f2f4f5;
+  font-family: var(--font-geist, Geist), "Helvetica Neue", sans-serif;
+}
+
+.v8-app-signout {
+  min-height: 36px;
+  margin-top: 0;
+  border-radius: 10px;
+  border: 1px solid #262a31;
+  background: transparent;
+  color: #9aa1ab;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.v8-app-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-left: 248px;
+  width: calc(100vw - 248px);
+  max-width: calc(100vw - 248px);
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #262a31 transparent;
+  background: #0a0b0d;
+}
+
+/* Right pane fills the screen. The top header spans that pane; page blocks center themselves. */
+.v8-app-main > div {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin: 0;
+}
+
+.v8-app-main > div > header {
+  width: 100%;
+  max-width: none;
+  align-self: stretch;
+}
+
+.v8-app-main h1,
+.v8-app-main h2 {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.v8-app-mobilebar {
+  display: none;
+}
+
+.v8-app-nav-backdrop {
+  display: none;
+}
+
+.v8-app-mobilebar-btn {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #262a31;
+  background: #131519;
+  color: #f2f4f5;
+  font-size: 13px;
+}
+
+.v8-app-mobilebar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #f2f4f5;
+  font-weight: 800;
+  font-family: "Bricolage Grotesque", Geist, sans-serif;
+}
+
+@media (max-width: 900px) {
+  .v8-app-chrome {
+    flex-direction: column;
+    padding-bottom: 0;
+  }
+
+  .v8-app-mobilebar {
+    display: flex;
+    flex: none;
+    width: 100%;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #1a1d22;
+    position: relative;
+    z-index: 45;
+    background: #0a0b0d;
+  }
+
+  .v8-app-nav-col {
+    display: none;
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(280px, 86vw);
+    max-width: min(280px, 86vw);
+    height: 100dvh;
+    z-index: 50;
+    box-shadow: 8px 0 40px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+  }
+
+  .v8-app-nav-col.is-open {
+    display: flex;
+  }
+
+  .v8-app-nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 40;
+    border: 0;
+  }
+
+  .v8-app-main {
+    margin-left: 0;
+    width: 100%;
+    max-width: 100%;
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+    padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .v8-app-main > div {
+    max-width: 100%;
+  }
+}
+
+/* Link resets — scoped so marketing pages keep their own link colors */
+.v8-app-chrome a {
+  color: inherit;
+}
+
+.v8-app-chrome a:hover {
+  color: inherit;
+}
+
+.v8-app-main a[href]:not([class]) {
+  color: #d5f879;
+}
+
+.v8-app-main a[href]:not([class]):hover {
+  color: #ecffb8;
+}
+
+/* Button resets */
+.v8-app-chrome button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Input focus styles */
+.v8-app-chrome input:focus,
+.v8-app-chrome textarea:focus {
+  outline: 2px solid #4da3ff;
+  outline-offset: 2px;
+}
+
+.v8-app-chrome button:focus-visible,
+.v8-app-chrome a:focus-visible {
+  outline: 2px solid #4da3ff;
+  outline-offset: 2px;
+}

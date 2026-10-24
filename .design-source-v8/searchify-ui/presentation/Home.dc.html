@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — Home</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;family=Caveat:wght@600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+@keyframes sfy-breathe{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes sfy-rise{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes sfy-fill{from{width:0}to{width:17%}}
+@keyframes sfy-sheen{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+@keyframes sfy-march{to{background-position:22.6px 0}}
+@keyframes sfy-flicker{0%,100%{opacity:1;transform:scale(1)}45%{opacity:.55;transform:scale(.9)}55%{opacity:1;transform:scale(1.04)}}
+@keyframes sfy-ping{0%,100%{box-shadow:0 0 0 0 rgba(242,244,245,.5)}60%{box-shadow:0 0 0 8px rgba(242,244,245,0)}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 960px; background: #0A0B0D; display: flex; flex-wrap: wrap; align-items: stretch">
+<div style="flex: 1 1 248px; max-width: 100%; display: flex">
+<dc-import name="Nav" current="home" hint-size="248px,960px"></dc-import>
+</div>
+<div style="flex: 999 1 560px; min-width: 0; min-height: 960px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 22px clamp(16px, 4vw, 56px) 40px; display: flex; flex-direction: column; gap: 32px">
+
+  <header style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+    <div style="display: flex; align-items: center; gap: 10px; margin-right: auto">
+      
+      <a href="Portfolio.dc.html" aria-label="Switch site" style="display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 10px; border-radius: 10px; color: #F2F4F5; text-decoration: none; font-weight: 600; font-size: 17px; letter-spacing: -0.3px">northline.example
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA1AB" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 10l5 5 5-5"></path></svg>
+      </a>
+    </div>
+    <a href="Path.dc.html" style="display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 14px; border-radius: 999px; background: #131519; border: 1px solid #262A31; color: #F2F4F5; text-decoration: none; font-size: 13px">
+      <span style="font-weight: 600">Level 2 · Fair</span>
+      <span style="display: inline-flex; gap: 3px" aria-hidden="true">
+        <span style="width: 14px; height: 4px; border-radius: 2px; background: {{accent}}"></span><span style="width: 14px; height: 4px; border-radius: 2px; background: {{accent}}"></span><span style="width: 14px; height: 4px; border-radius: 2px; background: {{accent}}"></span><span style="width: 14px; height: 4px; border-radius: 2px; background: #3A404A"></span><span style="width: 14px; height: 4px; border-radius: 2px; background: #3A404A"></span>
+      </span>
+      <span style="color: #9AA1AB">{{toLevel}}</span>
+    </a>
+    <span style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; background: #131519; border: 1px solid #262A31; font-size: 13px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-3 2-4 2-7 2 1 3 3 3 5"></path></svg>
+      3-week streak
+    </span>
+    <a href="Win.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; background: {{accent}}; color: #0A0B0D; text-decoration: none; font-size: 13px; font-weight: 600">
+      <span style="width: 7px; height: 7px; border-radius: 50%; background: #0A0B0D; animation: sfy-breathe 1.4s ease-in-out infinite"></span>
+      1 result is in
+    </a>
+    <a href="Changelog.dc.html" aria-label="Reports and change log" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid #262A31; display: grid; place-items: center; color: #D7DADE">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path><path d="M12 8v4l3 2"></path></svg>
+    </a>
+    <a href="Settings.dc.html" aria-label="Settings" style="width: 40px; height: 40px; border-radius: 50%; background: #262A31; display: grid; place-items: center; color: #F2F4F5; text-decoration: none; font-size: 13px; font-weight: 600">AR</a>
+  </header>
+
+  <section aria-label="Captured so far" style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+      <div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap">
+        <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(48px, 6vw, 80px); line-height: 0.9; letter-spacing: -2.5px; font-weight: 800">{{captured}}</span>
+        <span style="font-size: 17px; color: #9AA1AB">of 1,840 untapped clicks / month captured</span>
+      </div>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 13px; color: {{accent}}">{{pendingLabel}}</span>
+    </div>
+    <div role="progressbar" aria-label="Captured so far" aria-valuemin="0" aria-valuemax="1840" aria-valuenow="312" style="display: flex; height: 12px; border-radius: 7px; overflow: hidden; background: #1A1D22; gap: 2px">
+      <div style="width: 17%; position: relative; overflow: hidden; background: #3DDC84; box-shadow: 0 0 18px rgba(61,220,132,.75); animation: sfy-fill 1.4s cubic-bezier(.2,.8,.2,1) both">
+        <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 35%; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.6), rgba(255,255,255,0)); animation: sfy-sheen 1.9s ease-in-out infinite"></div>
+      </div>
+      <div style="width: {{pendingWidth}}; background: repeating-linear-gradient(135deg, #3DDC84 0 4px, transparent 4px 8px); background-size: 22.6px 12px; opacity: .6; transition: width .5s ease; animation: sfy-march 1s linear infinite"></div>
+    </div>
+  </section>
+
+  <main style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
+    <section aria-label="Your moves" style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+
+      <div style="display: flex; flex-direction: column; gap: 14px; padding: 18px 20px; border-radius: 20px; background: #101215; border: 1px solid #1A1D22">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+          <span style="font-size: 13px; color: #9AA1AB; margin-right: 4px">Work on</span>
+          <sc-for list="{{chips}}" as="ch" hint-placeholder-count="4">
+            <sc-if value="{{ch.on}}" hint-placeholder-val="{{false}}">
+              <button type="button" aria-pressed="true" onClick="{{ch.pick}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid {{ch.color}}; background: {{ch.tint}}; color: #F2F4F5; font-size: 13px; font-weight: 600; box-shadow: 0 0 22px {{ch.glow}}">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ch.color}}; box-shadow: 0 0 10px {{ch.color}}; animation: sfy-flicker 1.4s ease-in-out infinite"></span>{{ch.label}} <span style="font-family: 'Geist Mono', monospace">{{ch.count}}</span>
+              </button>
+            </sc-if>
+            <sc-if value="{{ch.off}}" hint-placeholder-val="{{true}}">
+              <button type="button" aria-pressed="false" onClick="{{ch.pick}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 13px">
+                <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ch.color}}"></span>{{ch.label}} <span style="font-family: 'Geist Mono', monospace; color: #9AA1AB">{{ch.count}}</span>
+              </button>
+            </sc-if>
+          </sc-for>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: .6px; color: #7D848E">INCOMING</span>
+            <span style="font-size: 13px; color: #D7DADE">{{streamLabel}}</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 9px; align-items: center">
+            <sc-for list="{{stream}}" as="d" hint-placeholder-count="6">
+              <button type="button" onClick="{{d.pick}}" aria-label="{{d.label}}" title="{{d.label}}" style="width: 22px; height: 22px; padding: 0; border-radius: 50%; border: 2px solid {{d.edge}}; background: {{d.fill}}; box-shadow: {{d.shadow}}; outline: {{d.ring}}; outline-offset: 3px; opacity: {{d.op}}; animation: {{d.anim}}; transition: opacity .3s ease"></button>
+            </sc-for>
+          </div>
+          <span style="font-size: 12px; color: #7D848E; line-height: 1.5">{{nextLabel}}</span>
+        </div>
+      </div>
+
+      <sc-if value="{{hasMove}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; flex-direction: column">
+          <article style="background: #131519; border: 1px solid #262A31; border-radius: 24px; padding: clamp(22px, 3vw, 36px); display: flex; flex-direction: column; gap: 22px; animation: sfy-rise .45s cubic-bezier(.2,.8,.2,1) both">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px">
+              <span style="display: inline-flex; align-items: center; gap: 7px; font-family: 'Geist Mono', monospace; color: {{m.color}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{m.color}}; box-shadow: 0 0 8px {{m.color}}"></span>{{m.tag}}</span>
+              <span style="color: #3A404A">·</span>
+              <span style="color: #9AA1AB">{{m.kind}}</span>
+              <span style="margin-left: auto; font-family: 'Geist Mono', monospace; color: #9AA1AB">{{m.page}}</span>
+            </div>
+            <div style="font-family: 'Caveat', cursive; font-size: 36px; font-weight: 700; line-height: 1; color: {{accent}}; margin-bottom: -14px; transform: rotate(-2deg); transform-origin: left center">We suggest…</div>
+            <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.12; letter-spacing: -1.4px; font-weight: 700"><sc-for list="{{m.head}}" as="s" hint-placeholder-count="3"><sc-if value="{{s.hl}}" hint-placeholder-val="{{false}}"><span style="display: inline-block; line-height: 1.02; padding: 0.02em 0.2em 0.06em; margin: 0 0.02em; color: #0A0B0D; border-radius: 0.3em 0.85em 0.4em 0.75em; transform: rotate(-1.2deg); background: repeating-linear-gradient(178deg, rgba(10,11,13,0) 0 3px, rgba(10,11,13,.07) 3px 4px), linear-gradient(100deg, rgba(213,248,121,0) 0%, rgba(213,248,121,.92) 3%, rgba(213,248,121,.78) 12%, rgba(213,248,121,.68) 88%, rgba(213,248,121,.9) 96%, rgba(213,248,121,0) 100%); box-shadow: 0 0 22px rgba(213,248,121,.18)">{{s.t}}</span></sc-if><sc-if value="{{s.plain}}" hint-placeholder-val="{{true}}"><span>{{s.t}}</span></sc-if></sc-for></h1>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px">
+              <div style="border-radius: 16px; background: #0E1013; border: 1px solid #1A1D22; padding: 18px; display: flex; flex-direction: column; gap: 8px">
+                <span style="font-size: 12px; color: #7D848E; font-family: 'Geist Mono', monospace">NOW</span>
+                <span style="font-size: 17px; line-height: 1.4; color: #9AA1AB">{{m.before}}</span>
+              </div>
+              <div style="border-radius: 16px; background: rgba(77,163,255,.07); border: 1.5px solid #4DA3FF; box-shadow: 0 0 26px rgba(77,163,255,.35), inset 0 0 18px rgba(77,163,255,.08); padding: 18px; display: flex; flex-direction: column; gap: 8px">
+                <span style="display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: #4DA3FF; font-family: 'Geist Mono', monospace"><span>AFTER</span><span style="color: #7D848E">OPTION {{m.opt}} OF 3</span></span>
+                <span style="font-size: 17px; line-height: 1.55"><sc-for list="{{m.afterSegs}}" as="s" hint-placeholder-count="3"><sc-if value="{{s.hl}}" hint-placeholder-val="{{false}}"><span style="padding: 0.04em 0.22em 0.08em; margin: 0 0.02em; color: #0A0B0D; font-weight: 600; border-radius: 0.3em 0.8em 0.4em 0.7em; -webkit-box-decoration-break: clone; box-decoration-break: clone; background: repeating-linear-gradient(178deg, rgba(10,11,13,0) 0 3px, rgba(10,11,13,.07) 3px 4px), linear-gradient(100deg, rgba(213,248,121,0) 0%, rgba(213,248,121,.92) 3%, rgba(213,248,121,.76) 14%, rgba(213,248,121,.66) 86%, rgba(213,248,121,.9) 96%, rgba(213,248,121,0) 100%)">{{s.t}}</span></sc-if><sc-if value="{{s.plain}}" hint-placeholder-val="{{true}}"><span>{{s.t}}</span></sc-if></sc-for></span>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+              <button type="button" onClick="{{regen}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 14px">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"></path><path d="M21 4v5h-5"></path></svg>Regenerate suggestion</button>
+              <a href="Edit.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; box-sizing: border-box; border-radius: 12px; border: 1px solid #262A31; color: #F2F4F5; font-size: 14px; text-decoration: none">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>Make manual edits</a>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 18px; border-top: 1px solid #1A1D22">
+              <div style="flex: 1 1 280px; display: flex; flex-direction: column; min-width: 0">
+                <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.6px; color: {{accent}}">{{m.gain}}</span>
+                <span style="font-size: 13px; color: #9AA1AB">{{m.ships}}</span>
+                <span style="display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 13px; color: #D7DADE"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M8 15l4-4 3 3 5-6"></path></svg>{{m.proof}}</span>
+              </div>
+              <div style="flex: none; display: flex; gap: 10px; margin-left: auto">
+              <button type="button" onClick="{{skip}}" style="min-height: 52px; padding: 0 22px; border-radius: 14px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 16px">Skip it</button>
+              <button type="button" onClick="{{ship}}" style="min-height: 52px; padding: 0 28px; border-radius: 14px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 16px; font-weight: 600; box-shadow: 0 0 24px rgba(77,163,255,.45)">Ship it</button>
+              </div>
+            </div>
+          </article>
+          <div aria-hidden="true" style="height: 12px; margin: 0 3%; background: #101215; border: 1px solid #1A1D22; border-top: 0; border-radius: 0 0 20px 20px"></div>
+          <div aria-hidden="true" style="height: 10px; margin: 0 6%; background: #0D0F11; border: 1px solid #16181C; border-top: 0; border-radius: 0 0 18px 18px"></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{hasInfo}}" hint-placeholder-val="{{false}}">
+        <div style="border-radius: 24px; border: 1px solid {{info.border}}; background: #101215; box-shadow: {{info.glow}}; padding: 40px 32px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; animation: sfy-rise .45s ease both">
+          <span style="font-family: 'Geist Mono', monospace; font-size: 13px; color: {{info.color}}">{{info.tag}}</span>
+          <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(30px, 3.6vw, 46px); line-height: 1.04; letter-spacing: -1.3px; font-weight: 700">{{info.title}}</h1>
+          <p style="margin: 0; font-size: 17px; color: #9AA1AB; line-height: 1.5; max-width: 560px">{{info.sub}}</p>
+          <span style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #D7DADE; padding: 8px 12px; border-radius: 10px; background: #0A0B0D; border: 1px solid #1A1D22">{{info.sel}}</span>
+          <sc-if value="{{info.hasNext}}" hint-placeholder-val="{{true}}">
+            <button type="button" onClick="{{info.go}}" style="min-height: 52px; padding: 0 24px; border-radius: 14px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 16px; font-weight: 600; box-shadow: 0 0 24px rgba(77,163,255,.45)">{{info.cta}}</button>
+          </sc-if>
+        </div>
+      </sc-if>
+    </section>
+
+    <aside aria-labelledby="conn-h" style="flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px">
+        <h2 id="conn-h" style="margin: 0; font-size: 15px; font-weight: 600">Connections active</h2>
+        <a href="Connect.dc.html" style="font-size: 13px; color: #9AA1AB; text-decoration: none">Manage</a>
+      </div>
+      <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px">
+        <sc-for list="{{connections}}" as="c" hint-placeholder-count="3">
+          <li>
+            <a href="Connect.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 14px; border-radius: 14px; background: #101215; border: 1px solid rgba(61,220,132,.35); text-decoration: none; color: #F2F4F5">
+              <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #7D848E; width: 14px">{{c.n}}</span>
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 14px; font-weight: 500">{{c.name}}</span><span style="font-size: 12px; color: #9AA1AB">{{c.sub}}</span></span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3DDC84" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Connected" style="flex: none; filter: drop-shadow(0 0 6px rgba(61,220,132,.85)); animation: sfy-breathe 2.2s ease-in-out infinite"><path d="M9 2v6"></path><path d="M15 2v6"></path><path d="M6 8h12v3a6 6 0 0 1-12 0z"></path><path d="M12 17v5"></path></svg>
+            </a>
+          </li>
+        </sc-for>
+      </ol>
+    </aside>
+  </main>
+
+  <label for="cmd" style="max-width: 1180px; width: 100%; margin: 0 auto; box-sizing: border-box; display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 0 18px; border-radius: 16px; background: #131519; border: 1px solid #262A31">
+    <span style="width: 8px; height: 8px; border-radius: 50%; background: {{accent}}"></span>
+    <input id="cmd" type="text" placeholder="Talk to Searchify — “why did the ice dam guide drop?” or “write the October client report”" style="flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: #F2F4F5; font: inherit; font-size: 15px">
+    <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #9AA1AB; border: 1px solid #262A31; border-radius: 6px; padding: 2px 7px">⌘K</span>
+  </label>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#D5F879","options":["#D5F879","#9FE7F5","#FFD36E","#C9B8FF"]},"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { col: 'red', cur: {}, done: {}, variant: {}, gains: [] };
+  }
+  renderVals() {
+    const COLORS = { red: '#FF5A4E', yellow: '#FFC53D', green: '#3DDC84', blue: '#4DA3FF' };
+    const RGB = { red: '255,90,78', yellow: '255,197,61', green: '61,220,132', blue: '77,163,255' };
+    const LABEL = { red: 'Dire', yellow: 'Medium', green: 'Passes', blue: 'Locked' };
+    const TAG = { red: 'DIRE', yellow: 'MEDIUM', green: 'PASSES', blue: 'LOCKED' };
+    const NOUN = { red: 'reds', yellow: 'yellows', green: 'greens', blue: 'blues' };
+    const topicOf = (path) => { const seg = path === '/' ? '' : path.split('/').pop(); return seg ? seg.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Home page'; };
+
+    // Red moves, written out. Words wrapped in *stars* get the highlighter.
+    const RED = [
+      { t: 'Rewrite title · /services/roof-repair', kind: 'Title rewrite', head: 'Put *Calgary* and *24/7* where searchers can see it.',
+        before: 'Roof Repair Services | Northline Roofing',
+        after: ['Roof Repair in *Calgary* — *24/7 Emergency* Leaks | Northline', '*Calgary* Roof Repair, *24/7* — Leaks Fixed Same Day | Northline', 'Emergency Roof Repair *Calgary* · Open *24/7* | Northline'],
+        gain: '+40–90 clicks / mo', mid: 65, ships: 'Ships to WordPress · checked live · one-click undo', proof: 'Proven: similar title changes on roofing sites, median +18% clicks (412 changes)' },
+      { t: 'Refresh guide · /blog/ice-dams-guide', kind: 'Content refresh', head: 'Win back the ice dam guide *before the first freeze*.',
+        before: 'Last updated 2023 · no step-by-step section',
+        after: ['Adds *step-by-step removal*, a *safety checklist*, and when to call a pro', 'Adds a *5-step removal guide*, photos, and *Calgary freeze dates*', 'Adds *how to prevent ice dams*, a *cost table*, and an FAQ'],
+        gain: '+~60 clicks / mo', mid: 60, ships: 'Arrives as a WordPress draft · you publish', proof: 'Proven: similar guide refreshes, median +22% clicks (156 changes)' },
+      { t: 'Fix broken page · /services/emergency-tarping', kind: 'Broken page', head: 'Stop sending storm traffic to a *dead page*.',
+        before: 'Page shows “Not found” · 3 of your pages link here',
+        after: ['Page restored with *same-day tarping* details and a *call button*', 'Redirect to */services/roof-repair*, the closest live service', 'Restore page and add it to the *storm season* menu'],
+        gain: '+15–35 clicks / mo', mid: 25, ships: 'Ships to WordPress · checked live · one-click undo', proof: 'Proven: fixed broken service pages, median +31% clicks (97 changes)' },
+      { t: 'Add missing description · /services/siding', kind: 'Description', head: 'Give Google a *real description* for siding.',
+        before: '(No description. Google shows a random sentence from the page.)',
+        after: ['*Siding repair and replacement in Calgary*. Free written quote, *10-year warranty*.', 'Hail-damaged siding? *Calgary crews*, insurance help, quotes in *24 hours*.', '*Vinyl, fibre cement and metal siding* installed across Calgary and Airdrie.'],
+        gain: '+10–20 clicks / mo', mid: 15, ships: 'Ships to Yoast · one-click undo', proof: 'Proven: added descriptions, median +9% clicks (318 changes)' },
+      { t: 'Fix redirect loop · /financing', kind: 'Redirect loop', head: 'Unstick the financing page so *people can open it*.',
+        before: '/financing → /finance → /financing (never loads)',
+        after: ['Point both addresses to *one working /financing page*', 'Keep */finance* and send /financing to it', 'Remove the old rule and *rebuild the redirect* in Yoast'],
+        gain: '+5–15 leads / mo', mid: 10, ships: 'Ships to WordPress redirects · one-click undo', proof: 'Proven: fixed redirect loops recover traffic within 2 weeks (64 changes)' },
+      { t: 'Let Google index · /service-area/airdrie', kind: 'Indexing', head: 'Let Google *see your Airdrie page* at all.',
+        before: 'Page is hidden from Google (noindex left on)',
+        after: ['*Turn indexing on* and add the page to your sitemap', '*Turn indexing on* and link it from */service-area*', '*Turn indexing on*, then ask Google to *recrawl today*'],
+        gain: '+20–45 clicks / mo', mid: 32, ships: 'Ships to Yoast · checked in Search Console', proof: 'Proven: re-indexed service-area pages, median 19 days to first clicks (141 changes)' }
+    ];
+    // Yellow moves, from a template per action.
+    const YT = {
+      'Add internal links': { kind: 'Internal links', head: 'Point three popular posts at *{T}*.', before: '1 page links here', after: ['*4 pages* link here, in context', '*3 blog posts* and the *home page* link here', 'Adds a *“related service”* box to 3 posts'], gain: '+10–25 clicks / mo', mid: 18 },
+      'Shorten title': { kind: 'Title', head: 'Trim the {T} title so it *isn’t cut off*.', before: 'Read What Our Customers Say About Northline Roofing In Calgary Alberta…', after: ['*Northline Reviews* — 4.9★ from 312 Calgary Homeowners', '*Calgary Roofer Reviews* | Northline', '*312 Reviews*, 4.9★ — Northline Roofing Calgary'], gain: '+5–15 clicks / mo', mid: 10 },
+      'Compress images': { kind: 'Speed', head: 'Make the {T} page *load twice as fast*.', before: '9 photos · 6.4 MB · 4.8s to load', after: ['9 photos · *1.1 MB* · *2.1s* to load', 'Lazy-load photos · *1.4 MB* · *2.3s*', 'Convert to *WebP* · *0.9 MB* · *1.9s*'], gain: '+5–10 clicks / mo', mid: 8 },
+      'Add FAQ section': { kind: 'FAQ', head: 'Answer the *5 questions people ask* about {t}.', before: 'No questions answered on the page', after: ['Adds *5 FAQs* from real searches, with FAQ markup', 'Adds *“How much do gutters cost in Calgary?”* and 4 more', 'Adds a short *FAQ block* under the quote form'], gain: '+10–20 clicks / mo', mid: 14 },
+      'Update the year': { kind: 'Freshness', head: 'Say *2026* so searchers know it’s current.', before: 'How Long Does a Roof Last? (2023 Guide)', after: ['How Long Does a Roof Last? (*2026* Guide)', 'How Long Does a Roof Last in Calgary? *Updated 2026*', 'Roof Lifespan by Material — *2026 Calgary Guide*'], gain: '+5–15 clicks / mo', mid: 9 },
+      'Add image descriptions': { kind: 'Images', head: 'Describe the photos so *Google Images* can find them.', before: '7 of 9 images have no description', after: ['All 9 images get a *plain description*', 'Descriptions written from *what’s in each photo*', 'Descriptions plus *file names that make sense*'], gain: '+3–8 clicks / mo', mid: 5 },
+      'Fix duplicate title': { kind: 'Title', head: 'Give the hail post *its own title*.', before: 'Same title as /blog/hail-damage-insurance', after: ['*Calgary Hail Season 2026*: Dates, Risks and Roof Checks', '*When Is Hail Season in Calgary?* A Roofer’s Guide', '*Hail Season Prep* for Calgary Roofs | Northline'], gain: '+5–12 clicks / mo', mid: 8 },
+      'Add business details': { kind: 'Local details', head: 'Show your *address and hours* to Google.', before: 'No business details in the page code', after: ['Adds *address, phone and hours* in Google’s format', 'Adds business details plus *service area map*', 'Adds details and links your *Google Business Profile*'], gain: '+5–15 calls / mo', mid: 10 },
+      'Merge thin posts': { kind: 'Merge', head: 'Combine 3 short posts into *one strong guide*.', before: '3 posts under 300 words each', after: ['One *1,200-word guide* · old posts redirect to it', 'One guide with a *noise checklist* · old posts redirect', 'One guide plus a *video* · old posts redirect'], gain: '+8–18 clicks / mo', mid: 12 },
+      'Speed up page': { kind: 'Speed', head: 'Get the home page *under 2.5 seconds*.', before: '3.9s to load on phones', after: ['*2.2s* — defer the chat widget and slider', '*2.4s* — compress the hero image', '*2.0s* — both of the above, plus caching'], gain: '+5–10 clicks / mo', mid: 8 },
+      'Link from blog': { kind: 'Internal links', head: 'Send blog readers to your *Cochrane page*.', before: '0 blog posts link here', after: ['*3 posts* mention Cochrane and link here', '*2 posts* plus the *footer* link here', 'Adds a *“We serve Cochrane”* line to 4 posts'], gain: '+5–12 clicks / mo', mid: 8 },
+      'Refresh stats': { kind: 'Content refresh', head: 'Swap old numbers for *2026 claim data*.', before: 'Quotes 2021 insurance figures', after: ['Updates to *2026 Alberta claim averages*', 'Updates figures and adds a *claim timeline*', 'Updates figures and adds *what adjusters check*'], gain: '+5–10 clicks / mo', mid: 7 },
+      'Shorten description': { kind: 'Description', head: 'Cut the About description to *fit in Google*.', before: '212 characters · cut off after “family-owned since…”', after: ['*Family-owned Calgary roofers since 1998*. Meet the crew.', '*26 years* roofing Calgary. Meet the family behind Northline.', 'Local, licensed, *family-owned*. Calgary roofers since 1998.'], gain: '+2–6 clicks / mo', mid: 4 },
+      'Add city to heading': { kind: 'Heading', head: 'Put *Calgary* in the siding headline.', before: 'Siding Services', after: ['Siding Repair & Replacement in *Calgary*', '*Calgary* Siding — Repair, Replace, Insure', 'Hail-Proof Siding for *Calgary* Homes'], gain: '+4–10 clicks / mo', mid: 7 }
+    };
+    const yellowTasks = ['Add internal links · /services/gutter-guards', 'Shorten title · /reviews', 'Compress images · /services/skylights', 'Add FAQ section · /services/gutters', 'Update the year · /blog/roof-lifespan', 'Add image descriptions · /blog/metal-vs-asphalt', 'Fix duplicate title · /blog/hail-season', 'Add business details · /contact', 'Merge thin posts · /blog/roof-noise', 'Speed up page · /', 'Link from blog · /service-area/cochrane', 'Refresh stats · /blog/insurance-claim-steps', 'Shorten description · /about', 'Add city to heading · /services/siding'];
+    const YELLOW = yellowTasks.map((t) => {
+      const parts = t.split(' · '); const tp = YT[parts[0]]; const T = topicOf(parts[1]);
+      const fill = (x) => x.split('{T}').join(T.toLowerCase()).split('{t}').join(T.toLowerCase());
+      return { t: t, kind: tp.kind, head: fill(tp.head), before: tp.before, after: tp.after, gain: tp.gain, mid: tp.mid,
+        ships: 'Ships to WordPress · checked live · one-click undo', proof: 'Proven: similar ' + tp.kind.toLowerCase() + ' changes, measured on 100+ roofing sites' };
+    });
+    const pages = ['/', '/about', '/contact', '/reviews', '/services/gutters', '/services/skylights', '/blog/roof-lifespan', '/blog/chinook-wind-damage', '/service-area/cochrane', '/blog/moss-removal'];
+    const checks = ['Title length OK', 'Indexed by Google', 'Mobile-friendly', 'Loads fast'];
+    const GREEN = []; for (let i = 0; i < 28; i++) GREEN.push({ t: checks[i % 4] + ' · ' + pages[i % 10] });
+    const BLUE = ['/services/flat-roofs', '/services/roof-inspection', '/blog/hail-damage-insurance', '/services/roof-replacement', '/service-area/calgary', '/blog/signs-you-need-a-new-roof', '/blog/winter-prep', '/blog/attic-ventilation', '/blog/choosing-a-roofer', '/blog/shingle-colours', '/blog/gutter-cleaning', '/blog/cost-calculator', '/blog/emergency-checklist'].map((p) => ({ t: 'Winning — leave as is · ' + p }));
+    const Q = { red: RED, yellow: YELLOW, green: GREEN, blue: BLUE };
+
+    const col = this.state.col;
+    const list = Q[col];
+    const doneMap = this.state.done;
+    const firstOpen = (c) => { const L = Q[c]; for (let k = 0; k < L.length; k++) if (!doneMap[L[k].t]) return k; return -1; };
+    let ci = this.state.cur[col];
+    if (ci === undefined) ci = firstOpen(col);
+    if (col === 'green' || col === 'blue') ci = ci < 0 ? 0 : ci;
+    const actionable = col === 'red' || col === 'yellow';
+    const openCount = (c) => Q[c].filter((x) => !doneMap[x.t]).length;
+
+    const chips = ['red', 'yellow', 'green', 'blue'].map((k) => ({
+      label: LABEL[k], count: (k === 'red' || k === 'yellow') ? openCount(k) + ' left' : String(Q[k].length), color: COLORS[k],
+      tint: 'rgba(' + RGB[k] + ',.16)', glow: 'rgba(' + RGB[k] + ',.55)',
+      on: col === k, off: col !== k, pick: () => this.setState({ col: k })
+    }));
+
+    const stream = list.map((x, k) => {
+      const st = doneMap[x.t];
+      const isCur = k === ci;
+      const fill = st === 'shipped' ? COLORS.green : (st === 'skipped' ? 'transparent' : COLORS[col]);
+      return {
+        pick: () => this.setState({ cur: Object.assign({}, this.state.cur, { [col]: k }) }),
+        label: x.t + (st ? ' — ' + st : ''),
+        fill: fill, edge: st === 'skipped' ? '#5B616B' : fill,
+        shadow: isCur ? '0 0 16px ' + COLORS[col] : (st ? 'none' : '0 0 8px rgba(' + RGB[col] + ',.45)'),
+        ring: isCur ? '2px solid #F2F4F5' : 'none',
+        op: st ? '0.55' : (isCur ? '1' : '0.8'),
+        anim: isCur ? 'sfy-flicker 1.4s ease-in-out infinite' : 'none'
+      };
+    });
+
+    const hasMove = actionable && ci >= 0;
+    let m = { tag: '', kind: '', page: '', head: [], afterSegs: [], before: '', gain: '', ships: '', proof: '', opt: '1', color: COLORS[col] };
+    const segs = (str) => str.split('*').map((t, k) => ({ t: t, hl: k % 2 === 1, plain: k % 2 === 0 })).filter((x) => x.t !== '');
+    if (hasMove) {
+      const it = list[ci];
+      const v = (this.state.variant[it.t] || 0) % 3;
+      m = { tag: TAG[col] + ' · ' + (ci + 1) + ' OF ' + list.length, kind: it.kind, page: it.t.split(' · ')[1], head: segs(it.head),
+        afterSegs: segs(it.after[v]), before: it.before, gain: it.gain, ships: it.ships, proof: it.proof, opt: String(v + 1), color: COLORS[col] };
+    }
+    const it = list[Math.max(ci, 0)];
+    const advance = (status) => {
+      const d = Object.assign({}, this.state.done, { [it.t]: status });
+      const g = status === 'shipped' ? this.state.gains.concat([it.mid || 0]) : this.state.gains;
+      this.setState({ done: d, gains: g, cur: Object.assign({}, this.state.cur, { [col]: undefined }) });
+    };
+
+    let info = { tag: '', title: '', sub: '', sel: '', hasNext: false, cta: '', go: () => {}, color: COLORS[col], border: '#1A1D22', glow: 'none' };
+    const hasInfo = !hasMove;
+    if (hasInfo) {
+      const nextCol = col === 'red' ? 'yellow' : 'red';
+      if (actionable) {
+        const sh = list.filter((x) => doneMap[x.t] === 'shipped').length, sk = list.filter((x) => doneMap[x.t] === 'skipped').length;
+        info = { tag: 'ALL ' + NOUN[col].toUpperCase() + ' HANDLED · ' + sh + ' SHIPPED · ' + sk + ' SKIPPED', title: 'That’s every ' + (col === 'red' ? 'red' : 'yellow') + '.',
+          sub: 'Searchify is shipping and checking your changes. Skipped moves come back next week with a fresh suggestion.', sel: 'Tap any dot above to reopen a move',
+          hasNext: openCount(nextCol) > 0, cta: 'Move on to the ' + NOUN[nextCol], go: () => this.setState({ col: nextCol }) };
+      } else if (col === 'green') {
+        info = { tag: 'PASSES · ' + list.length + ' CHECKS', title: 'Nothing to ship here.', sub: 'These pass Google’s criteria. Searchify rechecks them every week — if one slips, it turns yellow and joins your queue.', sel: 'Selected: ' + it.t, hasNext: openCount('red') > 0, cta: 'Back to the reds', go: () => this.setState({ col: 'red' }) };
+      } else {
+        info = { tag: 'LOCKED · ' + list.length + ' PAGES WINNING', title: 'These are winning. Hands off.', sub: 'Searchify never suggests changes to pages that are climbing. They unlock automatically if rankings drop for two weeks.', sel: 'Selected: ' + it.t.split(' · ')[1], hasNext: openCount('red') > 0, cta: 'Back to the reds', go: () => this.setState({ col: 'red' }) };
+      }
+      info.color = COLORS[col]; info.border = 'rgba(' + RGB[col] + ',.45)'; info.glow = '0 0 30px rgba(' + RGB[col] + ',.12)';
+    }
+
+    const upcoming = [];
+    if (actionable) { for (let k = 0; k < list.length && upcoming.length < 3; k++) { const x = list[(ci + 1 + k) % list.length]; if (!doneMap[x.t] && x !== list[ci]) upcoming.push(x.t); } }
+    const streamLabel = hasMove ? 'Working on ' + (ci + 1) + ' of ' + list.length + ' ' + NOUN[col] + ' · ' + list[ci].t.split(' · ')[1]
+      : (actionable ? 'All ' + list.length + ' ' + NOUN[col] + ' handled' : list.length + ' ' + NOUN[col] + ' · nothing to ship');
+    const nextLabel = upcoming.length ? 'Up next: ' + upcoming.join('  →  ') : (actionable ? 'Shipped dots turn green. Hollow dots were skipped.' : 'Tap a dot to see which page it is.');
+
+    const pending = this.state.gains.reduce((a, b) => a + b, 0);
+    const shippedN = this.state.gains.length;
+    const connections = [
+      { n: '1', name: 'Google Search Console', sub: 'Live · synced 2 min ago' },
+      { n: '2', name: 'WordPress', sub: 'Live · Yoast detected' },
+      { n: '3', name: 'Searchify', sub: 'Live · plugin 1.4 installed' }
+    ];
+    return {
+      accent: this.props.accent ?? '#D5F879',
+      chips: chips, stream: stream, streamLabel: streamLabel, nextLabel: nextLabel,
+      m: m, hasMove: hasMove, hasInfo: hasInfo, info: info,
+      captured: '312',
+      pendingLabel: pending > 0 ? '+' + pending + ' pending · banks once results are measured' : 'Ship a move to start filling the bar',
+      pendingWidth: (pending / 1840 * 100).toFixed(1) + '%',
+      toLevel: shippedN >= 2 ? 'Level 3 unlocked' : (shippedN === 1 ? '1 move to Level 3' : '2 moves to Level 3'),
+      ship: () => advance('shipped'),
+      skip: () => advance('skipped'),
+      regen: () => { if (!hasMove) return; const k = list[ci].t; this.setState({ variant: Object.assign({}, this.state.variant, { [k]: (this.state.variant[k] || 0) + 1 }) }); },
+      connections: connections
+    };
+  }
+}
+</script>
+<script>window.__DC_FACTORY = function (DCLogic, React) {
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { col: 'red', cur: {}, done: {}, variant: {}, gains: [] };
+  }
+  renderVals() {
+    const COLORS = { red: '#FF5A4E', yellow: '#FFC53D', green: '#3DDC84', blue: '#4DA3FF' };
+    const RGB = { red: '255,90,78', yellow: '255,197,61', green: '61,220,132', blue: '77,163,255' };
+    const LABEL = { red: 'Dire', yellow: 'Medium', green: 'Passes', blue: 'Locked' };
+    const TAG = { red: 'DIRE', yellow: 'MEDIUM', green: 'PASSES', blue: 'LOCKED' };
+    const NOUN = { red: 'reds', yellow: 'yellows', green: 'greens', blue: 'blues' };
+    const topicOf = (path) => { const seg = path === '/' ? '' : path.split('/').pop(); return seg ? seg.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Home page'; };
+
+    // Red moves, written out. Words wrapped in *stars* get the highlighter.
+    const RED = [
+      { t: 'Rewrite title · /services/roof-repair', kind: 'Title rewrite', head: 'Put *Calgary* and *24/7* where searchers can see it.',
+        before: 'Roof Repair Services | Northline Roofing',
+        after: ['Roof Repair in *Calgary* — *24/7 Emergency* Leaks | Northline', '*Calgary* Roof Repair, *24/7* — Leaks Fixed Same Day | Northline', 'Emergency Roof Repair *Calgary* · Open *24/7* | Northline'],
+        gain: '+40–90 clicks / mo', mid: 65, ships: 'Ships to WordPress · checked live · one-click undo', proof: 'Proven: similar title changes on roofing sites, median +18% clicks (412 changes)' },
+      { t: 'Refresh guide · /blog/ice-dams-guide', kind: 'Content refresh', head: 'Win back the ice dam guide *before the first freeze*.',
+        before: 'Last updated 2023 · no step-by-step section',
+        after: ['Adds *step-by-step removal*, a *safety checklist*, and when to call a pro', 'Adds a *5-step removal guide*, photos, and *Calgary freeze dates*', 'Adds *how to prevent ice dams*, a *cost table*, and an FAQ'],
+        gain: '+~60 clicks / mo', mid: 60, ships: 'Arrives as a WordPress draft · you publish', proof: 'Proven: similar guide refreshes, median +22% clicks (156 changes)' },
+      { t: 'Fix broken page · /services/emergency-tarping', kind: 'Broken page', head: 'Stop sending storm traffic to a *dead page*.',
+        before: 'Page shows “Not found” · 3 of your pages link here',
+        after: ['Page restored with *same-day tarping* details and a *call button*', 'Redirect to */services/roof-repair*, the closest live service', 'Restore page and add it to the *storm season* menu'],
+        gain: '+15–35 clicks / mo', mid: 25, ships: 'Ships to WordPress · checked live · one-click undo', proof: 'Proven: fixed broken service pages, median +31% clicks (97 changes)' },
+      { t: 'Add missing description · /services/siding', kind: 'Description', head: 'Give Google a *real description* for siding.',
+        before: '(No description. Google shows a random sentence from the page.)',
+        after: ['*Siding repair and replacement in Calgary*. Free written quote, *10-year warranty*.', 'Hail-damaged siding? *Calgary crews*, insurance help, quotes in *24 hours*.', '*Vinyl, fibre cement and metal siding* installed across Calgary and Airdrie.'],
+        gain: '+10–20 clicks / mo', mid: 15, ships: 'Ships to Yoast · one-click undo', proof: 'Proven: added descriptions, median +9% clicks (318 changes)' },
+      { t: 'Fix redirect loop · /financing', kind: 'Redirect loop', head: 'Unstick the financing page so *people can open it*.',
+        before: '/financing → /finance → /financing (never loads)',
+        after: ['Point both addresses to *one working /financing page*', 'Keep */finance* and send /financing to it', 'Remove the old rule and *rebuild the redirect* in Yoast'],
+        gain: '+5–15 leads / mo', mid: 10, ships: 'Ships to WordPress redirects · one-click undo', proof: 'Proven: fixed redirect loops recover traffic within 2 weeks (64 changes)' },
+      { t: 'Let Google index · /service-area/airdrie', kind: 'Indexing', head: 'Let Google *see your Airdrie page* at all.',
+        before: 'Page is hidden from Google (noindex left on)',
+        after: ['*Turn indexing on* and add the page to your sitemap', '*Turn indexing on* and link it from */service-area*', '*Turn indexing on*, then ask Google to *recrawl today*'],
+        gain: '+20–45 clicks / mo', mid: 32, ships: 'Ships to Yoast · checked in Search Console', proof: 'Proven: re-indexed service-area pages, median 19 days to first clicks (141 changes)' }
+    ];
+    // Yellow moves, from a template per action.
+    const YT = {
+      'Add internal links': { kind: 'Internal links', head: 'Point three popular posts at *{T}*.', before: '1 page links here', after: ['*4 pages* link here, in context', '*3 blog posts* and the *home page* link here', 'Adds a *“related service”* box to 3 posts'], gain: '+10–25 clicks / mo', mid: 18 },
+      'Shorten title': { kind: 'Title', head: 'Trim the {T} title so it *isn’t cut off*.', before: 'Read What Our Customers Say About Northline Roofing In Calgary Alberta…', after: ['*Northline Reviews* — 4.9★ from 312 Calgary Homeowners', '*Calgary Roofer Reviews* | Northline', '*312 Reviews*, 4.9★ — Northline Roofing Calgary'], gain: '+5–15 clicks / mo', mid: 10 },
+      'Compress images': { kind: 'Speed', head: 'Make the {T} page *load twice as fast*.', before: '9 photos · 6.4 MB · 4.8s to load', after: ['9 photos · *1.1 MB* · *2.1s* to load', 'Lazy-load photos · *1.4 MB* · *2.3s*', 'Convert to *WebP* · *0.9 MB* · *1.9s*'], gain: '+5–10 clicks / mo', mid: 8 },
+      'Add FAQ section': { kind: 'FAQ', head: 'Answer the *5 questions people ask* about {t}.', before: 'No questions answered on the page', after: ['Adds *5 FAQs* from real searches, with FAQ markup', 'Adds *“How much do gutters cost in Calgary?”* and 4 more', 'Adds a short *FAQ block* under the quote form'], gain: '+10–20 clicks / mo', mid: 14 },
+      'Update the year': { kind: 'Freshness', head: 'Say *2026* so searchers know it’s current.', before: 'How Long Does a Roof Last? (2023 Guide)', after: ['How Long Does a Roof Last? (*2026* Guide)', 'How Long Does a Roof Last in Calgary? *Updated 2026*', 'Roof Lifespan by Material — *2026 Calgary Guide*'], gain: '+5–15 clicks / mo', mid: 9 },
+      'Add image descriptions': { kind: 'Images', head: 'Describe the photos so *Google Images* can find them.', before: '7 of 9 images have no description', after: ['All 9 images get a *plain description*', 'Descriptions written from *what’s in each photo*', 'Descriptions plus *file names that make sense*'], gain: '+3–8 clicks / mo', mid: 5 },
+      'Fix duplicate title': { kind: 'Title', head: 'Give the hail post *its own title*.', before: 'Same title as /blog/hail-damage-insurance', after: ['*Calgary Hail Season 2026*: Dates, Risks and Roof Checks', '*When Is Hail Season in Calgary?* A Roofer’s Guide', '*Hail Season Prep* for Calgary Roofs | Northline'], gain: '+5–12 clicks / mo', mid: 8 },
+      'Add business details': { kind: 'Local details', head: 'Show your *address and hours* to Google.', before: 'No business details in the page code', after: ['Adds *address, phone and hours* in Google’s format', 'Adds business details plus *service area map*', 'Adds details and links your *Google Business Profile*'], gain: '+5–15 calls / mo', mid: 10 },
+      'Merge thin posts': { kind: 'Merge', head: 'Combine 3 short posts into *one strong guide*.', before: '3 posts under 300 words each', after: ['One *1,200-word guide* · old posts redirect to it', 'One guide with a *noise checklist* · old posts redirect', 'One guide plus a *video* · old posts redirect'], gain: '+8–18 clicks / mo', mid: 12 },
+      'Speed up page': { kind: 'Speed', head: 'Get the home page *under 2.5 seconds*.', before: '3.9s to load on phones', after: ['*2.2s* — defer the chat widget and slider', '*2.4s* — compress the hero image', '*2.0s* — both of the above, plus caching'], gain: '+5–10 clicks / mo', mid: 8 },
+      'Link from blog': { kind: 'Internal links', head: 'Send blog readers to your *Cochrane page*.', before: '0 blog posts link here', after: ['*3 posts* mention Cochrane and link here', '*2 posts* plus the *footer* link here', 'Adds a *“We serve Cochrane”* line to 4 posts'], gain: '+5–12 clicks / mo', mid: 8 },
+      'Refresh stats': { kind: 'Content refresh', head: 'Swap old numbers for *2026 claim data*.', before: 'Quotes 2021 insurance figures', after: ['Updates to *2026 Alberta claim averages*', 'Updates figures and adds a *claim timeline*', 'Updates figures and adds *what adjusters check*'], gain: '+5–10 clicks / mo', mid: 7 },
+      'Shorten description': { kind: 'Description', head: 'Cut the About description to *fit in Google*.', before: '212 characters · cut off after “family-owned since…”', after: ['*Family-owned Calgary roofers since 1998*. Meet the crew.', '*26 years* roofing Calgary. Meet the family behind Northline.', 'Local, licensed, *family-owned*. Calgary roofers since 1998.'], gain: '+2–6 clicks / mo', mid: 4 },
+      'Add city to heading': { kind: 'Heading', head: 'Put *Calgary* in the siding headline.', before: 'Siding Services', after: ['Siding Repair & Replacement in *Calgary*', '*Calgary* Siding — Repair, Replace, Insure', 'Hail-Proof Siding for *Calgary* Homes'], gain: '+4–10 clicks / mo', mid: 7 }
+    };
+    const yellowTasks = ['Add internal links · /services/gutter-guards', 'Shorten title · /reviews', 'Compress images · /services/skylights', 'Add FAQ section · /services/gutters', 'Update the year · /blog/roof-lifespan', 'Add image descriptions · /blog/metal-vs-asphalt', 'Fix duplicate title · /blog/hail-season', 'Add business details · /contact', 'Merge thin posts · /blog/roof-noise', 'Speed up page · /', 'Link from blog · /service-area/cochrane', 'Refresh stats · /blog/insurance-claim-steps', 'Shorten description · /about', 'Add city to heading · /services/siding'];
+    const YELLOW = yellowTasks.map((t) => {
+      const parts = t.split(' · '); const tp = YT[parts[0]]; const T = topicOf(parts[1]);
+      const fill = (x) => x.split('{T}').join(T.toLowerCase()).split('{t}').join(T.toLowerCase());
+      return { t: t, kind: tp.kind, head: fill(tp.head), before: tp.before, after: tp.after, gain: tp.gain, mid: tp.mid,
+        ships: 'Ships to WordPress · checked live · one-click undo', proof: 'Proven: similar ' + tp.kind.toLowerCase() + ' changes, measured on 100+ roofing sites' };
+    });
+    const pages = ['/', '/about', '/contact', '/reviews', '/services/gutters', '/services/skylights', '/blog/roof-lifespan', '/blog/chinook-wind-damage', '/service-area/cochrane', '/blog/moss-removal'];
+    const checks = ['Title length OK', 'Indexed by Google', 'Mobile-friendly', 'Loads fast'];
+    const GREEN = []; for (let i = 0; i < 28; i++) GREEN.push({ t: checks[i % 4] + ' · ' + pages[i % 10] });
+    const BLUE = ['/services/flat-roofs', '/services/roof-inspection', '/blog/hail-damage-insurance', '/services/roof-replacement', '/service-area/calgary', '/blog/signs-you-need-a-new-roof', '/blog/winter-prep', '/blog/attic-ventilation', '/blog/choosing-a-roofer', '/blog/shingle-colours', '/blog/gutter-cleaning', '/blog/cost-calculator', '/blog/emergency-checklist'].map((p) => ({ t: 'Winning — leave as is · ' + p }));
+    const Q = { red: RED, yellow: YELLOW, green: GREEN, blue: BLUE };
+
+    const col = this.state.col;
+    const list = Q[col];
+    const doneMap = this.state.done;
+    const firstOpen = (c) => { const L = Q[c]; for (let k = 0; k < L.length; k++) if (!doneMap[L[k].t]) return k; return -1; };
+    let ci = this.state.cur[col];
+    if (ci === undefined) ci = firstOpen(col);
+    if (col === 'green' || col === 'blue') ci = ci < 0 ? 0 : ci;
+    const actionable = col === 'red' || col === 'yellow';
+    const openCount = (c) => Q[c].filter((x) => !doneMap[x.t]).length;
+
+    const chips = ['red', 'yellow', 'green', 'blue'].map((k) => ({
+      label: LABEL[k], count: (k === 'red' || k === 'yellow') ? openCount(k) + ' left' : String(Q[k].length), color: COLORS[k],
+      tint: 'rgba(' + RGB[k] + ',.16)', glow: 'rgba(' + RGB[k] + ',.55)',
+      on: col === k, off: col !== k, pick: () => this.setState({ col: k })
+    }));
+
+    const stream = list.map((x, k) => {
+      const st = doneMap[x.t];
+      const isCur = k === ci;
+      const fill = st === 'shipped' ? COLORS.green : (st === 'skipped' ? 'transparent' : COLORS[col]);
+      return {
+        pick: () => this.setState({ cur: Object.assign({}, this.state.cur, { [col]: k }) }),
+        label: x.t + (st ? ' — ' + st : ''),
+        fill: fill, edge: st === 'skipped' ? '#5B616B' : fill,
+        shadow: isCur ? '0 0 16px ' + COLORS[col] : (st ? 'none' : '0 0 8px rgba(' + RGB[col] + ',.45)'),
+        ring: isCur ? '2px solid #F2F4F5' : 'none',
+        op: st ? '0.55' : (isCur ? '1' : '0.8'),
+        anim: isCur ? 'sfy-flicker 1.4s ease-in-out infinite' : 'none'
+      };
+    });
+
+    const hasMove = actionable && ci >= 0;
+    let m = { tag: '', kind: '', page: '', head: [], afterSegs: [], before: '', gain: '', ships: '', proof: '', opt: '1', color: COLORS[col] };
+    const segs = (str) => str.split('*').map((t, k) => ({ t: t, hl: k % 2 === 1, plain: k % 2 === 0 })).filter((x) => x.t !== '');
+    if (hasMove) {
+      const it = list[ci];
+      const v = (this.state.variant[it.t] || 0) % 3;
+      m = { tag: TAG[col] + ' · ' + (ci + 1) + ' OF ' + list.length, kind: it.kind, page: it.t.split(' · ')[1], head: segs(it.head),
+        afterSegs: segs(it.after[v]), before: it.before, gain: it.gain, ships: it.ships, proof: it.proof, opt: String(v + 1), color: COLORS[col] };
+    }
+    const it = list[Math.max(ci, 0)];
+    const advance = (status) => {
+      const d = Object.assign({}, this.state.done, { [it.t]: status });
+      const g = status === 'shipped' ? this.state.gains.concat([it.mid || 0]) : this.state.gains;
+      this.setState({ done: d, gains: g, cur: Object.assign({}, this.state.cur, { [col]: undefined }) });
+    };
+
+    let info = { tag: '', title: '', sub: '', sel: '', hasNext: false, cta: '', go: () => {}, color: COLORS[col], border: '#1A1D22', glow: 'none' };
+    const hasInfo = !hasMove;
+    if (hasInfo) {
+      const nextCol = col === 'red' ? 'yellow' : 'red';
+      if (actionable) {
+        const sh = list.filter((x) => doneMap[x.t] === 'shipped').length, sk = list.filter((x) => doneMap[x.t] === 'skipped').length;
+        info = { tag: 'ALL ' + NOUN[col].toUpperCase() + ' HANDLED · ' + sh + ' SHIPPED · ' + sk + ' SKIPPED', title: 'That’s every ' + (col === 'red' ? 'red' : 'yellow') + '.',
+          sub: 'Searchify is shipping and checking your changes. Skipped moves come back next week with a fresh suggestion.', sel: 'Tap any dot above to reopen a move',
+          hasNext: openCount(nextCol) > 0, cta: 'Move on to the ' + NOUN[nextCol], go: () => this.setState({ col: nextCol }) };
+      } else if (col === 'green') {
+        info = { tag: 'PASSES · ' + list.length + ' CHECKS', title: 'Nothing to ship here.', sub: 'These pass Google’s criteria. Searchify rechecks them every week — if one slips, it turns yellow and joins your queue.', sel: 'Selected: ' + it.t, hasNext: openCount('red') > 0, cta: 'Back to the reds', go: () => this.setState({ col: 'red' }) };
+      } else {
+        info = { tag: 'LOCKED · ' + list.length + ' PAGES WINNING', title: 'These are winning. Hands off.', sub: 'Searchify never suggests changes to pages that are climbing. They unlock automatically if rankings drop for two weeks.', sel: 'Selected: ' + it.t.split(' · ')[1], hasNext: openCount('red') > 0, cta: 'Back to the reds', go: () => this.setState({ col: 'red' }) };
+      }
+      info.color = COLORS[col]; info.border = 'rgba(' + RGB[col] + ',.45)'; info.glow = '0 0 30px rgba(' + RGB[col] + ',.12)';
+    }
+
+    const upcoming = [];
+    if (actionable) { for (let k = 0; k < list.length && upcoming.length < 3; k++) { const x = list[(ci + 1 + k) % list.length]; if (!doneMap[x.t] && x !== list[ci]) upcoming.push(x.t); } }
+    const streamLabel = hasMove ? 'Working on ' + (ci + 1) + ' of ' + list.length + ' ' + NOUN[col] + ' · ' + list[ci].t.split(' · ')[1]
+      : (actionable ? 'All ' + list.length + ' ' + NOUN[col] + ' handled' : list.length + ' ' + NOUN[col] + ' · nothing to ship');
+    const nextLabel = upcoming.length ? 'Up next: ' + upcoming.join('  →  ') : (actionable ? 'Shipped dots turn green. Hollow dots were skipped.' : 'Tap a dot to see which page it is.');
+
+    const pending = this.state.gains.reduce((a, b) => a + b, 0);
+    const shippedN = this.state.gains.length;
+    const connections = [
+      { n: '1', name: 'Google Search Console', sub: 'Live · synced 2 min ago' },
+      { n: '2', name: 'WordPress', sub: 'Live · Yoast detected' },
+      { n: '3', name: 'Searchify', sub: 'Live · plugin 1.4 installed' }
+    ];
+    return {
+      accent: this.props.accent ?? '#D5F879',
+      chips: chips, stream: stream, streamLabel: streamLabel, nextLabel: nextLabel,
+      m: m, hasMove: hasMove, hasInfo: hasInfo, info: info,
+      captured: '312',
+      pendingLabel: pending > 0 ? '+' + pending + ' pending · banks once results are measured' : 'Ship a move to start filling the bar',
+      pendingWidth: (pending / 1840 * 100).toFixed(1) + '%',
+      toLevel: shippedN >= 2 ? 'Level 3 unlocked' : (shippedN === 1 ? '1 move to Level 3' : '2 moves to Level 3'),
+      ship: () => advance('shipped'),
+      skip: () => advance('skipped'),
+      regen: () => { if (!hasMove) return; const k = list[ci].t; this.setState({ variant: Object.assign({}, this.state.variant, { [k]: (this.state.variant[k] || 0) + 1 }) }); },
+      connections: connections
+    };
+  }
+}
+
+return Component;
+};</script>
+<template data-dc-component="Nav" data-props='{"current":{"editor":"enum","options":["connect","scan","home","path","tracker","backlinks","results","reports","command","sites","clientreport","settings","billing"],"default":"home"},"$preview":{"width":248,"height":960}}'><x-dc>
+
+<nav aria-label="Main" style="flex: 1; align-self: stretch; width: 100%; min-height: 960px; box-sizing: border-box; padding: 22px 14px; background: #0D0E10; border-right: 1px solid #1A1D22; font-family: Geist, 'Helvetica Neue', sans-serif; color: #F2F4F5; display: flex; flex-direction: column; gap: 22px">
+  <a href="Home.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 0 8px; text-decoration: none; color: #F2F4F5">
+    <svg width="30" height="30" viewBox="0 0 32 32" role="img" aria-label="Searchify"><rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="#131519" stroke="#2E333B"></rect><circle cx="9" cy="12.5" r="2.9" fill="#FF5A4E"></circle><circle cx="16" cy="12.5" r="2.9" fill="#FF9F43"></circle><circle cx="23" cy="12.5" r="2.9" fill="#FFC53D"></circle><circle cx="9" cy="19.5" r="2.9" fill="#3DDC84"></circle><circle cx="16" cy="19.5" r="2.9" fill="#2CC7C0"></circle><circle cx="23" cy="19.5" r="2.9" fill="#4DA3FF"></circle></svg>
+    <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.4px">searchify</span>
+  </a>
+
+  <a href="Portfolio.dc.html" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 48px; padding: 6px 12px; border-radius: 12px; border: 1px solid #262A31; background: #131519; color: #F2F4F5; text-decoration: none">
+    <span style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 12px; color: #9AA1AB">Working on</span><span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">northline.example</span></span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA1AB" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 10l5 5 5-5"></path></svg>
+  </a>
+
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <span style="padding: 0 10px 6px; font-size: 12px; font-weight: 600; color: #7D848E">Core features</span>
+    <sc-for list="{{core}}" as="it" hint-placeholder-count="8">
+      <sc-if value="{{it.on}}" hint-placeholder-val="{{false}}">
+        <a href="{{it.href}}" aria-current="page" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 11px; background: #131519; box-shadow: inset 3px 0 0 #4DA3FF; color: #F2F4F5; text-decoration: none; font-size: 14px; font-weight: 600">
+          <span style="width: 22px; height: 22px; flex: none; border-radius: 50%; background: #4DA3FF; color: #0A0B0D; display: grid; place-items: center; font-family: 'Geist Mono', monospace; font-size: 11px; font-weight: 500; box-shadow: 0 0 10px rgba(77,163,255,.6)">{{it.n}}</span>{{it.label}}
+        </a>
+      </sc-if>
+      <sc-if value="{{it.off}}" hint-placeholder-val="{{true}}">
+        <a href="{{it.href}}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 11px; color: #B4BAC3; text-decoration: none; font-size: 14px">
+          <span style="width: 22px; height: 22px; flex: none; border-radius: 50%; border: 1px solid #3A404A; box-sizing: border-box; display: grid; place-items: center; font-family: 'Geist Mono', monospace; font-size: 11px; color: #9AA1AB">{{it.n}}</span>{{it.label}}
+        </a>
+      </sc-if>
+    </sc-for>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <span style="padding: 0 10px 6px; font-size: 12px; font-weight: 600; color: #7D848E">Profile and sites</span>
+    <sc-for list="{{account}}" as="it" hint-placeholder-count="5">
+      <sc-if value="{{it.on}}" hint-placeholder-val="{{false}}">
+        <a href="{{it.href}}" aria-current="page" style="display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px; border-radius: 11px; background: #131519; box-shadow: inset 3px 0 0 #4DA3FF; color: #F2F4F5; text-decoration: none; font-size: 14px; font-weight: 600">{{it.label}}</a>
+      </sc-if>
+      <sc-if value="{{it.off}}" hint-placeholder-val="{{true}}">
+        <a href="{{it.href}}" style="display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px; border-radius: 11px; color: #B4BAC3; text-decoration: none; font-size: 14px">{{it.label}}</a>
+      </sc-if>
+    </sc-for>
+  </div>
+
+  <div style="flex: 1"></div>
+  <a href="Settings.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; border: 1px solid #1A1D22; color: #F2F4F5; text-decoration: none">
+    <span style="width: 34px; height: 34px; flex: none; border-radius: 50%; background: #262A31; display: grid; place-items: center; font-size: 12px; font-weight: 600">AR</span>
+    <span style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 14px; font-weight: 500">Alex Rivera</span><span style="font-size: 12px; color: #9AA1AB">Rivera Digital · Premium</span></span>
+  </a>
+</nav>
+</x-dc></template>
+<script>window.__DC_COMPONENTS = window.__DC_COMPONENTS || {}; window.__DC_COMPONENTS['Nav'] = function (DCLogic, React) {
+
+class Component extends DCLogic {
+  renderVals() {
+    const cur = this.props.current ?? 'home';
+    const core = [
+      ['connect', 'Plug in', 'Connect.dc.html'],
+      ['scan', 'Site scan', 'Scan.dc.html'],
+      ['home', 'Today’s moves', 'Home.dc.html'],
+      ['path', 'Page progress', 'Path.dc.html'],
+      ['tracker', 'Keyword tracker', 'Win.dc.html'],
+      ['backlinks', 'Backlinks', 'Backlinks.dc.html'],
+      ['results', 'Results', 'Results.dc.html'],
+      ['reports', 'Reports and change log', 'Changelog.dc.html']
+    ].map((d, i) => ({ n: String(i + 1), label: d[1], href: d[2], on: d[0] === cur, off: d[0] !== cur }));
+    const account = [
+      ['command', 'Agency command centre', 'Command.dc.html'],
+      ['sites', 'All client sites', 'Portfolio.dc.html'],
+      ['clientreport', 'Client report', 'Report.dc.html'],
+      ['settings', 'Settings', 'Settings.dc.html'],
+      ['billing', 'Plan and billing', 'Pricing.dc.html']
+    ].map((d) => ({ label: d[1], href: d[2], on: d[0] === cur, off: d[0] !== cur }));
+    return { core: core, account: account };
+  }
+}
+
+return Component;
+};</script>
+</body>
+</html>

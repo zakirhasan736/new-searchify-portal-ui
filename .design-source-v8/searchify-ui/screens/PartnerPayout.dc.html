@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — Partner payout and tax</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+input[type=checkbox]{accent-color:#D5F879;width:18px;height:18px;flex:none}
+input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
+@keyframes sfy-rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 22px clamp(16px, 4vw, 56px) 56px; display: flex; flex-direction: column; gap: 22px">
+
+  <header style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+    <span style="display: flex; align-items: center; gap: 10px; margin-right: auto">
+      <svg width="30" height="30" viewBox="0 0 32 32" role="img" aria-label="Searchify"><rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="#131519" stroke="#2E333B"></rect><circle cx="9" cy="12.5" r="2.9" fill="#FF5A4E"></circle><circle cx="16" cy="12.5" r="2.9" fill="#FF9F43"></circle><circle cx="23" cy="12.5" r="2.9" fill="#FFC53D"></circle><circle cx="9" cy="19.5" r="2.9" fill="#3DDC84"></circle><circle cx="16" cy="19.5" r="2.9" fill="#2CC7C0"></circle><circle cx="23" cy="19.5" r="2.9" fill="#4DA3FF"></circle></svg>
+      <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.4px">searchify</span>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 6px; border: 1px solid #D5F879; color: #D5F879">PARTNER CENTRE</span>
+    </span>
+    <span style="display: flex; align-items: center; gap: 10px">
+      <span style="width: 36px; height: 36px; border-radius: 50%; background: #262A31; display: grid; place-items: center; font-size: 13px; font-weight: 600">{{me.initials}}</span>
+      <span style="display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 500">{{me.name}}</span><span style="font-size: 12px; color: #9AA1AB">{{me.sub}}</span></span>
+    </span>
+  </header>
+
+  <nav aria-label="Partner centre" style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid #1A1D22; padding-bottom: 12px">
+    <a href="Affiliate.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Overview</a>
+    <a href="PartnerEarnings.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Earnings</a>
+    <a href="PartnerPayout.dc.html" aria-current="page" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; background: #1A1D22; color: #F2F4F5; text-decoration: none; font-size: 14px; font-weight: 600">Payout and tax</a>
+    <a href="PartnerTerms.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Agreement and rules</a>
+  </nav>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 6px">
+    <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(30px, 3.6vw, 44px); line-height: 1.04; letter-spacing: -1.2px; font-weight: 700">How you get paid.</h1>
+    <span style="font-size: 15px; color: #9AA1AB">Payouts go out on the 15th for everything that cleared the month before, once you're over $50. We need your tax details before the first one.</span>
+  </div>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+    <section aria-labelledby="meth-h" style="flex: 1 1 420px; min-width: 0; border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+      <h2 id="meth-h" style="margin: 0; font-size: 18px; font-weight: 600">Payout method</h2>
+      <div role="radiogroup" aria-label="Payout method" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{methods}}" as="m" hint-placeholder-count="4">
+          <button type="button" role="radio" aria-checked="{{m.checked}}" onClick="{{m.pick}}" style="text-align: left; font: inherit; color: #F2F4F5; min-height: 64px; padding: 10px 12px; border-radius: 14px; border: 1px solid {{m.border}}; background: {{m.bg}}; display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 14px; font-weight: 600">{{m.label}}</span>
+            <span style="font-size: 12px; color: #9AA1AB">{{m.sub}}</span>
+          </button>
+        </sc-for>
+      </div>
+      <sc-if value="{{isEmail}}" hint-placeholder-val="{{true}}">
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">{{emailLabel}}
+          <input type="email" value="{{payEmail}}" onInput="{{setPayEmail}}" style="min-height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 15px">
+        </label>
+      </sc-if>
+      <sc-if value="{{isCaBank}}" hint-placeholder-val="{{false}}">
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">Institution<input inputmode="numeric" placeholder="3 digits" style="min-height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 15px; min-width: 0"></label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">Transit<input inputmode="numeric" placeholder="5 digits" style="min-height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 15px; min-width: 0"></label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">Account<input inputmode="numeric" placeholder="7 to 12 digits" style="min-height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 15px; min-width: 0"></label>
+        </div>
+      </sc-if>
+      <sc-if value="{{isUsBank}}" hint-placeholder-val="{{false}}">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">Routing number<input inputmode="numeric" placeholder="9 digits" style="min-height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 15px; min-width: 0"></label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">Account number<input inputmode="numeric" style="min-height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 15px; min-width: 0"></label>
+        </div>
+      </sc-if>
+      <div style="border-radius: 14px; background: #0A0B0D; border: 1px solid #1A1D22; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB; line-height: 1.5">
+        <span style="display: flex; justify-content: space-between; gap: 8px"><span>Paid in</span><span style="color: #F2F4F5">{{currency}}</span></span>
+        <span style="display: flex; justify-content: space-between; gap: 8px"><span>Minimum</span><span style="color: #F2F4F5">$50, smaller balances roll over</span></span>
+        <span style="display: flex; justify-content: space-between; gap: 8px"><span>Next payout</span><span style="color: #F2F4F5">Nov 15, 2026</span></span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+        <button type="button" onClick="{{saveMethod}}" style="min-height: 46px; padding: 0 18px; border-radius: 12px; border: 0; background: #D5F879; color: #0A0B0D; font-size: 14px; font-weight: 600">Save payout method</button>
+        <sc-if value="{{methodSaved}}" hint-placeholder-val="{{false}}"><span role="status" style="font-size: 13px; color: #3DDC84">Saved. We sent a confirmation code to your email before the change takes effect.</span></sc-if>
+      </div>
+    </section>
+
+    <section aria-labelledby="tax-h" style="flex: 999 1 520px; min-width: 0; border-radius: 22px; background: #101215; border: 1px solid {{taxBorder}}; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap">
+        <h2 id="tax-h" style="margin: 0; font-size: 18px; font-weight: 600">Tax details</h2>
+        <span style="font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 999px; color: {{taxColor}}; background: {{taxBg}}">{{taxStatus}}</span>
+      </div>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">Where do you live and do your referral work?
+        <select onChange="{{setCountry}}" value="{{country}}" style="min-height: 46px; padding: 0 10px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 15px">
+          <option value="us">United States</option>
+          <option value="ca">Canada</option>
+          <option value="other">Another country</option>
+        </select>
+      </label>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">Legal name or business name<input type="text" value="{{legal}}" onInput="{{setLegal}}" style="min-height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 15px; min-width: 0"></label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">Mailing address<input type="text" value="{{addr}}" onInput="{{setAddr}}" style="min-height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 15px; min-width: 0"></label>
+      </div>
+
+      <sc-if value="{{isUS}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.5">
+            <input type="checkbox" checked="{{outside}}" onChange="{{toggleOutside}}" style="margin-top: 3px">
+            I do my referral work from outside Canada.
+          </label>
+          <span style="font-size: 13px; color: #9AA1AB; line-height: 1.5">Searchify is a Canadian company. When the work is done outside Canada, no Canadian tax is taken off your commissions. You report them on your own US return.</span>
+        </div>
+      </sc-if>
+      <sc-if value="{{isCA}}" hint-placeholder-val="{{false}}">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">SIN, or business number if you have one<input type="text" inputmode="numeric" placeholder="9 digits" style="min-height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 15px; min-width: 0"></label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">GST/HST number (only if registered)<input type="text" placeholder="123456789 RT0001" style="min-height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 15px; min-width: 0"></label>
+        </div>
+        <span style="font-size: 13px; color: #9AA1AB; line-height: 1.5">If we pay you more than $500 in a year, we send you a T4A slip by the end of February. If you're registered for GST/HST, we add it on top of your commissions.</span>
+      </sc-if>
+      <sc-if value="{{isOther}}" hint-placeholder-val="{{false}}">
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">Tax ID in your country (optional)<input type="text" style="min-height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 15px"></label>
+        <span style="font-size: 13px; color: #9AA1AB; line-height: 1.5">You report your commissions where you live. We may ask for more if your country requires it.</span>
+      </sc-if>
+
+      <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.5">
+        <input type="checkbox" checked="{{certify}}" onChange="{{toggleCertify}}" style="margin-top: 3px">
+        The details above are true and complete, and I'll update them if anything changes.
+      </label>
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+        <button type="button" onClick="{{saveTax}}" disabled="{{saveDisabled}}" style="min-height: 46px; padding: 0 18px; border-radius: 12px; border: 0; background: #D5F879; color: #0A0B0D; font-size: 14px; font-weight: 600; opacity: {{saveOpacity}}">Save tax details</button>
+        <span role="status" style="font-size: 13px; color: {{saveNoteColor}}">{{saveNote}}</span>
+      </div>
+      <span style="font-size: 12px; color: #7D848E">Stored encrypted. Only the Searchify finance team can see it. This is general information, not tax advice.</span>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    let t = 'standard';
+    try { t = sessionStorage.getItem('searchify-partner-type') || 'standard'; } catch (e) {}
+    const F = t === 'founding';
+    this.state = { ptype: t, method: 'paypal', methodSaved: false, country: 'us', outside: true, certify: false, saved: false,
+      payEmail: F ? 'nick@petitt.example' : 'sam@ortizmedia.example', legal: F ? 'Nicholas Paul Petitt' : 'Ortiz Media LLC', addr: F ? 'Los Angeles, CA' : 'Austin, TX' };
+  }
+  renderVals() {
+    const F = this.state.ptype === 'founding';
+    const M = [
+      ['paypal', 'PayPal', 'Paid in US dollars'], ['wise', 'Wise', 'USD, CAD, GBP or EUR'],
+      ['cabank', 'Canadian bank', 'CAD direct deposit'], ['usbank', 'US bank (ACH)', 'Paid in US dollars']
+    ];
+    const m = this.state.method;
+    const c = this.state.country;
+    const ready = this.state.certify && this.state.legal.trim() && this.state.addr.trim() && (c !== 'us' || this.state.outside);
+    return {
+      me: F ? { name: 'Nicholas Petitt', initials: 'NP', sub: 'Founding partner' } : { name: 'Sam Ortiz', initials: 'SO', sub: 'Partner since May 2026' },
+      methods: M.map((x) => ({ label: x.at(1), sub: x.at(2), checked: m === x.at(0) ? 'true' : 'false', border: m === x.at(0) ? '#D5F879' : '#262A31', bg: m === x.at(0) ? 'rgba(213,248,121,.06)' : '#0A0B0D',
+        pick: () => this.setState({ method: x.at(0), methodSaved: false }) })),
+      isEmail: m === 'paypal' || m === 'wise', isCaBank: m === 'cabank', isUsBank: m === 'usbank',
+      emailLabel: m === 'paypal' ? 'PayPal email' : 'Wise email',
+      payEmail: this.state.payEmail, setPayEmail: (e) => this.setState({ payEmail: e.target.value, methodSaved: false }),
+      currency: m === 'cabank' ? 'Canadian dollars' : (m === 'wise' ? 'Your choice of currency' : 'US dollars'),
+      saveMethod: () => this.setState({ methodSaved: true }), methodSaved: this.state.methodSaved,
+      country: c, setCountry: (e) => this.setState({ country: e.target.value, saved: false }),
+      isUS: c === 'us', isCA: c === 'ca', isOther: c === 'other',
+      legal: this.state.legal, setLegal: (e) => this.setState({ legal: e.target.value, saved: false }),
+      addr: this.state.addr, setAddr: (e) => this.setState({ addr: e.target.value, saved: false }),
+      outside: this.state.outside, toggleOutside: () => this.setState({ outside: !this.state.outside, saved: false }),
+      certify: this.state.certify, toggleCertify: () => this.setState({ certify: !this.state.certify, saved: false }),
+      saveDisabled: !ready, saveOpacity: ready ? '1' : '.45',
+      saveTax: () => this.setState({ saved: true }),
+      saveNote: this.state.saved ? 'Saved. Your payouts are unlocked.' : (ready ? 'Ready to save.' : 'Fill in your name and address, then tick the box above.'),
+      saveNoteColor: this.state.saved ? '#3DDC84' : '#9AA1AB',
+      taxStatus: this.state.saved ? 'On file' : 'Needed before your first payout', taxColor: this.state.saved ? '#3DDC84' : '#FFC53D', taxBg: this.state.saved ? 'rgba(61,220,132,.12)' : 'rgba(255,197,61,.12)',
+      taxBorder: this.state.saved ? 'rgba(61,220,132,.4)' : 'rgba(255,197,61,.35)'
+    };
+  }
+}
+</script>
+<script>window.__DC_FACTORY = function (DCLogic, React) {
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    let t = 'standard';
+    try { t = sessionStorage.getItem('searchify-partner-type') || 'standard'; } catch (e) {}
+    const F = t === 'founding';
+    this.state = { ptype: t, method: 'paypal', methodSaved: false, country: 'us', outside: true, certify: false, saved: false,
+      payEmail: F ? 'nick@petitt.example' : 'sam@ortizmedia.example', legal: F ? 'Nicholas Paul Petitt' : 'Ortiz Media LLC', addr: F ? 'Los Angeles, CA' : 'Austin, TX' };
+  }
+  renderVals() {
+    const F = this.state.ptype === 'founding';
+    const M = [
+      ['paypal', 'PayPal', 'Paid in US dollars'], ['wise', 'Wise', 'USD, CAD, GBP or EUR'],
+      ['cabank', 'Canadian bank', 'CAD direct deposit'], ['usbank', 'US bank (ACH)', 'Paid in US dollars']
+    ];
+    const m = this.state.method;
+    const c = this.state.country;
+    const ready = this.state.certify && this.state.legal.trim() && this.state.addr.trim() && (c !== 'us' || this.state.outside);
+    return {
+      me: F ? { name: 'Nicholas Petitt', initials: 'NP', sub: 'Founding partner' } : { name: 'Sam Ortiz', initials: 'SO', sub: 'Partner since May 2026' },
+      methods: M.map((x) => ({ label: x.at(1), sub: x.at(2), checked: m === x.at(0) ? 'true' : 'false', border: m === x.at(0) ? '#D5F879' : '#262A31', bg: m === x.at(0) ? 'rgba(213,248,121,.06)' : '#0A0B0D',
+        pick: () => this.setState({ method: x.at(0), methodSaved: false }) })),
+      isEmail: m === 'paypal' || m === 'wise', isCaBank: m === 'cabank', isUsBank: m === 'usbank',
+      emailLabel: m === 'paypal' ? 'PayPal email' : 'Wise email',
+      payEmail: this.state.payEmail, setPayEmail: (e) => this.setState({ payEmail: e.target.value, methodSaved: false }),
+      currency: m === 'cabank' ? 'Canadian dollars' : (m === 'wise' ? 'Your choice of currency' : 'US dollars'),
+      saveMethod: () => this.setState({ methodSaved: true }), methodSaved: this.state.methodSaved,
+      country: c, setCountry: (e) => this.setState({ country: e.target.value, saved: false }),
+      isUS: c === 'us', isCA: c === 'ca', isOther: c === 'other',
+      legal: this.state.legal, setLegal: (e) => this.setState({ legal: e.target.value, saved: false }),
+      addr: this.state.addr, setAddr: (e) => this.setState({ addr: e.target.value, saved: false }),
+      outside: this.state.outside, toggleOutside: () => this.setState({ outside: !this.state.outside, saved: false }),
+      certify: this.state.certify, toggleCertify: () => this.setState({ certify: !this.state.certify, saved: false }),
+      saveDisabled: !ready, saveOpacity: ready ? '1' : '.45',
+      saveTax: () => this.setState({ saved: true }),
+      saveNote: this.state.saved ? 'Saved. Your payouts are unlocked.' : (ready ? 'Ready to save.' : 'Fill in your name and address, then tick the box above.'),
+      saveNoteColor: this.state.saved ? '#3DDC84' : '#9AA1AB',
+      taxStatus: this.state.saved ? 'On file' : 'Needed before your first payout', taxColor: this.state.saved ? '#3DDC84' : '#FFC53D', taxBg: this.state.saved ? 'rgba(61,220,132,.12)' : 'rgba(255,197,61,.12)',
+      taxBorder: this.state.saved ? 'rgba(61,220,132,.4)' : 'rgba(255,197,61,.35)'
+    };
+  }
+}
+
+return Component;
+};</script>
+</body>
+</html>

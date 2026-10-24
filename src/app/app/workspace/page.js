@@ -1,7 +1,7 @@
-import { ManageView } from "@/components/board/WorkspaceViews";
+"use client";
 
-export const metadata = { title: "Manage workspace" };
+import PortfolioScreen from "@/components/v8/screens/PortfolioScreen";
 
 export default function Page() {
-  return <ManageView />;
+  return <PortfolioScreen />;
 }

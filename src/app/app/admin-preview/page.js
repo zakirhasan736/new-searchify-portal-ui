@@ -1,7 +1,7 @@
-import { AdminPreviewView } from "@/components/board/WorkspaceViews";
+import { redirect } from "next/navigation";
 
-export const metadata = { title: "Admin preview" };
+export const metadata = { title: "HQ" };
 
 export default function Page() {
-  return <AdminPreviewView />;
+  redirect("/admin");
 }

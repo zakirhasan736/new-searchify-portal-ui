@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — Client report</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+@keyframes sfy-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 1550px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; display: flex; flex-direction: column">
+  <div style="background: #131519; border-bottom: 1px solid #262A31">
+    <div style="max-width: 900px; margin: 0 auto; box-sizing: border-box; padding: 12px clamp(16px, 4vw, 32px); display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+      <span style="font-size: 13px; color: #9AA1AB; margin-right: auto">Only you see this bar · the client sees the report below</span>
+      <a href="Changelog.dc.html" style="display: inline-flex; align-items: center; min-height: 38px; padding: 0 12px; border-radius: 10px; border: 1px solid #262A31; color: #D7DADE; text-decoration: none; font-size: 13px">Edit sections</a>
+      <button type="button" style="min-height: 38px; padding: 0 12px; border-radius: 10px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 13px">Download PDF</button>
+      <button type="button" onClick="{{copy}}" style="min-height: 38px; padding: 0 14px; border-radius: 10px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 13px; font-weight: 600; box-shadow: 0 0 18px rgba(77,163,255,.4)">{{copyLabel}}</button>
+    </div>
+  </div>
+
+  <main style="max-width: 900px; width: 100%; margin: 0 auto; box-sizing: border-box; padding: 48px clamp(16px, 4vw, 32px) 72px; display: flex; flex-direction: column; gap: 44px">
+    <header style="display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13px; color: #9AA1AB">
+        <span style="font-weight: 600; color: #F2F4F5">Rivera Digital</span><span>October 2026 report</span>
+      </div>
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(36px, 5vw, 60px); line-height: 1; letter-spacing: -1.8px; font-weight: 700">Northline Roofing is getting found more often.</h1>
+    </header>
+
+    <section aria-label="Headline results" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px">
+      <div style="border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 24px; display: flex; flex-direction: column; gap: 6px">
+        <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 64px; line-height: 0.9; font-weight: 800; letter-spacing: -2px; color: {{accent}}">+376</span>
+        <span style="font-size: 15px">more visitors a month from Google</span>
+        <span style="font-size: 13px; color: #9AA1AB">Since we started in June</span>
+      </div>
+      <div style="border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 24px; display: flex; flex-direction: column; gap: 6px">
+        <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 64px; line-height: 0.9; font-weight: 800; letter-spacing: -2px; color: {{accent}}">≈ 7</span>
+        <span style="font-size: 15px">extra calls or quote requests a month</span>
+        <span style="font-size: 13px; color: #9AA1AB">From your Google Analytics</span>
+      </div>
+    </section>
+
+    <section aria-labelledby="did-h" style="display: flex; flex-direction: column; gap: 14px">
+      <h2 id="did-h" style="margin: 0; font-size: 22px; font-weight: 600">What we changed this month</h2>
+      <div style="display: flex; flex-direction: column; border-top: 1px solid #1A1D22">
+        <div style="display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid #1A1D22; flex-wrap: wrap"><span style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px">Rewrote the Roof Replacement page title so it mentions Calgary</span><span style="font-size: 13px; color: #9AA1AB">Oct 14</span></span><span style="font-size: 14px; color: #9AA1AB">Measuring — results Nov 11</span></div>
+        <div style="display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid #1A1D22; flex-wrap: wrap"><span style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px">Linked two popular blog posts to the Skylights page</span><span style="font-size: 13px; color: #9AA1AB">Oct 9 · approved by Maya</span></span><span style="font-size: 14px; color: #9AA1AB">Measuring — results Nov 6</span></div>
+        <div style="display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid #1A1D22; flex-wrap: wrap"><span style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px">Flat Roofs title change from September</span><span style="font-size: 13px; color: #9AA1AB">Result came in this month</span></span><span style="font-size: 14px; color: {{accent}}">+64 visitors / mo</span></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="links-h" style="display: flex; flex-direction: column; gap: 14px">
+      <h2 id="links-h" style="margin: 0; font-size: 22px; font-weight: 600">Websites linking to you</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px">
+        <div style="border-radius: 16px; border: 1px solid #262A31; padding: 16px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 26px; font-weight: 700">38</span><span style="font-size: 13px; color: #9AA1AB">websites link to you, up from 22 a year ago</span></div>
+        <div style="border-radius: 16px; border: 1px solid #262A31; padding: 16px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 26px; font-weight: 700; color: {{accent}}">+4</span><span style="font-size: 13px; color: #9AA1AB">new this month, including Alberta Builders News</span></div>
+        <div style="border-radius: 16px; border: 1px solid #262A31; padding: 16px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 26px; font-weight: 700">2</span><span style="font-size: 13px; color: #9AA1AB">lost. We've asked Calgary Home Guide to restore theirs</span></div>
+      </div>
+      <span style="font-size: 14px; color: #9AA1AB; line-height: 1.5">Links from trusted local websites tell Google you're a real, recommended business. Next month: getting listed in the Calgary Home Builders Association directory, where all three of your main competitors already appear.</span>
+    </section>
+
+    <section aria-labelledby="health-h" style="display: flex; flex-direction: column; gap: 14px">
+      <h2 id="health-h" style="margin: 0; font-size: 22px; font-weight: 600">Your site's health</h2>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px">
+        <div style="border-radius: 16px; border: 1px solid rgba(255,90,78,.5); padding: 16px; display: flex; flex-direction: column; gap: 4px"><span style="display: flex; align-items: center; gap: 8px; font-size: 26px; font-weight: 700"><span style="width: 12px; height: 12px; border-radius: 50%; background: #FF5A4E"></span>6</span><span style="font-size: 13px; color: #9AA1AB">urgent fixes</span></div>
+        <div style="border-radius: 16px; border: 1px solid #262A31; padding: 16px; display: flex; flex-direction: column; gap: 4px"><span style="display: flex; align-items: center; gap: 8px; font-size: 26px; font-weight: 700"><span style="width: 12px; height: 12px; border-radius: 50%; background: #FFC53D"></span>14</span><span style="font-size: 13px; color: #9AA1AB">can wait</span></div>
+        <div style="border-radius: 16px; border: 1px solid #262A31; padding: 16px; display: flex; flex-direction: column; gap: 4px"><span style="display: flex; align-items: center; gap: 8px; font-size: 26px; font-weight: 700"><span style="width: 12px; height: 12px; border-radius: 50%; background: #3DDC84"></span>28</span><span style="font-size: 13px; color: #9AA1AB">passing</span></div>
+        <div style="border-radius: 16px; border: 1px solid #262A31; padding: 16px; display: flex; flex-direction: column; gap: 4px"><span style="display: flex; align-items: center; gap: 8px; font-size: 26px; font-weight: 700"><span style="width: 12px; height: 12px; border-radius: 50%; background: #4DA3FF"></span>13</span><span style="font-size: 13px; color: #9AA1AB">winning, protected</span></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="next-h" style="display: flex; flex-direction: column; gap: 14px">
+      <h2 id="next-h" style="margin: 0; font-size: 22px; font-weight: 600">Coming up in November</h2>
+      <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px">
+        <li style="display: flex; gap: 14px; font-size: 15px"><span style="font-family: 'Geist Mono', monospace; color: #9AA1AB">01</span>Put “Calgary” and “24/7” in the Roof Repair title</li>
+        <li style="display: flex; gap: 14px; font-size: 15px"><span style="font-family: 'Geist Mono', monospace; color: #9AA1AB">02</span>Refresh the ice dam guide before the first freeze</li>
+        <li style="display: flex; gap: 14px; font-size: 15px"><span style="font-family: 'Geist Mono', monospace; color: #9AA1AB">03</span>Share the refreshed guide on Facebook and Instagram</li>
+      </ol>
+      <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 18px; border-radius: 18px; border: 1px solid #4DA3FF; box-shadow: 0 0 24px rgba(77,163,255,.18)">
+        <span style="flex: 1 1 260px; font-size: 15px">Maya, 2 of these need your OK before they go live.</span>
+        <a href="Phone.dc.html" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 20px; border-radius: 12px; background: #4DA3FF; color: #0A0B0D; text-decoration: none; font-size: 15px; font-weight: 600">Review them</a>
+      </div>
+    </section>
+
+    <footer style="padding-top: 20px; border-top: 1px solid #1A1D22; font-size: 13px; color: #7D848E; line-height: 1.6">Every change listed here can be undone. Questions? Reply to this email or contact alex@riveradigital.example. · Made with Searchify</footer>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#D5F879","options":["#D5F879","#9FE7F5","#FFD36E","#C9B8FF"]},"$preview":{"width":1440,"height":1550}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { copied: false };
+  }
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#D5F879',
+      copyLabel: this.state.copied ? 'Link copied' : 'Copy client link',
+      copy: () => this.setState({ copied: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AuthField, AuthScreen, AuthSubmit } from "@/components/v3/AuthScreen";
+import { AuthField, AuthScreen, AuthSubmit } from "@/components/v8/AuthScreen";
 
 export default function ForgotPassword() {
   const router = useRouter();
@@ -22,26 +22,28 @@ export default function ForgotPassword() {
 
   return (
     <AuthScreen
-      label="Account recovery"
-      line1="FORGOT"
-      line2="PASSWORD."
-      sub="Confirm the workspace username. Next you will choose a new password."
+      line1="Forgot password."
+      sub="Enter the workspace email. Next you choose a new password."
+      title="Recover access"
       toast={toast}
+      foot={
+        <div className="v8-auth-foot">
+          <Link href="/login">← Back to sign in</Link>
+        </div>
+      }
     >
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <AuthField
-          label="Username or email"
+          label="Email"
+          id="email"
           type="text"
           name="username"
           autoComplete="username"
-          placeholder="workspace username"
+          required
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
-        <AuthSubmit>Continue →</AuthSubmit>
-        <p className="sf-auth-foot">
-          Remembered it? <Link href="/login">Back to sign in</Link>
-        </p>
+        <AuthSubmit>Continue</AuthSubmit>
       </form>
     </AuthScreen>
   );

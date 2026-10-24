@@ -1,114 +1,384 @@
-import Link from "next/link";
-import LandingShell from "@/components/landing/LandingShell";
+"use client";
 
-export default function PricingView() {
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import SearchifyMark from "@/components/landing/SearchifyMark";
+import { V8Button, V8Field, V8Segmented } from "@/components/v8/primitives";
+import { getBillingAccount, getBillingCatalog, requestEnterpriseQuote, startCheckout } from "@/lib/billingApi";
+import { PLAN_ALIAS, choosePlan, hydrateJourney, syncJourneyNow } from "@/lib/journey";
+import { getUser, userIsAuthenticated } from "@/utils/users/Helpers";
+import "@/styles/v8-kit.css";
+import "@/styles/v8-pricing.css";
+
+const FALLBACK = [
+  {
+    id: "solo",
+    name: "Solo",
+    tag: "ONE BUSINESS",
+    sites: "1 website",
+    mo: 29,
+    features: [
+      "Search Console + WordPress",
+      "Colour-coded task board",
+      "One move at a time, with results",
+      "Change log, one-click undo, unlimited CSV export",
+      "1 branded PDF report per month",
+    ],
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    tag: "GROWING TEAMS",
+    sites: "Up to 5 websites",
+    mo: 79,
+    features: [
+      "Everything in Solo",
+      "Calls and leads from Analytics",
+      "5 branded reports per site, per month",
+      "1 scheduled client send + 3 client logins per site",
+      "AI answer tracking and autopilot within limits",
+    ],
+  },
+  {
+    id: "premium",
+    name: "Premium",
+    tag: "BEST FOR AGENCIES",
+    sites: "Up to 25 websites",
+    mo: 399,
+    features: [
+      "Everything in Pro",
+      "Unlimited white-label reports, no Searchify name",
+      "Unlimited scheduled sends and client logins",
+      "Social channels via Postiz",
+      "All-clients view and team seats",
+    ],
+  },
+  {
+    id: "enterprise",
+    name: "Enterprise",
+    tag: "LARGE PORTFOLIOS",
+    sites: "25+ websites",
+    mo: 0,
+    features: [
+      "Everything in Premium",
+      "Custom site and report limits",
+      "Single sign-on and audit log",
+      "Dedicated success manager",
+      "API access and custom contract",
+    ],
+  },
+];
+
+function money(n) {
+  return `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
+}
+
+function userEmail() {
+  const u = getUser();
+  return String(u?.result?.email || u?.data?.email || u?.result?.username || "").trim();
+}
+
+export default function PricingView({ embedded = false }) {
+  const router = useRouter();
+  const [period, setPeriod] = useState("month");
+  const [pick, setPick] = useState("premium");
+  const [defs, setDefs] = useState(FALLBACK);
+  const [live, setLive] = useState(false);
+  const [account, setAccount] = useState(null);
+  const [entSent, setEntSent] = useState(false);
+  const [email, setEmail] = useState("");
+  const [sites, setSites] = useState("60");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
+  const yearly = period === "year";
+
+  useEffect(() => {
+    const mail = userEmail();
+    if (mail && mail.includes("@")) setEmail(mail);
+    getBillingCatalog().then((res) => {
+      if (res.ok && Array.isArray(res.data?.plans) && res.data.plans.length) {
+        setDefs(
+          res.data.plans.map((p) => ({
+            id: p.id,
+            name: p.name,
+            tag: p.tag,
+            sites: p.sites,
+            mo: Number(p.mo) || 0,
+            features: Array.isArray(p.features) ? p.features : [],
+          })),
+        );
+        setLive(Boolean(res.data.live));
+      }
+    });
+    if (!userIsAuthenticated()) return;
+    getBillingAccount().then((res) => {
+      if (!res.ok || !res.data?.planId) return;
+      setAccount(res.data);
+      setPick(res.data.planId);
+      if (res.data.billing === "annual") setPeriod("year");
+      if (res.data.email && String(res.data.email).includes("@")) setEmail(res.data.email);
+    });
+  }, []);
+
+  const plans = useMemo(
+    () =>
+      defs.map((d) => {
+        const on = d.id === pick;
+        const ent = d.id === "enterprise";
+        const perMo = yearly && d.mo ? Math.round(((d.mo * 10) / 12) * 100) / 100 : d.mo;
+        return {
+          ...d,
+          on,
+          ent,
+          price: ent ? "Contact us" : money(perMo),
+          per: ent ? "" : "USD/mo",
+          note: ent ? "Custom quote for your portfolio" : yearly ? `${money(d.mo * 10)} USD billed yearly` : "Billed monthly",
+          noteGreen: !ent && yearly,
+        };
+      }),
+    [defs, pick, yearly],
+  );
+
+  const chosen = defs.find((d) => d.id === pick) || defs[2] || FALLBACK[2];
+  const isEnt = pick === "enterprise";
+  const isPaid = !isEnt;
+
+  const checkout = async () => {
+    setErr("");
+    setMsg("");
+    const mail = email.trim();
+    if (!mail.includes("@")) {
+      setErr("Enter a work email to continue.");
+      return;
+    }
+    if (!userIsAuthenticated()) {
+      const q = new URLSearchParams({
+        plan: pick,
+        billing: yearly ? "annual" : "monthly",
+        email: mail,
+        next: "/pricing",
+      });
+      router.push(`/signup?${q}`);
+      return;
+    }
+    setBusy(true);
+    await hydrateJourney();
+    const canonical = PLAN_ALIAS[pick] || pick;
+    const path = choosePlan(canonical, yearly ? "annual" : "monthly");
+    if (!path) {
+      setBusy(false);
+      setErr("That plan cannot cover the websites already in this workspace. Remove a site or pick a larger plan.");
+      return;
+    }
+    const res = await startCheckout({
+      planId: pick,
+      billing: yearly ? "annual" : "monthly",
+      email: mail,
+    });
+    await syncJourneyNow();
+    setBusy(false);
+    if (!res.ok) {
+      setErr(res.data?.detail || "Could not start checkout. Try again.");
+      return;
+    }
+    setMsg(res.data?.detail || "Trial started.");
+    const fresh = await getBillingAccount();
+    if (fresh.ok && fresh.data?.planId) {
+      setAccount(fresh.data);
+      setPick(fresh.data.planId);
+    }
+    if (embedded) return;
+    router.push(res.data?.next || path || "/app/connections");
+  };
+
+  const sendQuote = async () => {
+    setErr("");
+    setMsg("");
+    const mail = email.trim();
+    if (!mail.includes("@")) {
+      setErr("Enter a work email for the quote.");
+      return;
+    }
+    setBusy(true);
+    const res = await requestEnterpriseQuote({ email: mail, sites: sites.trim() || "60" });
+    setBusy(false);
+    if (!res.ok) {
+      setErr(res.data?.detail || "Could not send the request.");
+      return;
+    }
+    setEntSent(true);
+    setMsg(res.data?.detail || "Request sent.");
+  };
+
   return (
-    <LandingShell current="pricing">
-      <main>
-        <section className="pagehero wrap">
-          <div className="eyebrow">
-            <span className="bar" /> PRICING & PILOT
-          </div>
-          <h1>
-            KNOW THE COST
-            <br />
-            <em>BEFORE YOU COMMIT.</em>
-          </h1>
-          <p>
-            Searchify is validating the first customer workflow now. Pilot pricing is being shaped around supported
-            sites, real provider usage, and the work you need done.
-          </p>
-          <Link className="btn primary" href="/contact">
-            Ask about the pilot
+    <div className="v8-page v8-pricing">
+      <header className="v8-pricing-head">
+        {embedded ? (
+          <span className="v8-pricing-current">
+            {account ? (
+              <>
+                Your plan is <strong>{account.name}</strong>
+                {" · "}
+                {account.sitesUsed} of {account.siteLimit} websites
+                {" · "}
+                {account.billing === "annual" ? "billed yearly" : "billed monthly"}
+                {account.status === "trial" ? " · 14-day trial" : ""}
+              </>
+            ) : (
+              "Loading your plan…"
+            )}
+          </span>
+        ) : (
+          <Link href="/" className="v8-brand">
+            <SearchifyMark size={28} />
+            <span>searchify</span>
           </Link>
-          <div className="micro">No published subscription price yet. You&apos;ll get the scope and cost in writing first.</div>
-        </section>
-        <section className="wrap pricewrap">
-          <article className="pricecard">
-            <div className="priceeyebrow">FOUNDING CUSTOMER PILOT</div>
-            <h2>
-              ONE WORKFLOW.
-              <br />
-              <span className="green">CLEAR TERMS.</span>
-            </h2>
-            <p className="priceintro">Work directly with the team to test one real SEO workflow on supported WordPress site(s).</p>
-            <ul className="pricecheck">
-              <li>Connect a supported WordPress site and Search Console</li>
-              <li>Review evidence-backed page opportunities</li>
-              <li>Approve AI-assisted title and description drafts</li>
-              <li>Publish, verify, and record supported changes</li>
-              <li>Measure actual data usage and operating costs</li>
+        )}
+        <Link href={embedded ? "/app/settings" : userIsAuthenticated() ? "/app" : "/login"} className="v8-pricing-back">
+          {embedded ? "Settings" : userIsAuthenticated() ? "Back to app" : "Sign in"}
+        </Link>
+      </header>
+
+      <div className="v8-wrap v8-pricing-hero">
+        <h1 className="v8-h1">Pay for sites, not seats.</h1>
+        <p className="v8-lede">
+          Every plan includes the scan, the colour-coded board, approvals, live checks and one-click undo.
+        </p>
+        <V8Segmented
+          ariaLabel="Billing period"
+          value={period}
+          onChange={setPeriod}
+          options={[
+            { value: "month", label: "Monthly" },
+            { value: "year", label: "Yearly · 2 months free", accent: "green" },
+          ]}
+        />
+        {live ? null : <span className="v8-pricing-fine">Loading live catalog…</span>}
+      </div>
+
+      <div className="v8-wrap v8-pricing-grid">
+        {plans.map((pl) => (
+          <article key={pl.id} className={`v8-card${pl.on ? " is-on" : ""}`}>
+            <div className="v8-pricing-card-top">
+              <h2>{pl.name}</h2>
+              <span className="v8-pricing-tag">{account?.planId === pl.id ? "YOUR PLAN" : pl.tag}</span>
+            </div>
+            <div className="v8-pricing-price">
+              <span className={pl.ent ? "is-ent" : undefined}>{pl.price}</span>
+              {pl.per ? <small>{pl.per}</small> : null}
+            </div>
+            <span className={`v8-pricing-note${pl.noteGreen ? " is-green" : ""}`}>{pl.note}</span>
+            <span className="v8-pricing-sites">{pl.sites}</span>
+            <ul className="v8-pricing-feats">
+              {pl.features.map((f) => (
+                <li key={f}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D5F879" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M5 12l5 5L20 7" />
+                  </svg>
+                  <span>{f}</span>
+                </li>
+              ))}
             </ul>
-            <Link className="btn primary" href="/contact">
-              Discuss pilot fit
-            </Link>
-            <p className="pricefine">Pilot scope, availability, and fees are confirmed individually before any work begins.</p>
+            <button
+              type="button"
+              className={`v8-pricing-cta${pl.on ? " is-on" : ""}`}
+              onClick={() => {
+                setPick(pl.id);
+                setEntSent(false);
+                setErr("");
+                setMsg("");
+              }}
+            >
+              {pl.on && account?.planId === pl.id ? "Current plan" : pl.on ? "Selected" : pl.ent ? "Contact for a quote" : `Choose ${pl.name}`}
+            </button>
           </article>
-          <aside className="priceaside">
-            <div className="eyebrow">WHAT SHAPES THE QUOTE</div>
-            <h3>PRICE IT ON WHAT YOU USE.</h3>
-            <p>Before agreeing to a pilot, we&apos;ll define:</p>
-            <ul className="checklist">
-              <li>Number of websites and pages in scope</li>
-              <li>How often each connection refreshes data</li>
-              <li>Third-party data costs and usage limits</li>
-              <li>What the workflow includes and how success is checked</li>
-            </ul>
-            <div className="costnote">
-              <strong>Provider usage matters.</strong>
-              <br />
-              Data fees depend on the actual workflow and usage. We&apos;re measuring those costs before setting ongoing plans.
-            </div>
-          </aside>
-        </section>
-        <section className="pageband">
-          <div className="wrap faq pricingfaq">
-            <div>
-              <div className="eyebrow">PRICING, WITHOUT SURPRISES</div>
-              <h2>
-                GOOD TO
-                <br />
-                KNOW.
-              </h2>
-            </div>
-            <div>
-              <details open>
-                <summary>Why isn&apos;t there a monthly price yet?</summary>
-                <p>
-                  The first release is still being validated with real customer workflows and third-party data usage.
-                  Publishing a flat price before measuring those costs would be guesswork.
-                </p>
-              </details>
-              <details>
-                <summary>Will provider API costs be included?</summary>
-                <p>
-                  The pilot quote will clearly state what is included, any usage limits, and how additional third-party
-                  charges are handled before you agree.
-                </p>
-              </details>
-              <details>
-                <summary>Can I get a walkthrough first?</summary>
-                <p>
-                  Yes. The current interactive demo uses sample data and simulated actions. Contact us to discuss the
-                  product direction and pilot scope.
-                </p>
-              </details>
-            </div>
+        ))}
+      </div>
+
+      {isPaid ? (
+        <section className="v8-wrap v8-pricing-panel" aria-label="Checkout">
+          <h2>Your order</h2>
+          <div className="v8-pricing-row">
+            <span>
+              {chosen.name} · {chosen.sites}
+            </span>
+            <span className="mono">
+              {yearly ? `${money(chosen.mo * 10)} USD / year` : `${money(chosen.mo)} USD / month`}
+            </span>
           </div>
-        </section>
-        <section className="closing">
-          <div className="eyebrow">GET THE DETAILS IN WRITING</div>
-          <div className="closing-title">
-            CLEAR SCOPE.
-            <br />
-            <span className="green">NO GUESSWORK.</span>
+          <div className="v8-pricing-row muted">
+            <span>14-day free trial</span>
+            <span>Billed after the trial ends</span>
           </div>
-          <p>Tell us how many sites you manage and what you want to test. We&apos;ll discuss whether the pilot is a fit.</p>
-          <Link className="btn primary" href="/contact">
-            Contact Searchify
-          </Link>
+          <hr />
+          <V8Field
+            label="Work email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@agency.com"
+            autoComplete="email"
+          />
+          {err ? (
+            <p role="alert" style={{ margin: 0, color: "#FF8A80", fontSize: 14 }}>
+              {err}
+            </p>
+          ) : null}
+          {msg ? (
+            <p role="status" style={{ margin: 0, color: "#3DDC84", fontSize: 14 }}>
+              {msg}
+            </p>
+          ) : null}
+          <V8Button
+            type="button"
+            variant="primary"
+            className="v8-pricing-full"
+            disabled={busy || (embedded && account?.planId === chosen.id && (yearly ? account.billing === "annual" : account.billing !== "annual"))}
+            onClick={checkout}
+          >
+            {busy
+              ? "Starting trial…"
+              : embedded && account?.planId === chosen.id && (yearly ? account.billing === "annual" : account.billing !== "annual")
+                ? "You're on this plan"
+                : embedded
+                  ? `Switch to ${chosen.name}`
+                  : "Continue to secure checkout"}
+          </V8Button>
+          <span className="v8-pricing-fine">
+            {userIsAuthenticated()
+              ? "Starts a 14-day trial on your account. Card checkout connects when Stripe is enabled — cancel any time from Settings."
+              : "Create an account next, then we start your 14-day trial. Cancel any time from Settings."}
+          </span>
         </section>
-      </main>
-    </LandingShell>
+      ) : null}
+
+      {isEnt ? (
+        <section className="v8-wrap v8-pricing-panel" aria-label="Contact sales">
+          <h2>Get an Enterprise quote</h2>
+          <p className="v8-lede" style={{ maxWidth: "none" }}>
+            Tell us how many sites you manage. We&apos;ll reply within one business day with a quote built around your
+            portfolio.
+          </p>
+          <div className="v8-pricing-ent-grid">
+            <V8Field label="Work email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+            <V8Field label="Number of websites" type="text" value={sites} onChange={(e) => setSites(e.target.value)} />
+          </div>
+          {err ? (
+            <p role="alert" style={{ margin: 0, color: "#FF8A80", fontSize: 14 }}>
+              {err}
+            </p>
+          ) : null}
+          {entSent ? (
+            <span className="v8-pricing-sent">Request sent · we&apos;ll be in touch within one business day</span>
+          ) : (
+            <V8Button type="button" variant="primary" className="v8-pricing-full" disabled={busy} onClick={sendQuote}>
+              {busy ? "Sending…" : "Request a quote"}
+            </V8Button>
+          )}
+        </section>
+      ) : null}
+    </div>
   );
 }

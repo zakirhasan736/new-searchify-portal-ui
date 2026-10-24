@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — Partner centre</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
+@keyframes sfy-grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 1500px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 22px clamp(16px, 4vw, 56px) 56px; display: flex; flex-direction: column; gap: 22px">
+
+  <header style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+    <span style="display: flex; align-items: center; gap: 10px; margin-right: auto">
+      <svg width="30" height="30" viewBox="0 0 32 32" role="img" aria-label="Searchify"><rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="#131519" stroke="#2E333B"></rect><circle cx="9" cy="12.5" r="2.9" fill="#FF5A4E"></circle><circle cx="16" cy="12.5" r="2.9" fill="#FF9F43"></circle><circle cx="23" cy="12.5" r="2.9" fill="#FFC53D"></circle><circle cx="9" cy="19.5" r="2.9" fill="#3DDC84"></circle><circle cx="16" cy="19.5" r="2.9" fill="#2CC7C0"></circle><circle cx="23" cy="19.5" r="2.9" fill="#4DA3FF"></circle></svg>
+      <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.4px">searchify</span>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 6px; border: 1px solid #D5F879; color: #D5F879">PARTNER CENTRE</span>
+    </span>
+    <span role="group" aria-label="Preview as" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #7D848E">Preview as
+      <span style="display: inline-flex; padding: 3px; border-radius: 10px; background: #131519; border: 1px solid #262A31">
+        <sc-for list="{{types}}" as="t" hint-placeholder-count="2">
+          <sc-if value="{{t.on}}" hint-placeholder-val="{{false}}"><button type="button" aria-pressed="true" onClick="{{t.pick}}" style="min-height: 32px; padding: 0 10px; border-radius: 8px; border: 0; background: #262A31; color: #F2F4F5; font-size: 12px; font-weight: 600">{{t.label}}</button></sc-if>
+          <sc-if value="{{t.off}}" hint-placeholder-val="{{true}}"><button type="button" aria-pressed="false" onClick="{{t.pick}}" style="min-height: 32px; padding: 0 10px; border-radius: 8px; border: 0; background: transparent; color: #9AA1AB; font-size: 12px">{{t.label}}</button></sc-if>
+        </sc-for>
+      </span>
+    </span>
+    <span style="display: flex; align-items: center; gap: 10px">
+      <span style="width: 36px; height: 36px; border-radius: 50%; background: #262A31; display: grid; place-items: center; font-size: 13px; font-weight: 600">{{me.initials}}</span>
+      <span style="display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 500">{{me.name}}</span><span style="font-size: 12px; color: #9AA1AB">{{me.sub}}</span></span>
+    </span>
+    <button type="button" onClick="{{signOut}}" style="min-height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 13px">Sign out</button>
+  </header>
+
+  <nav aria-label="Partner centre" style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid #1A1D22; padding-bottom: 12px">
+    <a href="Affiliate.dc.html" aria-current="page" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; background: #1A1D22; color: #F2F4F5; text-decoration: none; font-size: 14px; font-weight: 600">Overview</a>
+    <a href="PartnerEarnings.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Earnings</a>
+    <a href="PartnerPayout.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Payout and tax</a>
+    <a href="PartnerTerms.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Agreement and rules</a>
+  </nav>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(30px, 3.8vw, 48px); line-height: 1.02; letter-spacing: -1.4px; font-weight: 700">Your next payout is <span style="color: #D5F879">{{nextPayout}}</span> on Nov 15.</h1>
+      <span style="font-size: 15px; color: #9AA1AB">{{earnedLine}}</span>
+    </div>
+    <div role="group" aria-label="Time range" style="display: inline-flex; padding: 4px; border-radius: 12px; background: #131519; border: 1px solid #262A31">
+      <sc-for list="{{ranges}}" as="r" hint-placeholder-count="3">
+        <sc-if value="{{r.on}}" hint-placeholder-val="{{false}}"><button type="button" aria-pressed="true" onClick="{{r.pick}}" style="min-height: 36px; padding: 0 14px; border-radius: 9px; border: 0; background: #262A31; color: #F2F4F5; font-size: 13px; font-weight: 600">{{r.label}}</button></sc-if>
+        <sc-if value="{{r.off}}" hint-placeholder-val="{{true}}"><button type="button" aria-pressed="false" onClick="{{r.pick}}" style="min-height: 36px; padding: 0 14px; border-radius: 9px; border: 0; background: transparent; color: #9AA1AB; font-size: 13px">{{r.label}}</button></sc-if>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch">
+    <section aria-labelledby="rate-h" style="flex: 999 1 520px; min-width: 0; border-radius: 22px; background: #101215; border: 1px solid {{rate.border}}; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+        <span style="display: flex; flex-direction: column; gap: 4px">
+          <h2 id="rate-h" style="margin: 0; font-size: 17px; font-weight: 600">{{rate.title}}</h2>
+          <span style="font-size: 13px; color: #9AA1AB">{{rate.sub}}</span>
+        </span>
+        <span style="display: inline-flex; align-items: baseline; gap: 8px">
+          <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 40px; font-weight: 800; letter-spacing: -1px; color: #D5F879; line-height: 1">{{rate.now}}</span>
+          <sc-if value="{{rate.hasNext}}" hint-placeholder-val="{{false}}"><span style="font-size: 15px; color: #9AA1AB">→ {{rate.next}}</span></sc-if>
+        </span>
+      </div>
+      <sc-if value="{{rate.hasNext}}" hint-placeholder-val="{{false}}">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div role="img" aria-label="{{rate.aria}}" style="display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px">
+            <sc-for list="{{rate.dots}}" as="d" hint-placeholder-count="10"><span style="height: 14px; border-radius: 4px; background: {{d.bg}}; box-shadow: {{d.glow}}"></span></sc-for>
+          </div>
+          <span style="display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 14px"><span><b style="font-weight: 600">{{rate.count}}</b> qualified referrals in your current 6-month window</span><span style="color: #9AA1AB">{{rate.window}}</span></span>
+          <span style="font-size: 14px; color: #D5F879">{{rate.toGo}}</span>
+        </div>
+      </sc-if>
+      <span style="font-size: 12px; color: #7D848E; line-height: 1.5">A qualified referral is a new customer who signed up through your link, paid for at least one month and passed the 30-day hold without a refund. Your own businesses and family don't count.</span>
+    </section>
+
+    <section aria-labelledby="bal-h" style="flex: 1 1 320px; min-width: 0; border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+      <h2 id="bal-h" style="margin: 0; font-size: 17px; font-weight: 600">Where your money is</h2>
+      <sc-for list="{{balances}}" as="b" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid #16181C">
+          <span style="width: 9px; height: 9px; flex: none; border-radius: 50%; background: {{b.color}}"></span>
+          <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 14px">{{b.label}}</span><span style="font-size: 12px; color: #7D848E">{{b.sub}}</span></span>
+          <span style="font-family: 'Geist Mono', monospace; font-size: 14px; color: {{b.valueColor}}">{{b.value}}</span>
+        </div>
+      </sc-for>
+      <a href="PartnerEarnings.dc.html" style="font-size: 13px">See every commission</a>
+    </section>
+  </div>
+
+  <section aria-label="Your numbers" style="max-width: 1180px; width: 100%; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px">
+    <sc-for list="{{kpis}}" as="k" hint-placeholder-count="5">
+      <button type="button" onClick="{{k.pick}}" aria-pressed="{{k.pressed}}" style="text-align: left; font: inherit; color: #F2F4F5; border-radius: 18px; padding: 16px 18px; background: {{k.bg}}; border: 1px solid {{k.border}}; box-shadow: {{k.glow}}; display: flex; flex-direction: column; gap: 6px; cursor: {{k.cursor}}">
+        <span style="font-size: 13px; color: #9AA1AB">{{k.label}}</span>
+        <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 32px; font-weight: 800; letter-spacing: -1px; line-height: 1; color: {{k.valueColor}}">{{k.value}}</span>
+        <span style="font-size: 12px; color: #7D848E">{{k.sub}}</span>
+      </button>
+    </sc-for>
+  </section>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch">
+    <section aria-labelledby="chart-h" style="flex: 999 1 560px; min-width: 0; border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <h2 id="chart-h" style="margin: 0; font-size: 17px; font-weight: 600">{{chartTitle}}</h2>
+      <svg viewBox="0 0 720 260" role="img" aria-label="{{chartTitle}}" style="width: 100%; height: auto; display: block">
+        <sc-for list="{{grid}}" as="g" hint-placeholder-count="3">
+          <line x1="44" x2="712" y1="{{g.y}}" y2="{{g.y}}" stroke="#1A1D22"></line>
+          <text x="36" y="{{g.ty}}" text-anchor="end" font-size="12" fill="#7D848E" font-family="Geist Mono, monospace">{{g.label}}</text>
+        </sc-for>
+        <sc-for list="{{bars}}" as="b" hint-placeholder-count="12">
+          <rect x="{{b.x}}" y="{{b.y}}" width="{{b.w}}" height="{{b.h}}" rx="3" fill="{{b.color}}" style="transform-origin: 0 230px; transform-box: view-box; animation: sfy-grow .6s cubic-bezier(.2,.8,.2,1) both"></rect>
+        </sc-for>
+        <line x1="44" x2="712" y1="230" y2="230" stroke="#262A31"></line>
+        <sc-for list="{{xl}}" as="x" hint-placeholder-count="5">
+          <text x="{{x.x}}" y="250" text-anchor="middle" font-size="12" fill="#7D848E" font-family="Geist Mono, monospace">{{x.label}}</text>
+        </sc-for>
+      </svg>
+      <span style="font-size: 12px; color: #7D848E">Per week. Tap Link clicks, Sign-ups or Became paying above to switch.</span>
+    </section>
+
+    <section aria-labelledby="link-h" style="flex: 1 1 340px; min-width: 0; border-radius: 22px; background: #101215; border: 1px solid rgba(213,248,121,.35); padding: 20px; display: flex; flex-direction: column; gap: 14px">
+      <h2 id="link-h" style="margin: 0; font-size: 17px; font-weight: 600">Your referral link</h2>
+      <div style="display: flex; gap: 8px; align-items: stretch">
+        <span style="flex: 1; min-width: 0; display: flex; align-items: center; padding: 0 12px; min-height: 46px; border-radius: 12px; background: #0A0B0D; border: 1px solid #262A31; font-family: 'Geist Mono', monospace; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{link}}</span>
+        <button type="button" onClick="{{copy}}" style="flex: none; min-height: 46px; padding: 0 16px; border-radius: 12px; border: 0; background: {{copyBg}}; color: #0A0B0D; font-size: 14px; font-weight: 600">{{copyLabel}}</button>
+      </div>
+      <span style="font-size: 13px; color: #9AA1AB">Send people to</span>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap">
+        <sc-for list="{{dests}}" as="d" hint-placeholder-count="3">
+          <sc-if value="{{d.on}}" hint-placeholder-val="{{false}}"><button type="button" aria-pressed="true" onClick="{{d.pick}}" style="min-height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid #D5F879; background: rgba(213,248,121,.1); color: #F2F4F5; font-size: 13px; font-weight: 600">{{d.label}}</button></sc-if>
+          <sc-if value="{{d.off}}" hint-placeholder-val="{{true}}"><button type="button" aria-pressed="false" onClick="{{d.pick}}" style="min-height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 13px">{{d.label}}</button></sc-if>
+        </sc-for>
+      </div>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB">Campaign tag (optional, to see which post worked)
+        <input type="text" placeholder="e.g. youtube-october" onInput="{{setTag}}" style="min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 14px">
+      </label>
+      <div style="border-radius: 14px; background: #0A0B0D; border: 1px solid #1A1D22; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #9AA1AB; line-height: 1.5">
+        <span style="color: #F2F4F5; font-weight: 600">Remember to say you earn a commission</span>
+        <span>A short line like "I earn a commission if you sign up" is enough. <a href="PartnerTerms.dc.html">Ready-made wording</a></span>
+      </div>
+    </section>
+  </div>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+    <section aria-labelledby="ref-h" style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap">
+        <h2 id="ref-h" style="margin: 0; font-size: 17px; font-weight: 600">People you referred</h2>
+        <span style="font-size: 13px; color: #9AA1AB">{{refSummary}}</span>
+      </div>
+      <div style="border-radius: 20px; background: #101215; border: 1px solid #1A1D22; overflow-x: auto">
+        <div style="min-width: 600px">
+          <div aria-hidden="true" style="display: grid; grid-template-columns: 90px minmax(0, 1.6fr) 100px 110px 110px; gap: 10px; padding: 12px 18px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #7D848E; border-bottom: 1px solid #1A1D22">
+            <span>JOINED</span><span>CUSTOMER</span><span>PLAN</span><span>STATUS</span><span style="text-align: right">YOU EARN / MO</span>
+          </div>
+          <sc-for list="{{refs}}" as="r" hint-placeholder-count="8">
+            <div style="display: grid; grid-template-columns: 90px minmax(0, 1.6fr) 100px 110px 110px; gap: 10px; align-items: center; padding: 12px 18px; border-bottom: 1px solid #16181C; font-size: 14px">
+              <span style="font-size: 13px; color: #9AA1AB">{{r.date}}</span>
+              <span style="min-width: 0">{{r.who}}</span>
+              <span style="font-size: 13px">{{r.plan}}</span>
+              <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: {{r.color}}"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{r.color}}"></span>{{r.status}}</span>
+              <span style="text-align: right; font-family: 'Geist Mono', monospace; font-size: 13px; color: {{r.earnColor}}">{{r.earn}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <span style="font-size: 12px; color: #7D848E">Customer names stay private; you see their business type and city only.</span>
+    </section>
+
+    <section aria-labelledby="pay-h" style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+      <h2 id="pay-h" style="margin: 0; font-size: 17px; font-weight: 600">Payouts</h2>
+      <div style="border-radius: 20px; background: #101215; border: 1px solid #1A1D22; padding: 6px 4px">
+        <sc-for list="{{payouts}}" as="p" hint-placeholder-count="6">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid #16181C">
+            <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 14px">{{p.date}}</span><span style="font-size: 12px; color: #7D848E">{{p.method}}</span></span>
+            <span style="font-family: 'Geist Mono', monospace; font-size: 14px">{{p.amount}}</span>
+            <span style="min-width: 76px; text-align: center; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 999px; color: {{p.color}}; background: {{p.bg}}">{{p.status}}</span>
+          </div>
+        </sc-for>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; font-size: 13px; color: #9AA1AB"><span>{{payMethodLine}}</span><a href="PartnerPayout.dc.html" style="font-size: 13px">Change</a></div>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    let t = 'standard';
+    try { t = sessionStorage.getItem('searchify-partner-type') || 'standard'; } catch (e) {}
+    this.state = { range: 'all', metric: 'signups', dest: 'home', tag: '', copied: false, ptype: t };
+  }
+  renderVals() {
+    const F = this.state.ptype === 'founding';
+    const CLICKS0 = [77, 100, 92, 67, 65, 93, 120, 121, 111, 122, 149, 160, 142, 123, 137, 172, 193, 185, 177, 192, 215, 216, 195, 188];
+    const SIGNUPS0 = [3, 6, 3, 3, 4, 4, 6, 7, 5, 6, 9, 7, 8, 8, 6, 10, 12, 9, 10, 13, 11, 13, 13, 10];
+    const PAYING0 = [1, 2, 1, 1, 1, 2, 1, 1, 2, 2, 1, 2, 3, 2, 1, 3, 4, 1, 1, 4, 3, 1, 2, 4];
+    const PR = F
+      ? { name: 'Nicholas Petitt', initials: 'NP', sub: 'Founding partner', handle: 'nickpetitt', rate: 0.35, qual: 8,
+          CLICKS: CLICKS0.map((v) => Math.round(v * 0.24)), SIGNUPS: SIGNUPS0.map((v, i) => Math.round(v * 0.22 + (i % 3 === 0 ? 0.4 : 0))),
+          PAYING: [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1], MIX: { Solo: 4, Pro: 3, Premium: 6 },
+          PAY: [['Aug 15, 2026', 286.30], ['Sep 15, 2026', 512.85], ['Oct 15, 2026', 742.10]], since: 'Jul', hold: 279.65, method: 'Paid by PayPal to n***@petitt.example',
+          REFS: [['Oct 13', 'Agency · San Diego, CA', 'Premium', 'trial'], ['Oct 6', 'Med spa · Irvine, CA', 'Pro', 'paying'], ['Sep 29', 'Agency · Austin, TX', 'Premium', 'paying'], ['Sep 18', 'Gym · Pasadena, CA', 'Solo', 'paying'], ['Sep 2', 'Agency · Denver, CO', 'Premium', 'paying'], ['Aug 21', 'Café · Burbank, CA', 'Solo', 'cancelled']],
+          refSummary: '31 sign-ups · 13 paying · 2 in free trial' }
+      : { name: 'Sam Ortiz', initials: 'SO', sub: 'Partner since May 2026', handle: 'samortiz', rate: 0.30, qual: 38,
+          CLICKS: CLICKS0, SIGNUPS: SIGNUPS0, PAYING: PAYING0, MIX: { Solo: 18, Pro: 15, Premium: 8 },
+          PAY: [['Jun 15, 2026', 412.40], ['Jul 15, 2026', 688.20], ['Aug 15, 2026', 894.20], ['Sep 15, 2026', 1118.60], ['Oct 15, 2026', 1302.40]], since: 'May', hold: 214.50, method: 'Paid by PayPal to s***@ortizmedia.example',
+          REFS: [['Oct 16', 'Agency · Denver, CO', 'Premium', 'trial'], ['Oct 14', 'Dental clinic · Tampa, FL', 'Solo', 'paying'], ['Oct 9', 'Agency · Leeds, UK', 'Pro', 'paying'], ['Oct 2', 'Plumber · Austin, TX', 'Solo', 'paying'], ['Sep 27', 'Agency · Toronto, ON', 'Premium', 'paying'], ['Sep 19', 'Law firm · Phoenix, AZ', 'Pro', 'cancelled'], ['Sep 11', 'Agency · Melbourne, AU', 'Premium', 'paying'], ['Sep 3', 'Roofer · Calgary, AB', 'Solo', 'paying']],
+          refSummary: '186 sign-ups · 41 paying · 12 in free trial' };
+    const CLICKS = PR.CLICKS, SIGNUPS = PR.SIGNUPS, PAYING = PR.PAYING;
+    const N = CLICKS.length;
+    const PRICE = { Solo: 29, Pro: 79, Premium: 399 };
+    const RATE = PR.rate;
+    const monthly = Object.keys(PR.MIX).reduce((a, k) => a + PR.MIX[k] * PRICE[k] * RATE, 0);
+    const refMrr = Object.keys(PR.MIX).reduce((a, k) => a + PR.MIX[k] * PRICE[k], 0);
+    const money = (v) => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const paid = PR.PAY.reduce((a, p) => a + p.at(1), 0);
+    const R = this.state.range;
+    const W = { '30': 4, '90': 13, all: N }[R];
+    const sum = (arr) => arr.slice(N - W).reduce((a, b) => a + b, 0);
+    const cl = sum(CLICKS), su = sum(SIGNUPS), pa = sum(PAYING);
+    const last2 = PR.PAY.slice(-2).reduce((a, p) => a + p.at(1), 0);
+    const earnedRange = R === 'all' ? paid + monthly : (R === '90' ? last2 + monthly : monthly);
+    const M = this.state.metric;
+    const metricDefs = [
+      ['clicks', 'Link clicks', cl.toLocaleString('en-US'), 'people who clicked your link'],
+      ['signups', 'Sign-ups', String(su), (su / Math.max(1, cl) * 100).toFixed(1) + '% of clicks'],
+      ['paying', 'Became paying', String(pa), Math.round(pa / Math.max(1, su) * 100) + '% of sign-ups']
+    ];
+    const kpis = metricDefs.map((d) => {
+      const on = d.at(0) === M;
+      return { label: d.at(1), value: d.at(2), sub: d.at(3), valueColor: '#F2F4F5', pressed: on ? 'true' : 'false', cursor: 'pointer',
+        bg: on ? 'rgba(213,248,121,.06)' : '#101215', border: on ? '#D5F879' : '#1A1D22', glow: on ? '0 0 22px rgba(213,248,121,.15)' : 'none',
+        pick: () => this.setState({ metric: d.at(0) }) };
+    });
+    const nPaying = Object.keys(PR.MIX).reduce((a, k) => a + PR.MIX[k], 0);
+    kpis.push({ label: 'Paying right now', value: String(nPaying), sub: PR.MIX.Solo + ' Solo · ' + PR.MIX.Pro + ' Pro · ' + PR.MIX.Premium + ' Premium', valueColor: '#F2F4F5', pressed: 'false', cursor: 'default', bg: '#101215', border: '#1A1D22', glow: 'none', pick: () => {} });
+    kpis.push({ label: 'You earned', value: money(earnedRange), sub: R === 'all' ? 'since you joined, incl. this month' : 'in this period', valueColor: '#D5F879', pressed: 'false', cursor: 'default', bg: '#101215', border: '#1A1D22', glow: 'none', pick: () => {} });
+    const series = { clicks: CLICKS, signups: SIGNUPS, paying: PAYING }[M].slice(N - W);
+    const hi = Math.max(2, Math.max(...series) * 1.15);
+    const bw = Math.min(40, (668 / W) * 0.62);
+    const COL = { clicks: '#4DA3FF', signups: '#D5F879', paying: '#3DDC84' };
+    const bars = series.map((v, i) => { const h = v / hi * 200; const slot = 668 / W; return { x: (44 + i * slot + (slot - bw) / 2).toFixed(1), w: bw.toFixed(1), y: (230 - h).toFixed(1), h: h.toFixed(1), color: COL[M] }; });
+    const raw = hi / 4, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const gstep = [1, 2, 5, 10].map((m) => m * mag).find((v) => v >= raw);
+    const grid = [];
+    for (let v = gstep; v < hi; v += gstep) grid.push({ y: (230 - v / hi * 200).toFixed(1), ty: (234 - v / hi * 200).toFixed(1), label: String(Math.round(v * 10) / 10) });
+    const wk = (i) => { const d = new Date(Date.UTC(2026, 9, 12) - (N - 1 - i) * 7 * 864e5); return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].at(d.getUTCMonth()) + ' ' + d.getUTCDate(); };
+    const every = W <= 4 ? 1 : (W <= 13 ? 3 : 5);
+    const xl = [];
+    for (let i = 0; i < W; i += every) { const slot = 668 / W; xl.push({ x: (44 + i * slot + slot / 2).toFixed(1), label: wk(N - W + i) }); }
+    const tag = this.state.tag.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '');
+    const q = '?ref=' + PR.handle + (tag ? '&c=' + tag : '');
+    const link = this.state.dest === 'agencies' ? 'https://searchify.io/' + q + '#agencies' : 'https://searchify.io' + (this.state.dest === 'pricing' ? '/pricing' : '/') + q;
+    const ST = { paying: ['Paying', '#3DDC84'], trial: ['In free trial', '#4DA3FF'], cancelled: ['Cancelled', '#7D848E'] };
+    const refs = PR.REFS.map((r) => ({ date: r.at(0), who: r.at(1), plan: r.at(2), status: ST[r.at(3)].at(0), color: ST[r.at(3)].at(1),
+      earn: r.at(3) === 'paying' ? money(PRICE[r.at(2)] * RATE) : (r.at(3) === 'trial' ? 'from ' + money(PRICE[r.at(2)] * RATE) : '—'),
+      earnColor: r.at(3) === 'paying' ? '#D5F879' : '#7D848E' }));
+    const payouts = [{ date: 'Nov 15, 2026', amount: money(monthly), status: 'Scheduled', color: '#4DA3FF', bg: 'rgba(77,163,255,.12)', method: 'Cleared commissions so far' }]
+      .concat(PR.PAY.slice().reverse().map((p) => ({ date: p.at(0), amount: money(p.at(1)), status: 'Paid', color: '#3DDC84', bg: 'rgba(61,220,132,.12)', method: 'PayPal' })));
+    const qual = Math.min(PR.qual, 10);
+    const rate = F
+      ? { title: 'Your founding partner rate', sub: 'Of every payment, for each customer’s first 12 months. Locked in by your agreement.', now: '35%', next: '40% for good', hasNext: true,
+          border: 'rgba(213,248,121,.35)', count: String(qual), window: 'Window: Apr 13 to Oct 12, 2026',
+          toGo: (10 - qual) + ' more qualified referrals in your 6-month window unlocks 40% for good, on every customer you have already referred too.',
+          aria: qual + ' of 10 qualified referrals', dots: Array.from({ length: 10 }, (x, i) => ({ bg: i < qual ? '#D5F879' : '#1A1D22', glow: i < qual ? '0 0 8px rgba(213,248,121,.35)' : 'none' })) }
+      : { title: 'Your rate', sub: 'Of every payment, for each customer’s first 12 months. ' + PR.qual + ' qualified referrals in the last 6 months.', now: '30%', next: '', hasNext: false,
+          border: '#1A1D22', count: '', window: '', toGo: '', aria: '', dots: [] };
+    const balances = [
+      { label: 'Cleared, paying Nov 15', sub: 'past the 30-day hold', value: money(monthly), color: '#3DDC84', valueColor: '#D5F879' },
+      { label: 'In the 30-day hold', sub: 'clears between Oct 28 and Nov 19', value: money(PR.hold), color: '#4DA3FF', valueColor: '#F2F4F5' },
+      { label: 'Paid out so far', sub: 'since ' + PR.since, value: money(paid), color: '#8A93A3', valueColor: '#F2F4F5' }
+    ];
+    const setType = (t) => { try { sessionStorage.setItem('searchify-partner-type', t); } catch (e) {} this.setState({ ptype: t, copied: false }); };
+    return {
+      types: [['standard', 'Partner'], ['founding', 'Founding partner']].map((t) => ({ label: t.at(1), on: this.state.ptype === t.at(0), off: this.state.ptype !== t.at(0), pick: () => setType(t.at(0)) })),
+      me: { name: PR.name, initials: PR.initials, sub: PR.sub },
+      nextPayout: money(monthly),
+      earnedLine: money(paid + monthly) + ' earned since ' + PR.since + ' · ' + money(paid) + ' already paid out · your referrals bring in ' + money(refMrr) + ' a month',
+      ranges: [['30', 'Last 30 days'], ['90', 'Last 90 days'], ['all', 'All time']].map((r) => ({ label: r.at(1), on: r.at(0) === R, off: r.at(0) !== R, pick: () => this.setState({ range: r.at(0) }) })),
+      rate: rate, balances: balances,
+      kpis: kpis, bars: bars, grid: grid, xl: xl,
+      chartTitle: ({ clicks: 'Link clicks', signups: 'Sign-ups', paying: 'Became paying' })[M] + ' per week',
+      link: link, copyLabel: this.state.copied ? 'Copied' : 'Copy', copyBg: this.state.copied ? '#3DDC84' : '#D5F879',
+      copy: () => { try { navigator.clipboard.writeText(link); } catch (e) {} this.setState({ copied: true }); setTimeout(() => this.setState({ copied: false }), 1600); },
+      dests: [['home', 'Home page'], ['pricing', 'Pricing'], ['agencies', 'For agencies']].map((d) => ({ label: d.at(1), on: d.at(0) === this.state.dest, off: d.at(0) !== this.state.dest, pick: () => this.setState({ dest: d.at(0), copied: false }) })),
+      setTag: (e) => this.setState({ tag: e.target.value, copied: false }),
+      refSummary: PR.refSummary, refs: refs, payouts: payouts, payMethodLine: PR.method,
+      signOut: () => { try { sessionStorage.removeItem('searchify-partner-signed-in'); } catch (e) {} window.location.href = 'AffiliateLogin.dc.html'; }
+    };
+  }
+}
+</script>
+</body>
+</html>

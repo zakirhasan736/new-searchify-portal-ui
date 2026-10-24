@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — History</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+@keyframes sfy-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 1000px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 22px clamp(16px, 4vw, 56px) 56px; display: flex; flex-direction: column; gap: 32px">
+  <header style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+    <a href="Home.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #262A31; color: #F2F4F5; text-decoration: none; font-size: 13px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+      Home
+    </a>
+    <a href="Report.dc.html" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #262A31; color: #F2F4F5; text-decoration: none; font-size: 13px">Turn into client report</a>
+  </header>
+
+  <div style="max-width: 1000px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 10px">
+    <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(36px, 4.6vw, 58px); line-height: 1; letter-spacing: -1.6px; font-weight: 700">Everything Searchify has changed.</h1>
+    <p style="margin: 0; font-size: 16px; color: #9AA1AB">Every change keeps its old version. Undo any of them in one click.</p>
+  </div>
+
+  <div style="max-width: 1000px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 16px">
+    <div role="group" aria-label="Filter" style="display: flex; gap: 6px; flex-wrap: wrap">
+      <sc-for list="{{filters}}" as="f" hint-placeholder-count="5">
+        <sc-if value="{{f.on}}" hint-placeholder-val="{{false}}"><button type="button" aria-pressed="true" onClick="{{f.pick}}" style="display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #F2F4F5; background: #F2F4F5; color: #0A0B0D; font-size: 13px; font-weight: 600">{{f.label}} <span style="font-family: 'Geist Mono', monospace">{{f.count}}</span></button></sc-if>
+        <sc-if value="{{f.off}}" hint-placeholder-val="{{true}}"><button type="button" aria-pressed="false" onClick="{{f.pick}}" style="display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 13px">{{f.label}} <span style="font-family: 'Geist Mono', monospace; color: #9AA1AB">{{f.count}}</span></button></sc-if>
+      </sc-for>
+    </div>
+
+    <div style="border-radius: 22px; background: #101215; border: 1px solid #1A1D22; overflow: hidden">
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+        <div style="padding: 18px 22px; border-bottom: 1px solid #1A1D22; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #7D848E; width: 56px">{{r.date}}</span>
+            <span style="flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 15px; font-weight: 500">{{r.change}}</span>
+              <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #9AA1AB">{{r.page}} · approved by {{r.by}}</span>
+            </span>
+            <span style="display: inline-flex; align-items: center; gap: 8px; min-width: 170px">
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: {{r.dot}}"></span>
+              <span style="font-size: 14px; color: {{r.resultColor}}">{{r.result}}</span>
+            </span>
+            <sc-if value="{{r.canUndo}}" hint-placeholder-val="{{true}}">
+              <button type="button" onClick="{{r.ask}}" style="min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 13px">Undo</button>
+            </sc-if>
+            <sc-if value="{{r.isRolled}}" hint-placeholder-val="{{false}}">
+              <span style="font-size: 13px; color: #7D848E; min-width: 64px">Restored</span>
+            </sc-if>
+          </div>
+          <sc-if value="{{r.confirming}}" hint-placeholder-val="{{false}}">
+            <div style="margin-left: 72px; padding: 14px 16px; border-radius: 14px; background: #0A0B0D; border: 1px solid #262A31; display: flex; flex-direction: column; gap: 12px; animation: sfy-rise .25s ease both">
+              <span style="font-size: 14px; color: #D7DADE">This puts the old version back on your live site:</span>
+              <span style="font-size: 14px; padding: 10px 12px; border-radius: 10px; background: #131519">{{r.old}}</span>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                <button type="button" onClick="{{r.restore}}" style="min-height: 44px; padding: 0 18px; border-radius: 11px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 14px; font-weight: 600; box-shadow: 0 0 20px rgba(77,163,255,.4)">Restore old version</button>
+                <button type="button" onClick="{{cancel}}" style="min-height: 44px; padding: 0 16px; border-radius: 11px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 14px">Keep the change</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#D5F879","options":["#D5F879","#9FE7F5","#FFD36E","#C9B8FF"]},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { filter: 'all', confirm: 'oct14', restored: {} };
+  }
+  renderVals() {
+    const A = this.props.accent ?? '#D5F879';
+    const base = [
+      { id: 'oct14', date: 'Oct 14', change: 'Title + description rewrite', page: '/services/roof-replacement', by: 'you', res: 'measuring', result: 'Measuring · day 5 of 28', old: 'Roof Replacement | Northline Roofing' },
+      { id: 'oct09', date: 'Oct 09', change: 'Links added from 2 posts', page: '/services/skylights', by: 'Maya (client)', res: 'measuring', result: 'Measuring · day 10 of 28', old: 'No links from /blog/skylight-leaks or /blog/winter-prep' },
+      { id: 'sep22', date: 'Sep 22', change: 'Guide refreshed + 3 social posts', page: '/blog/hail-damage-insurance', by: 'you', res: 'worked', result: '+118 visitors / mo', old: 'Version from Mar 2024' },
+      { id: 'sep15', date: 'Sep 15', change: 'Title rewrite', page: '/services/flat-roofs', by: 'you', res: 'worked', result: '+64 visitors / mo', old: 'Flat Roofs | Northline Roofing' },
+      { id: 'sep08', date: 'Sep 08', change: 'FAQ section added', page: '/services/gutters', by: 'Maya (client)', res: 'flat', result: 'No clear effect', old: 'Page without FAQ section' },
+      { id: 'aug30', date: 'Aug 30', change: 'Description rewrite', page: '/about', by: 'you', res: 'rolled', result: '−21 visitors · auto-undone', old: 'About Northline Roofing' },
+      { id: 'aug21', date: 'Aug 21', change: 'Title rewrite', page: '/services/roof-inspection', by: 'you', res: 'worked', result: '+130 visitors / mo', old: 'Roof Inspections | Northline Roofing' }
+    ];
+    const restored = this.state.restored;
+    const all = base.map((r) => restored[r.id] ? Object.assign({}, r, { res: 'rolled', result: 'Restored just now' }) : r);
+    const look = {
+      worked: { dot: A, color: '#F2F4F5' },
+      measuring: { dot: '#3A404A', color: '#9AA1AB' },
+      flat: { dot: '#3A404A', color: '#9AA1AB' },
+      rolled: { dot: '#FF5A4E', color: '#9AA1AB' }
+    };
+    const f = this.state.filter;
+    const rows = all.filter((r) => f === 'all' || r.res === f).map((r) => Object.assign({}, r, {
+      dot: look[r.res].dot, resultColor: look[r.res].color,
+      canUndo: r.res !== 'rolled', isRolled: r.res === 'rolled',
+      confirming: this.state.confirm === r.id && r.res !== 'rolled',
+      ask: () => this.setState({ confirm: r.id }),
+      restore: () => this.setState({ restored: Object.assign({}, this.state.restored, { [r.id]: true }), confirm: null })
+    }));
+    const defs = [['all', 'All'], ['worked', 'Worked'], ['measuring', 'Measuring'], ['flat', 'No effect'], ['rolled', 'Undone']];
+    const filters = defs.map((d) => ({ label: d[1], count: String(d[0] === 'all' ? all.length : all.filter((r) => r.res === d[0]).length), on: f === d[0], off: f !== d[0], pick: () => this.setState({ filter: d[0] }) }));
+    return { accent: A, rows: rows, filters: filters, cancel: () => this.setState({ confirm: null }) };
+  }
+}
+</script>
+</body>
+</html>

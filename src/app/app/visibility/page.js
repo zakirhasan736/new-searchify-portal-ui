@@ -1,7 +1,8 @@
-﻿import { VisibilityView } from "@/components/board/WorkspaceViews";
+import { redirect } from "next/navigation";
 
-export const metadata = { title: "AI visibility" };
+export const metadata = { title: "Results" };
 
+/** V8 has no AI-visibility board skin — map to Results. */
 export default function Page() {
-  return <VisibilityView />;
+  redirect("/app/outcomes");
 }

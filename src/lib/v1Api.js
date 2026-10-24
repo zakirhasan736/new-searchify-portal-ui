@@ -531,12 +531,32 @@ export async function generateMeta(id) {
   return res;
 }
 
-export async function generateMetaCopy(id, { tone = "", breadth = "balanced" } = {}) {
+export async function generateMetaCopy(
+  id,
+  {
+    tone = "",
+    breadth = "balanced",
+    objective = "balanced",
+    focusTopic = "",
+    audience = "",
+    primaryKeyword = "",
+    extraInstructions = "",
+  } = {},
+) {
+  // Backend scrapes the live page, then OpenAI drafts title, description, Open Graph, and JSON-LD together.
   const res = await json(
     await fetch(`/api/v1/operator/changes/${id}/generate-meta`, {
       method: "POST",
       headers: authHeaders(),
-      body: JSON.stringify({ tone, breadth }),
+      body: JSON.stringify({
+        tone,
+        breadth,
+        objective,
+        focusTopic,
+        audience,
+        primaryKeyword,
+        extraInstructions,
+      }),
     }),
   );
   if (res.ok) invalidateV3Cache(["changes"]);

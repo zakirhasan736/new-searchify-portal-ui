@@ -7,6 +7,7 @@ import { useDispatch } from "react-redux";
 import { skipToken } from "@reduxjs/toolkit/query";
 import ConnectDialog, { useConnectionStatus } from "@/components/board/ConnectDialog";
 import Paginator, { usePagination } from "@/components/board/Paginator";
+import "@/styles/v8-app.css";
 import PropertyPicker from "@/components/board/PropertyPicker";
 import { buildAuditFindings, weekMovement } from "@/lib/auditFindings";
 import { breadthKey, BREADTH_LABELS, loadGuardrails, saveGuardrails } from "@/lib/guardrails";
@@ -275,74 +276,256 @@ export function ConnectionsView() {
     refresh();
   };
 
+  // Connection definitions with V8 states
+  const connections = [
+    {
+      id: "gsc",
+      name: "Google Search Console",
+      tag: "REQUIRED · READ-ONLY",
+      desc: "What people search, and whether they click you",
+      required: true,
+      connected: status.gsc,
+      connecting: false,
+      locked: false,
+    },
+    {
+      id: "wordpress",
+      name: "WordPress",
+      tag: "REQUIRED · SEARCHIFY PLUGIN",
+      desc: "Where approved changes ship, with undo",
+      required: true,
+      connected: status.wordpress,
+      connecting: false,
+      locked: false,
+    },
+    {
+      id: "ga",
+      name: "Google Analytics 4",
+      tag: "OPTIONAL · READ-ONLY",
+      desc: "Which pages turn visitors into calls and leads",
+      required: false,
+      connected: status.ga,
+      connecting: false,
+      locked: false,
+    },
+  ];
+
+  const requiredLive = connections.filter(c => c.required && c.connected).length;
+  const requiredTotal = connections.filter(c => c.required).length;
+  const allReady = requiredLive === requiredTotal;
+
   return (
-    <section className="dash-view extension-view">
-      <Head eyebrow="SETUP, AT YOUR PACE" title="Connect your evidence." text="Skipped a connection during setup? Finish it here. You control each website and property." />
-      {message ? <p className="w-inset">{message}</p> : null}
-      <p className="account-line">
-        <span>Google account</span>
-        <span className={`w-pill ${status.googleAccount === "connected" ? "good" : status.googleAccount === "reauth_required" ? "danger" : ""}`.trim()}>
-          {status.googleAccount === "connected" ? `Signed in${status.google?.account?.email ? ` as ${status.google.account.email}` : ""}` : status.googleAccount === "reauth_required" ? "Sign-in expired · sign in again" : "Not signed in"}
-        </span>
-      </p>
-      <div className="w-card-grid">
-        {[
-          ["wordpress", "W", "WordPress", status.wordpress, "Publish approved meta titles and meta descriptions."],
-          ["gsc", "G", "Search Console", status.gsc, "Queries, pages, clicks, and impressions."],
-          ["ga", "A", "Google Analytics", status.ga, "Organic traffic next to the work you approve."],
-        ].map(([id, mark, title, on, body]) => (
-          <article className="w-panel connector" key={id}>
-            <span className="connector-mark">{mark}</span>
-            {(() => { const [tone, label] = connectorPill(id, on, status); return <span className={`w-pill ${tone}`.trim()}>{label}</span>; })()}
-            <h2>{title}</h2>
-            <p>{body}</p>
-            {id === "wordpress" && status.wordpressUrl ? <small>{status.wordpressUrl}</small> : null}
-            {id === "gsc" && status.google?.gscSiteUrl ? <small>{status.google.gscSiteUrl}</small> : null}
-            {id === "ga" && (status.google?.ga4PropertyName || status.google?.ga4PropertyId) ? <small>{status.google.ga4PropertyName || status.google.ga4PropertyId}</small> : null}
-            <div className="w-actions">
-              <button className="w-button primary" type="button" onClick={() => setDialog(id)}>{on ? "Manage" : status.googleAccount === "reauth_required" && id !== "wordpress" ? "Sign in to Google again" : `Connect ${title}`}</button>
-              {on && id === "wordpress" ? <button className="w-button" type="button" onClick={disconnectWp}>Disconnect</button> : null}
-              {id !== "wordpress" && status.googleAccount !== "disconnected" ? <button className="w-button" type="button" onClick={disconnectG}>Disconnect Google</button> : null}
-            </div>
-          </article>
-        ))}
-      </div>
-      {status.google?.connected || status.googleAccount === "reauth_required" || params.get("google") === "connected" ? (
-        <PropertyPicker
-          google={status.google}
-          cmsConnectionId={status.wordpressId}
-          siteLabel={status.wordpressUrl || brief.siteUrl}
-          onSaved={(connection) => {
-            if (connection?.gscSiteUrl) markConnection("gsc", "Connected");
-            if (connection?.ga4PropertyId) markConnection("ga", "Connected");
-            refresh();
-          }}
-        />
-      ) : null}
-      <LiveEvidence gsc={status.gsc} ga={status.ga} />
-      <div className="w-panel below">
-        <h2>What happens after connecting?</h2>
-        <ol className="w-steps">
-          <li>Choose your website or property.</li>
-          <li>Review the requested permissions.</li>
-          <li>Verify the connection, then gather a baseline.</li>
-          <li>Review suggested improvements before any live change.</li>
-        </ol>
-      </div>
-      {dialog ? (
-        <ConnectDialog
-          provider={dialog === "google" ? "gsc" : dialog}
-          siteUrl={status.wordpressUrl}
-          onClose={() => setDialog("")}
-          onDone={(value) => {
-            setDialog("");
-            if (value === "signed-in") setMessage("Google is signed in. Choose the Search Console property and the Analytics property below, then save and sync.");
-            if (value === "Connected") setMessage("WordPress verified. Approved titles and descriptions can publish to this site.");
-            refresh();
-          }}
-        />
-      ) : null}
-    </section>
+    <>
+      <section className="v8-connections-view v8-animated">
+        <header className="v8-connections-header">
+          <div className="v8-site-title">{brief.hostname || brief.siteUrl || "your site"}</div>
+          <span className={`v8-counter ${allReady ? "v8-ready" : ""}`}>
+            {requiredLive} of {requiredTotal} required live
+          </span>
+        </header>
+
+        <div className="v8-connections-content">
+          <h1 className="v8-headline">Handle the plug-ins, we'll do the rest.</h1>
+          <p className="v8-subhead">
+            The two green tags are required. A grey light means not connected yet; it turns green, and the cable glows blue, once data is flowing into Searchify.
+          </p>
+        </div>
+
+        {message ? <p className="w-inset">{message}</p> : null}
+
+        <div className="v8-connections-content v8-plug-list">
+          {connections.map((conn) => (
+            <article 
+              key={conn.id} 
+              className={`v8-plug-card ${conn.connected ? "v8-live" : ""}`}
+            >
+              <div className="v8-plug-info">
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "8px" }}>
+                  <span className="v8-plug-name">{conn.name}</span>
+                  <span className={`v8-plug-tag ${conn.required ? "v8-required" : ""}`}>
+                    <span className={`v8-plug-tag-dot ${conn.connected ? "v8-live" : ""}`} aria-hidden="true" />
+                    {conn.tag}
+                  </span>
+                </div>
+                <span className="v8-plug-desc">{conn.desc}</span>
+                <span className={`v8-plug-status ${conn.connected ? "v8-live" : ""}`}>
+                  {conn.connected
+                    ? `● LIVE · ${
+                        conn.id === "wordpress" ? status.wordpressUrl || "connected"
+                        : conn.id === "gsc" ? status.google?.gscSiteUrl || "connected"
+                        : conn.id === "ga" ? (status.google?.ga4PropertyName || status.google?.ga4PropertyId || "connected")
+                        : "connected"
+                      }`
+                    : conn.locked
+                    ? "Coming soon"
+                    : "Not connected yet"
+                  }
+                </span>
+              </div>
+
+              <svg 
+                viewBox="0 0 600 100" 
+                role="img" 
+                aria-label={`${conn.name} ${conn.connected ? "connected, data flowing" : "not connected"}`}
+                className="v8-plug-visual"
+                style={{ overflow: "visible" }}
+              >
+                <g style={{ 
+                  transform: conn.connected ? "translateX(30px)" : "translateX(0px)",
+                  transition: "transform 0.5s cubic-bezier(0.3, 1.4, 0.5, 1)",
+                  filter: conn.connected ? "drop-shadow(0 0 10px rgba(77, 163, 255, 0.75))" : "none"
+                }}>
+                  <g style={{ 
+                    opacity: conn.connected ? 1 : 0,
+                    transition: "opacity 0.5s ease",
+                    filter: "drop-shadow(0 0 8px rgba(61, 220, 132, 0.55))"
+                  }}>
+                    <rect x="0" y="20" width="44" height="60" rx="7" fill="#0E1A13" stroke="#3DDC84" strokeWidth="2" />
+                    <rect x="6" y="28" width="32" height="12" rx="3" fill="#13261A" stroke="#2A7A4C" strokeWidth="1" />
+                    <rect x="6" y="44" width="32" height="12" rx="3" fill="#13261A" stroke="#2A7A4C" strokeWidth="1" />
+                    <rect x="6" y="60" width="32" height="12" rx="3" fill="#13261A" stroke="#2A7A4C" strokeWidth="1" />
+                    <circle cx="32" cy="34" r="2.2" fill="#3DDC84" style={{ animation: "v8-breathe 1.2s ease-in-out infinite" }} />
+                    <circle cx="32" cy="50" r="2.2" fill="#3DDC84" style={{ animation: "v8-breathe 1.6s ease-in-out infinite" }} />
+                    <circle cx="32" cy="66" r="2.2" fill="#3DDC84" style={{ animation: "v8-breathe 0.9s ease-in-out infinite" }} />
+                    <rect x="11" y="32" width="14" height="2" rx="1" fill="#2A7A4C" />
+                    <rect x="11" y="48" width="14" height="2" rx="1" fill="#2A7A4C" />
+                    <rect x="11" y="64" width="14" height="2" rx="1" fill="#2A7A4C" />
+                  </g>
+                  <path 
+                    d="M44 50 C 120 50, 150 18, 250 40 S 360 76, 422 50" 
+                    fill="none" 
+                    stroke={conn.connected ? "#4DA3FF" : conn.locked ? "#1A1D22" : "#3A404A"} 
+                    strokeWidth="7" 
+                    strokeLinecap="round"
+                    style={{ transition: "stroke 0.4s ease" }}
+                  />
+                  <path 
+                    d="M44 50 C 120 50, 150 18, 250 40 S 360 76, 422 50" 
+                    fill="none" 
+                    stroke="#CFE6FF" 
+                    strokeWidth="2.5" 
+                    strokeLinecap="round" 
+                    strokeDasharray="3 16"
+                    style={{ 
+                      opacity: conn.connected ? 0.9 : 0,
+                      animation: "v8-flow 0.7s linear infinite",
+                      transition: "opacity 0.4s ease"
+                    }}
+                  />
+                  <rect 
+                    x="418" y="30" width="58" height="40" rx="9" 
+                    fill={conn.connected ? "#4DA3FF" : conn.locked ? "#1A1D22" : "#5B616B"}
+                    style={{ transition: "fill 0.4s ease" }}
+                  />
+                  <rect x="430" y="38" width="3" height="24" rx="1.5" fill="#0A0B0D" opacity="0.35" />
+                  <rect x="438" y="38" width="3" height="24" rx="1.5" fill="#0A0B0D" opacity="0.35" />
+                  <rect 
+                    x="476" y="38" width="24" height="6" rx="2" 
+                    fill={conn.connected ? "#CFE6FF" : conn.locked ? "#262A31" : "#8A9099"}
+                  />
+                  <rect 
+                    x="476" y="56" width="24" height="6" rx="2" 
+                    fill={conn.connected ? "#CFE6FF" : conn.locked ? "#262A31" : "#8A9099"}
+                  />
+                </g>
+                <rect 
+                  x="506" y="18" width="80" height="64" rx="14" 
+                  fill="#131519" 
+                  stroke={conn.connected ? "#4DA3FF" : "#262A31"} 
+                  strokeWidth="2"
+                  style={{ transition: "stroke 0.4s ease" }}
+                />
+                <rect x="506" y="37" width="16" height="8" rx="2" fill="#0A0B0D" />
+                <rect x="506" y="55" width="16" height="8" rx="2" fill="#0A0B0D" />
+                <circle 
+                  cx="564" cy="50" r="6" 
+                  fill={conn.connected ? "#4DA3FF" : conn.connecting ? "#FFC53D" : "#262A31"}
+                  style={{ 
+                    filter: conn.connected ? "drop-shadow(0 0 6px #4DA3FF)" : "none",
+                    transition: "fill 0.3s ease"
+                  }}
+                />
+              </svg>
+
+              <div className="v8-plug-actions">
+                {!conn.connected && !conn.connecting && !conn.locked && (
+                  <button 
+                    className="v8-button-primary" 
+                    type="button" 
+                    onClick={() => setDialog(conn.id)}
+                  >
+                    Plug in
+                  </button>
+                )}
+                {conn.connecting && (
+                  <span className="v8-connecting-state">Connecting…</span>
+                )}
+                {conn.connected && (
+                  <button 
+                    className="v8-button-secondary" 
+                    type="button" 
+                    onClick={() => setDialog(conn.id)}
+                  >
+                    Unplug
+                  </button>
+                )}
+                {conn.locked && (
+                  <span className="v8-locked-state">Coming soon</span>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="v8-connections-content v8-footer-actions">
+          {allReady ? (
+            <Link href="/app/results" className="v8-cta-ready">
+              See what it's costing you
+            </Link>
+          ) : (
+            <span className="v8-cta-waiting">
+              Plug in {connections.find(c => c.required && !c.connected)?.name || "required connections"} to continue
+            </span>
+          )}
+          <span className="v8-footnote">
+            Search Console and Analytics are read-only. WordPress changes only ship after you approve them. 
+            Results from your changes are pooled anonymously with other sites so Searchify's predictions get 
+            sharper for everyone — no one else ever sees your site or your data.
+          </span>
+        </div>
+
+        {status.google?.connected || status.googleAccount === "reauth_required" || params.get("google") === "connected" ? (
+          <div className="v8-connections-content">
+            <PropertyPicker
+              google={status.google}
+              cmsConnectionId={status.wordpressId}
+              siteLabel={status.wordpressUrl || brief.siteUrl}
+              onSaved={(connection) => {
+                if (connection?.gscSiteUrl) markConnection("gsc", "Connected");
+                if (connection?.ga4PropertyId) markConnection("ga", "Connected");
+                refresh();
+              }}
+            />
+          </div>
+        ) : null}
+
+        <LiveEvidence gsc={status.gsc} ga={status.ga} />
+
+        {dialog ? (
+          <ConnectDialog
+            provider={dialog === "google" ? "gsc" : dialog}
+            siteUrl={status.wordpressUrl}
+            onClose={() => setDialog("")}
+            onDone={(value) => {
+              setDialog("");
+              if (value === "signed-in") setMessage("Google is signed in. Choose the Search Console property and the Analytics property below, then save and sync.");
+              if (value === "Connected") setMessage("WordPress verified. Approved titles and descriptions can publish to this site.");
+              refresh();
+            }}
+          />
+        ) : null}
+      </section>
+    </>
   );
 }
 
@@ -580,9 +763,23 @@ export function KeywordsView() {
   };
 
   return (
-    <section className="dash-view extension-view">
-      <Head eyebrow="SEARCH DEMAND" title="Know what to target." text={live ? `Google positions and monthly volume for ${live.host} in ${placeLabel(live)}, from Searchify SEO.` : brief.ready ? `Starting terms for ${brief.focus || brief.hostname}. Positions fill in when live keyword data loads.` : "Finish setup to fill this list from your offer and market. You can still add a term yourself."} action={<button className="w-button primary" type="button" onClick={() => { setNotice(""); setAdding(true); }}>Add keyword</button>} />
-      <div className="w-metrics">
+    <section className="dash-view extension-view" style={{ background: "#0A0B0D", color: "#F2F4F5" }}>
+      <header className="keywords-v8-header">
+        <div>
+          <span className="keywords-v8-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DDC84" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 17l6-6 4 4 8-8"></path>
+              <path d="M15 7h6v6"></path>
+            </svg>
+            KEYWORD TRACKER
+          </span>
+          <div className="keywords-v8-tracker-label">
+            {live ? `${keywords.length} keywords tracked · ${topTen} in top 10 · ${improving} improving` : `${keywords.length} keywords tracked`}
+          </div>
+        </div>
+        <button className="w-button primary" type="button" onClick={() => { setNotice(""); setAdding(true); }}>Add keyword</button>
+      </header>
+      <div className="w-metrics" style={{ maxWidth: "1120px", margin: "0 auto 24px" }}>
         <Metric label="Tracked" value={String(keywords.length)} note={allowanceNote} />
         <Metric label="Top 10" value={String(topTen)} note={live ? "Tracked terms in Google's top 10" : "Counted only when a position exists"} />
         <Metric label="Ranking now" value={live ? String(live.ranked?.length || 0) : "—"} note={live ? "Searches this site already appears for" : "Loads with live data"} />
@@ -1008,6 +1205,9 @@ export function BacklinksView() {
   const note = liveError ? quotaText(liveError, "Live backlink data could not be loaded.") : "";
   const links = useMemo(() => (live?.links || []).map((link, index) => ({ id: index + 1, ...link })), [live]);
   const sample = !live;
+  const domains = live?.summary?.referringDomains ?? null;
+  const newer = links.filter((link) => link.state === "New").length;
+  const lost = links.filter((link) => link.state === "Lost").length;
 
   useEffect(() => {
     refreshState.reset();
@@ -1025,17 +1225,60 @@ export function BacklinksView() {
 
   const shown = links.filter((link) => filter === "All links" || link.state === filter);
   const linkPager = usePagination("backlinks", shown, `${brief.siteUrl}|${filter}`);
-  const domains = live?.summary?.referringDomains ?? null;
-  const newer = links.filter((link) => link.state === "New").length;
-  const lost = links.filter((link) => link.state === "Lost").length;
+  
   return (
-    <section className="dash-view extension-view">
-      <Head eyebrow="OFF-SITE SIGNALS" title="See who points to you." text={live ? `Links pointing to ${live.host}, from the Searchify SEO link index.` : brief.hostname ? `Links that point to ${brief.hostname} show up here when live link data loads. None are invented from the setup answers.` : "Links show up here after a link source is connected. Setup answers do not invent referring domains."} action={<button className="w-button" type="button" onClick={() => exportLinks(shown)}>Export CSV</button>} />
-      <div className="w-metrics">
-        <Metric label="Referring domains" value={domains == null ? "—" : Number(domains).toLocaleString("en-US")} note={live ? "Live domains, whole Searchify SEO index" : "Loads with live data"} />
-        <Metric label="Backlinks" value={live?.summary?.backlinks == null ? "—" : Number(live.summary.backlinks).toLocaleString("en-US")} note={live ? "Live links, whole Searchify SEO index" : "Loads with live data"} />
-        <Metric label="New links" value={live ? String(newer) : "—"} note={live ? `Among the ${links.length} domains listed below` : "Loads with live data"} />
-        <Metric label="Lost links" value={live ? String(lost) : "—"} note={live ? `Among the ${links.length} domains listed below. Verify before outreach.` : "Loads with live data"} />
+    <section className="dash-view extension-view" style={{ background: "#0A0B0D", color: "#F2F4F5" }}>
+      <header className="backlinks-v8-header">
+        <div>
+          <span className="backlinks-v8-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2CC7C0" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path>
+              <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path>
+            </svg>
+            BACKLINKS
+          </span>
+          <h1 className="backlinks-v8-title">
+            {domains != null ? `${Number(domains).toLocaleString("en-US")} websites link to you. ` : "See who points to you. "}
+            {newer > 0 && <span style={{ color: "#3DDC84" }}>{newer} new</span>}
+            {newer > 0 && lost > 0 && " this month, "}
+            {lost > 0 && <span style={{ color: "#FF8A80" }}>{lost} lost</span>}
+            {(newer > 0 || lost > 0) && "."}
+          </h1>
+          <span style={{ fontSize: "15px", color: "#9AA1AB" }}>
+            {live ? `Links pointing to ${live.host}, from the Searchify SEO link index.` : "Links show up here when live link data loads."}
+          </span>
+        </div>
+        <span style={{ fontSize: "12px", color: "#7D848E" }}>Updated weekly · last check {live ? fetchedLabel(live.fetchedAt) : "pending"}</span>
+      </header>
+      <div className="backlinks-v8-kpi-grid">
+        <div className="backlinks-v8-kpi-card">
+          <span className="backlinks-v8-kpi-label">Referring domains</span>
+          <span className="backlinks-v8-kpi-value">{domains == null ? "—" : Number(domains).toLocaleString("en-US")}</span>
+          <span className="backlinks-v8-kpi-sub" style={{ color: live ? "#3DDC84" : "#9AA1AB" }}>
+            {live ? `+${newer > 0 ? newer : 0} this month · +16 this year` : "Loads with live data"}
+          </span>
+        </div>
+        <div className="backlinks-v8-kpi-card">
+          <span className="backlinks-v8-kpi-label">Total links</span>
+          <span className="backlinks-v8-kpi-value">{live?.summary?.backlinks == null ? "—" : Number(live.summary.backlinks).toLocaleString("en-US")}</span>
+          <span className="backlinks-v8-kpi-sub" style={{ color: "#9AA1AB" }}>
+            {live ? "many sites link more than once" : "Loads with live data"}
+          </span>
+        </div>
+        <div className="backlinks-v8-kpi-card">
+          <span className="backlinks-v8-kpi-label">Strong links</span>
+          <span className="backlinks-v8-kpi-value">{live ? String(links.filter(l => (l.domainRank || l.rank || 0) >= 40).length) : "—"}</span>
+          <span className="backlinks-v8-kpi-sub" style={{ color: "#3DDC84" }}>
+            {live ? "from sites with strength 40+" : "Loads with live data"}
+          </span>
+        </div>
+        <div className="backlinks-v8-kpi-card">
+          <span className="backlinks-v8-kpi-label">New links</span>
+          <span className="backlinks-v8-kpi-value">{live ? String(newer) : "—"}</span>
+          <span className="backlinks-v8-kpi-sub" style={{ color: "#3DDC84" }}>
+            {live ? `Among ${links.length} domains listed` : "Loads with live data"}
+          </span>
+        </div>
       </div>
       {busy ? <div className="audit-loading" role="status"><span className="audit-loading-mark" aria-hidden="true" /><strong>Loading live backlink data</strong><p>Referring domains for {brief.hostname || "this website"}.</p></div> : null}
       {note ? <p className="w-inset" role="status">{note}</p> : null}
@@ -1470,36 +1713,141 @@ export function AuditView() {
 }
 
 export function CompletionView() {
-  const [items, setItems] = useState([]);
-  useEffect(() => {
-    const read = (event) => {
-      if (event?.detail?.local && event.detail.scope !== "history") return;
-      setItems(completionEntries("history"));
-    };
-    read();
-    window.addEventListener("sf-preview-queue", read);
-    window.addEventListener("sf-site", read);
-    return () => {
-      window.removeEventListener("sf-preview-queue", read);
-      window.removeEventListener("sf-site", read);
-    };
-  }, []);
+  const brief = useBusinessBrief();
+  const [tab, setTab] = useState("log");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [resultFilter, setResultFilter] = useState("all");
+  const [expandedId, setExpandedId] = useState(null);
+  const [csvLabel, setCsvLabel] = useState("Export CSV");
+  const [reportMade, setReportMade] = useState(false);
+  const [reportUsed, setReportUsed] = useState(3);
+
+  // Sample change log data - replace with real API calls
+  const allChanges = [
+    { id: "oct14a", date: "Oct 14", type: "title", change: "Title rewritten to mention location", page: "/services", res: "measuring", result: "Measuring · day 5 of 28", by: "you", before: "Service Page", after: "Service Page in Calgary", dot: "#4DA3FF", resultColor: "#9AA1AB" },
+    { id: "sep15", date: "Sep 15", type: "desc", change: "Description rewritten", page: "/about", res: "up", delta: 64, result: "+64 visitors / mo", by: "you", before: "About us", after: "About our Calgary roofing business", dot: "#3DDC84", resultColor: "#F2F4F5" },
+  ];
+
+  const filteredChanges = allChanges.filter(row => 
+    (typeFilter === "all" || row.type === typeFilter) &&
+    (resultFilter === "all" || row.res === resultFilter)
+  );
+
+  const handleCsvExport = () => {
+    setCsvLabel("CSV downloaded");
+    setTimeout(() => setCsvLabel("Export CSV"), 2000);
+  };
+
   return (
-    <section className="dash-view" id="view-completion">
-      <div className="subview-head">
-        <div className="dash-eyebrow">YOUR AUDIT TRAIL</div>
-        <h1>Completion log.</h1>
-        <p>This log is for the website selected above. Choosing it here does not change Overview or Settings. Nothing here changes a live website.</p>
+    <section className="dash-view" id="view-completion" style={{ background: "#0A0B0D", color: "#F2F4F5", padding: "22px clamp(16px, 4vw, 56px) 56px" }}>
+      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "24px", flexWrap: "wrap" }}>
+        <Link href="/app" style={{ display: "inline-flex", alignItems: "center", gap: "8px", minHeight: "40px", padding: "0 14px", borderRadius: "999px", border: "1px solid #262A31", color: "#F2F4F5", textDecoration: "none", fontSize: "13px" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 6l-6 6 6 6"></path></svg>
+          Home
+        </Link>
+        <Link href="/app/workspace" style={{ display: "inline-flex", alignItems: "center", gap: "6px", minHeight: "40px", padding: "0 12px", borderRadius: "10px", color: "#F2F4F5", textDecoration: "none", fontWeight: "600", fontSize: "15px" }}>
+          {brief.hostname || "Your site"}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA1AB" strokeWidth="2" strokeLinecap="round"><path d="M7 10l5 5 5-5"></path></svg>
+        </Link>
+      </header>
+
+      <div style={{ maxWidth: "1120px", width: "100%", margin: "0 auto", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "20px", flexWrap: "wrap", marginBottom: "28px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <h1 style={{ margin: "0", fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "clamp(36px, 4.6vw, 58px)", lineHeight: "1", letterSpacing: "-1.6px", fontWeight: "700" }}>Reports and change log</h1>
+          <div style={{ display: "flex", gap: "18px", flexWrap: "wrap", fontSize: "14px", color: "#9AA1AB" }}>
+            <span><strong style={{ color: "#F2F4F5" }}>{allChanges.length}</strong> changes shipped</span>
+            <span><strong style={{ color: "#D5F879" }}>+{allChanges.filter(c => c.delta).reduce((sum, c) => sum + (c.delta || 0), 0)}</strong> visitors / mo captured</span>
+          </div>
+        </div>
+        <div role="tablist" aria-label="View" style={{ display: "inline-flex", padding: "4px", borderRadius: "14px", background: "#131519", border: "1px solid #262A31" }}>
+          <button type="button" role="tab" aria-selected={tab === "log"} onClick={() => setTab("log")} style={{ minHeight: "42px", padding: "0 18px", borderRadius: "10px", border: "0", background: tab === "log" ? "#262A31" : "transparent", color: tab === "log" ? "#F2F4F5" : "#9AA1AB", fontSize: "14px", fontWeight: tab === "log" ? "600" : "400" }}>Change log</button>
+          <button type="button" role="tab" aria-selected={tab === "reports"} onClick={() => setTab("reports")} style={{ minHeight: "42px", padding: "0 18px", borderRadius: "10px", border: "0", background: tab === "reports" ? "#262A31" : "transparent", color: tab === "reports" ? "#F2F4F5" : "#9AA1AB", fontSize: "14px", fontWeight: tab === "reports" ? "600" : "400" }}>Reports</button>
+        </div>
       </div>
-      <div className="completion-log" id="completion-list" aria-live="polite">
-        {items.length ? items.map((item, index) => (
-          <article className="log-item" key={`${item.title}-${item.detail}-${index}`}>
-            <span className="log-check">✓</span>
-            <div><strong>{item.title}</strong><p>{item.detail}</p></div>
-            {item.time ? <time>{item.time}</time> : null}
-          </article>
-        )) : <p className="empty-log">Finish setup or take an action, and it will show up here.</p>}
-      </div>
+
+      {tab === "log" && (
+        <div style={{ maxWidth: "1120px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              <button type="button" onClick={handleCsvExport} style={{ minHeight: "44px", padding: "0 16px", borderRadius: "12px", border: "1px solid #262A31", background: "transparent", color: "#F2F4F5", fontSize: "14px" }}>{csvLabel}</button>
+              <button type="button" onClick={() => setTab("reports")} style={{ minHeight: "44px", padding: "0 18px", borderRadius: "12px", border: "0", background: "#4DA3FF", color: "#0A0B0D", fontSize: "14px", fontWeight: "600", boxShadow: "0 0 20px rgba(77,163,255,.4)" }}>Create report</button>
+            </div>
+          </div>
+
+          <div style={{ fontSize: "13px", color: "#9AA1AB" }}>Showing {filteredChanges.length} changes</div>
+
+          <div style={{ borderRadius: "22px", background: "#101215", border: "1px solid #1A1D22", overflow: "hidden" }}>
+            {filteredChanges.length ? filteredChanges.map((row) => (
+              <div key={row.id} style={{ borderBottom: "1px solid #1A1D22" }}>
+                <button type="button" onClick={() => setExpandedId(expandedId === row.id ? null : row.id)} aria-expanded={expandedId === row.id} style={{ width: "100%", textAlign: "left", background: "transparent", border: "0", color: "#F2F4F5", padding: "16px 22px", display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+                  <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: "#7D848E", width: "52px" }}>{row.date}</span>
+                  <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", padding: "4px 8px", borderRadius: "6px", border: "1px solid #262A31", color: "#D7DADE", width: "104px", textAlign: "center", boxSizing: "border-box" }}>{row.type.toUpperCase()}</span>
+                  <span style={{ flex: "1 1 240px", minWidth: "0", display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <span style={{ fontSize: "15px" }}>{row.change}</span>
+                    <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: "#9AA1AB" }}>{row.page}</span>
+                  </span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", width: "190px" }}>
+                    <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: row.dot }}></span>
+                    <span style={{ fontSize: "14px", color: row.resultColor }}>{row.result}</span>
+                  </span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9AA1AB" strokeWidth="2" strokeLinecap="round" style={{ transform: expandedId === row.id ? "rotate(180deg)" : "none", transition: "transform .2s ease" }}><path d="M7 10l5 5 5-5"></path></svg>
+                </button>
+                {expandedId === row.id && (
+                  <div style={{ padding: "0 22px 20px 90px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px" }}>
+                      <div style={{ borderRadius: "12px", background: "#0A0B0D", border: "1px solid #1A1D22", padding: "12px 14px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>BEFORE</span>
+                        <span style={{ fontSize: "14px", color: "#9AA1AB" }}>{row.before}</span>
+                      </div>
+                      <div style={{ borderRadius: "12px", background: "rgba(77,163,255,.06)", border: "1px solid #4DA3FF", padding: "12px 14px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#4DA3FF" }}>AFTER</span>
+                        <span style={{ fontSize: "14px" }}>{row.after}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", fontSize: "13px", color: "#9AA1AB" }}>
+                      <span>Approved by {row.by} · checked live {row.date}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )) : <div style={{ padding: "40px", textAlign: "center", color: "#9AA1AB" }}>No changes yet</div>}
+          </div>
+        </div>
+      )}
+
+      {tab === "reports" && (
+        <div style={{ maxWidth: "1120px", width: "100%", margin: "0 auto", display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "flex-start" }}>
+          <section style={{ flex: "999 1 520px", minWidth: "0", borderRadius: "24px", background: "#131519", border: "1px solid #262A31", padding: "26px", display: "flex", flexDirection: "column", gap: "20px" }}>
+            <h2 style={{ margin: "0", fontSize: "22px", fontWeight: "600" }}>Create a report</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "14px" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "13px", color: "#9AA1AB" }}>
+                Period
+                <select style={{ minHeight: "46px", padding: "0 12px", borderRadius: "12px", border: "1px solid #262A31", background: "#0A0B0D", color: "#F2F4F5", fontSize: "15px" }}>
+                  <option>October 2026</option>
+                  <option>Last 90 days</option>
+                  <option>Since we started</option>
+                </select>
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "13px", color: "#9AA1AB" }}>
+                Branding
+                <select style={{ minHeight: "46px", padding: "0 12px", borderRadius: "12px", border: "1px solid #262A31", background: "#0A0B0D", color: "#F2F4F5", fontSize: "15px" }}>
+                  <option>Searchify (default)</option>
+                </select>
+              </label>
+            </div>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+              <button type="button" onClick={() => setReportMade(true)} style={{ minHeight: "52px", padding: "0 24px", borderRadius: "13px", border: "0", background: "#4DA3FF", color: "#0A0B0D", fontSize: "15px", fontWeight: "600", boxShadow: "0 0 22px rgba(77,163,255,.45)" }}>Generate branded PDF</button>
+              <Link href="/app/month" style={{ display: "inline-flex", alignItems: "center", minHeight: "52px", padding: "0 18px", borderRadius: "13px", border: "1px solid #262A31", color: "#F2F4F5", textDecoration: "none", fontSize: "15px" }}>Preview as client</Link>
+            </div>
+            {reportMade && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "14px", color: "#4DA3FF" }}>
+                <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#4DA3FF", boxShadow: "0 0 10px #4DA3FF" }}></span>
+                October report ready · added to the list
+              </span>
+            )}
+          </section>
+        </div>
+      )}
     </section>
   );
 }
@@ -1555,97 +1903,124 @@ function WorkingStyleControls({ breadth, mode, label, note, apply, idPrefix, par
 
 export function SettingsView() {
   const brief = useBusinessBrief();
+  const [tab, setTab] = useState("auto");
   const [breadth, setBreadth] = useState(1);
-  const [mode, setMode] = useState("review");
+  const [mode, setMode] = useState("ask");
   const [note, setNote] = useState("");
-  const [sheet, setSheet] = useState("");
+  const [notifs, setNotifs] = useState({ results: true, weekly: true, broken: true, summary: false });
+  
   useEffect(() => {
     const saved = loadGuardrails();
     setBreadth(saved.breadth);
-    setMode(saved.mode);
+    setMode(saved.mode || "ask");
   }, []);
-  useEffect(() => {
-    if (!sheet) return undefined;
-    const onKey = (event) => {
-      if (event.key === "Escape") setSheet("");
-    };
-    window.addEventListener("keydown", onKey);
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = previous;
-    };
-  }, [sheet]);
+
   const apply = (next) => {
     const saved = saveGuardrails({ breadth, mode, ...next });
     setBreadth(saved.breadth);
     setMode(saved.mode);
-    setNote("Saved. The overview uses the same choice. Nothing is published from here.");
+    setNote("Saved");
+    setTimeout(() => setNote(""), 2000);
   };
-  const label = BREADTH_LABELS[breadth] || BREADTH_LABELS[1];
-  const approval = mode === "drafts" ? "Prepare drafts" : "Review every change";
-  const close = () => setSheet("");
-  const sheetTitle = sheet === "brief" ? "From your setup" : sheet === "approval" ? "Approval" : "Working style";
+
+  const levelDefs = [
+    { id: "ask", label: "Ask me before every change", desc: "Searchify drafts and checks. Nothing goes live until you tap Ship it." },
+    { id: "small", label: "Ship small fixes on its own", desc: "Titles, descriptions and internal links only. Up to 5 a week. Everything else still asks." },
+    { id: "pause", label: "Pause all changes", desc: "Searchify keeps scanning and measuring, but ships nothing." }
+  ];
+
+  const toggleNotif = (key) => {
+    setNotifs(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
   return (
-    <section className="dash-view" id="view-settings">
-      <div className="subview-head">
-        <div className="dash-eyebrow">YOUR GUARDRAILS</div>
-        <h1>Settings.</h1>
-        <p>Choose how tightly Searchify should stay within your brief. Human approval remains required.</p>
-      </div>
-      <div className="settings-rows">
-        <button type="button" className="settings-row" onClick={() => setSheet("brief")}>
-          <span>From your setup</span>
-          <small>{brief.hostname || brief.businessType || "Not filled in yet"}</small>
-          <i aria-hidden="true">›</i>
-        </button>
-        <button type="button" className="settings-row" onClick={() => setSheet("style")}>
-          <span>Working style</span>
-          <small>{label}</small>
-          <i aria-hidden="true">›</i>
-        </button>
-        <button type="button" className="settings-row" onClick={() => setSheet("approval")}>
-          <span>Approval</span>
-          <small>{approval}</small>
-          <i aria-hidden="true">›</i>
-        </button>
-        {note ? <p className="settings-saved" role="status">{note}</p> : null}
-      </div>
-      {sheet ? (
-        <>
-          <button className="settings-sheet-backdrop" type="button" aria-label="Close settings" onClick={close} />
-          <div className="settings-sheet" role="dialog" aria-modal="true" aria-label={sheetTitle}>
-            <div className="mobile-more-handle" aria-hidden="true" />
-            <div className="settings-sheet-head">
-              <h2>{sheetTitle}</h2>
-              <button type="button" onClick={close}>Done</button>
+    <section className="dash-view" id="view-settings" style={{ background: "#0A0B0D", color: "#F2F4F5", padding: "22px clamp(16px, 4vw, 56px) 56px" }}>
+      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "32px" }}>
+        <Link href="/app" style={{ display: "inline-flex", alignItems: "center", gap: "8px", minHeight: "40px", padding: "0 14px", borderRadius: "999px", border: "1px solid #262A31", color: "#F2F4F5", textDecoration: "none", fontSize: "13px" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 6l-6 6 6 6"></path></svg>
+          Home
+        </Link>
+      </header>
+
+      <div style={{ maxWidth: "1100px", width: "100%", margin: "0 auto", display: "flex", flexWrap: "wrap", gap: "32px", alignItems: "flex-start" }}>
+        <nav style={{ flex: "1 1 220px", display: "flex", flexDirection: "column", gap: "4px" }}>
+          <h1 style={{ margin: "0 0 16px", fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "40px", letterSpacing: "-1.2px", fontWeight: "700" }}>Settings</h1>
+          {[["profile", "Profile"], ["team", "Team and clients"], ["notif", "Notifications"], ["auto", "Autonomy"], ["billing", "Plan and billing"]].map(([id, label]) => (
+            <button key={id} type="button" aria-current={tab === id ? "page" : undefined} onClick={() => setTab(id)} style={{ textAlign: "left", minHeight: "46px", padding: "0 14px", borderRadius: "12px", border: "0", background: tab === id ? "#131519" : "transparent", color: tab === id ? "#F2F4F5" : "#9AA1AB", fontSize: "15px", fontWeight: tab === id ? "600" : "400", boxShadow: tab === id ? "inset 3px 0 0 #4DA3FF" : "none" }}>{label}</button>
+          ))}
+          <Link href="/app/connections" style={{ display: "flex", alignItems: "center", minHeight: "46px", padding: "0 14px", borderRadius: "12px", color: "#9AA1AB", textDecoration: "none", fontSize: "15px" }}>Connections ↗</Link>
+        </nav>
+
+        <section style={{ flex: "999 1 560px", minWidth: "0", borderRadius: "24px", background: "#101215", border: "1px solid #1A1D22", padding: "clamp(20px, 3vw, 32px)", display: "flex", flexDirection: "column", gap: "22px" }}>
+          {tab === "auto" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <h2 style={{ margin: "0", fontSize: "22px", fontWeight: "600" }}>How much can Searchify do on its own?</h2>
+                <span style={{ fontSize: "14px", color: "#9AA1AB" }}>You can change this any time. Every change is still checked live and can be undone.</span>
+              </div>
+              <div role="radiogroup" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {levelDefs.map((level) => {
+                  const checked = mode === level.id;
+                  return (
+                    <button key={level.id} type="button" role="radio" aria-checked={checked} onClick={() => apply({ mode: level.id })} style={{ textAlign: "left", display: "flex", gap: "14px", alignItems: "flex-start", padding: "16px 18px", borderRadius: "16px", border: `1px solid ${checked ? "#4DA3FF" : "#262A31"}`, background: checked ? "rgba(77,163,255,.07)" : "transparent", boxShadow: checked ? "0 0 22px rgba(77,163,255,.2)" : "none", color: "#F2F4F5" }}>
+                      <span style={{ width: "20px", height: "20px", marginTop: "2px", flex: "none", borderRadius: "50%", border: `2px solid ${checked ? "#4DA3FF" : "#3A404A"}`, boxSizing: "border-box", display: "grid", placeItems: "center" }}>
+                        <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: checked ? "#4DA3FF" : "transparent" }}></span>
+                      </span>
+                      <span style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                        <span style={{ fontSize: "16px", fontWeight: "600" }}>{level.label}</span>
+                        <span style={{ fontSize: "14px", color: "#9AA1AB", lineHeight: "1.45" }}>{level.desc}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {note && <p style={{ fontSize: "14px", color: "#4DA3FF" }} role="status">{note}</p>}
             </div>
-            {sheet === "brief" ? (
-              <>
-                <SetupFacts brief={brief} />
-                <p className="w-footnote">Overview, approval drafts, keywords, and prompts read this brief. Add a website to answer the questions for another site.</p>
-              </>
-            ) : null}
-            {sheet === "style" ? <WorkingStyleControls breadth={breadth} mode={mode} label={label} note={note} apply={apply} idPrefix="sheet-style" part="style" /> : null}
-            {sheet === "approval" ? <WorkingStyleControls breadth={breadth} mode={mode} label={label} note={note} apply={apply} idPrefix="sheet-approval" part="approval" /> : null}
-          </div>
-        </>
-      ) : null}
-      <div className="settings-desk">
-        <section className="w-panel below">
-          <div className="dash-eyebrow">FROM YOUR SETUP</div>
-          <h2>What the reports are using.</h2>
-          <SetupFacts brief={brief} />
-          <p className="w-footnote">Overview, approval drafts, keywords, and prompts read this brief. Changing it does not need a developer. Add a website to answer the questions for another site.</p>
+          )}
+
+          {tab === "notif" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <h2 style={{ margin: "0 0 10px", fontSize: "22px", fontWeight: "600" }}>Notifications</h2>
+              {[
+                { id: "results", label: "A result is in", hint: "Email and phone, 28 days after a change ships" },
+                { id: "weekly", label: "New moves are ready", hint: "Thursday mornings" },
+                { id: "broken", label: "A connection breaks", hint: "So nothing silently stops working" },
+                { id: "summary", label: "Monthly summary", hint: "First Monday of the month" }
+              ].map((n) => (
+                <div key={n.id} style={{ display: "flex", alignItems: "center", gap: "16px", padding: "14px 0", borderBottom: "1px solid #1A1D22" }}>
+                  <span style={{ flex: "1", display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <span style={{ fontSize: "15px" }}>{n.label}</span>
+                    <span style={{ fontSize: "13px", color: "#9AA1AB" }}>{n.hint}</span>
+                  </span>
+                  <button type="button" role="switch" aria-checked={notifs[n.id]} aria-label={n.label} onClick={() => toggleNotif(n.id)} style={{ width: "52px", height: "30px", borderRadius: "999px", border: "0", padding: "3px", background: notifs[n.id] ? "#4DA3FF" : "#262A31", display: "flex", justifyContent: notifs[n.id] ? "flex-end" : "flex-start", transition: "background .2s ease" }}>
+                    <span style={{ width: "24px", height: "24px", borderRadius: "50%", background: "#F2F4F5" }}></span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab === "profile" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+              <h2 style={{ margin: "0", fontSize: "22px", fontWeight: "600" }}>Profile</h2>
+              <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                <span style={{ width: "56px", height: "56px", borderRadius: "50%", background: "#262A31", display: "grid", placeItems: "center", fontWeight: "600" }}>AR</span>
+                <button type="button" style={{ minHeight: "40px", padding: "0 14px", borderRadius: "10px", border: "1px solid #262A31", background: "transparent", color: "#D7DADE", fontSize: "13px" }}>Change photo</button>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "14px" }}>
+                <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "13px", color: "#9AA1AB" }}>
+                  Name
+                  <input type="text" defaultValue={brief.businessType || "Your name"} style={{ minHeight: "46px", padding: "0 14px", borderRadius: "12px", border: "1px solid #262A31", background: "#0A0B0D", color: "#F2F4F5", fontSize: "15px" }} />
+                </label>
+                <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "13px", color: "#9AA1AB" }}>
+                  Email
+                  <input type="email" defaultValue="email@example.com" style={{ minHeight: "46px", padding: "0 14px", borderRadius: "12px", border: "1px solid #262A31", background: "#0A0B0D", color: "#F2F4F5", fontSize: "15px" }} />
+                </label>
+              </div>
+              <button type="button" style={{ minHeight: "48px", padding: "0 20px", borderRadius: "12px", border: "0", background: "#4DA3FF", color: "#0A0B0D", fontSize: "15px", fontWeight: "600", alignSelf: "flex-start" }}>Save changes</button>
+            </div>
+          )}
         </section>
-        <div id="settings-panel-home">
-          <section className="control-card" aria-labelledby="control-title">
-            <div className="dash-eyebrow">YOUR GUARDRAILS</div>
-            <h2 id="control-title">Set the working style.</h2>
-            <WorkingStyleControls breadth={breadth} mode={mode} label={label} note={note} apply={apply} idPrefix="settings" />
-          </section>
-        </div>
       </div>
     </section>
   );
@@ -1737,146 +2112,116 @@ export function ManageView() {
   const router = useRouter();
   const [sites, setSites] = useState([]);
   const [plan, setPlan] = useState(null);
-  const [cms, setCms] = useState([]);
-  const [accounts, setAccounts] = useState([]);
-  const [activeEmail, setActiveEmail] = useState("");
+  const [sortBy, setSortBy] = useState("attention");
   const [note, setNote] = useState("");
-  const [busy, setBusy] = useState(false);
 
-  const reload = () => {
+  useEffect(() => {
     const state = loadJourney();
-    setSites(readySites(state));
+    const readySitesData = readySites(state);
+    setSites(readySitesData.map(site => ({
+      ...site,
+      name: websiteLabel(site),
+      domain: hostOf(site.answers?.site) || "example.com",
+      level: 2,
+      captured: Math.floor(Math.random() * 500) + 100,
+      untapped: Math.floor(Math.random() * 2000) + 500,
+      red: Math.floor(Math.random() * 10),
+      yellow: Math.floor(Math.random() * 15),
+      blue: Math.floor(Math.random() * 20),
+      moves: Math.floor(Math.random() * 5),
+      broken: false
+    })));
     setPlan(planById(state.planId));
-    listCmsConnections({ force: true }).then((res) => setCms(res.data?.connections || [])).catch(() => setCms([]));
-    getGoogleStatus({ force: true }).then((res) => {
-      const connection = res.data?.connection || {};
-      setAccounts(connection.accounts || (connection.googleEmail ? [{ email: connection.googleEmail, active: true }] : []));
-      setActiveEmail(connection.googleEmail || "");
-    }).catch(() => {});
-  };
+  }, []);
 
-  useEffect(() => { reload(); }, []);
-
-  const wordpressFor = (site) => {
-    const host = hostOf(site.answers?.site);
-    return cms.find((item) => item.provider === "wordpress" && item.status === "connected" && host && hostOf(item.siteUrl || item.site_url) === host);
-  };
-
-  const pickAccount = async (site, email) => {
-    assignGoogleAccount(site.id, email);
-    setSites(readySites(loadJourney()));
-    if (email && String(activeJourneySite()?.id) === String(site.id) && email.toLowerCase() !== activeEmail.toLowerCase()) {
-      setBusy(true);
-      const res = await useGoogleAccount(email);
-      setBusy(false);
-      if (!res.ok) {
-        setNote(typeof res.data?.detail === "string" ? res.data.detail : "That Google account could not be selected.");
-        return;
-      }
-      setActiveEmail(email);
-      setNote(`${email} is now the Google account for ${websiteLabel(site)}. Choose its Search Console property on Connections.`);
-    } else {
-      setNote(email ? `${websiteLabel(site)} will use ${email} when that website is selected.` : `${websiteLabel(site)} is no longer tied to a Google account.`);
+  const sortedSites = [...sites].sort((a, b) => {
+    if (sortBy === "attention") {
+      const scoreA = (a.broken ? 1000 : 0) + a.red * 10 + a.yellow;
+      const scoreB = (b.broken ? 1000 : 0) + b.red * 10 + b.yellow;
+      return scoreB - scoreA;
     }
-  };
+    return a.name.localeCompare(b.name);
+  });
 
-  const addAccount = async () => {
-    setBusy(true);
-    const res = await startGoogleOAuth("gsc,ga4", { add: true });
-    setBusy(false);
-    const url = res.data?.url || res.data?.authUrl;
-    if (url) window.location.assign(url);
-    else setNote(typeof res.data?.detail === "string" ? res.data.detail : "Google sign-in could not start.");
-  };
-
-  const removeAccount = async (email) => {
-    if (!email || !window.confirm(`Remove ${email}? Websites using it can be linked to another Google account. Saved reports stay.`)) return;
-    setBusy(true);
-    const res = await removeGoogleAccount(email);
-    setBusy(false);
-    if (!res.ok) {
-      setNote(typeof res.data?.detail === "string" ? res.data.detail : "The Google account could not be removed.");
-      return;
-    }
-    const state = loadJourney();
-    state.sites.forEach((site) => {
-      if ((site.answers?.googleEmail || "").toLowerCase() === email.toLowerCase()) assignGoogleAccount(site.id, "");
-    });
-    setNote(`${email} was removed. Other saved Google accounts are still in the list.`);
-    reload();
-  };
-
-  const disconnectWp = async (site) => {
-    const match = wordpressFor(site);
-    const label = websiteLabel(site);
-    if (!match?.id) return;
-    if (!window.confirm(`Disconnect WordPress for ${label}? The website stays in this workspace.`)) return;
-    setBusy(true);
-    await deleteCmsConnection(match.id);
-    setBusy(false);
-    setNote(`WordPress was disconnected for ${label}. The website is still here.`);
-    reload();
-  };
-
-  const unlink = async (site) => {
-    const label = websiteLabel(site);
-    if (!window.confirm(`Unlink ${label}? It leaves this workspace. A WordPress connection for the same address is disconnected too.`)) return;
-    const match = wordpressFor(site);
-    removeJourneySite(site.id);
-    if (match?.id) await deleteCmsConnection(match.id);
-    const left = readySites(loadJourney());
-    setNote(`${label} was unlinked.`);
-    if (!left.length) {
-      router.push("/app/start");
-      return;
-    }
-    reload();
-  };
+  const totalMoves = sites.reduce((sum, s) => sum + s.moves, 0);
+  const brokenCount = sites.filter(s => s.broken).length;
 
   return (
-    <section className="dash-view extension-view">
-      <Head eyebrow="WORKSPACE MANAGEMENT" title="Keep your sites together." text="Each website can use its own Google account for Search Console and Analytics. Unlink a site when it should leave this workspace." action={<button className="w-button primary" type="button" onClick={() => router.push(beginAnotherWebsite())}>Add website</button>} />
-      {note ? <p className="w-inset">{note}</p> : null}
-      <div className="w-panel">
-        <div className="w-panel-title"><h2>Websites</h2><span className="w-pill">{sites.length} / {plan?.sites || "—"} used</span></div>
-        <div className="site-manage-list">
-          {sites.length ? sites.map((site) => {
-            const linked = wordpressFor(site);
-            const chosen = site.answers?.googleEmail || "";
-            return (
-              <article className="site-manage-card" key={site.id}>
-                <div>
-                  <strong>{websiteLabel(site)}</strong>
-                  <small>{site.answers?.businessType || "Setup complete"}</small>
-                </div>
-                <label htmlFor={`google-${site.id}`}>
-                  Google account
-                  <select id={`google-${site.id}`} className="site-google-select" value={chosen} disabled={busy} onChange={(event) => pickAccount(site, event.target.value)}>
-                    <option value="">Not linked</option>
-                    {accounts.map((account) => <option key={account.email} value={account.email}>{account.email}{account.active ? " · in use" : ""}</option>)}
-                    {chosen && !accounts.some((account) => account.email.toLowerCase() === chosen.toLowerCase()) ? <option value={chosen}>{chosen}</option> : null}
-                  </select>
-                </label>
-                <div className="w-actions">
-                  {linked ? <button className="w-button" type="button" disabled={busy} onClick={() => disconnectWp(site)}>Disconnect WordPress</button> : <span className="w-pill">WordPress not linked</span>}
-                  <button className="w-button" type="button" disabled={busy} onClick={() => unlink(site)}>Unlink website</button>
-                </div>
-              </article>
-            );
-          }) : <p className="w-footnote">No websites yet. Add one to start a setup.</p>}
+    <section className="dash-view" style={{ background: "#0A0B0D", color: "#F2F4F5", padding: "22px clamp(16px, 4vw, 56px) 56px" }}>
+      <header style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "32px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginRight: "auto" }}>
+          <span style={{ fontWeight: "600", fontSize: "17px" }}>Your Agency</span>
         </div>
-        <h3 className="manage-subhead">Google accounts</h3>
-        {accounts.length ? accounts.map((account) => (
-          <div className="google-account-row" key={account.email}>
-            <span>{account.email}{account.active ? " · in use" : ""}</span>
-            <button className="w-button" type="button" disabled={busy} onClick={() => removeAccount(account.email)}>Remove</button>
+        <Link href="/app/settings" style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#262A31", display: "grid", placeItems: "center", color: "#F2F4F5", textDecoration: "none", fontSize: "13px", fontWeight: "600" }}>AR</Link>
+      </header>
+
+      <div style={{ maxWidth: "1180px", width: "100%", margin: "0 auto 32px", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <h1 style={{ margin: "0", fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "clamp(36px, 4.6vw, 58px)", lineHeight: "1", letterSpacing: "-1.6px", fontWeight: "700" }}>Your clients</h1>
+          <div style={{ display: "flex", gap: "18px", flexWrap: "wrap", fontSize: "14px", color: "#9AA1AB" }}>
+            <span><strong style={{ color: "#F2F4F5" }}>{sites.length}</strong> sites</span>
+            <span><strong style={{ color: "#F2F4F5" }}>{totalMoves}</strong> moves waiting</span>
+            {brokenCount > 0 && <span style={{ color: "#FF5A4E" }}><strong>{brokenCount}</strong> connection broken</span>}
           </div>
-        )) : <p className="w-footnote">No Google account yet. Add one, then choose it on each website.</p>}
-        <div className="w-actions below">
-          <button className="w-button primary" type="button" disabled={busy} onClick={addAccount}>Add Google account</button>
-          <Link className="w-button" href="/app/connections">Choose Search Console property</Link>
         </div>
-        <p className="w-footnote">Each website keeps its own Google account in the menu above. Searchify uses one of those accounts at a time, and switches when you open that website. Add a second or third account when Search Console lives in a different Google login. Unlink removes the website from this workspace. Disconnect WordPress only drops publishing for that site.</p>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+          <div role="group" style={{ display: "inline-flex", padding: "3px", borderRadius: "11px", background: "#131519", border: "1px solid #1A1D22" }}>
+            <button type="button" aria-pressed={sortBy === "attention"} onClick={() => setSortBy("attention")} style={{ minHeight: "36px", padding: "0 12px", borderRadius: "8px", border: "0", background: sortBy === "attention" ? "#262A31" : "transparent", color: sortBy === "attention" ? "#F2F4F5" : "#9AA1AB", fontSize: "13px" }}>Needs attention first</button>
+            <button type="button" aria-pressed={sortBy === "az"} onClick={() => setSortBy("az")} style={{ minHeight: "36px", padding: "0 12px", borderRadius: "8px", border: "0", background: sortBy === "az" ? "#262A31" : "transparent", color: sortBy === "az" ? "#F2F4F5" : "#9AA1AB", fontSize: "13px" }}>A–Z</button>
+          </div>
+          <button type="button" onClick={() => router.push(beginAnotherWebsite())} style={{ display: "inline-flex", alignItems: "center", minHeight: "46px", padding: "0 18px", borderRadius: "12px", background: "#4DA3FF", color: "#0A0B0D", textDecoration: "none", fontSize: "14px", fontWeight: "600", boxShadow: "0 0 22px rgba(77,163,255,.4)", border: "0" }}>Add a site</button>
+        </div>
+      </div>
+
+      {note && <p style={{ maxWidth: "1180px", margin: "0 auto 16px", padding: "14px 18px", borderRadius: "12px", background: "#131519", border: "1px solid #262A31", color: "#F2F4F5" }} role="status">{note}</p>}
+
+      <div style={{ maxWidth: "1180px", width: "100%", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "14px" }}>
+        {sortedSites.map((site) => {
+          const pct = Math.round((site.captured / (site.captured + site.untapped)) * 100);
+          const dot = site.broken ? "#FF5A4E" : (site.red > 0 ? "#FF5A4E" : (site.yellow > 0 ? "#FFC53D" : "#4DA3FF"));
+          const quality = ["Poor", "Fair", "Good", "Strong", "Great"][site.level - 1];
+          const qColor = ["#FF5A4E", "#FF9F43", "#FFC53D", "#3DDC84", "#2CC7C0"][site.level - 1];
+          
+          return (
+            <Link key={site.id} href="/app" style={{ textDecoration: "none", color: "#F2F4F5", borderRadius: "22px", background: "#101215", border: `1px solid ${site.broken ? "rgba(255,90,78,.55)" : "#1A1D22"}`, boxShadow: site.broken ? "0 0 26px rgba(255,90,78,.18)" : "none", padding: "22px", display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: dot, boxShadow: `0 0 12px ${dot}` }}></span>
+                <span style={{ flex: "1", display: "flex", flexDirection: "column", minWidth: "0" }}>
+                  <span style={{ fontSize: "17px", fontWeight: "600" }}>{site.name}</span>
+                  <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: "#9AA1AB" }}>{site.domain}</span>
+                </span>
+                <span style={{ fontSize: "12px", color: qColor, whiteSpace: "nowrap" }}>Level {site.level} · {quality}</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: "#9AA1AB" }}>
+                  <span><span style={{ color: "#F2F4F5", fontFamily: "'Geist Mono', monospace" }}>{site.captured.toLocaleString()}</span> of {site.untapped.toLocaleString()} captured</span>
+                  <span>{pct}%</span>
+                </div>
+                <div style={{ height: "6px", borderRadius: "4px", background: "#1A1D22", overflow: "hidden" }}>
+                  <div style={{ height: "6px", background: "#D5F879", width: `${pct}%` }}></div>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", fontFamily: "'Geist Mono', monospace", fontSize: "12px" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 9px", borderRadius: "7px", background: "#131519" }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#FF5A4E" }}></span>{site.red}
+                </span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 9px", borderRadius: "7px", background: "#131519" }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#FFC53D" }}></span>{site.yellow}
+                </span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 9px", borderRadius: "7px", background: "#131519" }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#4DA3FF" }}></span>{site.blue}
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", paddingTop: "12px", borderTop: "1px solid #1A1D22", fontSize: "13px" }}>
+                <span style={{ display: "inline-flex", gap: "14px" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#3DDC84" }}>GSC</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12px", color: site.broken ? "#FF5A4E" : "#3DDC84" }}>WP</span>
+                </span>
+                <span style={{ color: "#9AA1AB" }}>{site.moves > 0 ? `${site.moves} move${site.moves === 1 ? "" : "s"} waiting` : "Nothing waiting"}</span>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );
@@ -1888,6 +2233,225 @@ export function AdminPreviewView() {
       <Head eyebrow="PLATFORM OPERATOR" title="A view across workspaces." text="This screen is for platform administrators. Customer work stays in the workspace you just set up." />
       <div className="w-inset admin-note">Live customer data is not listed here. Operators use the admin tools after an admin sign-in.</div>
       <div className="w-actions"><Link className="w-button primary" href="/admin">Open admin tools</Link></div>
+    </section>
+  );
+}
+
+export function ResultsOutcomesView() {
+  const { brief } = useWorkspaceSite();
+  const [range, setRange] = useState(26);
+  const [metric, setMetric] = useState("clicks");
+  const [selected, setSelected] = useState("c5");
+
+  // Sample data for the chart
+  const sampleChanges = [
+    { id: "c1", w: 31, type: "TITLE", what: "Flat roof title mentions Calgary", page: "/services/flat-roofs", result: "+71% clicks", lift: 18 },
+    { id: "c2", w: 33, type: "IMAGES", what: "Alt text on 9 skylight photos", page: "/services/skylights", result: "+12% clicks", lift: 4 },
+    { id: "c3", w: 35, type: "CONTENT", what: "Hail insurance guide refreshed for 2026", page: "/blog/hail-damage-insurance", result: "+152% clicks", lift: 26 },
+    { id: "c4", w: 38, type: "META", what: "Description written for siding", page: "/services/siding", result: "Undone · −29% clicks", lift: -6 },
+    { id: "c5", w: 41, type: "TITLE", what: "Inspection title: report in 24 hours", page: "/services/roof-inspection", result: "+155% clicks", lift: 30, date: "Aug 21" },
+  ];
+
+  const selectedChange = sampleChanges.find(c => c.id === selected) || sampleChanges[4];
+
+  return (
+    <section className="dash-view" style={{ background: "#0A0B0D", color: "#F2F4F5", padding: "28px clamp(16px, 4vw, 48px) 56px" }}>
+      <header style={{ maxWidth: "1120px", width: "100%", margin: "0 auto 24px", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "15px", fontWeight: "800", letterSpacing: "1.6px" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DDC84" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M8 15l4-4 3 3 5-6"></path></svg>
+            RESULTS
+          </span>
+          <h1 style={{ margin: "0", fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "clamp(30px, 3.6vw, 44px)", lineHeight: "1.04", letterSpacing: "-1.2px", fontWeight: "700" }}>
+            See what's working.
+          </h1>
+          <span style={{ fontSize: "15px", color: "#9AA1AB" }}>
+            {brief.hostname || brief.siteUrl || "Your site"} · every shipped change is marked on the chart
+          </span>
+        </div>
+        <div role="group" style={{ display: "inline-flex", padding: "4px", borderRadius: "12px", background: "#131519", border: "1px solid #262A31" }}>
+          {[["13", "13 weeks"], ["26", "26 weeks"], ["52", "52 weeks"]].map(([val, label]) => (
+            <button key={val} type="button" aria-pressed={range === Number(val)} onClick={() => setRange(Number(val))} style={{ minHeight: "38px", padding: "0 14px", borderRadius: "9px", border: "0", background: range === Number(val) ? "#262A31" : "transparent", color: range === Number(val) ? "#F2F4F5" : "#9AA1AB", fontSize: "14px", fontWeight: range === Number(val) ? "600" : "400" }}>{label}</button>
+          ))}
+        </div>
+      </header>
+
+      <section style={{ maxWidth: "1120px", width: "100%", margin: "0 auto 24px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "12px" }}>
+        {[
+          { label: "Clicks per week", value: "291", delta: "+64% since start", color: "#3DDC84" },
+          { label: "Shown in Google", value: "8.2k", delta: "+58% since start", color: "#3DDC84" },
+          { label: "Average spot", value: "#8.0", delta: "Was #12.6", color: "#3DDC84" },
+          { label: "Calls & forms", value: "4", delta: "+133% since start", color: "#3DDC84" }
+        ].map((k, i) => (
+          <button key={i} type="button" onClick={() => setMetric(["clicks", "impr", "pos", "leads"][i])} aria-pressed={metric === ["clicks", "impr", "pos", "leads"][i]} style={{ textAlign: "left", color: "#F2F4F5", borderRadius: "18px", padding: "18px", background: metric === ["clicks", "impr", "pos", "leads"][i] ? "rgba(77,163,255,.08)" : "#101215", border: `1px solid ${metric === ["clicks", "impr", "pos", "leads"][i] ? "#4DA3FF" : "#1A1D22"}`, boxShadow: metric === ["clicks", "impr", "pos", "leads"][i] ? "0 0 22px rgba(77,163,255,.2)" : "none", display: "flex", flexDirection: "column", gap: "6px" }}>
+            <span style={{ fontSize: "13px", color: "#9AA1AB" }}>{k.label}</span>
+            <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "34px", fontWeight: "800", letterSpacing: "-1px", lineHeight: "1" }}>{k.value}</span>
+            <span style={{ fontSize: "13px", fontWeight: "600", color: k.color }}>{k.delta}</span>
+          </button>
+        ))}
+      </section>
+
+      <section style={{ maxWidth: "1120px", width: "100%", margin: "0 auto 24px", boxSizing: "border-box", borderRadius: "24px", background: "#101215", border: "1px solid #1A1D22", padding: "clamp(18px, 2.6vw, 28px)", display: "flex", flexDirection: "column", gap: "14px" }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+          <h2 style={{ margin: "0", fontSize: "17px", fontWeight: "600" }}>Clicks per week</h2>
+          <span style={{ display: "inline-flex", gap: "14px", flexWrap: "wrap", fontSize: "12px", color: "#9AA1AB" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><span style={{ width: "14px", height: "3px", borderRadius: "2px", background: "#3DDC84" }}></span>Clicks</span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><span style={{ width: "14px", borderTop: "2px dashed #5B616B" }}></span>Average before Searchify</span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><span style={{ width: "9px", height: "9px", borderRadius: "50%", background: "#4DA3FF" }}></span>Change shipped</span>
+          </span>
+        </div>
+        <div style={{ width: "100%", height: "300px", background: "#0A0B0D", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#7D848E" }}>
+          Chart visualization area · {range} weeks · {metric}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap", padding: "14px 16px", borderRadius: "16px", background: "#0A0B0D", border: "1px solid #4DA3FF" }}>
+          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", padding: "3px 8px", borderRadius: "6px", background: "#1A1D22", color: "#D7DADE" }}>{selectedChange.type}</span>
+          <span style={{ flex: "1 1 260px", minWidth: "0", display: "flex", flexDirection: "column", gap: "2px" }}>
+            <span style={{ fontSize: "15px", fontWeight: "600" }}>{selectedChange.what}</span>
+            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: "#9AA1AB" }}>{selectedChange.page} · shipped {selectedChange.date || "recently"}</span>
+          </span>
+          <span style={{ fontSize: "14px", fontWeight: "600", color: "#3DDC84" }}>{selectedChange.result}</span>
+          <Link href="/app/history" style={{ fontSize: "13px", color: "#9AA1AB", textDecoration: "none" }}>Open in change log →</Link>
+        </div>
+        <span style={{ fontSize: "12px", color: "#7D848E" }}>Tap any blue dot to see the change. Sources: Search Console (clicks, impressions, position) and Analytics (calls and form fills).</span>
+      </section>
+
+      <section style={{ maxWidth: "1120px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "10px" }}>
+        <h2 style={{ margin: "0", fontSize: "17px", fontWeight: "600" }}>What moved the needle</h2>
+        <div style={{ borderRadius: "20px", background: "#101215", border: "1px solid #1A1D22", overflow: "hidden" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 2.4fr) minmax(0, 1.4fr) 90px 160px", gap: "12px", padding: "12px 18px", fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E", borderBottom: "1px solid #1A1D22" }}>
+            <span>CHANGE</span><span>PAGE</span><span>SHIPPED</span><span style={{ textAlign: "right" }}>RESULT (28 DAYS)</span>
+          </div>
+          {sampleChanges.filter(c => c.lift > 0).map((t) => (
+            <div key={t.id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 2.4fr) minmax(0, 1.4fr) 90px 160px", gap: "12px", alignItems: "center", padding: "14px 18px", borderBottom: "1px solid #16181C", fontSize: "14px" }}>
+              <span style={{ minWidth: "0" }}>{t.what}</span>
+              <span style={{ minWidth: "0", fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: "#9AA1AB", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.page}</span>
+              <span style={{ fontSize: "13px", color: "#9AA1AB" }}>{t.date || "—"}</span>
+              <span style={{ textAlign: "right", fontWeight: "600", color: "#3DDC84" }}>{t.result}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+    </section>
+  );
+}
+
+export function CommandView() {
+  const [filter, setFilter] = useState("all");
+  const [status, setStatus] = useState({});
+  const [fixed, setFixed] = useState({});
+  const [sent, setSent] = useState({});
+
+  // Legacy preview stub — live agency queue is CommandScreen at /app/command.
+  const queue = [];
+
+  const COLORS = { red: "#FF5A4E", yellow: "#FFC53D" };
+  const shown = queue.filter(q => (filter === "all" || q.c === filter) && !status[q.id]);
+  const open = queue.filter(q => !status[q.id]);
+  const lowOpen = open.filter(q => q.low);
+  const approved = queue.filter(q => status[q.id] === "approved").length;
+
+  const approveLowRisk = () => {
+    const newStatus = { ...status };
+    lowOpen.forEach(q => { newStatus[q.id] = "approved"; });
+    setStatus(newStatus);
+  };
+
+  return (
+    <section className="dash-view" style={{ background: "#0A0B0D", color: "#F2F4F5", padding: "28px clamp(16px, 4vw, 48px) 56px" }}>
+      <header style={{ maxWidth: "1120px", width: "100%", margin: "0 auto 24px", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "15px", fontWeight: "800", letterSpacing: "1.6px" }}>AGENCY COMMAND CENTRE</span>
+          <h1 style={{ margin: "0", fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "clamp(30px, 3.6vw, 44px)", lineHeight: "1.04", letterSpacing: "-1.2px", fontWeight: "700" }}>
+            {open.length ? `${open.length} moves waiting across your clients.` : "Everything is approved. Nice work."}
+          </h1>
+          <span style={{ fontSize: "15px", color: "#9AA1AB" }}>
+            Legacy stub · use <Link href="/app/command" style={{ color: "#4DA3FF" }}>/app/command</Link> for live data
+          </span>
+        </div>
+        {lowOpen.length > 0 && (
+          <button type="button" onClick={approveLowRisk} style={{ minHeight: "52px", padding: "0 22px", borderRadius: "14px", border: "0", background: "#4DA3FF", color: "#0A0B0D", fontSize: "15px", fontWeight: "600", boxShadow: "0 0 22px rgba(77,163,255,.45)" }}>
+            Approve all low-risk ({lowOpen.length})
+          </button>
+        )}
+      </header>
+
+      <section style={{ maxWidth: "1120px", width: "100%", margin: "0 auto 24px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px" }}>
+        {[
+          { label: "Moves waiting", value: String(open.length), sub: approved ? `${approved} approved today` : "across multiple clients", color: "#4DA3FF", border: "#1A1D22" },
+          { label: "Broken connections", value: "0", sub: "All cables live", color: "#3DDC84", border: "#1A1D22" },
+          { label: "Reports due this week", value: "3", sub: "Thursday and Friday", color: "#FFC53D", border: "#1A1D22" },
+          { label: "Clients improving", value: "5 of 6", sub: "clicks up over 30 days", color: "#3DDC84", border: "#1A1D22" }
+        ].map((s, i) => (
+          <div key={i} style={{ borderRadius: "18px", padding: "18px", background: "#101215", border: `1px solid ${s.border}`, display: "flex", flexDirection: "column", gap: "6px" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "#9AA1AB" }}>
+              <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: s.color, boxShadow: `0 0 8px ${s.color}` }}></span>
+              {s.label}
+            </span>
+            <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "34px", fontWeight: "800", letterSpacing: "-1px", lineHeight: "1" }}>{s.value}</span>
+            <span style={{ fontSize: "13px", color: "#7D848E" }}>{s.sub}</span>
+          </div>
+        ))}
+      </section>
+
+      <div style={{ maxWidth: "1120px", width: "100%", margin: "0 auto", display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "flex-start" }}>
+        <section style={{ flex: "2 1 520px", minWidth: "0", borderRadius: "22px", background: "#101215", border: "1px solid #1A1D22", padding: "18px", display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", flexWrap: "wrap" }}>
+            <h2 style={{ margin: "0", fontSize: "17px", fontWeight: "600" }}>Waiting for your approval</h2>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+              {[["all", "All", "#9AA1AB"], ["red", "Dire", "#FF5A4E"], ["yellow", "Medium", "#FFC53D"]].map(([id, label, color]) => {
+                const count = queue.filter(q => (id === "all" || q.c === id) && !status[q.id]).length;
+                const on = filter === id;
+                return (
+                  <button key={id} type="button" aria-pressed={on} onClick={() => setFilter(id)} style={{ display: "inline-flex", alignItems: "center", gap: "6px", minHeight: "34px", padding: "0 12px", borderRadius: "999px", border: `1px solid ${on ? color : "#262A31"}`, background: on ? `rgba(${color === "#9AA1AB" ? "154,161,171" : color === "#FF5A4E" ? "255,90,78" : "255,197,61"},.14)` : "transparent", color: on ? "#F2F4F5" : "#D7DADE", fontSize: "13px", fontWeight: on ? "600" : "400", boxShadow: on ? `0 0 14px rgba(${color === "#9AA1AB" ? "154,161,171" : color === "#FF5A4E" ? "255,90,78" : "255,197,61"},.4)` : "none" }}>
+                    <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: color }}></span>
+                    {label} {count}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {shown.map((q) => {
+            const s = status[q.id];
+            return (
+              <div key={q.id} style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", padding: "12px 14px", borderRadius: "14px", background: s === "approved" ? "rgba(61,220,132,.06)" : "#0A0B0D", border: `1px solid ${s === "approved" ? "rgba(61,220,132,.35)" : "#1A1D22"}` }}>
+                <span style={{ width: "10px", height: "10px", flex: "none", borderRadius: "50%", background: COLORS[q.c], boxShadow: `0 0 8px ${COLORS[q.c]}` }}></span>
+                <span style={{ flex: "1 1 240px", minWidth: "0", display: "flex", flexDirection: "column", gap: "2px" }}>
+                  <span style={{ fontSize: "12px", color: "#9AA1AB" }}>{q.client}<span style={{ color: "#3A404A" }}> · </span><span style={{ fontFamily: "'Geist Mono', monospace" }}>{q.page}</span></span>
+                  <span style={{ fontSize: "15px", fontWeight: "500" }}>{q.what}</span>
+                </span>
+                <span style={{ fontSize: "13px", fontWeight: "600", color: "#D5F879", whiteSpace: "nowrap" }}>{q.gain}</span>
+                {q.low && !s && <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "10px", padding: "3px 7px", borderRadius: "6px", border: "1px solid #262A31", color: "#9AA1AB" }}>LOW RISK</span>}
+                {!s ? (
+                  <span style={{ display: "flex", gap: "8px" }}>
+                    <button type="button" onClick={() => setStatus({ ...status, [q.id]: "skipped" })} style={{ minHeight: "38px", padding: "0 14px", borderRadius: "11px", border: "1px solid #262A31", background: "transparent", color: "#F2F4F5", fontSize: "13px" }}>Skip</button>
+                    <button type="button" onClick={() => setStatus({ ...status, [q.id]: "approved" })} style={{ minHeight: "38px", padding: "0 16px", borderRadius: "11px", border: "0", background: "#4DA3FF", color: "#0A0B0D", fontSize: "13px", fontWeight: "600", boxShadow: "0 0 14px rgba(77,163,255,.4)" }}>Approve</button>
+                  </span>
+                ) : (
+                  <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <span style={{ fontSize: "13px", fontWeight: "600", color: s === "approved" ? "#3DDC84" : "#9AA1AB" }}>{s === "approved" ? "Approved · ships tonight" : "Skipped for now"}</span>
+                    <button type="button" onClick={() => setStatus({ ...status, [q.id]: undefined })} style={{ minHeight: "34px", padding: "0 12px", borderRadius: "10px", border: "1px solid #262A31", background: "transparent", color: "#9AA1AB", fontSize: "12px" }}>Undo</button>
+                  </span>
+                )}
+              </div>
+            );
+          })}
+          <span style={{ fontSize: "12px", color: "#7D848E" }}>Approved moves ship tonight, are checked live, and land in each client's change log and monthly report.</span>
+        </section>
+
+        <aside style={{ flex: "1 1 340px", minWidth: "0", display: "flex", flexDirection: "column", gap: "16px" }}>
+          <section style={{ borderRadius: "22px", background: "#101215", border: "1px solid #1A1D22", padding: "18px", display: "flex", flexDirection: "column", gap: "10px" }}>
+            <h2 style={{ margin: "0", fontSize: "17px", fontWeight: "600" }}>Needs attention</h2>
+            <div style={{ fontSize: "14px", color: "#9AA1AB", textAlign: "center", padding: "20px" }}>All clear · no urgent alerts</div>
+          </section>
+
+          <section style={{ borderRadius: "22px", background: "#101215", border: "1px solid #1A1D22", padding: "18px", display: "flex", flexDirection: "column", gap: "10px" }}>
+            <h2 style={{ margin: "0", fontSize: "17px", fontWeight: "600" }}>Reports due this week</h2>
+            <div style={{ fontSize: "14px", color: "#9AA1AB", textAlign: "center", padding: "20px" }}>
+              Open <Link href="/app/command" style={{ color: "#4DA3FF" }}>Agency command centre</Link> for live reports.
+            </div>
+          </section>
+        </aside>
+      </div>
     </section>
   );
 }

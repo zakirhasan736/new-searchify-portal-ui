@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — Partner agreement and rules</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
+@keyframes sfy-rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 1500px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 22px clamp(16px, 4vw, 56px) 56px; display: flex; flex-direction: column; gap: 22px">
+
+  <header style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+    <span style="display: flex; align-items: center; gap: 10px; margin-right: auto">
+      <svg width="30" height="30" viewBox="0 0 32 32" role="img" aria-label="Searchify"><rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="#131519" stroke="#2E333B"></rect><circle cx="9" cy="12.5" r="2.9" fill="#FF5A4E"></circle><circle cx="16" cy="12.5" r="2.9" fill="#FF9F43"></circle><circle cx="23" cy="12.5" r="2.9" fill="#FFC53D"></circle><circle cx="9" cy="19.5" r="2.9" fill="#3DDC84"></circle><circle cx="16" cy="19.5" r="2.9" fill="#2CC7C0"></circle><circle cx="23" cy="19.5" r="2.9" fill="#4DA3FF"></circle></svg>
+      <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.4px">searchify</span>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 6px; border: 1px solid #D5F879; color: #D5F879">PARTNER CENTRE</span>
+    </span>
+    <span role="group" aria-label="Preview as" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #7D848E">Preview as
+      <span style="display: inline-flex; padding: 3px; border-radius: 10px; background: #131519; border: 1px solid #262A31">
+        <sc-for list="{{types}}" as="t" hint-placeholder-count="2">
+          <sc-if value="{{t.on}}" hint-placeholder-val="{{false}}"><button type="button" aria-pressed="true" onClick="{{t.pick}}" style="min-height: 32px; padding: 0 10px; border-radius: 8px; border: 0; background: #262A31; color: #F2F4F5; font-size: 12px; font-weight: 600">{{t.label}}</button></sc-if>
+          <sc-if value="{{t.off}}" hint-placeholder-val="{{true}}"><button type="button" aria-pressed="false" onClick="{{t.pick}}" style="min-height: 32px; padding: 0 10px; border-radius: 8px; border: 0; background: transparent; color: #9AA1AB; font-size: 12px">{{t.label}}</button></sc-if>
+        </sc-for>
+      </span>
+    </span>
+    <span style="display: flex; align-items: center; gap: 10px">
+      <span style="width: 36px; height: 36px; border-radius: 50%; background: #262A31; display: grid; place-items: center; font-size: 13px; font-weight: 600">{{me.initials}}</span>
+      <span style="display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 500">{{me.name}}</span><span style="font-size: 12px; color: #9AA1AB">{{me.sub}}</span></span>
+    </span>
+  </header>
+
+  <nav aria-label="Partner centre" style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid #1A1D22; padding-bottom: 12px">
+    <a href="Affiliate.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Overview</a>
+    <a href="PartnerEarnings.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Earnings</a>
+    <a href="PartnerPayout.dc.html" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #9AA1AB; text-decoration: none; font-size: 14px">Payout and tax</a>
+    <a href="PartnerTerms.dc.html" aria-current="page" style="min-height: 38px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; background: #1A1D22; color: #F2F4F5; text-decoration: none; font-size: 14px; font-weight: 600">Agreement and rules</a>
+  </nav>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch">
+    <section aria-labelledby="ag-h" style="flex: 999 1 560px; min-width: 0; border-radius: 22px; background: #101215; border: 1px solid rgba(213,248,121,.35); padding: 22px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+        <span style="display: flex; flex-direction: column; gap: 4px">
+          <h1 id="ag-h" style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 30px; letter-spacing: -0.8px; font-weight: 700">{{ag.title}}</h1>
+          <span style="font-size: 14px; color: #9AA1AB">{{ag.sub}}</span>
+        </span>
+        <button type="button" onClick="{{download}}" style="min-height: 42px; padding: 0 16px; border-radius: 12px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 14px">Download PDF</button>
+      </div>
+      <sc-if value="{{dl}}" hint-placeholder-val="{{false}}"><span role="status" style="font-size: 13px; color: #3DDC84">Downloaded: your signed copy.</span></sc-if>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px">
+        <sc-for list="{{ag.terms}}" as="t" hint-placeholder-count="6">
+          <div style="border-radius: 14px; background: #0A0B0D; border: 1px solid #1A1D22; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 12px; color: #7D848E">{{t.label}}</span>
+            <span style="font-size: 15px; font-weight: 600; line-height: 1.35">{{t.value}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section aria-labelledby="ps-h" style="flex: 1 1 340px; min-width: 0; border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 22px; display: flex; flex-direction: column; gap: 12px">
+      <h2 id="ps-h" style="margin: 0; font-size: 17px; font-weight: 600">Performance shares</h2>
+      <sc-if value="{{isFounding}}" hint-placeholder-val="{{false}}">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 14px; color: #9AA1AB; line-height: 1.5">Up to 2.5% more of the company, in five steps of 0.5%. A step is earned when monthly revenue from your referrals reaches its level and stays there for 3 months in a row.</span>
+          <span style="display: flex; justify-content: space-between; font-size: 14px"><span>Your referrals now bring in</span><span style="font-family: 'Geist Mono', monospace; color: #D5F879">$2,747 / mo</span></span>
+          <sc-for list="{{steps}}" as="s" hint-placeholder-count="5">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: {{s.bg}}; border: 1px solid {{s.border}}">
+              <span style="width: 26px; height: 26px; flex: none; border-radius: 8px; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: {{s.numBg}}; color: {{s.numColor}}">{{s.n}}</span>
+              <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 14px">{{s.at}} a month</span><span style="font-size: 12px; color: #7D848E">{{s.note}}</span></span>
+              <span style="font-size: 12px; font-weight: 600; color: {{s.color}}">{{s.state}}</span>
+            </div>
+          </sc-for>
+          <span style="font-size: 12px; color: #7D848E">Steps must be earned by Feb 26, 2030 (36 months after signing). Earned steps are granted under a board-approved plan.</span>
+        </div>
+      </sc-if>
+      <sc-if value="{{isStandard}}" hint-placeholder-val="{{true}}">
+        <span style="font-size: 14px; color: #9AA1AB; line-height: 1.5">Performance shares are part of the Founding Partner Agreement only. Your rate and payouts are set out in the Partner Program Terms on the left.</span>
+      </sc-if>
+    </section>
+  </div>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch">
+    <section aria-labelledby="do-h" style="flex: 1 1 360px; min-width: 0; border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+      <h2 id="do-h" style="margin: 0; font-size: 17px; font-weight: 600">Do</h2>
+      <sc-for list="{{dos}}" as="d" hint-placeholder-count="4">
+        <div style="display: flex; gap: 10px; font-size: 14px; line-height: 1.5">
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#3DDC84" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <span>{{d}}</span>
+        </div>
+      </sc-for>
+    </section>
+    <section aria-labelledby="dont-h" style="flex: 1 1 360px; min-width: 0; border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+      <h2 id="dont-h" style="margin: 0; font-size: 17px; font-weight: 600">Don't</h2>
+      <sc-for list="{{donts}}" as="d" hint-placeholder-count="4">
+        <div style="display: flex; gap: 10px; font-size: 14px; line-height: 1.5">
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="#FF8A80" stroke-width="2.4" stroke-linecap="round"></path></svg>
+          <span>{{d}}</span>
+        </div>
+      </sc-for>
+      <span style="font-size: 12px; color: #7D848E; line-height: 1.5">Breaking these can end the agreement, and commissions on those customers stop.</span>
+    </section>
+  </div>
+
+  <section aria-labelledby="disc-h" style="max-width: 1180px; width: 100%; box-sizing: border-box; margin: 0 auto; border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+    <h2 id="disc-h" style="margin: 0; font-size: 17px; font-weight: 600">Say you earn a commission: wording you can copy</h2>
+    <span style="font-size: 14px; color: #9AA1AB">Put it where people will see it before they click, not hidden at the bottom. US law (the FTC's endorsement rules) requires it, and it builds trust.</span>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px">
+      <sc-for list="{{snips}}" as="s" hint-placeholder-count="3">
+        <div style="border-radius: 14px; background: #0A0B0D; border: 1px solid #1A1D22; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 12px; color: #7D848E">{{s.where}}</span>
+          <span style="font-size: 14px; line-height: 1.5">{{s.text}}</span>
+          <button type="button" onClick="{{s.copy}}" style="align-self: flex-start; min-height: 36px; padding: 0 12px; border-radius: 10px; border: 0; background: {{s.bg}}; color: #0A0B0D; font-size: 13px; font-weight: 600">{{s.label}}</button>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section aria-labelledby="kit-h" style="max-width: 1180px; width: 100%; box-sizing: border-box; margin: 0 auto; border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap">
+      <h2 id="kit-h" style="margin: 0; font-size: 17px; font-weight: 600">Marketing kit</h2>
+      <span style="font-size: 13px; color: #9AA1AB">Questions? <a href="mailto:partners@searchify.io">partners@searchify.io</a></span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px">
+      <sc-for list="{{kit}}" as="k" hint-placeholder-count="4">
+        <div style="border-radius: 14px; background: #0A0B0D; border: 1px solid #1A1D22; padding: 14px; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 15px; font-weight: 600">{{k.title}}</span>
+          <span style="font-size: 13px; color: #9AA1AB; line-height: 1.45">{{k.desc}}</span>
+          <button type="button" onClick="{{k.get}}" style="align-self: flex-start; margin-top: 4px; min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 13px">{{k.label}}</button>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    let t = 'standard';
+    try { t = sessionStorage.getItem('searchify-partner-type') || 'standard'; } catch (e) {}
+    this.state = { ptype: t, copied: -1, got: {}, dl: false };
+  }
+  renderVals() {
+    const F = this.state.ptype === 'founding';
+    const ag = F
+      ? { title: 'Founding Partner Agreement', sub: 'Signed at closing with Aequitas Marketing Corp. (Searchify) · Alberta law',
+          terms: [['Your rate', '35%, rising to 40% for good after 10 qualified referrals in any 6 months'], ['How long', 'Each customer’s first 12 months'], ['When it clears', '30 days after each payment'],
+            ['When you’re paid', 'Monthly on the 15th, once over $50'], ['Performance shares', 'Up to 2.5% in five 0.5% steps'], ['Your rate is protected', 'It can’t be lowered without your written consent'],
+            ['Ending it', 'Either side, with 30 days’ notice'], ['Your shares', 'Separate. Ending this never affects them']] }
+      : { title: 'Partner Program Terms', sub: 'Accepted May 4, 2026 · version 1.2 · Alberta law',
+          terms: [['Your rate', '30% of every payment'], ['How long', 'Each customer’s first 12 months'], ['Link tracking', '60 days after a click'],
+            ['When it clears', '30 days after each payment'], ['When you’re paid', 'Monthly on the 15th, once over $50'], ['Ending it', 'Either side, with 30 days’ notice']] };
+    const STEPS = [2500, 5000, 10000, 20000, 40000];
+    const steps = STEPS.map((s, i) => {
+      const st = i === 0 ? ['Earned · being approved', '#D5F879', 'rgba(213,248,121,.06)', 'rgba(213,248,121,.4)', '#D5F879', '#0A0B0D', 'Held above $2,500 for Aug, Sep and Oct']
+        : (i === 1 ? ['Next', '#4DA3FF', '#0A0B0D', '#1A1D22', '#1A1D22', '#F2F4F5', '$2,253 a month to go'] : ['', '#7D848E', '#0A0B0D', '#1A1D22', '#1A1D22', '#7D848E', '0.5% of the company']);
+      return { n: String(i + 1), at: '$' + s.toLocaleString('en-US'), state: st.at(0), color: st.at(1), bg: st.at(2), border: st.at(3), numBg: st.at(4), numColor: st.at(5), note: st.at(6) };
+    });
+    const handle = F ? 'nickpetitt' : 'samortiz';
+    const SN = [
+      ['Social post or video', 'I use Searchify for SEO on WordPress sites, and I earn a commission if you sign up through my link.'],
+      ['YouTube or podcast description', 'Affiliate link: searchify.io/?ref=' + handle + '. I earn a commission if you subscribe, at no extra cost to you.'],
+      ['Email or newsletter', 'Heads up: this is a partner link, so I get paid if you become a customer. I only recommend tools I use.']
+    ];
+    const KIT = [
+      ['Logo pack', 'SVG and PNG, light and dark versions, with spacing rules.', 'Download logos'],
+      ['Banners', 'Ready-made sizes for websites and social: 1200×628, 1080×1080, 728×90, 300×250.', 'Download banners'],
+      ['Product screenshots', 'The scan, the approval queue and before/after results, cleared for you to use.', 'Download screenshots'],
+      ['Sample posts and emails', 'Short posts and a 3-email sequence you can edit. Disclosure line already included.', 'Download copy']
+    ];
+    const setType = (t) => { try { sessionStorage.setItem('searchify-partner-type', t); } catch (e) {} this.setState({ ptype: t, copied: -1 }); };
+    return {
+      types: [['standard', 'Partner'], ['founding', 'Founding partner']].map((t) => ({ label: t.at(1), on: this.state.ptype === t.at(0), off: this.state.ptype !== t.at(0), pick: () => setType(t.at(0)) })),
+      me: F ? { name: 'Nicholas Petitt', initials: 'NP', sub: 'Founding partner' } : { name: 'Sam Ortiz', initials: 'SO', sub: 'Partner since May 2026' },
+      ag: { title: ag.title, sub: ag.sub, terms: ag.terms.map((t) => ({ label: t.at(0), value: t.at(1) })) },
+      download: () => this.setState({ dl: true }), dl: this.state.dl,
+      isFounding: F, isStandard: !F, steps: steps,
+      dos: ['Say clearly that you earn a commission, every time you share your link.', 'Describe Searchify accurately: what it does, and what it costs.', 'Follow anti-spam laws: only email people who agreed to hear from you.', 'Use the logos and screenshots from the kit below.'],
+      donts: ['Bid on "Searchify" or similar words in Google or Bing ads.', 'Pretend to be Searchify, or make promises we don’t make (like guaranteed rankings).', 'Sign up yourself, your own businesses or family through your link.'],
+      snips: SN.map((s, i) => ({ where: s.at(0), text: s.at(1), label: this.state.copied === i ? 'Copied' : 'Copy', bg: this.state.copied === i ? '#3DDC84' : '#D5F879',
+        copy: () => { try { navigator.clipboard.writeText(s.at(1)); } catch (e) {} this.setState({ copied: i }); } })),
+      kit: KIT.map((k, i) => ({ title: k.at(0), desc: k.at(1), label: this.state.got[i] ? 'Downloaded' : k.at(2), get: () => this.setState({ got: Object.assign({}, this.state.got, { [i]: true }) }) }))
+    };
+  }
+}
+</script>
+<script>window.__DC_FACTORY = function (DCLogic, React) {
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    let t = 'standard';
+    try { t = sessionStorage.getItem('searchify-partner-type') || 'standard'; } catch (e) {}
+    this.state = { ptype: t, copied: -1, got: {}, dl: false };
+  }
+  renderVals() {
+    const F = this.state.ptype === 'founding';
+    const ag = F
+      ? { title: 'Founding Partner Agreement', sub: 'Signed at closing with Aequitas Marketing Corp. (Searchify) · Alberta law',
+          terms: [['Your rate', '35%, rising to 40% for good after 10 qualified referrals in any 6 months'], ['How long', 'Each customer’s first 12 months'], ['When it clears', '30 days after each payment'],
+            ['When you’re paid', 'Monthly on the 15th, once over $50'], ['Performance shares', 'Up to 2.5% in five 0.5% steps'], ['Your rate is protected', 'It can’t be lowered without your written consent'],
+            ['Ending it', 'Either side, with 30 days’ notice'], ['Your shares', 'Separate. Ending this never affects them']] }
+      : { title: 'Partner Program Terms', sub: 'Accepted May 4, 2026 · version 1.2 · Alberta law',
+          terms: [['Your rate', '30% of every payment'], ['How long', 'Each customer’s first 12 months'], ['Link tracking', '60 days after a click'],
+            ['When it clears', '30 days after each payment'], ['When you’re paid', 'Monthly on the 15th, once over $50'], ['Ending it', 'Either side, with 30 days’ notice']] };
+    const STEPS = [2500, 5000, 10000, 20000, 40000];
+    const steps = STEPS.map((s, i) => {
+      const st = i === 0 ? ['Earned · being approved', '#D5F879', 'rgba(213,248,121,.06)', 'rgba(213,248,121,.4)', '#D5F879', '#0A0B0D', 'Held above $2,500 for Aug, Sep and Oct']
+        : (i === 1 ? ['Next', '#4DA3FF', '#0A0B0D', '#1A1D22', '#1A1D22', '#F2F4F5', '$2,253 a month to go'] : ['', '#7D848E', '#0A0B0D', '#1A1D22', '#1A1D22', '#7D848E', '0.5% of the company']);
+      return { n: String(i + 1), at: '$' + s.toLocaleString('en-US'), state: st.at(0), color: st.at(1), bg: st.at(2), border: st.at(3), numBg: st.at(4), numColor: st.at(5), note: st.at(6) };
+    });
+    const handle = F ? 'nickpetitt' : 'samortiz';
+    const SN = [
+      ['Social post or video', 'I use Searchify for SEO on WordPress sites, and I earn a commission if you sign up through my link.'],
+      ['YouTube or podcast description', 'Affiliate link: searchify.io/?ref=' + handle + '. I earn a commission if you subscribe, at no extra cost to you.'],
+      ['Email or newsletter', 'Heads up: this is a partner link, so I get paid if you become a customer. I only recommend tools I use.']
+    ];
+    const KIT = [
+      ['Logo pack', 'SVG and PNG, light and dark versions, with spacing rules.', 'Download logos'],
+      ['Banners', 'Ready-made sizes for websites and social: 1200×628, 1080×1080, 728×90, 300×250.', 'Download banners'],
+      ['Product screenshots', 'The scan, the approval queue and before/after results, cleared for you to use.', 'Download screenshots'],
+      ['Sample posts and emails', 'Short posts and a 3-email sequence you can edit. Disclosure line already included.', 'Download copy']
+    ];
+    const setType = (t) => { try { sessionStorage.setItem('searchify-partner-type', t); } catch (e) {} this.setState({ ptype: t, copied: -1 }); };
+    return {
+      types: [['standard', 'Partner'], ['founding', 'Founding partner']].map((t) => ({ label: t.at(1), on: this.state.ptype === t.at(0), off: this.state.ptype !== t.at(0), pick: () => setType(t.at(0)) })),
+      me: F ? { name: 'Nicholas Petitt', initials: 'NP', sub: 'Founding partner' } : { name: 'Sam Ortiz', initials: 'SO', sub: 'Partner since May 2026' },
+      ag: { title: ag.title, sub: ag.sub, terms: ag.terms.map((t) => ({ label: t.at(0), value: t.at(1) })) },
+      download: () => this.setState({ dl: true }), dl: this.state.dl,
+      isFounding: F, isStandard: !F, steps: steps,
+      dos: ['Say clearly that you earn a commission, every time you share your link.', 'Describe Searchify accurately: what it does, and what it costs.', 'Follow anti-spam laws: only email people who agreed to hear from you.', 'Use the logos and screenshots from the kit below.'],
+      donts: ['Bid on "Searchify" or similar words in Google or Bing ads.', 'Pretend to be Searchify, or make promises we don’t make (like guaranteed rankings).', 'Sign up yourself, your own businesses or family through your link.'],
+      snips: SN.map((s, i) => ({ where: s.at(0), text: s.at(1), label: this.state.copied === i ? 'Copied' : 'Copy', bg: this.state.copied === i ? '#3DDC84' : '#D5F879',
+        copy: () => { try { navigator.clipboard.writeText(s.at(1)); } catch (e) {} this.setState({ copied: i }); } })),
+      kit: KIT.map((k, i) => ({ title: k.at(0), desc: k.at(1), label: this.state.got[i] ? 'Downloaded' : k.at(2), get: () => this.setState({ got: Object.assign({}, this.state.got, { [i]: true }) }) }))
+    };
+  }
+}
+
+return Component;
+};</script>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — Results</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
+@keyframes sfy-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes sfy-draw{from{stroke-dashoffset:2400}to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 1200px; background: #0A0B0D; display: flex; flex-wrap: wrap; align-items: stretch">
+<div style="flex: 1 1 248px; max-width: 100%; display: flex">
+<dc-import name="Nav" current="results" hint-size="248px,1200px"></dc-import>
+</div>
+<div style="flex: 999 1 560px; min-width: 0; min-height: 1200px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 28px clamp(16px, 4vw, 48px) 56px; display: flex; flex-direction: column; gap: 24px">
+
+  <header style="max-width: 1120px; width: 100%; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="display: inline-flex; align-items: center; gap: 8px; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 1.6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DDC84" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M8 15l4-4 3 3 5-6"></path></svg>RESULTS</span>
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(30px, 3.6vw, 44px); line-height: 1.04; letter-spacing: -1.2px; font-weight: 700">{{headline}}</h1>
+      <span style="font-size: 15px; color: #9AA1AB">northline.example · every shipped change is marked on the chart</span>
+    </div>
+    <div role="group" aria-label="Time range" style="display: inline-flex; padding: 4px; border-radius: 12px; background: #131519; border: 1px solid #262A31">
+      <sc-for list="{{ranges}}" as="r" hint-placeholder-count="3">
+        <sc-if value="{{r.on}}" hint-placeholder-val="{{false}}"><button type="button" aria-pressed="true" onClick="{{r.pick}}" style="min-height: 38px; padding: 0 14px; border-radius: 9px; border: 0; background: #262A31; color: #F2F4F5; font-size: 14px; font-weight: 600">{{r.label}}</button></sc-if>
+        <sc-if value="{{r.off}}" hint-placeholder-val="{{true}}"><button type="button" aria-pressed="false" onClick="{{r.pick}}" style="min-height: 38px; padding: 0 14px; border-radius: 9px; border: 0; background: transparent; color: #9AA1AB; font-size: 14px">{{r.label}}</button></sc-if>
+      </sc-for>
+    </div>
+  </header>
+
+  <section aria-label="Headline numbers" style="max-width: 1120px; width: 100%; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px">
+    <sc-for list="{{kpis}}" as="k" hint-placeholder-count="5">
+      <button type="button" onClick="{{k.pick}}" aria-pressed="{{k.pressed}}" style="text-align: left; font: inherit; color: #F2F4F5; border-radius: 18px; padding: 18px; background: {{k.bg}}; border: 1px solid {{k.border}}; box-shadow: {{k.glow}}; display: flex; flex-direction: column; gap: 6px; transition: border-color .25s ease, box-shadow .25s ease">
+        <span style="font-size: 13px; color: #9AA1AB">{{k.label}}</span>
+        <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1">{{k.value}}</span>
+        <span style="font-size: 13px; font-weight: 600; color: {{k.deltaColor}}">{{k.delta}}</span>
+      </button>
+    </sc-for>
+  </section>
+
+  <section aria-label="Chart" style="max-width: 1120px; width: 100%; margin: 0 auto; box-sizing: border-box; border-radius: 24px; background: #101215; border: 1px solid #1A1D22; padding: clamp(18px, 2.6vw, 28px); display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+      <h2 style="margin: 0; font-size: 17px; font-weight: 600">{{chartTitle}}</h2>
+      <span style="display: inline-flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #9AA1AB">
+        <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 3px; border-radius: 2px; background: #3DDC84"></span>{{seriesName}}</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; border-top: 2px dashed #5B616B"></span>Average before Searchify</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: 50%; background: #4DA3FF"></span>Change shipped</span>
+      </span>
+    </div>
+    <svg viewBox="0 0 960 300" role="img" aria-label="{{chartAria}}" style="width: 100%; height: auto; display: block; overflow: visible">
+      <sc-for list="{{grid}}" as="g" hint-placeholder-count="4">
+        <line x1="56" x2="944" y1="{{g.y}}" y2="{{g.y}}" stroke="#1A1D22" stroke-width="1"></line>
+        <text x="46" y="{{g.ty}}" text-anchor="end" font-size="12" fill="#7D848E" font-family="Geist Mono, monospace">{{g.label}}</text>
+      </sc-for>
+      <line x1="56" x2="944" y1="{{baseY}}" y2="{{baseY}}" stroke="#5B616B" stroke-width="1.5" stroke-dasharray="6 6"></line>
+      <path d="{{area}}" fill="rgba(61,220,132,.10)"></path>
+      <path d="{{line}}" fill="none" stroke="#3DDC84" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="2400" style="animation: sfy-draw 1.4s ease-out both; filter: drop-shadow(0 0 6px rgba(61,220,132,.45))"></path>
+      <sc-for list="{{marks}}" as="m" hint-placeholder-count="6">
+        <line x1="{{m.x}}" x2="{{m.x}}" y1="{{m.y}}" y2="262" stroke="{{m.stem}}" stroke-width="1" stroke-dasharray="3 4"></line>
+      </sc-for>
+      <line x1="56" x2="944" y1="262" y2="262" stroke="#262A31" stroke-width="1"></line>
+      <sc-for list="{{xlabels}}" as="xl" hint-placeholder-count="6">
+        <text x="{{xl.x}}" y="284" text-anchor="middle" font-size="12" fill="#7D848E" font-family="Geist Mono, monospace">{{xl.label}}</text>
+      </sc-for>
+      <sc-for list="{{marks}}" as="m" hint-placeholder-count="6">
+        <g onClick="{{m.pick}}" style="cursor: pointer">
+          <circle cx="{{m.x}}" cy="262" r="14" fill="transparent"></circle>
+          <circle cx="{{m.x}}" cy="262" r="{{m.r}}" fill="{{m.color}}" stroke="{{m.ring}}" stroke-width="2.5" style="filter: drop-shadow(0 0 6px {{m.color}})"></circle>
+        </g>
+      </sc-for>
+    </svg>
+    <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border-radius: 16px; background: #0A0B0D; border: 1px solid {{sel.border}}; animation: sfy-rise .3s ease both">
+      <span style="font-family: 'Geist Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 6px; background: #1A1D22; color: #D7DADE">{{sel.type}}</span>
+      <span style="flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 600">{{sel.what}}</span><span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #9AA1AB">{{sel.page}} · shipped {{sel.date}}</span></span>
+      <span style="font-size: 14px; font-weight: 600; color: {{sel.color}}">{{sel.result}}</span>
+      <a href="Changelog.dc.html" style="font-size: 13px; color: #9AA1AB; text-decoration: none">Open in change log →</a>
+    </div>
+    <span style="font-size: 12px; color: #7D848E">Tap any blue dot to see the change. Sources: Search Console (clicks, impressions, position) and Analytics (calls and form fills).</span>
+  </section>
+
+  <section aria-labelledby="top-h" style="max-width: 1120px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 10px">
+    <h2 id="top-h" style="margin: 0; font-size: 17px; font-weight: 600">What moved the needle</h2>
+    <div style="border-radius: 20px; background: #101215; border: 1px solid #1A1D22; overflow: hidden">
+      <div aria-hidden="true" style="display: grid; grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.4fr) 90px 160px; gap: 12px; padding: 12px 18px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #7D848E; border-bottom: 1px solid #1A1D22">
+        <span>CHANGE</span><span>PAGE</span><span>SHIPPED</span><span style="text-align: right">RESULT (28 DAYS)</span>
+      </div>
+      <sc-for list="{{top}}" as="t" hint-placeholder-count="5">
+        <div style="display: grid; grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.4fr) 90px 160px; gap: 12px; align-items: center; padding: 14px 18px; border-bottom: 1px solid #16181C; font-size: 14px">
+          <span style="min-width: 0">{{t.what}}</span>
+          <span style="min-width: 0; font-family: 'Geist Mono', monospace; font-size: 12px; color: #9AA1AB; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{t.page}}</span>
+          <span style="font-size: 13px; color: #9AA1AB">{{t.date}}</span>
+          <span style="text-align: right; font-weight: 600; color: {{t.color}}">{{t.result}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { range: 26, metric: 'clicks', sel: 'c5' };
+  }
+  renderVals() {
+    const N = 52;
+    // Weekly series, 52 weeks ending this week. Searchify started at week 30.
+    const START = 30;
+    const CH = [
+      { id: 'c1', w: 31, type: 'TITLE', what: 'Flat roof title mentions Calgary', page: '/services/flat-roofs', res: '+71% clicks', ok: 1, lift: 18 },
+      { id: 'c2', w: 33, type: 'IMAGES', what: 'Alt text on 9 skylight photos', page: '/services/skylights', res: '+12% clicks', ok: 1, lift: 4 },
+      { id: 'c3', w: 35, type: 'CONTENT', what: 'Hail insurance guide refreshed for 2026', page: '/blog/hail-damage-insurance', res: '+152% clicks', ok: 1, lift: 26 },
+      { id: 'c4', w: 38, type: 'META', what: 'Description written for siding', page: '/services/siding', res: 'Undone · −29% clicks', ok: -1, lift: -6 },
+      { id: 'c5', w: 41, type: 'TITLE', what: 'Inspection title: report in 24 hours', page: '/services/roof-inspection', res: '+155% clicks', ok: 1, lift: 30 },
+      { id: 'c6', w: 44, type: 'LINKS', what: '3 posts now link to gutter guards', page: '/services/gutter-guards', res: '+38% clicks', ok: 1, lift: 9 },
+      { id: 'c7', w: 47, type: 'TITLE', what: 'Roof repair title: Calgary + 24/7', page: '/services/roof-repair', res: '+184% clicks', ok: 1, lift: 34 },
+      { id: 'c8', w: 50, type: 'CONTENT', what: 'Ice dam guide: step-by-step removal', page: '/blog/ice-dams-guide', res: 'Measuring · day 9 of 28', ok: 0, lift: 6 }
+    ];
+    const wobble = (i, a) => Math.round(a * Math.sin(i * 1.7) + a * 0.6 * Math.cos(i * 0.9));
+    const clicks = [], impr = [], pos = [], leads = [];
+    for (let i = 0; i < N; i++) {
+      let lift = 0;
+      CH.forEach((c) => { if (i >= c.w + 1) lift += c.lift * Math.min(1, (i - c.w) / 3); });
+      const season = Math.round(10 * Math.sin(i / 8));
+      clicks.push(Math.max(120, 178 + season + wobble(i, 7) + Math.round(lift)));
+      impr.push(Math.round((7600 + season * 60 + wobble(i, 120) + lift * 95) / 10) * 10);
+      pos.push(Math.round((12.6 - (i >= START ? Math.min(4.6, (i - START) * 0.24) : 0) + Math.sin(i * 1.3) * 0.3) * 10) / 10);
+      leads.push(Math.max(1, Math.round(clicks.at(i) / 70 + Math.sin(i * 2.1) * 0.8)));
+    }
+    const M = {
+      clicks: { data: clicks, name: 'Clicks per week', fmt: (v) => String(v), invert: false },
+      impr: { data: impr, name: 'Times shown in Google per week', fmt: (v) => (v >= 1000 ? (v / 1000).toFixed(1) + 'k' : String(v)), invert: false },
+      pos: { data: pos, name: 'Average spot on Google (#1 is the top)', fmt: (v) => '#' + v.toFixed(1), invert: true },
+      leads: { data: leads, name: 'Calls and form fills per week', fmt: (v) => String(v), invert: false }
+    };
+    const R = this.state.range, mk = M[this.state.metric];
+    const from = N - R;
+    const series = mk.data.slice(from);
+    const before = mk.data.slice(0, START);
+    const baseAvg = before.reduce((a, b) => a + b, 0) / before.length;
+    let lo = Math.min(baseAvg, ...series), hi = Math.max(baseAvg, ...series);
+    const pad = (hi - lo) * 0.15 || 1; lo -= pad; hi += pad;
+    if (!mk.invert) lo = Math.max(0, lo);
+    const X = (i) => 56 + (i / (R - 1)) * 888;
+    const Y = (v) => mk.invert ? 24 + ((v - lo) / (hi - lo)) * 230 : 254 - ((v - lo) / (hi - lo)) * 230;
+    const pts = series.map((v, i) => [X(i), Y(v)]);
+    const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+    const area = line + ' L' + X(R - 1).toFixed(1) + ' 262 L56 262 Z';
+    const grid = [0, 1, 2, 3].map((k) => { const v = lo + (hi - lo) * (k + 0.5) / 4; const y = Y(v); return { y: y.toFixed(1), ty: (y + 4).toFixed(1), label: mk.fmt(mk.invert ? Math.round(v * 10) / 10 : Math.round(v)) }; });
+    const weekDate = (i) => { const d = new Date(Date.UTC(2026, 9, 19) - (N - 1 - i) * 7 * 864e5); return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].at(d.getUTCMonth()) + ' ' + d.getUTCDate(); };
+    const step = R <= 13 ? 2 : (R <= 26 ? 4 : 8);
+    const xlabels = [];
+    for (let i = 0; i < R; i += step) xlabels.push({ x: X(i).toFixed(1), label: weekDate(from + i) });
+    const color = (c) => c.ok > 0 ? '#3DDC84' : (c.ok < 0 ? '#FF5A4E' : '#4DA3FF');
+    const vis = CH.filter((c) => c.w >= from);
+    const marks = vis.map((c) => {
+      const on = c.id === this.state.sel;
+      const x = X(c.w - from), y = Y(mk.data.at(c.w));
+      return { x: x.toFixed(1), y: y.toFixed(1), color: on ? '#4DA3FF' : '#4DA3FF', ring: on ? '#F2F4F5' : '#0A0B0D', r: on ? '8' : '6', stem: on ? '#4DA3FF' : '#2E333B',
+        pick: () => this.setState({ sel: c.id }) };
+    });
+    const selC = CH.find((c) => c.id === this.state.sel) || CH.at(-1);
+    const sel = { type: selC.type, what: selC.what, page: selC.page, date: weekDate(selC.w), result: selC.res, color: color(selC), border: selC.ok > 0 ? 'rgba(61,220,132,.4)' : (selC.ok < 0 ? 'rgba(255,90,78,.4)' : 'rgba(77,163,255,.4)') };
+    const lastN = (arr, n) => arr.slice(N - n);
+    const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
+    const nowWin = Math.min(R, 8);
+    const kdef = [
+      ['clicks', 'Clicks / month', Math.round(avg(lastN(clicks, nowWin)) * 4.33), avg(clicks.slice(0, START)) * 4.33, false, (v) => v.toLocaleString('en-US')],
+      ['impr', 'Times shown / month', Math.round(avg(lastN(impr, nowWin)) * 4.33), avg(impr.slice(0, START)) * 4.33, false, (v) => (v / 1000).toFixed(1) + 'k'],
+      ['pos', 'Average spot', Math.round(avg(lastN(pos, nowWin)) * 10) / 10, avg(pos.slice(0, START)), true, (v) => '#' + v.toFixed(1)],
+      ['leads', 'Calls + forms / month', Math.round(avg(lastN(leads, nowWin)) * 4.33), avg(leads.slice(0, START)) * 4.33, false, (v) => String(v)]
+    ];
+    const kpis = kdef.map((d) => {
+      const on = d[0] === this.state.metric;
+      const better = d[4] ? d[2] < d[3] : d[2] > d[3];
+      const delta = d[4] ? 'up ' + (d[3] - d[2]).toFixed(1) + ' spots since Searchify' : (d[2] >= d[3] ? '+' : '') + Math.round((d[2] / d[3] - 1) * 100) + '% since Searchify';
+      return { label: d[1], value: d[5](d[2]), delta: delta, deltaColor: better ? '#3DDC84' : '#FF5A4E', pressed: on ? 'true' : 'false',
+        bg: on ? 'rgba(61,220,132,.06)' : '#101215', border: on ? '#3DDC84' : '#1A1D22', glow: on ? '0 0 22px rgba(61,220,132,.18)' : 'none',
+        pick: () => this.setState({ metric: d[0] }) };
+    });
+    const shipped = CH.length, kept = CH.filter((c) => c.ok >= 0).length, measured = CH.filter((c) => c.ok !== 0), wins = measured.filter((c) => c.ok > 0).length;
+    kpis.push({ label: 'Changes shipped', value: String(shipped), delta: wins + ' of ' + measured.length + ' measured changes won · ' + (shipped - kept) + ' undone', deltaColor: '#9AA1AB', pressed: 'false', bg: '#101215', border: '#1A1D22', glow: 'none', pick: () => this.setState({ sel: 'c8' }) });
+    const top = CH.filter((c) => c.ok !== 0).slice().sort((a, b) => b.lift - a.lift).map((c) => ({ what: c.what, page: c.page, date: weekDate(c.w), result: c.res, color: color(c) }));
+    const clicksNow = Math.round(avg(lastN(clicks, 8)) * 4.33), clicksBefore = Math.round(avg(clicks.slice(0, START)) * 4.33);
+    return {
+      headline: '+' + Math.round((clicksNow / clicksBefore - 1) * 100) + '% more clicks since you started.',
+      ranges: [[13, '3 months'], [26, '6 months'], [52, '12 months']].map((r) => ({ label: r[1], on: r[0] === R, off: r[0] !== R, pick: () => this.setState({ range: r[0] }) })),
+      kpis: kpis, chartTitle: mk.name, seriesName: mk.name.split(' (')[0], chartAria: mk.name + ' over the last ' + R + ' weeks, with shipped changes marked',
+      grid: grid, baseY: Y(baseAvg).toFixed(1), line: line, area: area, marks: marks, xlabels: xlabels, sel: sel, top: top
+    };
+  }
+}
+</script>
+</body>
+</html>

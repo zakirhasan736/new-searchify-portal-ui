@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — Setup</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F7}
+a{color:#121417}a:hover{color:#2457C5}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="min-height: 1240px; background: #F5F6F7; color: #121417; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 28px 16px 64px">
+  <div style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 36px">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <div style="width: 30px; height: 30px; border-radius: 8px; background: {{accent}}; color: #121417; display: grid; place-items: center; font-weight: 700; font-size: 18px">s</div>
+        <div style="font-weight: 700; font-size: 18px; letter-spacing: -0.4px">searchify</div>
+      </div>
+      <span style="font-size: 13px; color: #5B616B">Step {{stepNo}} of 3</span>
+    </div>
+
+    <header style="display: flex; flex-direction: column; gap: 10px">
+      <h1 style="margin: 0; font-size: clamp(32px, 5vw, 48px); line-height: 1.05; letter-spacing: -1.4px; font-weight: 600">Paste your site. We'll learn the rest.</h1>
+      <p style="margin: 0; font-size: 17px; color: #5B616B; line-height: 1.5; max-width: 600px">Searchify reads your pages and drafts a business brief. You correct anything it got wrong — no questionnaire.</p>
+    </header>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 10px">
+      <label for="site" style="flex: 1 1 360px; display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 0 16px; background: #FFFFFF; border: 1px solid #C9CDD2; border-radius: 12px">
+        <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Website address</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B616B" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"></path></svg>
+        <input id="site" type="url" value="https://northline.example" style="flex: 1; min-width: 0; border: 0; outline: none; font: inherit; font-size: 16px; background: transparent; color: #121417">
+      </label>
+      <button type="button" onClick="{{read}}" style="min-height: 54px; padding: 0 22px; border-radius: 12px; border: 0; background: #121417; color: #FFFFFF; font-size: 15px; font-weight: 600">Read my site</button>
+    </div>
+
+    <sc-if value="{{showBrief}}" hint-placeholder-val="{{true}}">
+      <section aria-labelledby="brief-h" style="display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: #127A45; font-weight: 500">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>
+          Read 48 pages in 41 seconds
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E3E5E8; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap">
+            <h2 id="brief-h" style="margin: 0; font-size: 18px; font-weight: 600">Here's what we think you do</h2>
+            <span style="font-size: 13px; color: #5B616B">Edit anything that's off</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #5B616B">Business
+              <input type="text" value="Residential roof repair and replacement" style="min-height: 44px; padding: 0 12px; border: 1px solid #E3E5E8; border-radius: 9px; font: inherit; font-size: 15px; color: #121417">
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #5B616B">Service area
+              <input type="text" value="Calgary, Airdrie, Cochrane" style="min-height: 44px; padding: 0 12px; border: 1px solid #E3E5E8; border-radius: 9px; font: inherit; font-size: 15px; color: #121417">
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #5B616B">What makes you different
+              <input type="text" value="24/7 emergency tarping, written quotes" style="min-height: 44px; padding: 0 12px; border: 1px solid #E3E5E8; border-radius: 9px; font: inherit; font-size: 15px; color: #121417">
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #5B616B">Pages that make money
+              <input type="text" value="/services/roof-repair, /services/roof-replacement" style="min-height: 44px; padding: 0 12px; border: 1px solid #E3E5E8; border-radius: 9px; font: inherit; font-size: 15px; color: #121417">
+            </label>
+          </div>
+          <div style="padding: 12px 14px; border-radius: 10px; background: #FFF6DB; color: #5C4400; font-size: 14px; line-height: 1.5">One question we couldn't answer from your site: do you want more <strong>repair calls</strong> or more <strong>replacement quotes</strong>? It changes which pages Searchify works on first.</div>
+          <div role="group" aria-label="Main goal" style="display: flex; gap: 8px; flex-wrap: wrap">
+            <sc-for list="{{goals}}" as="g" hint-placeholder-count="3">
+              <sc-if value="{{g.on}}" hint-placeholder-val="{{false}}"><button type="button" aria-pressed="true" onClick="{{g.pick}}" style="min-height: 42px; padding: 0 14px; border-radius: 999px; border: 1px solid #121417; background: #121417; color: #FFFFFF; font-size: 14px">{{g.label}}</button></sc-if>
+              <sc-if value="{{g.off}}" hint-placeholder-val="{{true}}"><button type="button" aria-pressed="false" onClick="{{g.pick}}" style="min-height: 42px; padding: 0 14px; border-radius: 999px; border: 1px solid #E3E5E8; background: #FFFFFF; color: #3A3F46; font-size: 14px">{{g.label}}</button></sc-if>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #E3E5E8; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 600">Connect two things</h2>
+          <div style="display: flex; flex-wrap: wrap; gap: 12px">
+            <button type="button" style="flex: 1 1 260px; text-align: left; min-height: 64px; padding: 12px 16px; border-radius: 12px; border: 1px solid #C9CDD2; background: #FFFFFF; color: #121417; display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 15px; font-weight: 600">Google Search Console</span><span style="font-size: 13px; color: #5B616B">So we can see what people search for</span>
+            </button>
+            <button type="button" style="flex: 1 1 260px; text-align: left; min-height: 64px; padding: 12px 16px; border-radius: 12px; border: 1px solid #C9CDD2; background: #FFFFFF; color: #121417; display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 15px; font-weight: 600">WordPress</span><span style="font-size: 13px; color: #5B616B">So approved changes can ship</span>
+            </button>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 6px">
+            <span style="font-size: 13px; color: #5B616B">Nothing goes live without your approval.</span>
+            <a href="Main.dc.html" style="display: inline-flex; align-items: center; min-height: 46px; padding: 0 20px; border-radius: 11px; background: {{accent}}; color: #121417; font-size: 15px; font-weight: 600; text-decoration: none">See my first moves</a>
+          </div>
+        </div>
+      </section>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#D5F879","options":["#D5F879","#9FE7F5","#FFD36E","#C9B8FF"]},"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { read: true, goal: 'repair' };
+  }
+  renderVals() {
+    const defs = [
+      { id: 'repair', label: 'More repair calls' },
+      { id: 'replace', label: 'More replacement quotes' },
+      { id: 'both', label: 'Both equally' }
+    ];
+    const goals = defs.map((d) => Object.assign({}, d, { on: d.id === this.state.goal, off: d.id !== this.state.goal, pick: () => this.setState({ goal: d.id }) }));
+    return {
+      accent: this.props.accent ?? '#D5F879',
+      showBrief: this.state.read,
+      stepNo: this.state.read ? '2' : '1',
+      read: () => this.setState({ read: true }),
+      goals: goals
+    };
+  }
+}
+</script>
+<script>window.__DC_FACTORY = function (DCLogic, React) {
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { read: true, goal: 'repair' };
+  }
+  renderVals() {
+    const defs = [
+      { id: 'repair', label: 'More repair calls' },
+      { id: 'replace', label: 'More replacement quotes' },
+      { id: 'both', label: 'Both equally' }
+    ];
+    const goals = defs.map((d) => Object.assign({}, d, { on: d.id === this.state.goal, off: d.id !== this.state.goal, pick: () => this.setState({ goal: d.id }) }));
+    return {
+      accent: this.props.accent ?? '#D5F879',
+      showBrief: this.state.read,
+      stepNo: this.state.read ? '2' : '1',
+      read: () => this.setState({ read: true }),
+      goals: goals
+    };
+  }
+}
+
+return Component;
+};</script>
+</body>
+</html>

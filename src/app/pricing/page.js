@@ -3,8 +3,7 @@ import PricingView from "@/components/landing/PricingView";
 
 export const metadata = pageMeta({
   title: "Pricing",
-  description:
-    "Searchify is validating its first customer workflow. Ask about the pilot and get clear scope and pricing before you commit.",
+  description: "Pay for sites, not seats. Solo, Pro, Premium, and Enterprise plans with a 14-day trial.",
   path: "/pricing",
 });
 

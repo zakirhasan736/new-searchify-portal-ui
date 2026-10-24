@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — Review a move</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F7}
+a{color:#121417}a:hover{color:#2457C5}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="min-height: 1240px; background: #F5F6F7; color: #121417; font-family: Geist, 'Helvetica Neue', sans-serif; display: flex; flex-wrap: wrap; align-items: stretch">
+
+  <nav aria-label="Primary" style="flex: 1 1 228px; box-sizing: border-box; padding: 22px 16px; background: #FFFFFF; border-right: 1px solid #E3E5E8; display: flex; flex-direction: column; gap: 22px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 0 6px">
+      <div style="width: 30px; height: 30px; border-radius: 8px; background: {{accent}}; color: #121417; display: grid; place-items: center; font-weight: 700; font-size: 18px">s</div>
+      <div style="font-weight: 700; font-size: 18px; letter-spacing: -0.4px">searchify</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <a href="Main.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 8px; background: #EEF0F2; text-decoration: none; font-size: 14px; font-weight: 600">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h4l2 3h4l2-3h4"></path><path d="M5 5h14l1 8v6H4v-6z"></path></svg>
+        <span>Today</span>
+      </a>
+      <a href="Ledger.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 8px; text-decoration: none; font-size: 14px; color: #3A3F46">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M8 15l4-4 3 3 5-6"></path></svg>
+        <span>Ledger</span>
+      </a>
+      <a href="Connections.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 8px; text-decoration: none; font-size: 14px; color: #3A3F46">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7V3"></path><path d="M15 7V3"></path><path d="M6 7h12v4a6 6 0 0 1-12 0z"></path><path d="M12 17v4"></path></svg>
+        <span>Connections</span>
+      </a>
+      <a href="Setup.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 8px; text-decoration: none; font-size: 14px; color: #3A3F46">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"></path><path d="M9 12h7"></path><path d="M9 16h5"></path></svg>
+        <span>Business brief</span>
+      </a>
+    </div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px clamp(16px, 4vw, 48px) 48px">
+    <div style="max-width: 1120px; display: flex; flex-direction: column; gap: 24px">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #5B616B">
+        <a href="Main.dc.html" style="color: #5B616B">Today</a>
+        <span aria-hidden="true">/</span>
+        <span>Title rewrite</span>
+      </div>
+
+      <header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 6px; flex: 1 1 420px">
+          <h1 style="margin: 0; font-size: clamp(26px, 3vw, 34px); line-height: 1.15; letter-spacing: -0.8px; font-weight: 600">Put the city in the roof repair title</h1>
+          <div style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #5B616B">northline.example/services/roof-repair</div>
+        </div>
+        <sc-if value="{{pending}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <a href="Main.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #E3E5E8; background: #FFFFFF; color: #3A3F46; font-size: 14px; text-decoration: none">Skip</a>
+            <button type="button" style="min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #C9CDD2; background: #FFFFFF; color: #121417; font-size: 14px">Edit draft</button>
+            <button type="button" onClick="{{approve}}" style="min-height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #121417; color: #FFFFFF; font-size: 14px; font-weight: 600">Approve and ship</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{approved}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #127A45; background: #E6F4EC; padding: 10px 14px; border-radius: 10px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>
+              Shipped · live value verified
+            </span>
+            <button type="button" onClick="{{undo}}" style="min-height: 44px; padding: 0 12px; border: 0; background: transparent; color: #5B616B; font-size: 14px; text-decoration: underline">Roll back</button>
+          </div>
+        </sc-if>
+      </header>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+        <section aria-labelledby="change-h" style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+          <div style="background: #FFFFFF; border: 1px solid #E3E5E8; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 18px">
+            <h2 id="change-h" style="margin: 0; font-size: 16px; font-weight: 600">The exact change</h2>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <div style="font-size: 12px; font-weight: 600; color: #5B616B; text-transform: uppercase; letter-spacing: 0.6px">SEO title</div>
+              <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; background: #FBEAE4">
+                <span style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #B3401A; font-weight: 600">−</span>
+                <span style="font-size: 15px; color: #5E2412; text-decoration: line-through">Roof Repair Services | Northline Roofing</span>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; background: #E6F4EC">
+                <span style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #127A45; font-weight: 600">+</span>
+                <span style="font-size: 15px; color: #0D4A2B">Roof Repair in Calgary — 24/7 Emergency Leaks | Northline</span>
+              </div>
+              <div style="font-size: 12px; color: #5B616B">56 characters · fits on desktop and mobile results</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <div style="font-size: 12px; font-weight: 600; color: #5B616B; text-transform: uppercase; letter-spacing: 0.6px">Meta description</div>
+              <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; background: #FBEAE4">
+                <span style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #B3401A; font-weight: 600">−</span>
+                <span style="font-size: 15px; color: #5E2412; text-decoration: line-through">Learn more about our roof repair services.</span>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; background: #E6F4EC">
+                <span style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #127A45; font-weight: 600">+</span>
+                <span style="font-size: 15px; color: #0D4A2B; line-height: 1.45">Leaking roof in Calgary, Airdrie or Cochrane? Same-day repairs, 24/7 emergency tarping, and a written quote before any work starts.</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background: #FFFFFF; border: 1px solid #E3E5E8; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600">How it looks in Google</h2>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+              <div style="border: 1px solid #EEF0F2; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 4px">
+                <div style="font-size: 12px; color: #5B616B; margin-bottom: 4px">Now</div>
+                <div style="font-size: 12px; color: #3A3F46">northline.example › services</div>
+                <div style="font-size: 17px; color: #1A0DAB">Roof Repair Services | Northline Roofing</div>
+                <div style="font-size: 13px; color: #4D5156; line-height: 1.45">Learn more about our roof repair services.</div>
+              </div>
+              <div style="border: 2px solid #121417; border-radius: 10px; padding: 13px; display: flex; flex-direction: column; gap: 4px">
+                <div style="font-size: 12px; color: #121417; font-weight: 600; margin-bottom: 4px">After</div>
+                <div style="font-size: 12px; color: #3A3F46">northline.example › services</div>
+                <div style="font-size: 17px; color: #1A0DAB">Roof Repair in Calgary — 24/7 Emergency Leaks | Northline</div>
+                <div style="font-size: 13px; color: #4D5156; line-height: 1.45">Leaking roof in Calgary, Airdrie or Cochrane? Same-day repairs, 24/7 emergency tarping, and a written quote before any work starts.</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background: #FFFFFF; border: 1px solid #E3E5E8; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600">Why Searchify suggested it</h2>
+            <p style="margin: 0; font-size: 14px; color: #3A3F46; line-height: 1.5">The page already ranks near the top of page one for these searches. People see it but don't click, because the title doesn't say where you work or that you handle emergencies.</p>
+            <div style="overflow-x: auto">
+              <table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 460px">
+                <thead>
+                  <tr style="text-align: left; color: #5B616B; font-size: 12px">
+                    <th style="padding: 8px 0; font-weight: 600; border-bottom: 1px solid #E3E5E8">Search query · Search Console, 28 days</th>
+                    <th style="padding: 8px 0; font-weight: 600; border-bottom: 1px solid #E3E5E8; text-align: right">Impressions</th>
+                    <th style="padding: 8px 0; font-weight: 600; border-bottom: 1px solid #E3E5E8; text-align: right">Position</th>
+                    <th style="padding: 8px 0; font-weight: 600; border-bottom: 1px solid #E3E5E8; text-align: right">CTR</th>
+                  </tr>
+                </thead>
+                <tbody style="font-family: 'Geist Mono', monospace; font-size: 13px">
+                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #EEF0F2">roof repair calgary</td><td style="text-align: right; border-bottom: 1px solid #EEF0F2">2,140</td><td style="text-align: right; border-bottom: 1px solid #EEF0F2">6.4</td><td style="text-align: right; border-bottom: 1px solid #EEF0F2">0.9%</td></tr>
+                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #EEF0F2">roof repair near me</td><td style="text-align: right; border-bottom: 1px solid #EEF0F2">980</td><td style="text-align: right; border-bottom: 1px solid #EEF0F2">8.1</td><td style="text-align: right; border-bottom: 1px solid #EEF0F2">1.4%</td></tr>
+                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #EEF0F2">roof leak repair</td><td style="text-align: right; border-bottom: 1px solid #EEF0F2">680</td><td style="text-align: right; border-bottom: 1px solid #EEF0F2">9.3</td><td style="text-align: right; border-bottom: 1px solid #EEF0F2">0.7%</td></tr>
+                  <tr><td style="padding: 10px 0">emergency roof repair calgary</td><td style="text-align: right">410</td><td style="text-align: right">5.2</td><td style="text-align: right">2.0%</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <aside style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+          <div style="background: #121417; color: #FFFFFF; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+            <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: #C9CDD2">Expected result</div>
+            <div style="font-size: 28px; font-weight: 600; letter-spacing: -0.6px">+40 to +90 clicks / mo</div>
+            <div style="font-size: 14px; color: #D7DADE; line-height: 1.5">Based on [N] comparable title changes Searchify has measured on local-service pages. Median CTR change: [X]%.</div>
+            <div style="height: 1px; background: #2E3238"></div>
+            <div style="font-size: 13px; color: #C9CDD2; line-height: 1.5">This number improves with every change any Searchify customer ships and measures.</div>
+          </div>
+
+          <div style="background: #FFFFFF; border: 1px solid #E3E5E8; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600">From your business brief</h2>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px">
+              <div style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #5B616B">Service area</span><span style="text-align: right">Calgary, Airdrie, Cochrane</span></div>
+              <div style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #5B616B">Differentiator</span><span style="text-align: right">24/7 emergency tarping</span></div>
+              <div style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #5B616B">Voice</span><span style="text-align: right">Plain, no hype</span></div>
+            </div>
+          </div>
+
+          <div style="background: #FFFFFF; border: 1px solid #E3E5E8; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600">How it ships and gets checked</h2>
+            <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 14px">
+              <li style="display: flex; gap: 10px"><span style="font-family: 'Geist Mono', monospace; color: #5B616B">1</span><span>Writes the Yoast title and description through the Searchify plugin. Dry run passed.</span></li>
+              <li style="display: flex; gap: 10px"><span style="font-family: 'Geist Mono', monospace; color: #5B616B">2</span><span>Reads the live page back to confirm it matches what you approved.</span></li>
+              <li style="display: flex; gap: 10px"><span style="font-family: 'Geist Mono', monospace; color: #5B616B">3</span><span>Saves the old values, so one click rolls it back.</span></li>
+              <li style="display: flex; gap: 10px"><span style="font-family: 'Geist Mono', monospace; color: #5B616B">4</span><span>Compares the 28 days after against the 28 days before, and reports back on Nov 16.</span></li>
+            </ol>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#D5F879","options":["#D5F879","#9FE7F5","#FFD36E","#C9B8FF"]},"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { approved: false };
+  }
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#D5F879',
+      pending: !this.state.approved,
+      approved: this.state.approved,
+      approve: () => this.setState({ approved: true }),
+      undo: () => this.setState({ approved: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

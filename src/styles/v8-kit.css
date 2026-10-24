@@ -1,0 +1,197 @@
+.v8-page {
+  --bg: #0a0b0d;
+  --surface: #101215;
+  --raised: #131519;
+  --line: #1a1d22;
+  --line-2: #262a31;
+  --text: #f2f4f5;
+  --muted: #9aa1ab;
+  --faint: #7d848e;
+  --lime: #d5f879;
+  --blue: #4da3ff;
+  --red: #ff5a4e;
+  --green: #3ddc84;
+  --display: var(--font-bricolage), "Bricolage Grotesque", Geist, system-ui, sans-serif;
+  --ui: var(--font-geist), Geist, system-ui, sans-serif;
+  --mono: var(--font-geist-mono), "Geist Mono", ui-monospace, monospace;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 var(--ui);
+  box-sizing: border-box;
+  padding: 22px clamp(16px, 4vw, 56px) 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+.v8-page *,
+.v8-page *::before,
+.v8-page *::after {
+  box-sizing: border-box;
+}
+.v8-page a {
+  color: var(--lime);
+}
+.v8-page a:hover {
+  color: #ecffb8;
+}
+.v8-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 17px;
+}
+.v8-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--lime);
+  border: 1px solid var(--lime);
+  border-radius: 6px;
+  padding: 2px 7px;
+  margin-left: 4px;
+}
+.v8-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 22px;
+  border-radius: 14px;
+  border: 0;
+  font: 600 15px var(--ui);
+  cursor: pointer;
+  text-decoration: none;
+}
+.v8-btn-primary {
+  background: var(--blue);
+  color: var(--bg);
+  box-shadow: 0 0 24px rgba(77, 163, 255, 0.45);
+}
+.v8-btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--line-2);
+}
+.v8-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.v8-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.v8-field input,
+.v8-field select,
+.v8-field textarea {
+  min-height: 50px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line-2);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  width: 100%;
+}
+.v8-field textarea {
+  min-height: 96px;
+  padding: 12px 14px;
+  resize: vertical;
+}
+.v8-seg {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--raised);
+  border: 1px solid var(--line-2);
+  gap: 2px;
+}
+.v8-seg button {
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 9px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: 400 14px var(--ui);
+  cursor: pointer;
+}
+.v8-seg button.is-on {
+  background: #262a31;
+  color: var(--text);
+  font-weight: 600;
+}
+.v8-seg button.is-on[data-accent="green"] {
+  background: var(--green);
+  color: var(--bg);
+  box-shadow: 0 0 18px rgba(61, 220, 132, 0.5);
+}
+.v8-card {
+  border-radius: 26px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.v8-card.is-on {
+  border-color: var(--blue);
+  box-shadow: 0 0 34px rgba(77, 163, 255, 0.25);
+}
+.v8-wrap {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+}
+.v8-h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(40px, 5.2vw, 68px);
+  line-height: 0.98;
+  letter-spacing: -2px;
+  font-weight: 700;
+}
+.v8-lede {
+  margin: 0;
+  font-size: 17px;
+  color: var(--muted);
+  line-height: 1.5;
+  max-width: 560px;
+}
+.v8-nav-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+}
+.v8-nav-tabs a {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: 10px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+}
+.v8-nav-tabs a[aria-current="page"] {
+  background: #1a1d22;
+  color: var(--text);
+  font-weight: 600;
+}
+@media (prefers-reduced-motion: reduce) {
+  .v8-page * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

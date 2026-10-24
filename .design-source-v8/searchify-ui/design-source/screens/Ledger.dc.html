@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — Ledger</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F7}
+a{color:#121417}a:hover{color:#2457C5}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="min-height: 1240px; background: #F5F6F7; color: #121417; font-family: Geist, 'Helvetica Neue', sans-serif; display: flex; flex-wrap: wrap; align-items: stretch">
+
+  <nav aria-label="Primary" style="flex: 1 1 228px; box-sizing: border-box; padding: 22px 16px; background: #FFFFFF; border-right: 1px solid #E3E5E8; display: flex; flex-direction: column; gap: 22px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 0 6px">
+      <div style="width: 30px; height: 30px; border-radius: 8px; background: {{accent}}; color: #121417; display: grid; place-items: center; font-weight: 700; font-size: 18px">s</div>
+      <div style="font-weight: 700; font-size: 18px; letter-spacing: -0.4px">searchify</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 8px; text-decoration: none; font-size: 14px; color: #3A3F46">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h4l2 3h4l2-3h4"></path><path d="M5 5h14l1 8v6H4v-6z"></path></svg>
+        <span>Today</span>
+      </a>
+      <a href="Ledger.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 8px; background: #EEF0F2; text-decoration: none; font-size: 14px; font-weight: 600">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M8 15l4-4 3 3 5-6"></path></svg>
+        <span>Ledger</span>
+      </a>
+      <a href="Connections.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 8px; text-decoration: none; font-size: 14px; color: #3A3F46">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7V3"></path><path d="M15 7V3"></path><path d="M6 7h12v4a6 6 0 0 1-12 0z"></path><path d="M12 17v4"></path></svg>
+        <span>Connections</span>
+      </a>
+      <a href="Setup.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 8px; text-decoration: none; font-size: 14px; color: #3A3F46">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"></path><path d="M9 12h7"></path><path d="M9 16h5"></path></svg>
+        <span>Business brief</span>
+      </a>
+    </div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 36px clamp(16px, 4vw, 48px) 48px">
+    <div style="max-width: 1120px; display: flex; flex-direction: column; gap: 24px">
+      <header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 8px; flex: 1 1 420px">
+          <h1 style="margin: 0; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.1; letter-spacing: -1px; font-weight: 600">Every change, and what it did.</h1>
+          <p style="margin: 0; font-size: 16px; color: #5B616B; max-width: 640px; line-height: 1.5">Who approved it, proof that it went live, and its measured effect 28 days later. Anything can be rolled back.</p>
+        </div>
+        <div style="display: flex; gap: 8px">
+          <button type="button" style="min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #C9CDD2; background: #FFFFFF; color: #121417; font-size: 14px">Export CSV</button>
+          <button type="button" style="min-height: 44px; padding: 0 16px; border-radius: 10px; border: 0; background: #121417; color: #FFFFFF; font-size: 14px; font-weight: 600">Client report · October</button>
+        </div>
+      </header>
+
+      <div role="group" aria-label="Filter by result" style="display: flex; flex-wrap: wrap; gap: 8px">
+        <sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+          <sc-if value="{{f.on}}" hint-placeholder-val="{{false}}">
+            <button type="button" aria-pressed="true" onClick="{{f.pick}}" style="min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #121417; background: #121417; color: #FFFFFF; font-size: 14px; font-weight: 500">{{f.label}} · {{f.count}}</button>
+          </sc-if>
+          <sc-if value="{{f.off}}" hint-placeholder-val="{{true}}">
+            <button type="button" aria-pressed="false" onClick="{{f.pick}}" style="min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #E3E5E8; background: #FFFFFF; color: #3A3F46; font-size: 14px">{{f.label}} · {{f.count}}</button>
+          </sc-if>
+        </sc-for>
+      </div>
+
+      <div style="background: #FFFFFF; border: 1px solid #E3E5E8; border-radius: 14px; overflow-x: auto">
+        <div style="min-width: 860px">
+          <div style="display: grid; grid-template-columns: 90px minmax(0, 2.2fr) minmax(0, 1.2fr) 120px minmax(0, 1.3fr) 110px; gap: 16px; padding: 12px 20px; border-bottom: 1px solid #E3E5E8; font-size: 12px; font-weight: 600; color: #5B616B">
+            <span>Shipped</span><span>Change</span><span>Approved by</span><span>Live check</span><span>Result · 28d vs prior</span><span></span>
+          </div>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+            <div style="display: grid; grid-template-columns: 90px minmax(0, 2.2fr) minmax(0, 1.2fr) 120px minmax(0, 1.3fr) 110px; gap: 16px; padding: 14px 20px; border-bottom: 1px solid #EEF0F2; align-items: center; font-size: 14px">
+              <span style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #5B616B">{{r.date}}</span>
+              <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                <span style="font-weight: 500">{{r.change}}</span>
+                <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #5B616B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{r.page}}</span>
+              </span>
+              <span style="color: #3A3F46">{{r.by}}</span>
+              <span style="display: inline-flex; align-items: center; gap: 6px; color: #127A45; font-size: 13px; font-weight: 500">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>
+                Matches
+              </span>
+              <span>
+                <sc-if value="{{r.up}}" hint-placeholder-val="{{true}}"><span style="display: inline-flex; gap: 6px; align-items: baseline"><span style="font-weight: 600; color: #127A45">{{r.delta}}</span><span style="font-size: 13px; color: #5B616B">{{r.detail}}</span></span></sc-if>
+                <sc-if value="{{r.flat}}" hint-placeholder-val="{{false}}"><span style="display: inline-flex; gap: 6px; align-items: baseline"><span style="font-weight: 600; color: #3A3F46">{{r.delta}}</span><span style="font-size: 13px; color: #5B616B">{{r.detail}}</span></span></sc-if>
+                <sc-if value="{{r.down}}" hint-placeholder-val="{{false}}"><span style="display: inline-flex; gap: 6px; align-items: baseline"><span style="font-weight: 600; color: #B3401A">{{r.delta}}</span><span style="font-size: 13px; color: #5B616B">{{r.detail}}</span></span></sc-if>
+                <sc-if value="{{r.measuring}}" hint-placeholder-val="{{false}}"><span style="display: inline-flex; flex-direction: column; gap: 4px; width: 100%"><span style="font-size: 13px; color: #5B616B">{{r.detail}}</span><span style="display: block; height: 4px; border-radius: 4px; background: #EEF0F2"><span style="display: block; height: 4px; border-radius: 4px; background: #2457C5; width: {{r.progress}}"></span></span></span></sc-if>
+              </span>
+              <span style="text-align: right">
+                <sc-if value="{{r.rolled}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; color: #5B616B">Rolled back</span></sc-if>
+                <sc-if value="{{r.canRoll}}" hint-placeholder-val="{{true}}"><button type="button" style="min-height: 36px; padding: 0 10px; border: 1px solid #E3E5E8; border-radius: 8px; background: #FFFFFF; color: #3A3F46; font-size: 13px">Roll back</button></sc-if>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <p style="margin: 0; font-size: 13px; color: #5B616B; max-width: 720px; line-height: 1.5">Results compare Search Console clicks for the changed page over the 28 days after the live check against the 28 days before. Seasonality and algorithm updates are flagged when they overlap a window.</p>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#D5F879","options":["#D5F879","#9FE7F5","#FFD36E","#C9B8FF"]},"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { filter: 'all' };
+  }
+  renderVals() {
+    const all = [
+      { date: 'Oct 14', change: 'Title + description rewrite', page: '/services/roof-replacement', by: 'You', res: 'measuring', detail: 'Day 5 of 28', progress: '18%' },
+      { date: 'Oct 09', change: 'Internal links from 2 posts', page: '/services/skylights', by: 'Maya (client)', res: 'measuring', detail: 'Day 10 of 28', progress: '36%' },
+      { date: 'Sep 22', change: 'Refreshed guide + 3 social posts', page: '/blog/hail-damage-insurance', by: 'You', res: 'up', delta: '+118 clicks', detail: 'CTR 1.6% → 2.9%' },
+      { date: 'Sep 15', change: 'Title rewrite', page: '/services/flat-roofs', by: 'You', res: 'up', delta: '+64 clicks', detail: 'pos 7.2 → 5.9' },
+      { date: 'Sep 08', change: 'FAQ section added', page: '/services/gutters', by: 'Maya (client)', res: 'flat', delta: '+3 clicks', detail: 'no clear effect' },
+      { date: 'Aug 30', change: 'Description rewrite', page: '/about', by: 'You', res: 'down', delta: '−21 clicks', detail: 'rolled back Sep 27', rolled: true },
+      { date: 'Aug 21', change: 'Title rewrite', page: '/services/roof-inspection', by: 'You', res: 'up', delta: '+130 clicks', detail: 'CTR 0.8% → 2.1%' }
+    ];
+    const f = this.state.filter;
+    const match = (r) => f === 'all' || (f === 'working' && r.res === 'up') || (f === 'measuring' && r.res === 'measuring') || (f === 'rolled' && !!r.rolled);
+    const rows = all.filter(match).map((r) => Object.assign({}, r, {
+      up: r.res === 'up', flat: r.res === 'flat', down: r.res === 'down', measuring: r.res === 'measuring',
+      rolled: !!r.rolled, canRoll: !r.rolled
+    }));
+    const defs = [
+      { id: 'all', label: 'All', count: all.length },
+      { id: 'working', label: 'Working', count: all.filter((r) => r.res === 'up').length },
+      { id: 'measuring', label: 'Measuring', count: all.filter((r) => r.res === 'measuring').length },
+      { id: 'rolled', label: 'Rolled back', count: all.filter((r) => r.rolled).length }
+    ];
+    const filters = defs.map((d) => Object.assign({}, d, { on: d.id === f, off: d.id !== f, pick: () => this.setState({ filter: d.id }) }));
+    return { accent: this.props.accent ?? '#D5F879', rows: rows, filters: filters };
+  }
+}
+</script>
+</body>
+</html>

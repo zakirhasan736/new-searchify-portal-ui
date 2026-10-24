@@ -43,19 +43,52 @@ body:has(#sf-app) #sf-app {
 
 html:has(#sf-app.sf-auth),
 body:has(#sf-app.sf-auth) {
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
+  height: auto;
+  min-height: 100%;
+  max-height: none;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 body:has(#sf-app.sf-auth) #sf-app.sf-auth {
-  height: 100dvh;
+  height: auto;
   min-height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
+  max-height: none;
+  overflow: visible;
 }
 @media (min-width: 761px) {
   body:has(#sf-app.sf-auth) #sf-app.sf-auth {
-    overflow: hidden;
+    overflow: visible;
+  }
+}
+
+.v8-wall-pill {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #131519;
+  border: 1px solid #262a31;
+  color: #f2f4f5;
+  font: 500 13px Geist, system-ui, sans-serif;
+  text-decoration: none;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 900px) {
+  .v8-wall-pill {
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .v8-wall-pill.is-above-tabs {
+    bottom: calc(74px + env(safe-area-inset-bottom, 0px));
   }
 }
 

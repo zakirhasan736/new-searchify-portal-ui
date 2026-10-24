@@ -250,15 +250,18 @@ html,body{margin:0;background:#101112}button,input,select,textarea{font-family:i
 /* Auth screens — original display type, split layout, form in remaining dvh */
 html:has(#sf-app.sf-auth),
 body:has(#sf-app.sf-auth){
-  height:100dvh;
-  overflow:hidden;
+  height:auto;
+  min-height:100%;
+  max-height:none;
+  overflow-x:hidden;
+  overflow-y:auto;
   background:#101112;
 }
 #sf-app.sf-auth{
   min-height:100dvh;
-  height:100dvh;
-  max-height:100dvh;
-  overflow:hidden;
+  height:auto;
+  max-height:none;
+  overflow:visible;
   display:flex;
   flex-direction:column;
   -webkit-overflow-scrolling:touch;

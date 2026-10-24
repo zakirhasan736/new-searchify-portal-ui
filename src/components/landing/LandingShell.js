@@ -3,19 +3,21 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, useReducedMotion } from "framer-motion";
+import SearchifyMark from "@/components/landing/SearchifyMark";
 
 const LINKS = [
-  { href: "/#how", label: "How it works", key: "how" },
+  { href: "/#testimonials", label: "Testimonials", key: "testimonials", homeOnly: true },
+  { href: "/#how", label: "How it works", key: "how", homeOnly: true },
   { href: "/pricing", label: "Pricing", key: "pricing" },
-  { href: "/about", label: "About", key: "about" },
-  { href: "/contact", label: "Contact", key: "contact" },
-  { href: "/#questions", label: "FAQs", key: "faq" },
+  { href: "/partners/login", label: "Partners", key: "partners" },
 ];
 
-export default function LandingShell({ current = "home", footerNote = "Searchify · Fully developed · 2026", children }) {
+export default function LandingShell({
+  current = "home",
+  footerNote = "© Searchify",
+  children,
+}) {
   const pathname = usePathname() || "/";
-  const reduce = useReducedMotion();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -44,109 +46,79 @@ export default function LandingShell({ current = "home", footerNote = "Searchify
     };
   }, [open]);
 
-  useEffect(() => {
-    const root = document.querySelector(".sf-land");
-    if (!root) return undefined;
-    const nodes = root.querySelectorAll("section, .hero, .pagehero, .contactintro, .closing, .pricewrap, .contactlayout");
-    if (reduce) {
-      nodes.forEach((node) => node.classList.add("is-in"));
-      return undefined;
-    }
-    root.classList.add("js-motion");
-    const seen = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          entry.target.classList.add("is-in");
-          seen.unobserve(entry.target);
-        });
-      },
-      { threshold: 0.14, rootMargin: "0px 0px -6% 0px" },
-    );
-    nodes.forEach((node) => {
-      node.classList.add("sf-rise");
-      seen.observe(node);
-    });
-    return () => seen.disconnect();
-  }, [pathname, reduce]);
-
   const close = () => setOpen(false);
+  const visibleLinks = LINKS.filter((item) => !item.homeOnly || current === "home");
 
   return (
     <div className="sf-land">
-      <header className={`wrap${scrolled ? " is-scrolled" : ""}`}>
-        <nav className="nav" aria-label="Main navigation">
-          <Link className="brand" href={current === "home" ? "#top" : "/"} aria-label="Searchify home" onClick={close}>
-            <motion.span
-              className="mark"
-              aria-hidden="true"
-              animate={reduce ? undefined : { scale: scrolled ? 0.9 : 1, rotate: scrolled ? -6 : 0 }}
-              transition={{ type: "spring", stiffness: 420, damping: 28 }}
-            >
-              s
-            </motion.span>
-            searchify
-            <small>SEO OPERATOR</small>
+      <header className={`sf-top${scrolled ? " is-scrolled" : ""}`}>
+        <nav className="sf-nav" aria-label="Main">
+          <Link
+            className="sf-brand"
+            href={current === "home" ? "#top" : "/"}
+            aria-label="Searchify home"
+            onClick={close}
+          >
+            <SearchifyMark />
+            <span>searchify</span>
           </Link>
+
           <button
-            className="menubtn"
+            className="sf-menubtn"
             type="button"
             aria-expanded={open}
-            aria-controls="navlinks"
+            aria-controls="sf-navlinks"
             onClick={() => setOpen((value) => !value)}
           >
             {open ? "Close" : "Menu"}
           </button>
-          <div className={`navlinks${open ? " open" : ""}`} id="navlinks">
-            {LINKS.map((item) => (
-              <span className="navitem" key={item.key}>
-                <Link href={item.href} aria-current={current === item.key ? "page" : undefined} onClick={close}>
-                  {item.label}
-                </Link>
-              </span>
+
+          <div className={`sf-navlinks${open ? " open" : ""}`} id="sf-navlinks">
+            {visibleLinks.map((item) => (
+              <Link
+                key={item.key}
+                href={item.href}
+                aria-current={current === item.key ? "page" : undefined}
+                onClick={close}
+              >
+                {item.label}
+              </Link>
             ))}
-            <Link className="navsignin" href="/login" onClick={close}>
+            <Link href="/login" onClick={close}>
               Sign in
             </Link>
-            <Link className="btn primary small" href="/signup" onClick={close}>
-              Explore the product
+            <Link
+              className="sf-cta"
+              href={current === "home" ? "/#scan" : "/signup?next=%2Fapp%2Fstart"}
+              onClick={close}
+            >
+              Scan your site
             </Link>
           </div>
         </nav>
       </header>
-      <motion.div
-        key={pathname}
-        initial={reduce ? false : { opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      >
+
+      <div id="top" className="sf-main">
         {children}
-      </motion.div>
-      <footer className="wrap footer">
-        <Link href="/" className="brand" onClick={close}>
-          <span className="mark">s</span>searchify
-        </Link>
-        <div className="footerlinks">
+      </div>
+
+      <footer className="sf-footer">
+        <div className="sf-footer-inner">
+          <span className="sf-footer-copy">{footerNote}</span>
           <Link href="/pricing" aria-current={current === "pricing" ? "page" : undefined}>
             Pricing
           </Link>
-          <Link href="/about" aria-current={current === "about" ? "page" : undefined}>
-            About
-          </Link>
-          <Link href="/contact" aria-current={current === "contact" ? "page" : undefined}>
-            Contact
+          <Link href="/partners/login">Affiliates</Link>
+          <Link href="/privacy" aria-current={current === "privacy" ? "page" : undefined}>
+            Privacy
           </Link>
           <Link href="/terms" aria-current={current === "terms" ? "page" : undefined}>
             Terms
           </Link>
-          <Link href="/privacy" aria-current={current === "privacy" ? "page" : undefined}>
-            Privacy
+          <Link href="/contact" aria-current={current === "contact" ? "page" : undefined}>
+            Contact
           </Link>
-          <Link href="/#questions">FAQs</Link>
-          <Link href="/login">Sign in</Link>
-          {current === "home" ? <a href="#top">Back to top</a> : null}
         </div>
-        <small>{footerNote}</small>
       </footer>
     </div>
   );

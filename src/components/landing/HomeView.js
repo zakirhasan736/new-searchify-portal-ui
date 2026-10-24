@@ -1,531 +1,573 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import LandingShell from "@/components/landing/LandingShell";
+import TestimonialsSlider from "@/components/landing/TestimonialsSlider";
+import { normalizeSiteUrl, seedDraftSite, stashPendingSite } from "@/lib/journey";
+import { userIsAuthenticated } from "@/utils/users/Helpers";
 
-const STEP_NAMES = ["Find", "Understand", "Recommend", "Approve", "Execute", "Verify", "Monitor"];
 
-const STAGES = [
-  {
-    title: "Know which page to work on next.",
-    desc: "Searchify brings search queries and existing page metadata into a work queue, so each recommendation starts with something you can inspect.",
-  },
-  {
-    title: "Understand the opportunity in context.",
-    desc: "Check what people searched for, what the page says, and which services the business actually offers. Keep missing information visible.",
-  },
-  {
-    title: "Start with a draft that knows the business.",
-    desc: "Generate a title and description from the page, search evidence and approved business facts. Edit the wording before anything is approved.",
-  },
-  {
-    title: "Your approval is the turning point.",
-    desc: "Compare old and new values, check the selected site, and approve the exact version. Changing the draft means reviewing it again.",
-  },
-  {
-    title: "Publish the version you approved.",
-    desc: "Send the approved metadata to the supported WordPress site. An intervening edit should stop the job and send it back for review.",
-  },
-  {
-    title: "Check the page, not just the response.",
-    desc: "Fetch the live page and check that the approved values are present. A mismatch stays visible. This verifies the website, not Google’s search listing.",
-  },
-  {
-    title: "Keep the change connected to what follows.",
-    desc: "Track search performance alongside the work completed. See dates, data freshness and changes over time, without treating every traffic movement as proof of impact.",
-  },
+const COLORS = { red: "#FF5A4E", yellow: "#FFC53D", green: "#3DDC84", blue: "#4DA3FF" };
+const RGB = { red: "255,90,78", yellow: "255,197,61", green: "61,220,132", blue: "77,163,255" };
+const KEYS = ["red", "yellow", "green", "blue"];
+const LABELS = { red: "5 DIRE", yellow: "9 MEDIUM", green: "18 PASS", blue: "8 LOCKED" };
+const TILE = {
+  red: ["Dire", "Costing you the most. Fix first."],
+  yellow: ["Medium", "Worth doing after the reds."],
+  green: ["Passes", "Meets the criteria. Rechecked weekly."],
+  blue: ["Locked", "Winning pages Searchify never touches."],
+};
+const DOT_PATTERN = "gbgygrbgggybgygrbggybggrgbyggbgybgygb";
+const ACCENT = "#D5F879";
+
+const PLUGS = [
+  { id: "Claude", label: "Claude", short: "Cl", color: "#D97757" },
+  { id: "Google Search Console", label: "Google Search Console", short: "SC", color: "#4285F4" },
+  { id: "Google Analytics", label: "Google Analytics", short: "GA", color: "#F9AB00" },
+  { id: "Shopify", label: "Shopify", short: "Sh", color: "#95BF47" },
+  { id: "WordPress", label: "WordPress", short: "WP", color: "#3D8FD1" },
+  { id: "Webflow", label: "Webflow", short: "Wf", color: "#4353FF" },
+  { id: "ChatGPT", label: "ChatGPT", short: "GPT", color: "#10A37F" },
 ];
 
-function WalkVisual({ step, onApprove }) {
-  if (step === 0) {
-    return (
-      <>
-        <div className="eyebrow">OPPORTUNITY DETECTED</div>
-        <div className="mockfield">
-          <small>Page</small>
-          <strong>/services/drain-cleaning</strong>
-        </div>
-        <div className="mockfield">
-          <small>Current title</small>
-          <strong>Drain Cleaning | Northline</strong>
-        </div>
-        <div className="factrow">
-          <div className="fact">
-            <b>1,240</b>
-            <small>Search impressions</small>
-          </div>
-          <div className="fact">
-            <b>28 days</b>
-            <small>Evidence window</small>
-          </div>
-        </div>
-      </>
-    );
+const QUOTES = [
+  { text: "Add a real customer quote here: one or two sentences on the result they saw.", who: "Customer name", role: "Business · City", color: "#FF5A4E" },
+  { text: "Add a real customer quote here: ideally an agency talking about client reports.", who: "Customer name", role: "Agency · City", color: "#FFC53D" },
+  { text: "Add a real customer quote here: a specific number beats a general compliment.", who: "Customer name", role: "Business · City", color: "#4DA3FF" },
+  { text: "Add a real customer quote here: what changed after they approved the first title rewrite.", who: "Customer name", role: "Business · City", color: "#3DDC84" },
+  { text: "Add a real customer quote here: how the change log helped a client conversation.", who: "Customer name", role: "Agency · City", color: "#FF9F43" },
+  { text: "Add a real customer quote here: a locked winning page they did not want automation to touch.", who: "Customer name", role: "Business · City", color: "#2CC7C0" },
+];
+
+const LOG_SEED = [
+  { id: "a", type: "TITLE", what: "Roof repair title now mentions Calgary + 24/7", sub: "/services/roof-repair · Oct 14" },
+  { id: "b", type: "IMAGE", what: "Alt text added to 9 skylight photos", sub: "/services/skylights · Oct 12" },
+  { id: "c", type: "META", what: "New description for the siding page", sub: "/services/siding · Oct 9" },
+  { id: "d", type: "LINKS", what: "3 posts now link to gutter guards", sub: "/services/gutter-guards · Oct 6" },
+];
+
+function sceneFor(tile, shipped) {
+  const base = {
+    red: {
+      tag: "DIRE · TITLE REWRITE",
+      page: "/services/roof-repair",
+      title: "Your title hides the two words people search for.",
+      isFix: true,
+      beforeT: "Roof Repair Services | Northline Roofing",
+      beforeD: "Learn more about our roof repair services.",
+      afterT: "Roof Repair in Calgary — 24/7 Emergency Leaks | Northline",
+      afterD: "Same-day leak repairs across Calgary. Written quote before any work starts.",
+      gain: "+40–90 clicks / month",
+    },
+    yellow: {
+      tag: "MEDIUM · DESCRIPTION",
+      page: "/services/siding",
+      title: "Google is guessing your description. Give it a real one.",
+      isFix: true,
+      beforeT: "Siding | Northline Roofing",
+      beforeD: "(No description. Google shows a random sentence from the page.)",
+      afterT: "Siding Repair & Replacement in Calgary | Northline",
+      afterD: "Hail-damaged siding? Calgary crews, insurance help, quotes in 24 hours.",
+      gain: "+10–20 clicks / month",
+    },
+    green: {
+      tag: "PASSES · 4 CHECKS",
+      page: "/contact",
+      title: "This page passes. Nothing to ship.",
+      isList: true,
+      rows: [
+        { title: "Title length OK", sub: "52 characters", icon: "✓" },
+        { title: "Indexed by Google", sub: "last crawl 3 days ago", icon: "✓" },
+        { title: "Mobile-friendly", sub: "no layout issues", icon: "✓" },
+        { title: "Loads fast", sub: "1.8s on phones", icon: "✓" },
+      ],
+      foot: "Searchify rechecks green pages every week. If one slips, it turns yellow and lands in your queue.",
+    },
+    blue: {
+      tag: "LOCKED · WINNING",
+      page: "/services/flat-roofs",
+      title: "This page is winning. Searchify won’t touch it.",
+      isList: true,
+      rows: [
+        { title: "#2 on Google", sub: "flat roof repair calgary", icon: "▲" },
+        { title: "+71% clicks", sub: "since the September change", icon: "▲" },
+        { title: "3 leads a month", sub: "from this page alone", icon: "▲" },
+        { title: "Locked", sub: "unlocks only if rankings drop for 2 weeks", icon: "🔒" },
+      ],
+      foot: "Locked pages are protected from automation, so a good result never gets “optimised” away.",
+    },
+  }[tile];
+
+  return {
+    ...base,
+    color: COLORS[tile],
+    border: `rgba(${RGB[tile]},.45)`,
+    glow: `0 0 34px rgba(${RGB[tile]},.12)`,
+    afterLabel: shipped ? "LIVE IN GOOGLE · CHECKED" : "WE SUGGEST",
+    afterLabelColor: shipped ? "#3DDC84" : "#4DA3FF",
+    afterBorder: shipped ? "#3DDC84" : "#4DA3FF",
+  };
+}
+
+function hostLabel(raw) {
+  const site = normalizeSiteUrl(raw);
+  if (!site) return "yourwebsite.com";
+  try {
+    return new URL(site).hostname.replace(/^www\./, "") || "yourwebsite.com";
+  } catch {
+    return String(raw || "yourwebsite.com").replace(/^https?:\/\//i, "").replace(/^www\./, "") || "yourwebsite.com";
   }
-  if (step === 1) {
-    return (
-      <>
-        <div className="eyebrow">THE EVIDENCE BEHIND THE TASK</div>
-        <div className="mockfield">
-          <small>Relevant search query</small>
-          <strong>drain cleaning Calgary</strong>
-        </div>
-        <div className="mockfield">
-          <small>Confirmed business facts</small>
-          <strong>Drain cleaning · Calgary · Residential service</strong>
-        </div>
-        <div className="mockfield">
-          <small>Why review this page?</small>
-          <strong>The title does not name the confirmed service area.</strong>
-        </div>
-      </>
-    );
-  }
-  if (step === 2) {
-    return (
-      <>
-        <div className="eyebrow">SUGGESTED SEARCH LISTING</div>
-        <div className="mockfield">
-          <small>Title</small>
-          <strong className="draft-title">Drain Cleaning in Calgary | Northline Plumbing</strong>
-        </div>
-        <div className="mockfield">
-          <small>Description</small>
-          <strong className="draft-desc">
-            Get help with blocked drains in your Calgary home. Explore Northline Plumbing’s drain-cleaning services and contact the team to book.
-          </strong>
-        </div>
-        <div className="capsule spaced">Draft ready for human review</div>
-      </>
-    );
-  }
-  if (step === 3) {
-    return (
-      <>
-        <div className="eyebrow">FINAL REVIEW</div>
-        <ul className="checklist">
-          <li>Correct site: Northline Plumbing</li>
-          <li>Correct page: /services/drain-cleaning</li>
-          <li>Only the meta title and meta description will change</li>
-        </ul>
-        <button id="approve-demo" className="btn primary small approve-demo" type="button" onClick={onApprove}>
-          Approve this example
-        </button>
-      </>
-    );
-  }
-  if (step === 4) {
-    return (
-      <>
-        <div className="eyebrow">APPROVED CHANGE / SAMPLE</div>
-        <div className="mockfield">
-          <small>Destination</small>
-          <strong>Northline Plumbing · WordPress</strong>
-        </div>
-        <ul className="checklist">
-          <li>Source values checked</li>
-          <li>Approved title saved</li>
-          <li>Approved description saved</li>
-        </ul>
-        <span className="pill spaced">READY FOR VERIFICATION</span>
-      </>
-    );
-  }
-  if (step === 5) {
-    return (
-      <>
-        <div className="bigcheck">✓</div>
-        <div className="eyebrow">LIVE PAGE VERIFIED / SAMPLE</div>
-        <div className="mockfield matched">
-          <strong>Approved values match the page.</strong>
-          <small>Title matched · Description matched</small>
-        </div>
-        <div className="capsule loose">Before and after values saved in change history</div>
-      </>
-    );
-  }
+}
+
+function PlugChip({ item, ariaHidden = false }) {
   return (
-    <>
-      <div className="eyebrow">MONITORING / SAMPLE</div>
-      <div className="mockfield">
-        <small>Update recorded</small>
-        <strong>Drain-cleaning title and description</strong>
-      </div>
-      <div className="mockfield">
-        <small>Search performance</small>
-        <strong>Awaiting the next Search Console sync</strong>
-      </div>
-      <div className="mockfield">
-        <small>Client work record</small>
-        <strong>Approved · Published · Verified</strong>
-      </div>
-    </>
+    <span className="sf-plug" aria-hidden={ariaHidden || undefined}>
+      <span className="sf-plug-mark" data-logo={item.id} style={{ color: item.color }}>
+        {item.short}
+      </span>
+      {item.label}
+    </span>
   );
 }
 
 export default function HomeView() {
-  const [step, setStep] = useState(0);
-  const stage = STAGES[step];
+  const router = useRouter();
+  const [focus, setFocus] = useState(0);
+  const [tile, setTile] = useState("red");
+  const [shipped, setShipped] = useState(false);
+  const [undone, setUndone] = useState({});
+  const [heroUrl, setHeroUrl] = useState("");
+  const [footUrl, setFootUrl] = useState("");
 
-  const show = (index, focus = false) => {
-    const next = (index + STAGES.length) % STAGES.length;
-    setStep(next);
-    if (focus) {
-      requestAnimationFrame(() => document.getElementById(`step-${next}`)?.focus());
+  useEffect(() => {
+    const timer = setInterval(() => setFocus((value) => (value + 1) % 4), 2200);
+    return () => clearInterval(timer);
+  }, []);
+
+  const focusKey = KEYS[focus];
+  const dots = useMemo(() => {
+    const map = { r: "red", y: "yellow", g: "green", b: "blue" };
+    return Array.from({ length: 40 }, (_, i) => {
+      const c = map[DOT_PATTERN[i % DOT_PATTERN.length]];
+      const on = c === focusKey;
+      return {
+        color: COLORS[c],
+        op: on ? 1 : 0.16,
+        shadow: on ? `0 0 20px ${COLORS[c]}` : "none",
+        anim: on,
+      };
+    });
+  }, [focusKey]);
+
+  const sc = sceneFor(tile, shipped);
+  const log = LOG_SEED.map((row) => {
+    const reverted = !!undone[row.id];
+    return { ...row, reverted };
+  });
+
+  const goScan = (raw) => {
+    const site = normalizeSiteUrl(raw);
+    if (site) stashPendingSite(site);
+    if (userIsAuthenticated()) {
+      if (site) seedDraftSite(site);
+      router.push(site ? "/app/start" : "/app/results");
+      return;
     }
+    const q = new URLSearchParams({ next: "/app/start" });
+    if (site) q.set("site", site);
+    router.push(`/signup?${q}`);
   };
 
-  const openReview = () => {
-    show(2);
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    document.getElementById("how")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
-    document.getElementById("walk-panel")?.focus({ preventScroll: true });
-  };
-
-  const onTabKey = (event) => {
-    if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
-    event.preventDefault();
-    if (event.key === "Home") show(0, true);
-    else if (event.key === "End") show(6, true);
-    else show(step + (event.key === "ArrowRight" ? 1 : -1), true);
-  };
+  const previewHost = hostLabel(heroUrl || footUrl);
 
   return (
-    <LandingShell current="home" footerNote="Searchify · Fully developed · 2026">
-      <main id="top">
-        <div className="wrap">
-          <div className="hero reveal">
-            <div className="eyebrow">
-              <span className="bar" /> YOUR WORDPRESS SEO WORKSPACE <span className="bar" />
-            </div>
-            <h1>
-              SEO THAT
-              <br />
-              <em>GETS DONE.</em>
-            </h1>
-            <p>
-              Find what needs improving. Review the recommendation.
-              <br />
-              Publish approved changes and see what happened.
-              <br />
-              All in one workspace.
-            </p>
-            <div className="actions">
-              <a className="btn primary" href="#how">
-                See how Searchify works
-              </a>
-              <Link className="btn" href="/signup">
-                <span className="play" aria-hidden="true">
-                  ▶
-                </span>
-                Explore the product
-              </Link>
-            </div>
-            <div className="micro">WordPress first. Your approval before every live change.</div>
-            <div className="hero-floor">
-              <div className="app">
-                <div className="apptop">
-                  <div className="dots" aria-hidden="true">
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                  <span>Searchify / Agency workspace</span>
-                  <span>Fully developed</span>
-                </div>
-                <div className="appbody">
-                  <aside className="sidebar" aria-hidden="true">
-                    <div className="brand">
-                      <span className="mark">s</span>searchify
-                    </div>
-                    <div className="sidelabel">WORKSPACE</div>
-                    <div className="sideitem">Overview</div>
-                    <div className="sideitem active">Work queue</div>
-                    <div className="sideitem">Performance</div>
-                    <div className="sideitem">Reports</div>
-                    <div className="sidelabel">SETTINGS</div>
-                    <div className="sideitem">Connections</div>
-                    <div className="sideitem">Business profile</div>
-                  </aside>
-                  <div className="appmain">
-                    <div className="apphead">
-                      <span>Northline Plumbing / Calgary</span>
-                      <span className="pill">WORDPRESS + SEARCH CONSOLE</span>
-                    </div>
-                    <h3>Your next move.</h3>
-                    <p>Three suggested updates. You choose what goes live.</p>
-                    <div className="queue">
-                      <div className="queuehead">
-                        <strong>Give your service pages a clearer introduction.</strong>
-                        <span>3 ready for review</span>
-                      </div>
-                      <div className="queueitem">
-                        <div>
-                          Make the drain-cleaning title more specific
-                          <small>/services/drain-cleaning</small>
-                        </div>
-                        <button className="mini review" type="button" onClick={openReview}>
-                          Review
-                        </button>
-                      </div>
-                      <div className="queueitem">
-                        <div>
-                          Clarify the water-heater service description
-                          <small>/services/water-heaters</small>
-                        </div>
-                        <button className="mini review" type="button" onClick={openReview}>
-                          Review
-                        </button>
-                      </div>
-                      <div className="queueitem">
-                        <div>
-                          Add a missing plumbing-repairs description
-                          <small>/services/repairs</small>
-                        </div>
-                        <button className="mini review" type="button" onClick={openReview}>
-                          Review
-                        </button>
-                      </div>
-                    </div>
-                    <div className="metrics">
-                      <div className="metric">
-                        <small>Organic clicks · 28 days</small>
-                        <b>428</b>
-                        <span>Search Console data</span>
-                      </div>
-                      <div className="metric">
-                        <small>Updates verified</small>
-                        <b>12</b>
-                        <span>Approved by your team</span>
-                      </div>
-                      <div className="metric">
-                        <small>Pages monitored</small>
-                        <b>18</b>
-                        <span>Last checked today</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+    <LandingShell current="home">
+      <header className="sf-hero">
+        <div className="sf-hero-copy">
+          <h1>Don&apos;t lose customers on Google. Cast a better net.</h1>
+          <p>
+            Searchify scans your site, colour-codes every fix, and ships them one at a time — with your approval, and
+            proof of what each one earned.
+          </p>
+          <form
+            id="scan"
+            className="sf-urlrow"
+            onSubmit={(event) => {
+              event.preventDefault();
+              goScan(heroUrl);
+            }}
+          >
+            <label className="sf-urlfield">
+              <span className="sf-sr">Your website</span>
+              <input
+                type="url"
+                inputMode="url"
+                autoComplete="url"
+                placeholder="yourwebsite.com"
+                value={heroUrl}
+                onChange={(event) => setHeroUrl(event.target.value)}
+              />
+            </label>
+            <button className="sf-btn-blue lg" type="submit">
+              Scan it free
+            </button>
+          </form>
+          <span className="sf-note">
+            {userIsAuthenticated()
+              ? "Opens setup with your site. About 60 seconds. Nothing on your site changes until you approve."
+              : "Quick account, then your first scan. About 60 seconds. Nothing on your site changes."}
+          </span>
+        </div>
+
+        <div className="sf-hero-board" aria-hidden="true">
+          <div className="sf-hero-board-top">
+            <span>{previewHost}</span>
+            <span style={{ color: COLORS[focusKey] }}>{LABELS[focusKey]}</span>
+          </div>
+          <div className="sf-dots">
+            {dots.map((dot, index) => (
+              <div className="sf-dot-cell" key={index}>
+                <div
+                  className={`sf-dot${dot.anim ? " is-live" : ""}`}
+                  style={{
+                    background: dot.color,
+                    opacity: dot.op,
+                    boxShadow: dot.shadow,
+                  }}
+                />
               </div>
-              <div className="appcaption">
-                <span>One workspace. From opportunity to verified update.</span>
-                <span>Illustrative data · Northline Plumbing</span>
-              </div>
-            </div>
-            <div className="connections">
-              <p>Bring your site, search data and business context together.</p>
-              <div className="logos">
-                <div>
-                  <span className="logoicon">W</span>WordPress
-                </div>
-                <div>
-                  <span className="logoicon g">G</span>Search Console
-                </div>
-                <div>
-                  <span className="logoicon dfs">S</span>Searchify SEO
-                </div>
-                <div>
-                  <span className="logoicon dfs">✳</span>AI recommendations
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
-        <section id="how" className="workflow">
-          <div className="wrap">
-            <div className="sectionhead">
-              <div>
-                <div className="eyebrow">01 / FROM OPPORTUNITY TO ACTION</div>
-                <h2>
-                  LESS CHASING.
-                  <br />
-                  <span className="green">MORE COMPLETING.</span>
-                </h2>
-              </div>
-              <p>A clear next action, the evidence behind it, and a controlled path to getting it live. Follow a sample update through Searchify.</p>
-            </div>
-            <div className="steps" role="tablist" aria-label="SEO workflow stages">
-              {STEP_NAMES.map((name, index) => (
-                <button
-                  key={name}
-                  className="step"
-                  role="tab"
-                  id={`step-${index}`}
-                  type="button"
-                  aria-selected={step === index}
-                  aria-controls="walk-panel"
-                  tabIndex={step === index ? 0 : -1}
-                  onClick={() => show(index)}
-                  onKeyDown={onTabKey}
-                >
-                  <small>{String(index + 1).padStart(2, "0")}</small>
-                  {name}
-                </button>
+      </header>
+
+      <section className="sf-plugs" aria-label="Works with">
+        <div className="sf-plugs-inner">
+          <span className="sf-plugs-label">PLUGS INTO</span>
+          <div className="sf-marquee">
+            <div className="sf-track">
+              {[...PLUGS, ...PLUGS].map((item, index) => (
+                <PlugChip key={`${item.id}-${index}`} item={item} ariaHidden={index >= PLUGS.length} />
               ))}
             </div>
-            <div id="walk-panel" role="tabpanel" aria-labelledby={`step-${step}`} className="walk" tabIndex={0}>
-              <div className="walkcopy">
-                <div className="stepnum" id="stepnum">
-                  {String(step + 1).padStart(2, "0")}
+          </div>
+        </div>
+      </section>
+
+      <section id="how" className="sf-section">
+        <h2>You handle plugging in your sites, we handle the rest.</h2>
+        <div className="sf-how-grid">
+          <article className="sf-card">
+            <span className="sf-kicker">01 · PLUG IN</span>
+            <svg viewBox="0 0 300 70" aria-hidden="true" className="sf-cable">
+              <g style={{ filter: "drop-shadow(0 0 8px rgba(77,163,255,.7))" }}>
+                <path
+                  d="M-10 35 C 60 35, 90 14, 150 28 S 200 48, 214 35"
+                  fill="none"
+                  stroke="#4DA3FF"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                />
+                <path
+                  className="sf-flow"
+                  d="M-10 35 C 60 35, 90 14, 150 28 S 200 48, 214 35"
+                  fill="none"
+                  stroke="#CFE6FF"
+                  strokeWidth="2"
+                  strokeDasharray="3 16"
+                />
+                <rect x="212" y="20" width="40" height="30" rx="7" fill="#4DA3FF" />
+              </g>
+              <rect x="252" y="12" width="44" height="46" rx="10" fill="#131519" stroke="#4DA3FF" strokeWidth="2" />
+            </svg>
+            <h3>Connect Google and WordPress</h3>
+            <p>Two cables. When they glow blue, data is flowing. That&apos;s the whole setup.</p>
+          </article>
+          <article className="sf-card">
+            <span className="sf-kicker">02 · SHIP ONE MOVE</span>
+            <div className="sf-before-after" aria-hidden="true">
+              <div className="sf-strike">Roof Repair Services | Northline</div>
+              <div className="sf-suggest">Roof Repair in Calgary — 24/7 Emergency Leaks</div>
+            </div>
+            <h3>Approve the next fix in one tap</h3>
+            <p>See the exact before and after, and why. Nothing goes live without you, and every change has one-click undo.</p>
+          </article>
+          <article className="sf-card">
+            <span className="sf-kicker">03 · SEE WHAT IT EARNED</span>
+            <div className="sf-gain" aria-hidden="true">
+              <span style={{ color: ACCENT }}>+64</span>
+              <small>visitors / month</small>
+            </div>
+            <h3>Get proof, not promises</h3>
+            <p>Four weeks after each change, Searchify shows what it did — visitors, calls, ranking — and adds it to your total.</p>
+          </article>
+        </div>
+      </section>
+
+      <section className="sf-band">
+        <div className="sf-band-inner">
+          <div className="sf-band-copy">
+            <h2>Every task, colour-coded.</h2>
+            <p>No 40-tab SEO dashboard. One board that tells you what&apos;s urgent, what can wait, and what to leave alone.</p>
+          </div>
+
+          <div className="sf-tiles" role="group" aria-label="Pick a colour to see it in action">
+            {KEYS.map((key) => {
+              const on = key === tile;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={on}
+                  className={`sf-tile${on ? " is-on" : ""}`}
+                  style={{
+                    background: on ? `rgba(${RGB[key]},.08)` : "transparent",
+                    borderColor: on ? COLORS[key] : "#262A31",
+                    boxShadow: on ? `0 0 26px rgba(${RGB[key]},.3)` : "none",
+                  }}
+                  onClick={() => {
+                    setTile(key);
+                    setShipped(false);
+                  }}
+                >
+                  <span className="sf-tile-top">
+                    <span
+                      className={`sf-tile-dot${on ? " is-live" : ""}`}
+                      style={{
+                        background: COLORS[key],
+                        boxShadow: on ? `0 0 12px ${COLORS[key]}` : "none",
+                      }}
+                    />
+                    <span style={{ color: on ? COLORS[key] : "#5B616B" }}>{on ? "SHOWING ↓" : "TAP TO SEE"}</span>
+                  </span>
+                  <strong>{TILE[key][0]}</strong>
+                  <span>{TILE[key][1]}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div
+            className="sf-scene"
+            aria-live="polite"
+            style={{ borderColor: sc.border, boxShadow: sc.glow }}
+          >
+            <div className="sf-scene-meta">
+              <span style={{ color: sc.color }}>
+                <i style={{ background: sc.color, boxShadow: `0 0 10px ${sc.color}` }} />
+                {sc.tag}
+              </span>
+              <span className="sf-dotsep">·</span>
+              <span className="sf-mono muted">{sc.page}</span>
+              <span className="sf-scene-note">Example from a real-style scan</span>
+            </div>
+            <h3>{sc.title}</h3>
+
+            {sc.isFix ? (
+              <>
+                <div className="sf-compare">
+                  <div className="sf-compare-card">
+                    <span className="sf-mono tiny">IN GOOGLE NOW</span>
+                    <strong>{sc.beforeT}</strong>
+                    <p>{sc.beforeD}</p>
+                  </div>
+                  <div className="sf-compare-card is-after" style={{ borderColor: sc.afterBorder }}>
+                    <span className="sf-mono tiny" style={{ color: sc.afterLabelColor }}>
+                      {sc.afterLabel}
+                    </span>
+                    <strong>{sc.afterT}</strong>
+                    <p>{sc.afterD}</p>
+                  </div>
                 </div>
-                <h3 id="walktitle">{stage.title}</h3>
-                <p id="walkdesc">{stage.desc}</p>
-                <button className="btn small" id="nextstep" type="button" onClick={() => show(step + 1)}>
-                  {step === 6 ? "Restart the walkthrough" : `Next: ${STEP_NAMES[step + 1]}`}
+                <div className="sf-scene-actions">
+                  <span className="sf-scene-gain" style={{ color: ACCENT }}>
+                    {sc.gain}
+                  </span>
+                  {!shipped ? (
+                    <button className="sf-btn-blue" type="button" onClick={() => setShipped(true)}>
+                      Try it: Ship it
+                    </button>
+                  ) : (
+                    <span className="sf-shipped-row">
+                      <span className="sf-shipped">● Shipped · checked live · logged in the change log</span>
+                      <button className="sf-btn-ghost" type="button" onClick={() => setShipped(false)}>
+                        Undo
+                      </button>
+                    </span>
+                  )}
+                </div>
+              </>
+            ) : null}
+
+            {sc.isList ? (
+              <>
+                <div className="sf-list-grid">
+                  {sc.rows.map((row) => (
+                    <div className="sf-list-row" key={row.title}>
+                      <span
+                        className="sf-list-icon"
+                        style={{
+                          background: tile === "blue" ? "rgba(77,163,255,.15)" : "rgba(61,220,132,.15)",
+                          color: tile === "blue" ? "#4DA3FF" : "#3DDC84",
+                        }}
+                      >
+                        {row.icon}
+                      </span>
+                      <span>
+                        <strong>{row.title}</strong>
+                        <small className="sf-mono">{row.sub}</small>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="sf-scene-foot">{sc.foot}</p>
+              </>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
+      <section className="sf-section sf-trust">
+        <h2>Automation you can actually trust with a client&apos;s site.</h2>
+
+        <div className="sf-changelog">
+          <div className="sf-changelog-copy">
+            <span className="sf-pill-blue">ONLY IN SEARCHIFY · THE CHANGE LOG</span>
+            <h3>Every change is recorded, reversible and reported.</h3>
+            <p>
+              Searchify keeps its own change log tab for every site. You see exactly what changed, on which page, and
+              when — titles, descriptions, images, links, content. Undo any change in one click, or roll a page back to
+              any earlier version. Every change and every reversal flows straight into the report your client or boss
+              receives.
+            </p>
+            <div className="sf-chips">
+              <span>↺ Undo in one click</span>
+              <span>⟲ Roll back to any version</span>
+              <span>✉ Reported automatically</span>
+            </div>
+          </div>
+          <div className="sf-log-panel">
+            <div className="sf-log-head">
+              <span>Change log · northline.example</span>
+              <span className="sf-mono tiny">LIVE DEMO</span>
+            </div>
+            {log.map((row) => (
+              <div
+                key={row.id}
+                className={`sf-log-row${row.reverted ? " is-undone" : ""}`}
+              >
+                <span className="sf-log-type">{row.type}</span>
+                <span className="sf-log-body">
+                  <strong style={{ textDecoration: row.reverted ? "line-through" : "none" }}>{row.what}</strong>
+                  <small className="sf-mono">
+                    {row.reverted ? "Reverted to the previous version · client report updated" : row.sub}
+                  </small>
+                </span>
+                <button
+                  type="button"
+                  className="sf-btn-ghost sm"
+                  style={{
+                    color: row.reverted ? "#FFC53D" : "#F2F4F5",
+                    borderColor: row.reverted ? "rgba(255,197,61,.5)" : "#262A31",
+                  }}
+                  onClick={() =>
+                    setUndone((prev) => ({ ...prev, [row.id]: !prev[row.id] }))
+                  }
+                >
+                  {row.reverted ? "Redo" : "Undo"}
                 </button>
               </div>
-              <div>
-                <div className="walkvisual" id="walkvisual">
-                  <WalkVisual step={step} onApprove={() => show(4)} />
-                </div>
-                <div className="samplelabel">Interactive workflow example · illustrative data</div>
-              </div>
-            </div>
+            ))}
           </div>
-        </section>
-        <section className="wrap" id="control">
-          <div className="sectionhead">
-            <div>
-              <div className="eyebrow">02 / BUILT AROUND YOUR APPROVAL</div>
-              <h2>
-                YOUR SITE.
-                <br />
-                <span className="green">YOUR SAY.</span>
-              </h2>
-            </div>
-            <p>Review the evidence. Adjust the wording. Approve the exact change. Keep a record of the work your team completes.</p>
-          </div>
-          <div className="featuregrid">
-            <article className="feature">
-              <div className="icon" aria-hidden="true">
-                ≡
-              </div>
-              <h3>See the reason behind the rewrite.</h3>
-              <p>Keep the page, search queries and business facts beside the recommendation. Spend your review time making a decision, with the context already there.</p>
-            </article>
-            <article className="feature">
-              <div className="icon" aria-hidden="true">
-                ✓
-              </div>
-              <h3>Approve exactly what gets published.</h3>
-              <p>Compare the current and suggested title and description. Edit the draft before approving it for a supported WordPress site.</p>
-            </article>
-            <article className="feature wide">
-              <div>
-                <div className="icon" aria-hidden="true">
-                  ↶
-                </div>
-                <h3>A record you can come back to.</h3>
-                <p>See who approved a change and whether it was verified. Restore saved values where supported, with checks for edits made since publication.</p>
-              </div>
-              <div className="history">
-                <div className="eyebrow">CHANGE HISTORY / SAMPLE</div>
-                <div className="historyrow">
-                  <span className="tick">✓</span>
-                  <div>
-                    <strong>Title and description published</strong>
-                    <small>/services/drain-cleaning</small>
-                  </div>
-                  <time>10:42</time>
-                </div>
-                <div className="historyrow">
-                  <span className="tick">✓</span>
-                  <div>
-                    <strong>Live page values verified</strong>
-                    <small>Matched the approved version</small>
-                  </div>
-                  <time>10:43</time>
-                </div>
-                <div className="historyrow">
-                  <span className="tick">↶</span>
-                  <div>
-                    <strong>Previous values saved</strong>
-                    <small>Undo available if the page is unchanged</small>
-                  </div>
-                </div>
-              </div>
-            </article>
-          </div>
-        </section>
-        <section className="agency">
-          <div className="wrap">
-            <div>
-              <div className="eyebrow">03 / FOR PEOPLE MANAGING CLIENT SITES</div>
-              <h2>
-                KEEP EVERY
-                <br />
-                CLIENT MOVING.
-              </h2>
-              <p>Searchify is designed for small agencies and hands-on website owners who want a repeatable way to complete SEO work.</p>
-            </div>
-            <div className="agencylist">
-              <div>
-                <b>01</b>
-                <strong>Keep each client’s business context in place.</strong>
-              </div>
-              <div>
-                <b>02</b>
-                <strong>Review the work that needs your attention.</strong>
-              </div>
-              <div>
-                <b>03</b>
-                <strong>Show clients what changed and what followed.</strong>
-              </div>
-            </div>
-          </div>
-        </section>
-        <section className="wrap faq" id="questions">
-          <div>
-            <div className="eyebrow">A FEW THINGS TO KNOW</div>
-            <h2>GOOD QUESTIONS.</h2>
-            <p>The workspace is fully developed. You review every change before it goes live.</p>
-          </div>
-          <div>
-            <details open>
-              <summary>What does Searchify focus on first?</summary>
-              <p>Searchify connects WordPress and Google Search Console, finds metadata opportunities, prepares titles and descriptions, and supports approval, publishing, verification, and monitoring.</p>
-            </details>
-            <details>
-              <summary>Will it change my website automatically?</summary>
-              <p>No. Every live change needs your approval. You review and can edit the proposed title and description before it is published.</p>
-            </details>
-            <details>
-              <summary>Does “verified” mean Google has updated the result?</summary>
-              <p>No. Verification checks that the live website reflects the approved values. Google controls when it recrawls the page and may choose different wording for search results.</p>
-            </details>
-            <details>
-              <summary>Which websites will it support?</summary>
-              <p>WordPress is supported now, with a defined set of SEO-plugin configurations. You can set up each site included in your plan.</p>
-            </details>
-            <details>
-              <summary>Can I try it today?</summary>
-              <p>Yes. Create access, answer the setup questions, choose a plan, and open your workspace. Connect WordPress and Search Console when you are ready to review live recommendations.</p>
-            </details>
-            <details>
-              <summary>Does it guarantee better rankings?</summary>
-              <p>No. Searchify is designed to help you complete and document SEO improvements. Search performance depends on many factors, and any changes need time and context to assess.</p>
-            </details>
-          </div>
-        </section>
-        <div className="closing">
-          <div className="eyebrow">MEET YOUR NEXT SEO WORKFLOW</div>
-          <div className="closing-title">
-            GIVE GOOD SEO
-            <br />
-            <span className="green">A WAY TO GET DONE.</span>
-          </div>
-          <p>
-            Explore the workspace. Review a recommendation.
-            <br />
-            See how the whole process fits together.
-          </p>
-          <Link className="btn primary" href="/signup">
-            Explore Searchify
-          </Link>
-          <div className="micro">Interactive demo · No live changes</div>
         </div>
-      </main>
+
+        <div className="sf-trust-grid">
+          <div>
+            <strong>You approve every change</strong>
+            <span>Searchify drafts. You decide. Edit anything first.</span>
+          </div>
+          <div>
+            <strong>Checked live</strong>
+            <span>After shipping, it reads the page back to confirm it matches.</span>
+          </div>
+          <div>
+            <strong>Nothing is ever lost</strong>
+            <span>The old version of every change is saved in the change log, forever.</span>
+          </div>
+          <div>
+            <strong>Winners stay locked</strong>
+            <span>Pages that already perform are off-limits.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="testimonials" className="sf-section">
+        <h2>What customers say</h2>
+        <TestimonialsSlider items={QUOTES} />
+        <span className="sf-mono tiny muted">PLACEHOLDER · REPLACE WITH REAL CUSTOMER QUOTES BEFORE LAUNCH</span>
+      </section>
+
+      <section id="agencies" className="sf-section">
+        <div className="sf-agency">
+          <div>
+            <span className="sf-kicker">FOR AGENCIES</span>
+            <h2>Every client on one screen. Reports that write themselves.</h2>
+            <p>
+              See which client needs attention, approve moves across sites, and send a branded monthly report showing
+              exactly what you shipped and what it earned.
+            </p>
+          </div>
+          <div className="sf-agency-list" aria-hidden="true">
+            <div>
+              <i style={{ background: "#FF5A4E", boxShadow: "0 0 10px #FF5A4E" }} />
+              <span>Northline Roofing</span>
+              <small className="sf-mono">6 dire</small>
+            </div>
+            <div>
+              <i style={{ background: "#FFC53D" }} />
+              <span>Bowvalley Dental</span>
+              <small className="sf-mono">4 medium</small>
+            </div>
+            <div>
+              <i style={{ background: "#4DA3FF" }} />
+              <span>Prairie Coffee Co.</span>
+              <small className="sf-mono">all clear</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="sf-closing">
+        <h2>Find out what your site is leaving on the table.</h2>
+        <form
+          className="sf-urlrow center"
+          onSubmit={(event) => {
+            event.preventDefault();
+            goScan(footUrl || heroUrl);
+          }}
+        >
+          <label className="sf-urlfield">
+            <span className="sf-sr">Your website</span>
+            <input
+              type="url"
+              inputMode="url"
+              autoComplete="url"
+              placeholder="yourwebsite.com"
+              value={footUrl}
+              onChange={(event) => setFootUrl(event.target.value)}
+            />
+          </label>
+          <button className="sf-btn-blue lg" type="submit">
+            Scan it free
+          </button>
+        </form>
+        <p className="sf-note">
+          Prefer to explore first?{" "}
+          <Link href="/signup">Create an account</Link> or <Link href="/login">sign in</Link>.
+        </p>
+      </section>
     </LandingShell>
   );
 }

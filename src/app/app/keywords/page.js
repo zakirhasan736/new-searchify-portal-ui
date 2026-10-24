@@ -1,7 +1,7 @@
-﻿import { KeywordsView } from "@/components/board/WorkspaceViews";
+"use client";
 
-export const metadata = { title: "Keywords" };
+import WinScreen from "@/components/v8/screens/WinScreen";
 
 export default function Page() {
-  return <KeywordsView />;
+  return <WinScreen />;
 }

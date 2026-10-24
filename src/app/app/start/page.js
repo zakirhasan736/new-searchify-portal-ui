@@ -1,12 +1,10 @@
 import { Suspense } from "react";
-import GuidedSetup from "@/components/guide/GuidedSetup";
-
-export const metadata = { title: "Setup" };
+import SetupScreen from "@/components/v8/screens/SetupScreen";
 
 export default function Page() {
   return (
     <Suspense fallback={null}>
-      <GuidedSetup />
+      <SetupScreen />
     </Suspense>
   );
 }

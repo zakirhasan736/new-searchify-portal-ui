@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — Keyword tracker</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+select:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
+@keyframes sfy-breathe{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes sfy-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 1000px; background: #0A0B0D; display: flex; flex-wrap: wrap; align-items: stretch">
+<div style="flex: 1 1 248px; max-width: 100%; display: flex">
+<dc-import name="Nav" current="tracker" hint-size="248px,1000px"></dc-import>
+</div>
+<div style="flex: 999 1 560px; min-width: 0; min-height: 1000px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 28px clamp(16px, 4vw, 48px) 56px; display: flex; flex-direction: column; gap: 24px">
+
+  <header style="max-width: 1120px; width: 100%; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="display: inline-flex; align-items: center; gap: 8px; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 1.6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DDC84" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"></path><path d="M15 7h6v6"></path></svg>KEYWORD TRACKER</span>
+      <span style="font-size: 15px; color: #9AA1AB">{{trackedLabel}}</span>
+    </div>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #9AA1AB; min-width: 300px">Keyword
+      <select value="{{selId}}" onChange="{{pickFromSelect}}" style="min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid #4DA3FF; background: #131519; color: #F2F4F5; font: inherit; font-size: 15px; box-shadow: 0 0 18px rgba(77,163,255,.2)">
+        <sc-for list="{{list}}" as="o" hint-placeholder-count="6">
+          <option value="{{o.id}}">{{o.term}}</option>
+        </sc-for>
+      </select>
+    </label>
+  </header>
+
+  <div style="max-width: 1120px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+
+    <section aria-labelledby="list-h" style="flex: 1 1 360px; min-width: 0; border-radius: 22px; background: #101215; border: 1px solid #1A1D22; padding: 8px; display: flex; flex-direction: column; gap: 2px">
+      <div style="display: flex; flex-direction: column; gap: 4px; margin: 10px 12px 6px">
+        <h2 id="list-h" style="margin: 0; font-size: 14px; font-weight: 600; color: #D7DADE">Tracked keywords</h2>
+        <span style="font-size: 12px; color: #7D848E; line-height: 1.4">Your spot on Google. <span style="color: #D7DADE">#1 is the top result</span> — a smaller number is better.</span>
+      </div>
+      <div aria-hidden="true" style="display: flex; align-items: center; gap: 10px; padding: 0 12px 6px; font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: .5px; color: #7D848E">
+        <span style="flex: 1">KEYWORD</span><span style="width: 54px; text-align: right">SPOT</span><span style="min-width: 58px; text-align: center">CHANGE</span>
+      </div>
+      <div style="max-height: 452px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; padding-right: 2px; scrollbar-color: #262A31 transparent; scrollbar-width: thin">
+      <sc-for list="{{list}}" as="k" hint-placeholder-count="8">
+        <sc-if value="{{k.on}}" hint-placeholder-val="{{false}}">
+          <button type="button" aria-pressed="true" onClick="{{k.pick}}" aria-label="{{k.aria}}" style="display: flex; align-items: center; gap: 10px; width: 100%; min-height: 58px; padding: 8px 12px; border-radius: 13px; border: 1px solid #4DA3FF; background: rgba(77,163,255,.08); box-shadow: 0 0 18px rgba(77,163,255,.2); color: #F2F4F5; text-align: left; flex: none">
+            <span style="width: 9px; height: 9px; flex: none; border-radius: 50%; background: {{k.dot}}; box-shadow: 0 0 8px {{k.dot}}"></span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 600; line-height: 1.25">{{k.term}}</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #9AA1AB; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{k.page}}</span></span>
+            <span style="flex: none; display: flex; align-items: center; gap: 10px">
+              <span style="display: flex; flex-direction: column; align-items: flex-end; width: 54px; white-space: nowrap"><span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 20px; font-weight: 700; line-height: 1">{{k.nowRank}}</span><span style="font-size: 11px; color: #7D848E">was {{k.wasRank}}</span></span>
+              <span style="min-width: 58px; text-align: center; font-size: 11px; font-weight: 600; padding: 4px 7px; border-radius: 8px; color: {{k.moveColor}}; background: {{k.moveBg}}; white-space: nowrap">{{k.move}}</span>
+            </span>
+          </button>
+        </sc-if>
+        <sc-if value="{{k.off}}" hint-placeholder-val="{{true}}">
+          <button type="button" aria-pressed="false" onClick="{{k.pick}}" aria-label="{{k.aria}}" style="display: flex; align-items: center; gap: 10px; width: 100%; min-height: 58px; padding: 8px 12px; border-radius: 13px; border: 1px solid transparent; background: transparent; color: #F2F4F5; text-align: left; flex: none">
+            <span style="width: 9px; height: 9px; flex: none; border-radius: 50%; background: {{k.dot}}"></span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-size: 14px; line-height: 1.25">{{k.term}}</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #7D848E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{k.page}}</span></span>
+            <span style="flex: none; display: flex; align-items: center; gap: 10px">
+              <span style="display: flex; flex-direction: column; align-items: flex-end; width: 54px; white-space: nowrap"><span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 20px; font-weight: 700; line-height: 1">{{k.nowRank}}</span><span style="font-size: 11px; color: #7D848E">was {{k.wasRank}}</span></span>
+              <span style="min-width: 58px; text-align: center; font-size: 11px; font-weight: 600; padding: 4px 7px; border-radius: 8px; color: {{k.moveColor}}; background: {{k.moveBg}}; white-space: nowrap">{{k.move}}</span>
+            </span>
+          </button>
+        </sc-if>
+      </sc-for>
+      </div>
+      <span style="padding: 8px 12px 0; font-size: 12px; color: #7D848E">{{scrollHint}}</span>
+      <div style="display: flex; gap: 8px; padding: 10px 6px 6px; border-top: 1px solid #1A1D22; margin-top: 6px">
+        <label style="flex: 1; min-width: 0; display: flex"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Add a keyword</span><input type="text" placeholder="Add a keyword to track" style="flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; border-radius: 11px; border: 1px solid #262A31; background: #0A0B0D; color: #F2F4F5; font: inherit; font-size: 14px"></label>
+        <button type="button" style="flex: none; min-height: 44px; padding: 0 14px; border-radius: 11px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 14px; font-weight: 600">Track</button>
+      </div>
+    </section>
+
+    <main style="flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 18px; animation: sfy-rise .3s ease both">
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; font-family: 'Geist Mono', monospace; font-size: 12px; font-weight: 500; color: {{k.badgeText}}; background: {{k.badgeBg}}; border: 1px solid {{k.badgeBorder}}; padding: 6px 12px; border-radius: 999px">{{k.badge}}</span>
+        <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(30px, 3.6vw, 46px); line-height: 1.04; letter-spacing: -1.3px; font-weight: 700">{{k.headline}}</h1>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 13px; color: #9AA1AB">What we changed on <span style="font-family: 'Geist Mono', monospace; color: #D7DADE">{{k.page}}</span> · {{k.date}}</span>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px">
+            <div style="border-radius: 16px; background: #0E1013; border: 1px solid #1A1D22; padding: 16px; display: flex; flex-direction: column; gap: 8px">
+              <span style="font-size: 12px; color: #7D848E; font-family: 'Geist Mono', monospace">BEFORE</span>
+              <span style="font-size: 16px; line-height: 1.4; color: #9AA1AB">{{k.was}}</span>
+            </div>
+            <div style="border-radius: 16px; background: rgba(77,163,255,.07); border: 1.5px solid #4DA3FF; box-shadow: 0 0 26px rgba(77,163,255,.3), inset 0 0 18px rgba(77,163,255,.08); padding: 16px; display: flex; flex-direction: column; gap: 8px">
+              <span style="font-size: 12px; color: #4DA3FF; font-family: 'Geist Mono', monospace">AFTER</span>
+              <span style="font-size: 16px; line-height: 1.4">{{k.now}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section aria-label="Result" style="background: #131519; border: 1px solid #262A31; border-radius: 24px; padding: clamp(20px, 3vw, 30px); display: flex; flex-direction: column; gap: 22px">
+        <div role="group" aria-label="Choose a metric" style="display: flex; flex-wrap: wrap; gap: 6px">
+          <sc-for list="{{metrics}}" as="m" hint-placeholder-count="4">
+            <sc-if value="{{m.on}}" hint-placeholder-val="{{false}}"><button type="button" aria-pressed="true" onClick="{{m.pick}}" style="min-height: 40px; padding: 0 15px; border-radius: 999px; border: 1px solid #F2F4F5; background: #F2F4F5; color: #0A0B0D; font-size: 14px; font-weight: 600">{{m.label}}</button></sc-if>
+            <sc-if value="{{m.off}}" hint-placeholder-val="{{true}}"><button type="button" aria-pressed="false" onClick="{{m.pick}}" style="min-height: 40px; padding: 0 15px; border-radius: 999px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 14px">{{m.label}}</button></sc-if>
+          </sc-for>
+        </div>
+        <div style="display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 16px; align-items: end">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #7D848E">{{beforeLabel}}</span>
+            <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(44px, 6vw, 76px); line-height: 0.9; letter-spacing: -2px; font-weight: 700; color: #9AA1AB">{{sel.before}}</span>
+          </div>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="{{k.arrow}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-bottom: 12px"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: {{k.arrow}}">{{afterLabel}}</span>
+            <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(44px, 6vw, 76px); line-height: 0.9; letter-spacing: -2px; font-weight: 800; color: {{k.afterColor}}">{{sel.after}}</span>
+          </div>
+        </div>
+        <sc-if value="{{sel.hasPill}}" hint-placeholder-val="{{true}}"><span style="align-self: flex-start; font-size: 15px; font-weight: 600; padding: 7px 14px; border-radius: 999px; color: {{sel.pillColor}}; background: {{sel.pillBg}}">{{sel.pill}}</span></sc-if>
+        <p style="margin: 0; font-size: 18px; line-height: 1.45">{{sel.sentence}}</p>
+        <span style="font-size: 13px; color: #7D848E">{{sel.source}}</span>
+      </section>
+
+      <sc-if value="{{k.worked}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center">
+          <a href="Edit.dc.html" style="display: inline-flex; align-items: center; min-height: 52px; padding: 0 24px; border-radius: 13px; background: #4DA3FF; color: #0A0B0D; font-size: 15px; font-weight: 600; text-decoration: none; box-shadow: 0 0 22px rgba(77,163,255,.45)">Do the same on 3 similar pages</a>
+          <span style="font-size: 13px; color: #9AA1AB">Added to your total and this month's client report.</span>
+        </div>
+      </sc-if>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { id: 'flat', metric: 'rank' };
+  }
+  renderVals() {
+    const mk = (id, term, page, date, status, was, now, r, v, l, c, say) => ({ id: id, term: term, page: page, date: date, status: status, was: was, now: now,
+      m: { rank: ['#' + r[0], '#' + r[1], say], visitors: [String(v[0]), String(v[1]), v[2]], leads: [String(l[0]), String(l[1]), l[2]], rate: [c[0], c[1], c[2]] } });
+    const K = [
+      mk('flat', 'flat roof repair calgary', '/services/flat-roofs', 'SEP 15', 'worked', 'Flat Roofs | Northline Roofing', 'Flat Roof Repair & Replacement in Calgary | Northline',
+        [8, 5], [46, 79, '33 more people a month reach you from this search.'], [1, 2, 'About one extra call or quote request a month.'], ['1.4%', '2.6%', 'Almost twice as many searchers now pick you.'], 'You used to be the 8th result on Google. Now you’re 5th — up 3 spots, into the top half of page one.'),
+      mk('inspect', 'roof inspection calgary', '/services/roof-inspection', 'AUG 21', 'worked', 'Roof Inspections | Northline Roofing', 'Roof Inspection in Calgary — Report in 24 Hours | Northline',
+        [6, 3], [38, 97, '59 more people a month from this search.'], [1, 3, 'About two extra inspection bookings a month.'], ['1.1%', '2.4%', 'More than twice as many searchers click you.'], 'You were 6th. Now you’re 3rd — up 3 spots, and visible without scrolling on phones.'),
+      mk('hail', 'hail damage roof insurance', '/blog/hail-damage-insurance', 'SEP 22', 'worked', 'Hail Damage and Insurance (guide from March 2024)', 'Updated claim steps, 2026 insurer rules and a photo checklist',
+        [11, 4], [52, 131, '79 more readers a month from this search.'], [0, 2, 'Two quote requests a month that started on this guide.'], ['0.9%', '2.2%', 'Searchers now pick your guide more than twice as often.'], 'You were 11th, on page two where hardly anyone looks. Now you’re 4th — up 7 spots.'),
+      mk('emerg', 'emergency roof repair calgary', '/services/roof-repair', 'OCT 2', 'worked', 'Roof Repair Services | Northline Roofing', 'Roof Repair in Calgary — 24/7 Emergency Leaks | Northline',
+        [9, 4], [31, 88, '57 more people a month from this search.'], [1, 4, 'About three extra emergency calls a month.'], ['1.0%', '2.9%', 'Nearly three times as many searchers pick you.'], 'You were 9th. Now you’re 4th — up 5 spots for people with a leak right now.'),
+      mk('airdrie', 'roofers airdrie', '/service-area/airdrie', 'AUG 12', 'worked', 'Airdrie | Northline', 'Roofers in Airdrie — Repairs, Replacements, Inspections | Northline',
+        [9, 6], [21, 44, '23 more people a month from Airdrie.'], [0, 1, 'About one new Airdrie lead a month.'], ['1.6%', '2.5%', 'More Airdrie searchers choose you.'], 'You were 9th. Now you’re 6th — up 3 spots for Airdrie searches.'),
+      mk('gutter', 'gutter guards calgary', '/services/gutter-guards', 'SEP 29', 'worked', 'Gutter Guards | Northline Roofing', 'Gutter Guard Installation in Calgary — No More Clogs | Northline',
+        [14, 9], [8, 22, '14 more people a month from this search.'], [0, 1, 'About one new gutter-guard quote a month.'], ['0.6%', '1.5%', 'More than twice as many searchers click you.'], 'You were 14th, on page two. Now you’re 9th — up 5 spots, onto page one.'),
+      mk('replace', 'roof replacement calgary', '/services/roof-replacement', 'OCT 14', 'measuring', 'Roof Replacement | Northline Roofing', 'Roof Replacement in Calgary — Free Written Quotes | Northline',
+        [9, 8], [64, '—', 'Visitor numbers need the full 4 weeks. Results land Nov 11.'], [2, '—', 'Lead numbers need the full 4 weeks. Results land Nov 11.'], ['1.2%', '—', 'Click rate needs the full 4 weeks. Results land Nov 11.'], 'Early sign: you were 9th and you’re 8th after 5 days. The full result lands Nov 11.'),
+      mk('ice', 'ice dam removal calgary', '/blog/ice-dams-guide', 'OCT 16', 'measuring', 'Ice dams guide (last updated 2023)', 'Step-by-step removal, a safety checklist, and when to call a pro',
+        [12, 10], [40, '—', 'Visitor numbers need the full 4 weeks. Results land Nov 13.'], [0, '—', 'Lead numbers need the full 4 weeks. Results land Nov 13.'], ['0.8%', '—', 'Click rate needs the full 4 weeks. Results land Nov 13.'], 'Early sign: you were 12th and you’re 10th after 3 days. The full result lands Nov 13.'),
+      mk('cochrane', 'roofers cochrane', '/service-area/cochrane', 'OCT 9', 'measuring', 'Cochrane | Northline', 'Roofers in Cochrane — Local Crew, Free Quotes | Northline',
+        [17, 15], [5, '—', 'Visitor numbers need the full 4 weeks. Results land Nov 6.'], [0, '—', 'Lead numbers need the full 4 weeks. Results land Nov 6.'], ['0.7%', '—', 'Click rate needs the full 4 weeks. Results land Nov 6.'], 'Early sign: you were 17th and you’re 15th after 10 days. The full result lands Nov 6.'),
+      mk('leak', 'flat roof leak repair', '/services/flat-roofs', 'SEP 15', 'flat', 'Flat Roofs | Northline Roofing', 'Flat Roof Repair & Replacement in Calgary | Northline',
+        [7, 7], [18, 19, 'About the same as before.'], [0, 0, 'No change in leads.'], ['2.0%', '2.1%', 'About the same as before.'], 'Still 7th — no movement. The new title doesn’t mention leaks, so Searchify will suggest a page section for this search.'),
+      mk('skylight', 'skylight installation calgary', '/services/skylights', 'SEP 8', 'flat', 'Skylights | Northline Roofing', 'Skylight Installation & Repair in Calgary | Northline',
+        [13, 13], [9, 10, 'About the same as before.'], [0, 0, 'No change in leads.'], ['0.9%', '1.0%', 'About the same as before.'], 'Still 13th. The page loads slowly, which is holding it back — it’s on your yellow list.'),
+      mk('siding', 'siding repair calgary', '/services/siding', 'SEP 3', 'dropped', 'Siding Services | Northline Roofing', 'Siding | Northline',
+        [10, 12], [24, 17, '7 fewer people a month from this search.'], [1, 1, 'No change in leads yet.'], ['1.3%', '0.9%', 'Fewer searchers click you than before.'], 'You were 10th. Now you’re 12th — down 2 spots. That title change made it worse; Searchify has a fix ready in your reds.'),
+      mk('metal', 'metal roof vs asphalt', '/blog/metal-vs-asphalt', 'AUG 30', 'worked', 'Metal vs Asphalt Shingles', 'Metal Roof vs Asphalt Shingles in Calgary: Cost, Lifespan, Hail (2026)',
+        [15, 7], [12, 41, '29 more readers a month from this search.'], [0, 1, 'About one quote request a month from this guide.'], ['0.5%', '1.6%', 'Three times as many searchers pick your guide.'], 'You were 15th, on page two. Now you’re 7th — up 8 spots.'),
+      mk('lifespan', 'how long does a roof last', '/blog/roof-lifespan', 'OCT 18', 'measuring', 'How Long Does a Roof Last? (2023 Guide)', 'How Long Does a Roof Last? (2026 Guide)',
+        [22, 22], [6, '—', 'Visitor numbers need the full 4 weeks. Results land Nov 15.'], [0, '—', 'Lead numbers need the full 4 weeks. Results land Nov 15.'], ['0.3%', '—', 'Click rate needs the full 4 weeks. Results land Nov 15.'], 'Just shipped yesterday. You’re 22nd today. The full result lands Nov 15.')
+    ];
+    const ST = {
+      worked: { dot: '#3DDC84', badge: 'IT WORKED', text: '#0A0B0D', bg: '#3DDC84', border: '#3DDC84', arrow: '#3DDC84', after: '#3DDC84' },
+      measuring: { dot: '#4DA3FF', badge: 'MEASURING · DAY 5 OF 28', text: '#4DA3FF', bg: 'rgba(77,163,255,.1)', border: 'rgba(77,163,255,.5)', arrow: '#4DA3FF', after: '#F2F4F5' },
+      flat: { dot: '#9AA1AB', badge: 'NO CLEAR EFFECT YET', text: '#D7DADE', bg: '#1A1D22', border: '#262A31', arrow: '#9AA1AB', after: '#F2F4F5' },
+      dropped: { dot: '#FF5A4E', badge: 'WENT DOWN · FIX READY', text: '#FF5A4E', bg: 'rgba(255,90,78,.1)', border: 'rgba(255,90,78,.5)', arrow: '#FF5A4E', after: '#FF5A4E' }
+    };
+    const cur = K.find((x) => x.id === this.state.id) || K[0];
+    const sc = ST[cur.status];
+    const moveOf = (x) => {
+      const b = parseInt(x.m.rank[0].slice(1), 10), a = parseInt(x.m.rank[1].slice(1), 10);
+      if (a < b) return { t: '▲ up ' + (b - a), c: '#3DDC84', bg: 'rgba(61,220,132,.12)', n: b - a, w: 'up ' + (b - a) + ((b - a) === 1 ? ' spot' : ' spots') };
+      if (a > b) return { t: '▼ down ' + (a - b), c: '#FF5A4E', bg: 'rgba(255,90,78,.12)', n: a - b, w: 'down ' + (a - b) + ((a - b) === 1 ? ' spot' : ' spots') };
+      return { t: 'no change', c: '#9AA1AB', bg: '#1A1D22', n: 0, w: 'no change' };
+    };
+    const list = K.map((x) => {
+      const mv = moveOf(x);
+      return { id: x.id, term: x.term, page: x.page, dot: ST[x.status].dot, nowRank: x.m.rank[1], wasRank: x.m.rank[0], move: mv.t, moveColor: mv.c, moveBg: mv.bg,
+        aria: x.term + ': now ' + x.m.rank[1] + ' on Google, was ' + x.m.rank[0] + ', ' + mv.w,
+        on: x.id === cur.id, off: x.id !== cur.id, pick: () => this.setState({ id: x.id }) };
+    });
+    const headline = cur.status === 'worked' ? '“' + cur.term + '” is bringing in more customers.' :
+      (cur.status === 'measuring' ? 'Too early to call “' + cur.term + '”.' : (cur.status === 'dropped' ? '“' + cur.term + '” slipped. A fix is ready.' : '“' + cur.term + '” hasn’t moved yet.'));
+    const MLAB = { rank: 'Spot on Google', visitors: 'Visitors', leads: 'Calls & leads', rate: 'Click rate' };
+    const SRC = { rank: 'From Search Console · your average spot on Google for this search (#1 is the top result)', visitors: 'From Search Console · clicks from this search', leads: 'From Analytics · calls and form fills from this search', rate: 'From Search Console · clicks ÷ times shown' };
+    const mv = cur.m[this.state.metric];
+    return {
+      trackedLabel: K.length + ' keywords tracked on northline.example · 7 up · 2 flat · 1 down · 4 measuring',
+      list: list, selId: cur.id,
+      pickFromSelect: (e) => this.setState({ id: e.target.value }),
+      k: { term: cur.term, page: cur.page, date: cur.date, was: cur.was, now: cur.now, headline: headline,
+        badge: sc.badge, badgeText: sc.text, badgeBg: sc.bg, badgeBorder: sc.border, arrow: sc.arrow, afterColor: sc.after,
+        worked: cur.status === 'worked' },
+      beforeLabel: this.state.metric === 'rank' ? 'WHERE YOU WERE' : '4 WEEKS BEFORE',
+      afterLabel: this.state.metric === 'rank' ? (cur.status === 'measuring' ? 'WHERE YOU ARE SO FAR' : 'WHERE YOU ARE NOW') : (cur.status === 'measuring' ? 'SO FAR' : '4 WEEKS AFTER'),
+      scrollHint: 'Showing all ' + K.length + ' · scroll for more',
+      metrics: ['rank', 'visitors', 'leads', 'rate'].map((id) => ({ label: MLAB[id], on: id === this.state.metric, off: id !== this.state.metric, pick: () => this.setState({ metric: id }) })),
+      sel: { before: mv[0], after: mv[1], sentence: mv[2], source: SRC[this.state.metric],
+        hasPill: this.state.metric === 'rank', pill: (moveOf(cur).n ? (moveOf(cur).c === '#3DDC84' ? '▲ ' : '▼ ') : '') + moveOf(cur).w.charAt(0).toUpperCase() + moveOf(cur).w.slice(1) + ' on Google', pillColor: moveOf(cur).c, pillBg: moveOf(cur).bg }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — The scan</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;family=Caveat:wght@600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+@keyframes sfy-breathe{0%,100%{opacity:1}50%{opacity:.55}}
+@keyframes sfy-flicker{0%,100%{opacity:1;transform:scale(1)}45%{opacity:.55;transform:scale(.9)}55%{opacity:1;transform:scale(1.04)}}
+@keyframes sfy-rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 960px; background: #0A0B0D; display: flex; flex-wrap: wrap; align-items: stretch">
+<div style="flex: 1 1 248px; max-width: 100%; display: flex">
+<dc-import name="Nav" current="scan" hint-size="248px,960px"></dc-import>
+</div>
+<div style="flex: 999 1 560px; min-width: 0; min-height: 960px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 28px clamp(16px, 4vw, 56px) 56px; display: flex; flex-direction: column; gap: 40px">
+  <div style="display: flex; align-items: center; justify-content: space-between">
+    <div style="display: flex; align-items: center; gap: 10px">
+      
+      
+    </div>
+    <button type="button" onClick="{{replay}}" style="min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #262A31; background: transparent; color: #9AA1AB; font-size: 13px">Replay the scan</button>
+  </div>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 48px; align-items: flex-start">
+
+    <section style="flex: 1 1 440px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+      <sc-if value="{{isInput}}" hint-placeholder-val="{{false}}">
+        <div style="display: flex; flex-direction: column; gap: 22px; animation: sfy-rise .5s ease both">
+          <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(40px, 5.4vw, 72px); line-height: 0.98; letter-spacing: -2px; font-weight: 700">How much is your website leaving on the table?</h1>
+          <p style="margin: 0; font-size: 17px; color: #9AA1AB; line-height: 1.5; max-width: 480px">Paste your address. In about a minute you'll know, task by task.</p>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px">
+            <label for="url" style="flex: 1 1 280px; display: flex; align-items: center; min-height: 58px; padding: 0 18px; border-radius: 14px; background: #131519; border: 1px solid #262A31">
+              <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Website address</span>
+              <input id="url" type="url" value="northline.example" style="flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: #F2F4F5; font: inherit; font-size: 18px">
+            </label>
+            <button type="button" onClick="{{start}}" style="min-height: 58px; padding: 0 26px; border-radius: 14px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 16px; font-weight: 600; box-shadow: 0 0 24px rgba(77,163,255,.45)">Scan it</button>
+          </div>
+          <div style="font-size: 13px; color: #7D848E">No account needed for the scan.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isScanning}}" hint-placeholder-val="{{false}}">
+        <div style="display: flex; flex-direction: column; gap: 22px">
+          <div style="font-family: 'Geist Mono', monospace; font-size: 13px; color: {{accent}}; letter-spacing: 0.5px; animation: sfy-breathe 1.2s ease-in-out infinite">READING NORTHLINE.EXAMPLE</div>
+          <div style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(64px, 8vw, 112px); line-height: 0.9; letter-spacing: -3px; font-weight: 800">{{pct}}%</div>
+          <div style="height: 4px; border-radius: 4px; background: #1A1D22; overflow: hidden"><div style="height: 4px; background: {{accent}}; width: {{pctWidth}}; transition: width .08s linear"></div></div>
+          <div style="display: flex; flex-direction: column; gap: 8px; font-family: 'Geist Mono', monospace; font-size: 14px; color: #9AA1AB">
+            <sc-for list="{{log}}" as="line" hint-placeholder-count="3">
+              <div style="animation: sfy-rise .3s ease both">{{line}}</div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isConnect}}" hint-placeholder-val="{{false}}">
+        <div style="display: flex; flex-direction: column; gap: 22px; animation: sfy-rise .5s ease both">
+          <div style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #9AA1AB; letter-spacing: 0.5px">61 TASKS FOUND · <span style="color: #FF5A4E">6 DIRE</span> · <span style="color: #FFC53D">14 MEDIUM</span> · <span style="color: #4DA3FF">13 LOCKED</span></div>
+          <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(36px, 4.6vw, 60px); line-height: 1; letter-spacing: -1.6px; font-weight: 700">Now let's see what it's costing you.</h1>
+          <p style="margin: 0; font-size: 17px; color: #9AA1AB; line-height: 1.5; max-width: 480px">Search Console shows how many people see each page in Google but don't click. Read-only access.</p>
+          <button type="button" onClick="{{connect}}" style="align-self: flex-start; min-height: 58px; padding: 0 26px; border-radius: 14px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 16px; font-weight: 600; box-shadow: 0 0 24px rgba(77,163,255,.45)">Connect Search Console</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isReveal}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; flex-direction: column; gap: 20px; animation: sfy-rise .6s ease both">
+          <div style="font-family: 'Caveat', cursive; font-size: 40px; font-weight: 700; line-height: 1; color: #FF5A4E; transform: rotate(-2deg); transform-origin: left center; text-shadow: 0 0 22px rgba(255,90,78,.35)">You're missing this every month ↓</div>
+          <div style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap">
+            <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(88px, 11vw, 150px); line-height: 0.85; letter-spacing: -5px; font-weight: 800; color: {{accent}}">1,840</span>
+            <span style="font-size: 20px; color: #F2F4F5; line-height: 1.2">visitors<br>from Google</span>
+          </div>
+          <p style="margin: 0; font-size: 19px; line-height: 1.45; max-width: 520px">That's roughly <strong style="color: {{accent}}">36 calls or quote requests a month</strong> you're not getting. These people already see your site in Google — they pick someone else.</p>
+
+          <section aria-live="polite" aria-label="Selected task" style="border-radius: 22px; background: #101215; border: 1px solid {{insp.border}}; box-shadow: {{insp.glow}}; padding: 20px; display: flex; flex-direction: column; gap: 14px; transition: border-color .3s ease, box-shadow .3s ease">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+              <span style="width: 12px; height: 12px; border-radius: 50%; background: {{insp.color}}; box-shadow: 0 0 10px {{insp.color}}"></span>
+              <span style="font-size: 13px; font-weight: 600; color: {{insp.color}}">{{insp.status}}</span>
+              <span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 12px; color: #9AA1AB">{{insp.page}}</span>
+            </div>
+            <h2 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.3px">{{insp.task}}</h2>
+            <div style="border-radius: 14px; background: #F7F8FA; color: #202124; padding: 14px 16px; display: flex; flex-direction: column; gap: 3px">
+              <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #5F6368; margin-bottom: 4px">IN GOOGLE NOW</span>
+              <span style="font-size: 12px; color: #3C4043">northline.example{{insp.crumb}}</span>
+              <span style="font-size: 18px; color: #1A0DAB; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{insp.nowT}}</span>
+              <span style="font-size: 13px; color: #4D5156; line-height: 1.45">{{insp.nowD}}</span>
+            </div>
+            <sc-if value="{{insp.hasSug}}" hint-placeholder-val="{{true}}">
+              <div style="border-radius: 14px; background: #F7F8FA; color: #202124; padding: 14px 16px; display: flex; flex-direction: column; gap: 3px; outline: 2px solid #4DA3FF; outline-offset: 2px; box-shadow: 0 0 26px rgba(77,163,255,.35)">
+                <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #1A5FB4; margin-bottom: 4px">WE SUGGEST · OPTION {{insp.optNo}} OF 3</span>
+                <span style="font-size: 12px; color: #3C4043">northline.example{{insp.crumb}}</span>
+                <span style="font-size: 18px; color: #1A0DAB; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{insp.sugT}}</span>
+                <span style="font-size: 13px; color: #4D5156; line-height: 1.45">{{insp.sugD}}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{insp.canAct}}" hint-placeholder-val="{{true}}">
+              <div style="display: flex; gap: 10px; flex-wrap: wrap">
+                <button type="button" onClick="{{insp.publish}}" style="min-height: 50px; padding: 0 22px; border-radius: 13px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 15px; font-weight: 600; box-shadow: 0 0 22px rgba(77,163,255,.45)">Publish change</button>
+                <button type="button" onClick="{{insp.regen}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 50px; padding: 0 18px; border-radius: 13px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 15px">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"></path><path d="M21 4v5h-5"></path></svg>
+                  Regenerate suggestion
+                </button>
+              </div>
+            </sc-if>
+            <sc-if value="{{insp.isPublished}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+                <span style="display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 16px; border-radius: 12px; background: rgba(61,220,132,.1); border: 1px solid rgba(61,220,132,.5); font-size: 14px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #3DDC84; box-shadow: 0 0 8px #3DDC84; animation: sfy-breathe 1.2s ease-in-out infinite"></span>Published · checking the live page</span>
+                <button type="button" onClick="{{insp.undo}}" style="min-height: 46px; padding: 0 12px; border: 0; background: transparent; color: #9AA1AB; font-size: 13px; text-decoration: underline">Undo</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{insp.hasNote}}" hint-placeholder-val="{{false}}">
+              <p style="margin: 0; font-size: 14px; color: #9AA1AB; line-height: 1.5">{{insp.note}}</p>
+            </sc-if>
+            <span style="font-size: 12px; color: #7D848E">Click any dot on the board to load it here.</span>
+          </section>
+
+          <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap">
+            <a href="Home.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 50px; padding: 0 20px; border-radius: 14px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 15px; font-weight: 500; text-decoration: none">Work through them one at a time in Today's moves <span aria-hidden="true">→</span></a>
+            <span style="font-size: 13px; color: #7D848E">Pick reds, yellows, greens or blues there.</span>
+          </div>
+        </div>
+      </sc-if>
+    </section>
+
+    <section aria-label="Every task Searchify found" style="flex: 1 1 440px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+      <div style="background: #101215; border: 1px solid #1A1D22; border-radius: 24px; padding: clamp(20px, 3vw, 32px); display: flex; flex-direction: column; gap: 18px">
+
+        <div style="display: flex; align-items: center; gap: 10px; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 16px; font-weight: 800; letter-spacing: 1.6px; color: #F2F4F5">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F2F4F5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3l14 7-6 2-2 6z"></path></svg>
+          HOVER OVER ANY DOT
+        </div>
+        <div role="group" aria-label="Show tasks by colour" style="display: flex; flex-wrap: wrap; gap: 6px">
+          <sc-for list="{{chips}}" as="ch" hint-placeholder-count="5">
+            <sc-if value="{{ch.on}}" hint-placeholder-val="{{false}}">
+              <button type="button" aria-pressed="true" onClick="{{ch.pick}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid {{ch.color}}; background: {{ch.tint}}; color: #F2F4F5; font-size: 13px; font-weight: 600; box-shadow: 0 0 22px {{ch.glow}}; transition: box-shadow .3s ease">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ch.color}}; box-shadow: 0 0 10px {{ch.color}}; animation: sfy-flicker 1.4s ease-in-out infinite"></span>{{ch.label}} <span style="font-family: 'Geist Mono', monospace">{{ch.count}}</span>
+              </button>
+            </sc-if>
+            <sc-if value="{{ch.off}}" hint-placeholder-val="{{true}}">
+              <button type="button" aria-pressed="false" onClick="{{ch.pick}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #262A31; background: transparent; color: #D7DADE; font-size: 13px">
+                <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ch.color}}"></span>{{ch.label}} <span style="font-family: 'Geist Mono', monospace; color: #9AA1AB">{{ch.count}}</span>
+              </button>
+            </sc-if>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap">
+          <div role="group" aria-label="Order" style="display: inline-flex; padding: 3px; border-radius: 10px; background: #0A0B0D; border: 1px solid #1A1D22">
+            <sc-for list="{{orders}}" as="o" hint-placeholder-count="2">
+              <sc-if value="{{o.on}}" hint-placeholder-val="{{false}}"><button type="button" aria-pressed="true" onClick="{{o.pick}}" style="min-height: 30px; padding: 0 10px; border-radius: 7px; border: 0; background: #262A31; color: #F2F4F5; font-size: 12px">{{o.label}}</button></sc-if>
+              <sc-if value="{{o.off}}" hint-placeholder-val="{{true}}"><button type="button" aria-pressed="false" onClick="{{o.pick}}" style="min-height: 30px; padding: 0 10px; border-radius: 7px; border: 0; background: transparent; color: #9AA1AB; font-size: 12px">{{o.label}}</button></sc-if>
+            </sc-for>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #9AA1AB">{{rangeLabel}}</span>
+            <button type="button" aria-label="Previous tasks" onClick="{{prev}}" style="width: 34px; height: 34px; border-radius: 9px; border: 1px solid #262A31; background: transparent; color: {{prevColor}}; display: grid; place-items: center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+            </button>
+            <button type="button" aria-label="Next tasks" onClick="{{next}}" style="width: 34px; height: 34px; border-radius: 9px; border: 1px solid #262A31; background: transparent; color: {{nextColor}}; display: grid; place-items: center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: clamp(8px, 1.2vw, 14px); min-height: 280px; align-content: start">
+          <sc-for list="{{dots}}" as="d" hint-placeholder-count="48">
+            <button type="button" onClick="{{d.pick}}" onMouseEnter="{{d.hover}}" onMouseLeave="{{clearHover}}" aria-label="{{d.label}}" aria-pressed="{{d.selStr}}" style="aspect-ratio: 1; display: grid; place-items: center; padding: 0; border: 0; background: transparent; border-radius: 50%; cursor: pointer; outline: {{d.ring}}; outline-offset: 1px">
+              <div style="width: 58%; aspect-ratio: 1; border-radius: 50%; background: {{d.color}}; opacity: {{d.op}}; box-shadow: {{d.shadow}}; animation: {{d.anim}}; transition: opacity .3s ease, box-shadow .3s ease"></div>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="min-height: 44px; padding-top: 14px; border-top: 1px solid #1A1D22; display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 14px; font-weight: 600">{{infoTitle}}</span>
+          <span style="font-size: 13px; color: #9AA1AB">{{infoSub}}</span>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#D5F879","options":["#D5F879","#9FE7F5","#FFD36E","#C9B8FF"]},"startAt":{"editor":"enum","options":["reveal","input"],"default":"reveal"},"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const s = (props && props.startAt) === 'input' ? 'input' : 'reveal';
+    this.state = { stage: s, pct: s === 'reveal' ? 100 : 0, hover: -1, filter: 'red', order: 'scan', page: 0, sel: null, variant: {}, pub: {} };
+    this.timer = null;
+  }
+  componentWillUnmount() { if (this.timer) clearInterval(this.timer); }
+  run() {
+    if (this.timer) clearInterval(this.timer);
+    this.setState({ stage: 'scanning', pct: 0, page: 0, filter: 'red', order: 'scan' });
+    this.timer = setInterval(() => {
+      const p = Math.min(100, this.state.pct + 2);
+      if (p >= 100) { clearInterval(this.timer); this.timer = null; this.setState({ pct: 100, stage: 'connect' }); }
+      else this.setState({ pct: p });
+    }, 70);
+  }
+  renderVals() {
+    const COLORS = { red: '#FF5A4E', yellow: '#FFC53D', green: '#3DDC84', blue: '#4DA3FF' };
+    const META = {
+      all: { label: 'All', title: 'Every task, colour-coded', sub: 'Pick a colour to make those tasks glow. Hover any dot to see the task.' },
+      red: { label: 'Dire', title: 'Needs dire improvement', sub: 'Fix these first — they cost you the most visitors.' },
+      yellow: { label: 'Medium', title: 'Medium priority', sub: 'Worth doing once the reds are done.' },
+      green: { label: 'Passes', title: 'Passes the criteria', sub: 'Nothing to do. Searchify rechecks these weekly.' },
+      blue: { label: 'Locked', title: 'Successful — do not change', sub: 'These are winning. Searchify will not touch them.' }
+    };
+    const red = ['Rewrite title · /services/roof-repair', 'Refresh guide · /blog/ice-dams-guide', 'Fix broken page · /services/emergency-tarping', 'Add missing description · /services/siding', 'Fix redirect loop · /financing', 'Let Google index · /service-area/airdrie'];
+    const yellow = ['Add internal links · /services/gutter-guards', 'Shorten title · /reviews', 'Compress images · /services/skylights', 'Add FAQ section · /services/gutters', 'Update the year · /blog/roof-lifespan', 'Add image descriptions · /blog/metal-vs-asphalt', 'Fix duplicate title · /blog/hail-season', 'Add business details · /contact', 'Merge thin posts · /blog/roof-noise', 'Speed up page · /', 'Link from blog · /service-area/cochrane', 'Refresh stats · /blog/insurance-claim-steps', 'Shorten description · /about', 'Add city to heading · /services/siding'];
+    const pages = ['/', '/about', '/contact', '/reviews', '/services/gutters', '/services/skylights', '/blog/roof-lifespan', '/blog/chinook-wind-damage', '/service-area/cochrane', '/blog/moss-removal'];
+    const checks = ['Title length OK', 'Indexed by Google', 'Mobile-friendly', 'Loads fast'];
+    const green = [];
+    for (let i = 0; i < 28; i++) green.push(checks[i % 4] + ' · ' + pages[i % 10]);
+    const bluePages = ['/services/flat-roofs', '/services/roof-inspection', '/blog/hail-damage-insurance', '/services/roof-replacement', '/service-area/calgary', '/blog/signs-you-need-a-new-roof', '/blog/winter-prep', '/blog/attic-ventilation', '/blog/choosing-a-roofer', '/blog/shingle-colours', '/blog/gutter-cleaning', '/blog/cost-calculator', '/blog/emergency-checklist'];
+    const blue = bluePages.map((p) => 'Winning — leave as is · ' + p);
+    const all = [];
+    red.forEach((t) => all.push({ c: 'red', t: t }));
+    yellow.forEach((t) => all.push({ c: 'yellow', t: t }));
+    green.forEach((t) => all.push({ c: 'green', t: t }));
+    blue.forEach((t) => all.push({ c: 'blue', t: t }));
+    const N = all.length;
+    const rank = { red: 0, yellow: 1, green: 2, blue: 3 };
+    let tasks;
+    if (this.state.order === 'priority') tasks = all.slice();
+    else { tasks = []; for (let i = 0; i < N; i++) tasks.push(all[(i * 37) % N]); }
+    if (this.state.order === 'priority') tasks.sort((a, b) => rank[a.c] - rank[b.c]);
+
+    const PER = 48;
+    const pagesCount = Math.ceil(N / PER);
+    const pg = Math.min(this.state.page, pagesCount - 1);
+    const slice = tasks.slice(pg * PER, pg * PER + PER);
+    const st = this.state.stage;
+    const lit = st === 'input' ? 0 : (st === 'scanning' ? Math.round(this.state.pct / 100 * slice.length) : slice.length);
+    const f = this.state.filter;
+    const effSel = this.state.sel || (tasks.find((x) => x.c === 'red') || tasks[0]).t;
+    const dots = slice.map((task, i) => {
+      const on = i < lit;
+      const scanning = st === 'scanning';
+      const match = scanning || f === task.c;
+      const published = !!this.state.pub[task.t];
+      const col = published ? COLORS.green : COLORS[task.c];
+      const selected = effSel === task.t;
+      return {
+        pick: () => this.setState({ sel: task.t }),
+        ring: selected ? '2px solid #F2F4F5' : 'none', selStr: String(selected),
+        color: on ? col : '#1A1D22',
+        op: !on ? '1' : (match ? '1' : '0.14'),
+        shadow: on && !scanning && match ? '0 0 22px ' + col : 'none',
+        anim: on && !scanning && match && !published ? 'sfy-flicker 1.4s ease-in-out infinite' : 'none',
+        label: task.t + ' — ' + META[task.c].title.toLowerCase(),
+        hover: () => this.setState({ hover: i })
+      };
+    });
+    const counts = { all: N, red: 6, yellow: 14, green: 28, blue: 13 };
+    const RGB = { red: '255,90,78', yellow: '255,197,61', green: '61,220,132', blue: '77,163,255' };
+    const chips = ['red', 'yellow', 'green', 'blue'].map((k) => ({
+      label: META[k].label, count: String(counts[k]), color: COLORS[k],
+      tint: 'rgba(' + RGB[k] + ',.16)', glow: 'rgba(' + RGB[k] + ',.55)',
+      on: f === k, off: f !== k, pick: () => this.setState({ filter: k })
+    }));
+    const orders = [{ id: 'scan', label: 'Scan order' }, { id: 'priority', label: 'By priority' }].map((o) => ({
+      label: o.label, on: this.state.order === o.id, off: this.state.order !== o.id, pick: () => this.setState({ order: o.id, page: 0 })
+    }));
+    const hv = this.state.hover;
+    const hovered = hv >= 0 && hv < lit ? slice[hv] : null;
+    const p = this.state.pct;
+    const log = [];
+    if (p > 4) log.push('→ found sitemap · 48 URLs');
+    if (p > 25) log.push('→ reading titles and headings');
+    if (p > 50) log.push('→ WordPress + Yoast detected');
+    if (p > 72) log.push('→ mapping internal links');
+    if (p > 90) log.push('→ 61 tasks · 6 dire · 14 medium');
+    const selTask = tasks.find((x) => x.t === this.state.sel) || tasks.find((x) => x.c === 'red') || tasks[0];
+    const parts = selTask.t.split(' · ');
+    const action = parts[0], path = parts[1] || '/';
+    const isBlog = path.indexOf('/blog') === 0;
+    const seg = path === '/' ? '' : path.split('/').pop();
+    const topic = seg ? seg.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Roofing';
+    const crumb = path === '/' ? '' : ' › ' + path.split('/').filter(Boolean).join(' › ');
+    const nowT = path === '/' ? 'Northline Roofing' : topic + (isBlog ? ' | Northline Roofing Blog' : ' | Northline Roofing');
+    const nowD = action.indexOf('description') >= 0 && action.indexOf('Add') === 0 ? '(No description. Google shows a random sentence from the page.)' : (isBlog ? 'Read our latest post about ' + topic.toLowerCase() + '.' : 'Learn more about our ' + topic.toLowerCase() + ' services.');
+    const SUG = isBlog ? [
+      [topic + ': A 2026 Guide for Calgary Homeowners | Northline', 'What Calgary homeowners need to know about ' + topic.toLowerCase() + ', with photos, costs and when to call a pro.'],
+      [topic + ' — What Calgary Homeowners Should Know | Northline', 'Plain answers on ' + topic.toLowerCase() + ' from a Calgary roofing crew. Updated for 2026.'],
+      [topic + ', Step by Step (Calgary 2026) | Northline', 'A step-by-step guide to ' + topic.toLowerCase() + ', written by local roofers who see it every winter.']
+    ] : [
+      [(path === '/' ? 'Calgary Roofers' : topic + ' in Calgary') + ' — 24/7 Emergency Service | Northline', (path === '/' ? 'Roof repair and replacement' : topic) + ' across Calgary, Airdrie and Cochrane. Same-day visits and a written quote before any work starts.'],
+      [(path === '/' ? 'Calgary Roofing Company' : topic + ' in Calgary') + ' — Free Written Quotes | Northline', 'Need ' + (path === '/' ? 'a roofer' : topic.toLowerCase()) + ' in Calgary? Licensed local crew, 10-year workmanship warranty, quotes within 24 hours.'],
+      ['Calgary ' + (path === '/' ? 'Roofers' : topic) + ' by Local Roofers Since 1998 | Northline', 'Family-owned Calgary roofers. ' + (path === '/' ? 'Every roof' : topic) + ' done right the first time. Book a free inspection today.']
+    ];
+    const v = (this.state.variant[selTask.t] || 0) % 3;
+    const isPub = !!this.state.pub[selTask.t];
+    const actionable = selTask.c === 'red' || selTask.c === 'yellow';
+    const STATUS = { red: 'Needs dire improvement', yellow: 'Medium priority', green: 'Passes the criteria', blue: 'Winning · locked' };
+    const insp = {
+      task: action, page: path, crumb: crumb, nowT: nowT, nowD: nowD,
+      sugT: SUG[v][0], sugD: SUG[v][1], optNo: String(v + 1),
+      color: isPub ? COLORS.green : COLORS[selTask.c],
+      status: isPub ? 'Published' : STATUS[selTask.c],
+      border: isPub ? 'rgba(61,220,132,.5)' : 'rgba(' + ({ red: '255,90,78', yellow: '255,197,61', green: '61,220,132', blue: '77,163,255' })[selTask.c] + ',.5)',
+      glow: '0 0 26px rgba(' + (isPub ? '61,220,132' : ({ red: '255,90,78', yellow: '255,197,61', green: '61,220,132', blue: '77,163,255' })[selTask.c]) + ',.15)',
+      hasSug: actionable, canAct: actionable && !isPub, isPublished: isPub,
+      hasNote: !actionable,
+      note: selTask.c === 'blue' ? 'This page is winning. Searchify has locked it and won’t suggest changes.' : 'This passes. Nothing to change; Searchify rechecks it every week.',
+      publish: () => this.setState({ pub: Object.assign({}, this.state.pub, { [selTask.t]: true }) }),
+      undo: () => { const nx = Object.assign({}, this.state.pub); delete nx[selTask.t]; this.setState({ pub: nx }); },
+      regen: () => this.setState({ variant: Object.assign({}, this.state.variant, { [selTask.t]: v + 1 }) })
+    };
+    return {
+      accent: this.props.accent ?? '#D5F879',
+      isInput: st === 'input', isScanning: st === 'scanning', isConnect: st === 'connect', isReveal: st === 'reveal',
+      pct: String(p), pctWidth: p + '%', dots: dots, log: log, insp: insp, chips: chips, orders: orders,
+      rangeLabel: 'Tasks ' + (pg * PER + 1) + '–' + (pg * PER + slice.length) + ' of ' + N,
+      prevColor: pg > 0 ? '#F2F4F5' : '#3A404A', nextColor: pg < pagesCount - 1 ? '#F2F4F5' : '#3A404A',
+      prev: () => this.setState({ page: Math.max(0, pg - 1), hover: -1 }),
+      next: () => this.setState({ page: Math.min(pagesCount - 1, pg + 1), hover: -1 }),
+      infoTitle: hovered ? hovered.t : META[f].title,
+      infoSub: hovered ? META[hovered.c].title : META[f].sub,
+      clearHover: () => this.setState({ hover: -1 }),
+      start: () => this.run(),
+      replay: () => { if (this.timer) clearInterval(this.timer); this.setState({ stage: 'input', pct: 0, page: 0 }); },
+      connect: () => this.setState({ stage: 'reveal' })
+    };
+  }
+}
+</script>
+<script>window.__DC_FACTORY = function (DCLogic, React) {
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const s = (props && props.startAt) === 'input' ? 'input' : 'reveal';
+    this.state = { stage: s, pct: s === 'reveal' ? 100 : 0, hover: -1, filter: 'red', order: 'scan', page: 0, sel: null, variant: {}, pub: {} };
+    this.timer = null;
+  }
+  componentWillUnmount() { if (this.timer) clearInterval(this.timer); }
+  run() {
+    if (this.timer) clearInterval(this.timer);
+    this.setState({ stage: 'scanning', pct: 0, page: 0, filter: 'red', order: 'scan' });
+    this.timer = setInterval(() => {
+      const p = Math.min(100, this.state.pct + 2);
+      if (p >= 100) { clearInterval(this.timer); this.timer = null; this.setState({ pct: 100, stage: 'connect' }); }
+      else this.setState({ pct: p });
+    }, 70);
+  }
+  renderVals() {
+    const COLORS = { red: '#FF5A4E', yellow: '#FFC53D', green: '#3DDC84', blue: '#4DA3FF' };
+    const META = {
+      all: { label: 'All', title: 'Every task, colour-coded', sub: 'Pick a colour to make those tasks glow. Hover any dot to see the task.' },
+      red: { label: 'Dire', title: 'Needs dire improvement', sub: 'Fix these first — they cost you the most visitors.' },
+      yellow: { label: 'Medium', title: 'Medium priority', sub: 'Worth doing once the reds are done.' },
+      green: { label: 'Passes', title: 'Passes the criteria', sub: 'Nothing to do. Searchify rechecks these weekly.' },
+      blue: { label: 'Locked', title: 'Successful — do not change', sub: 'These are winning. Searchify will not touch them.' }
+    };
+    const red = ['Rewrite title · /services/roof-repair', 'Refresh guide · /blog/ice-dams-guide', 'Fix broken page · /services/emergency-tarping', 'Add missing description · /services/siding', 'Fix redirect loop · /financing', 'Let Google index · /service-area/airdrie'];
+    const yellow = ['Add internal links · /services/gutter-guards', 'Shorten title · /reviews', 'Compress images · /services/skylights', 'Add FAQ section · /services/gutters', 'Update the year · /blog/roof-lifespan', 'Add image descriptions · /blog/metal-vs-asphalt', 'Fix duplicate title · /blog/hail-season', 'Add business details · /contact', 'Merge thin posts · /blog/roof-noise', 'Speed up page · /', 'Link from blog · /service-area/cochrane', 'Refresh stats · /blog/insurance-claim-steps', 'Shorten description · /about', 'Add city to heading · /services/siding'];
+    const pages = ['/', '/about', '/contact', '/reviews', '/services/gutters', '/services/skylights', '/blog/roof-lifespan', '/blog/chinook-wind-damage', '/service-area/cochrane', '/blog/moss-removal'];
+    const checks = ['Title length OK', 'Indexed by Google', 'Mobile-friendly', 'Loads fast'];
+    const green = [];
+    for (let i = 0; i < 28; i++) green.push(checks[i % 4] + ' · ' + pages[i % 10]);
+    const bluePages = ['/services/flat-roofs', '/services/roof-inspection', '/blog/hail-damage-insurance', '/services/roof-replacement', '/service-area/calgary', '/blog/signs-you-need-a-new-roof', '/blog/winter-prep', '/blog/attic-ventilation', '/blog/choosing-a-roofer', '/blog/shingle-colours', '/blog/gutter-cleaning', '/blog/cost-calculator', '/blog/emergency-checklist'];
+    const blue = bluePages.map((p) => 'Winning — leave as is · ' + p);
+    const all = [];
+    red.forEach((t) => all.push({ c: 'red', t: t }));
+    yellow.forEach((t) => all.push({ c: 'yellow', t: t }));
+    green.forEach((t) => all.push({ c: 'green', t: t }));
+    blue.forEach((t) => all.push({ c: 'blue', t: t }));
+    const N = all.length;
+    const rank = { red: 0, yellow: 1, green: 2, blue: 3 };
+    let tasks;
+    if (this.state.order === 'priority') tasks = all.slice();
+    else { tasks = []; for (let i = 0; i < N; i++) tasks.push(all[(i * 37) % N]); }
+    if (this.state.order === 'priority') tasks.sort((a, b) => rank[a.c] - rank[b.c]);
+
+    const PER = 48;
+    const pagesCount = Math.ceil(N / PER);
+    const pg = Math.min(this.state.page, pagesCount - 1);
+    const slice = tasks.slice(pg * PER, pg * PER + PER);
+    const st = this.state.stage;
+    const lit = st === 'input' ? 0 : (st === 'scanning' ? Math.round(this.state.pct / 100 * slice.length) : slice.length);
+    const f = this.state.filter;
+    const effSel = this.state.sel || (tasks.find((x) => x.c === 'red') || tasks[0]).t;
+    const dots = slice.map((task, i) => {
+      const on = i < lit;
+      const scanning = st === 'scanning';
+      const match = scanning || f === task.c;
+      const published = !!this.state.pub[task.t];
+      const col = published ? COLORS.green : COLORS[task.c];
+      const selected = effSel === task.t;
+      return {
+        pick: () => this.setState({ sel: task.t }),
+        ring: selected ? '2px solid #F2F4F5' : 'none', selStr: String(selected),
+        color: on ? col : '#1A1D22',
+        op: !on ? '1' : (match ? '1' : '0.14'),
+        shadow: on && !scanning && match ? '0 0 22px ' + col : 'none',
+        anim: on && !scanning && match && !published ? 'sfy-flicker 1.4s ease-in-out infinite' : 'none',
+        label: task.t + ' — ' + META[task.c].title.toLowerCase(),
+        hover: () => this.setState({ hover: i })
+      };
+    });
+    const counts = { all: N, red: 6, yellow: 14, green: 28, blue: 13 };
+    const RGB = { red: '255,90,78', yellow: '255,197,61', green: '61,220,132', blue: '77,163,255' };
+    const chips = ['red', 'yellow', 'green', 'blue'].map((k) => ({
+      label: META[k].label, count: String(counts[k]), color: COLORS[k],
+      tint: 'rgba(' + RGB[k] + ',.16)', glow: 'rgba(' + RGB[k] + ',.55)',
+      on: f === k, off: f !== k, pick: () => this.setState({ filter: k })
+    }));
+    const orders = [{ id: 'scan', label: 'Scan order' }, { id: 'priority', label: 'By priority' }].map((o) => ({
+      label: o.label, on: this.state.order === o.id, off: this.state.order !== o.id, pick: () => this.setState({ order: o.id, page: 0 })
+    }));
+    const hv = this.state.hover;
+    const hovered = hv >= 0 && hv < lit ? slice[hv] : null;
+    const p = this.state.pct;
+    const log = [];
+    if (p > 4) log.push('→ found sitemap · 48 URLs');
+    if (p > 25) log.push('→ reading titles and headings');
+    if (p > 50) log.push('→ WordPress + Yoast detected');
+    if (p > 72) log.push('→ mapping internal links');
+    if (p > 90) log.push('→ 61 tasks · 6 dire · 14 medium');
+    const selTask = tasks.find((x) => x.t === this.state.sel) || tasks.find((x) => x.c === 'red') || tasks[0];
+    const parts = selTask.t.split(' · ');
+    const action = parts[0], path = parts[1] || '/';
+    const isBlog = path.indexOf('/blog') === 0;
+    const seg = path === '/' ? '' : path.split('/').pop();
+    const topic = seg ? seg.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Roofing';
+    const crumb = path === '/' ? '' : ' › ' + path.split('/').filter(Boolean).join(' › ');
+    const nowT = path === '/' ? 'Northline Roofing' : topic + (isBlog ? ' | Northline Roofing Blog' : ' | Northline Roofing');
+    const nowD = action.indexOf('description') >= 0 && action.indexOf('Add') === 0 ? '(No description. Google shows a random sentence from the page.)' : (isBlog ? 'Read our latest post about ' + topic.toLowerCase() + '.' : 'Learn more about our ' + topic.toLowerCase() + ' services.');
+    const SUG = isBlog ? [
+      [topic + ': A 2026 Guide for Calgary Homeowners | Northline', 'What Calgary homeowners need to know about ' + topic.toLowerCase() + ', with photos, costs and when to call a pro.'],
+      [topic + ' — What Calgary Homeowners Should Know | Northline', 'Plain answers on ' + topic.toLowerCase() + ' from a Calgary roofing crew. Updated for 2026.'],
+      [topic + ', Step by Step (Calgary 2026) | Northline', 'A step-by-step guide to ' + topic.toLowerCase() + ', written by local roofers who see it every winter.']
+    ] : [
+      [(path === '/' ? 'Calgary Roofers' : topic + ' in Calgary') + ' — 24/7 Emergency Service | Northline', (path === '/' ? 'Roof repair and replacement' : topic) + ' across Calgary, Airdrie and Cochrane. Same-day visits and a written quote before any work starts.'],
+      [(path === '/' ? 'Calgary Roofing Company' : topic + ' in Calgary') + ' — Free Written Quotes | Northline', 'Need ' + (path === '/' ? 'a roofer' : topic.toLowerCase()) + ' in Calgary? Licensed local crew, 10-year workmanship warranty, quotes within 24 hours.'],
+      ['Calgary ' + (path === '/' ? 'Roofers' : topic) + ' by Local Roofers Since 1998 | Northline', 'Family-owned Calgary roofers. ' + (path === '/' ? 'Every roof' : topic) + ' done right the first time. Book a free inspection today.']
+    ];
+    const v = (this.state.variant[selTask.t] || 0) % 3;
+    const isPub = !!this.state.pub[selTask.t];
+    const actionable = selTask.c === 'red' || selTask.c === 'yellow';
+    const STATUS = { red: 'Needs dire improvement', yellow: 'Medium priority', green: 'Passes the criteria', blue: 'Winning · locked' };
+    const insp = {
+      task: action, page: path, crumb: crumb, nowT: nowT, nowD: nowD,
+      sugT: SUG[v][0], sugD: SUG[v][1], optNo: String(v + 1),
+      color: isPub ? COLORS.green : COLORS[selTask.c],
+      status: isPub ? 'Published' : STATUS[selTask.c],
+      border: isPub ? 'rgba(61,220,132,.5)' : 'rgba(' + ({ red: '255,90,78', yellow: '255,197,61', green: '61,220,132', blue: '77,163,255' })[selTask.c] + ',.5)',
+      glow: '0 0 26px rgba(' + (isPub ? '61,220,132' : ({ red: '255,90,78', yellow: '255,197,61', green: '61,220,132', blue: '77,163,255' })[selTask.c]) + ',.15)',
+      hasSug: actionable, canAct: actionable && !isPub, isPublished: isPub,
+      hasNote: !actionable,
+      note: selTask.c === 'blue' ? 'This page is winning. Searchify has locked it and won’t suggest changes.' : 'This passes. Nothing to change; Searchify rechecks it every week.',
+      publish: () => this.setState({ pub: Object.assign({}, this.state.pub, { [selTask.t]: true }) }),
+      undo: () => { const nx = Object.assign({}, this.state.pub); delete nx[selTask.t]; this.setState({ pub: nx }); },
+      regen: () => this.setState({ variant: Object.assign({}, this.state.variant, { [selTask.t]: v + 1 }) })
+    };
+    return {
+      accent: this.props.accent ?? '#D5F879',
+      isInput: st === 'input', isScanning: st === 'scanning', isConnect: st === 'connect', isReveal: st === 'reveal',
+      pct: String(p), pctWidth: p + '%', dots: dots, log: log, insp: insp, chips: chips, orders: orders,
+      rangeLabel: 'Tasks ' + (pg * PER + 1) + '–' + (pg * PER + slice.length) + ' of ' + N,
+      prevColor: pg > 0 ? '#F2F4F5' : '#3A404A', nextColor: pg < pagesCount - 1 ? '#F2F4F5' : '#3A404A',
+      prev: () => this.setState({ page: Math.max(0, pg - 1), hover: -1 }),
+      next: () => this.setState({ page: Math.min(pagesCount - 1, pg + 1), hover: -1 }),
+      infoTitle: hovered ? hovered.t : META[f].title,
+      infoSub: hovered ? META[hovered.c].title : META[f].sub,
+      clearHover: () => this.setState({ hover: -1 }),
+      start: () => this.run(),
+      replay: () => { if (this.timer) clearInterval(this.timer); this.setState({ stage: 'input', pct: 0, page: 0 }); },
+      connect: () => this.setState({ stage: 'reveal' })
+    };
+  }
+}
+
+return Component;
+};</script>
+<template data-dc-component="Nav" data-props='{"current":{"editor":"enum","options":["connect","scan","home","path","tracker","backlinks","results","reports","command","sites","clientreport","settings","billing"],"default":"home"},"$preview":{"width":248,"height":960}}'><x-dc>
+
+<nav aria-label="Main" style="flex: 1; align-self: stretch; width: 100%; min-height: 960px; box-sizing: border-box; padding: 22px 14px; background: #0D0E10; border-right: 1px solid #1A1D22; font-family: Geist, 'Helvetica Neue', sans-serif; color: #F2F4F5; display: flex; flex-direction: column; gap: 22px">
+  <a href="Home.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 0 8px; text-decoration: none; color: #F2F4F5">
+    <svg width="30" height="30" viewBox="0 0 32 32" role="img" aria-label="Searchify"><rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="#131519" stroke="#2E333B"></rect><circle cx="9" cy="12.5" r="2.9" fill="#FF5A4E"></circle><circle cx="16" cy="12.5" r="2.9" fill="#FF9F43"></circle><circle cx="23" cy="12.5" r="2.9" fill="#FFC53D"></circle><circle cx="9" cy="19.5" r="2.9" fill="#3DDC84"></circle><circle cx="16" cy="19.5" r="2.9" fill="#2CC7C0"></circle><circle cx="23" cy="19.5" r="2.9" fill="#4DA3FF"></circle></svg>
+    <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.4px">searchify</span>
+  </a>
+
+  <a href="Portfolio.dc.html" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 48px; padding: 6px 12px; border-radius: 12px; border: 1px solid #262A31; background: #131519; color: #F2F4F5; text-decoration: none">
+    <span style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 12px; color: #9AA1AB">Working on</span><span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">northline.example</span></span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA1AB" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 10l5 5 5-5"></path></svg>
+  </a>
+
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <span style="padding: 0 10px 6px; font-size: 12px; font-weight: 600; color: #7D848E">Core features</span>
+    <sc-for list="{{core}}" as="it" hint-placeholder-count="8">
+      <sc-if value="{{it.on}}" hint-placeholder-val="{{false}}">
+        <a href="{{it.href}}" aria-current="page" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 11px; background: #131519; box-shadow: inset 3px 0 0 #4DA3FF; color: #F2F4F5; text-decoration: none; font-size: 14px; font-weight: 600">
+          <span style="width: 22px; height: 22px; flex: none; border-radius: 50%; background: #4DA3FF; color: #0A0B0D; display: grid; place-items: center; font-family: 'Geist Mono', monospace; font-size: 11px; font-weight: 500; box-shadow: 0 0 10px rgba(77,163,255,.6)">{{it.n}}</span>{{it.label}}
+        </a>
+      </sc-if>
+      <sc-if value="{{it.off}}" hint-placeholder-val="{{true}}">
+        <a href="{{it.href}}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 11px; color: #B4BAC3; text-decoration: none; font-size: 14px">
+          <span style="width: 22px; height: 22px; flex: none; border-radius: 50%; border: 1px solid #3A404A; box-sizing: border-box; display: grid; place-items: center; font-family: 'Geist Mono', monospace; font-size: 11px; color: #9AA1AB">{{it.n}}</span>{{it.label}}
+        </a>
+      </sc-if>
+    </sc-for>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <span style="padding: 0 10px 6px; font-size: 12px; font-weight: 600; color: #7D848E">Profile and sites</span>
+    <sc-for list="{{account}}" as="it" hint-placeholder-count="5">
+      <sc-if value="{{it.on}}" hint-placeholder-val="{{false}}">
+        <a href="{{it.href}}" aria-current="page" style="display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px; border-radius: 11px; background: #131519; box-shadow: inset 3px 0 0 #4DA3FF; color: #F2F4F5; text-decoration: none; font-size: 14px; font-weight: 600">{{it.label}}</a>
+      </sc-if>
+      <sc-if value="{{it.off}}" hint-placeholder-val="{{true}}">
+        <a href="{{it.href}}" style="display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px; border-radius: 11px; color: #B4BAC3; text-decoration: none; font-size: 14px">{{it.label}}</a>
+      </sc-if>
+    </sc-for>
+  </div>
+
+  <div style="flex: 1"></div>
+  <a href="Settings.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; border: 1px solid #1A1D22; color: #F2F4F5; text-decoration: none">
+    <span style="width: 34px; height: 34px; flex: none; border-radius: 50%; background: #262A31; display: grid; place-items: center; font-size: 12px; font-weight: 600">AR</span>
+    <span style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 14px; font-weight: 500">Alex Rivera</span><span style="font-size: 12px; color: #9AA1AB">Rivera Digital · Premium</span></span>
+  </a>
+</nav>
+</x-dc></template>
+<script>window.__DC_COMPONENTS = window.__DC_COMPONENTS || {}; window.__DC_COMPONENTS['Nav'] = function (DCLogic, React) {
+
+class Component extends DCLogic {
+  renderVals() {
+    const cur = this.props.current ?? 'home';
+    const core = [
+      ['connect', 'Plug in', 'Connect.dc.html'],
+      ['scan', 'Site scan', 'Scan.dc.html'],
+      ['home', 'Today’s moves', 'Home.dc.html'],
+      ['path', 'Page progress', 'Path.dc.html'],
+      ['tracker', 'Keyword tracker', 'Win.dc.html'],
+      ['backlinks', 'Backlinks', 'Backlinks.dc.html'],
+      ['results', 'Results', 'Results.dc.html'],
+      ['reports', 'Reports and change log', 'Changelog.dc.html']
+    ].map((d, i) => ({ n: String(i + 1), label: d[1], href: d[2], on: d[0] === cur, off: d[0] !== cur }));
+    const account = [
+      ['command', 'Agency command centre', 'Command.dc.html'],
+      ['sites', 'All client sites', 'Portfolio.dc.html'],
+      ['clientreport', 'Client report', 'Report.dc.html'],
+      ['settings', 'Settings', 'Settings.dc.html'],
+      ['billing', 'Plan and billing', 'Pricing.dc.html']
+    ].map((d) => ({ label: d[1], href: d[2], on: d[0] === cur, off: d[0] !== cur }));
+    return { core: core, account: account };
+  }
+}
+
+return Component;
+};</script>
+</body>
+</html>

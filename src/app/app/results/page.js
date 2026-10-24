@@ -1,7 +1,7 @@
-import { AuditView } from "@/components/board/WorkspaceViews";
+"use client";
 
-export const metadata = { title: "Site audit" };
+import ScanScreen from "@/components/v8/screens/ScanScreen";
 
 export default function Page() {
-  return <AuditView />;
+  return <ScanScreen />;
 }

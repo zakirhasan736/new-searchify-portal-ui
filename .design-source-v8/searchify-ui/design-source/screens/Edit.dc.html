@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — Edit a move</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+input:focus,textarea:focus{outline:2px solid #4DA3FF;outline-offset:2px}
+@keyframes sfy-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes sfy-breathe{0%,100%{opacity:1}50%{opacity:.5}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 1000px; background: #0A0B0D; display: flex; flex-wrap: wrap; align-items: stretch">
+<div style="flex: 1 1 248px; max-width: 100%; display: flex">
+<dc-import name="Nav" current="home" hint-size="248px,1000px"></dc-import>
+</div>
+<div style="flex: 999 1 560px; min-width: 0; min-height: 1000px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 22px clamp(16px, 4vw, 56px) 56px; display: flex; flex-direction: column; gap: 32px">
+  <header style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+    <a href="Home.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #262A31; color: #F2F4F5; text-decoration: none; font-size: 13px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+      Back to the move
+    </a>
+    <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #9AA1AB">TITLE REWRITE · /services/roof-repair</span>
+  </header>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 8px">
+    <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(34px, 4.2vw, 54px); line-height: 1; letter-spacing: -1.5px; font-weight: 700">Make it yours, then ship it.</h1>
+    <p style="margin: 0; font-size: 16px; color: #9AA1AB">Edit Searchify's draft. The Google preview and checks update as you type.</p>
+  </div>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+    <section aria-label="Your edit" style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 18px">
+      <div style="border-radius: 24px; background: #131519; border: 1px solid #262A31; padding: 24px; display: flex; flex-direction: column; gap: 20px">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; justify-content: space-between; gap: 10px">
+            <label for="t" style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #4DA3FF">NEW TITLE</label>
+            <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: {{titleCountColor}}">{{titleCount}} / 60</span>
+          </div>
+          <input id="t" type="text" value="{{title}}" onChange="{{setTitle}}" style="min-height: 56px; padding: 0 16px; border-radius: 14px; border: 1.5px solid #4DA3FF; background: rgba(77,163,255,.06); box-shadow: 0 0 22px rgba(77,163,255,.25); color: #F2F4F5; font: inherit; font-size: 18px">
+          <span style="font-size: 13px; color: #7D848E">Was: <span style="text-decoration: line-through">Roof Repair Services | Northline Roofing</span></span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; justify-content: space-between; gap: 10px">
+            <label for="d" style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #4DA3FF">NEW DESCRIPTION</label>
+            <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: {{descCountColor}}">{{descCount}} / 155</span>
+          </div>
+          <textarea id="d" rows="3" onChange="{{setDesc}}" value="{{desc}}" style="padding: 14px 16px; border-radius: 14px; border: 1.5px solid #4DA3FF; background: rgba(77,163,255,.06); color: #F2F4F5; font: inherit; font-size: 16px; line-height: 1.5; resize: vertical"></textarea>
+          <span style="font-size: 13px; color: #7D848E">Was: <span style="text-decoration: line-through">Learn more about our roof repair services.</span></span>
+        </div>
+      </div>
+
+      <div style="border-radius: 24px; background: #F7F8FA; color: #202124; padding: 22px 24px; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #5F6368; margin-bottom: 6px">HOW IT WILL LOOK IN GOOGLE</span>
+        <span style="font-size: 13px; color: #3C4043">northline.example › services › roof-repair</span>
+        <span style="font-size: 20px; color: #1A0DAB; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{title}}</span>
+        <span style="font-size: 14px; color: #4D5156; line-height: 1.5">{{descShown}}</span>
+      </div>
+    </section>
+
+    <aside style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+      <div style="border-radius: 24px; background: #101215; border: 1px solid #1A1D22; padding: 22px; display: flex; flex-direction: column; gap: 14px">
+        <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #9AA1AB">SEARCHIFY CRITERIA CHECKS</span>
+        <sc-for list="{{checks}}" as="c" hint-placeholder-count="4">
+          <div style="display: flex; gap: 10px; align-items: flex-start">
+            <span style="width: 12px; height: 12px; margin-top: 4px; flex: none; border-radius: 50%; background: {{c.color}}; box-shadow: {{c.glow}}"></span>
+            <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px">{{c.label}}</span><span style="font-size: 12px; color: #9AA1AB">{{c.hint}}</span></span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="border-radius: 24px; background: #101215; border: 1px solid #1A1D22; padding: 22px; display: flex; flex-direction: column; gap: 8px">
+        <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #9AA1AB">EXPECTED</span>
+        <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: 30px; font-weight: 700; color: {{accent}}">+40–90 visitors / mo</span>
+        <span style="font-size: 13px; color: #9AA1AB; line-height: 1.5">Based on 412 similar title changes Searchify has measured on local-service sites (median +18% clicks). Holds as long as all checks pass.</span>
+      </div>
+    </aside>
+  </div>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; gap: 10px; flex-wrap: wrap; align-items: center">
+    <sc-if value="{{notShipped}}" hint-placeholder-val="{{true}}">
+      <div style="display: flex; gap: 10px; flex-wrap: wrap">
+        <button type="button" onClick="{{ship}}" style="min-height: 56px; padding: 0 30px; border-radius: 14px; border: 0; background: #4DA3FF; color: #0A0B0D; font-size: 16px; font-weight: 600; box-shadow: 0 0 24px rgba(77,163,255,.45)">Ship it</button>
+        <button type="button" onClick="{{reset}}" style="min-height: 56px; padding: 0 20px; border-radius: 14px; border: 1px solid #262A31; background: transparent; color: #F2F4F5; font-size: 15px">Reset to Searchify's draft</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{shipped}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; animation: sfy-rise .4s ease both">
+        <span style="display: inline-flex; align-items: center; gap: 10px; min-height: 56px; padding: 0 20px; border-radius: 14px; background: rgba(77,163,255,.1); border: 1px solid #4DA3FF; font-size: 15px">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #4DA3FF; animation: sfy-breathe 1s ease-in-out infinite"></span>
+          Shipped. Checking the live page now…
+        </span>
+        <a href="Home.dc.html" style="display: inline-flex; align-items: center; min-height: 56px; padding: 0 24px; border-radius: 14px; background: #4DA3FF; color: #0A0B0D; font-size: 16px; font-weight: 600; text-decoration: none; box-shadow: 0 0 24px rgba(77,163,255,.45)">Next move</a>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#D5F879","options":["#D5F879","#9FE7F5","#FFD36E","#C9B8FF"]},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.draft = { title: 'Roof Repair in Calgary — 24/7 Emergency Leaks | Northline', desc: 'Leaking roof in Calgary, Airdrie or Cochrane? Same-day repairs, 24/7 emergency tarping, and a written quote before any work starts.' };
+    this.state = { title: this.draft.title, desc: this.draft.desc, shipped: false };
+  }
+  renderVals() {
+    const t = this.state.title || '';
+    const d = this.state.desc || '';
+    const lt = t.toLowerCase();
+    const ok = (b) => ({ color: b ? '#3DDC84' : '#FFC53D', glow: b ? 'none' : '0 0 10px #FFC53D' });
+    const checks = [
+      Object.assign({ label: 'Mentions Calgary', hint: 'Your top searches include the city' }, ok(lt.indexOf('calgary') >= 0)),
+      Object.assign({ label: 'Mentions 24/7 or emergency', hint: 'Your brief says this sets you apart' }, ok(lt.indexOf('24/7') >= 0 || lt.indexOf('emergency') >= 0)),
+      Object.assign({ label: 'Title fits in Google (60 characters)', hint: t.length + ' characters now' }, ok(t.length > 0 && t.length <= 60)),
+      Object.assign({ label: 'Keeps your brand name', hint: 'Helps returning customers spot you' }, ok(lt.indexOf('northline') >= 0)),
+      Object.assign({ label: 'Description fits (155 characters)', hint: d.length + ' characters now' }, ok(d.length > 0 && d.length <= 155))
+    ];
+    return {
+      accent: this.props.accent ?? '#D5F879',
+      title: t, desc: d,
+      descShown: d.length > 155 ? d.slice(0, 152) + '…' : d,
+      titleCount: String(t.length), descCount: String(d.length),
+      titleCountColor: t.length > 60 ? '#FFC53D' : '#9AA1AB',
+      descCountColor: d.length > 155 ? '#FFC53D' : '#9AA1AB',
+      checks: checks,
+      setTitle: (e) => this.setState({ title: e.target.value, shipped: false }),
+      setDesc: (e) => this.setState({ desc: e.target.value, shipped: false }),
+      reset: () => this.setState({ title: this.draft.title, desc: this.draft.desc }),
+      ship: () => this.setState({ shipped: true }),
+      shipped: this.state.shipped, notShipped: !this.state.shipped
+    };
+  }
+}
+</script>
+</body>
+</html>

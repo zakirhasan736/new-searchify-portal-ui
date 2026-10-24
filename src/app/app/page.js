@@ -1,7 +1,7 @@
-import ResultsBoard from "@/components/board/ResultsBoard";
+import HomeScreen from "@/components/v8/screens/HomeScreen";
 
-export const metadata = { title: "Your next SEO moves" };
+export const metadata = { title: "Home" };
 
 export default function Page() {
-  return <ResultsBoard />;
+  return <HomeScreen />;
 }

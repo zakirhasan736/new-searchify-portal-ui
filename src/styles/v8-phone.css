@@ -1,0 +1,383 @@
+/* Phone.dc.html — mobile layout reference (390×844 device + real-phone fill) */
+
+@keyframes sfy-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes sfy-fill {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--sfy-fill-to, 17%);
+  }
+}
+@keyframes sfy-sheen {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+@keyframes sfy-march {
+  to {
+    background-position: 22.6px 0;
+  }
+}
+
+.v8-phone-stage {
+  min-height: 100dvh;
+  background: #0a0b0d;
+  display: grid;
+  place-items: center;
+  padding: 24px 12px;
+  box-sizing: border-box;
+}
+
+.v8-phone {
+  width: 390px;
+  height: 844px;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: #0a0b0d;
+  color: #f2f4f5;
+  font-family: var(--font-geist, Geist), "Helvetica Neue", sans-serif;
+  padding: 24px 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow: hidden;
+  border: 1px solid #1a1d22;
+  border-radius: 28px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+}
+
+/* On real phones: drop the device chrome and fill the viewport (Phone is the mobile UI). */
+@media (max-width: 480px) {
+  .v8-phone-stage {
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .v8-phone {
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 24px 18px calc(22px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.v8-phone-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.v8-phone-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.v8-phone-brand span {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.v8-phone-counter {
+  font-family: var(--font-geist-mono, "Geist Mono"), monospace;
+  font-size: 12px;
+  color: #9aa1ab;
+}
+
+.v8-phone-capture {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.v8-phone-capture-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.v8-phone-capture-num {
+  font-family: var(--font-bricolage, "Bricolage Grotesque"), Geist, sans-serif;
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -1.4px;
+  line-height: 1;
+}
+
+.v8-phone-capture-label {
+  font-size: 13px;
+  color: #9aa1ab;
+}
+
+.v8-phone-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: #1a1d22;
+  gap: 2px;
+}
+
+.v8-phone-bar-live {
+  position: relative;
+  overflow: hidden;
+  background: #3ddc84;
+  box-shadow: 0 0 14px rgba(61, 220, 132, 0.75);
+  animation: sfy-fill 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.v8-phone-bar-sheen {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 35%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0));
+  animation: sfy-sheen 1.9s ease-in-out infinite;
+}
+
+.v8-phone-bar-pending {
+  background: repeating-linear-gradient(135deg, #3ddc84 0 4px, transparent 4px 8px);
+  background-size: 22.6px 8px;
+  opacity: 0.6;
+  transition: width 0.4s ease;
+  animation: sfy-march 1s linear infinite;
+}
+
+.v8-phone-card {
+  flex: 1;
+  min-height: 0;
+  background: #131519;
+  border: 1px solid #262a31;
+  border-radius: 26px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: sfy-rise 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.v8-phone-kind {
+  font-family: var(--font-geist-mono, "Geist Mono"), monospace;
+  font-size: 11px;
+  color: #9aa1ab;
+}
+
+.v8-phone-suggest {
+  font-family: Caveat, cursive;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: -10px;
+  transform: rotate(-2deg);
+  transform-origin: left center;
+}
+
+.v8-phone-title {
+  margin: 0;
+  font-family: var(--font-bricolage, "Bricolage Grotesque"), Geist, sans-serif;
+  font-size: 30px;
+  line-height: 1.02;
+  letter-spacing: -1px;
+  font-weight: 700;
+}
+
+.v8-phone-diff {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.v8-phone-now,
+.v8-phone-after {
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.v8-phone-now {
+  background: #0e1013;
+}
+
+.v8-phone-after {
+  background: rgba(77, 163, 255, 0.07);
+  border: 1.5px solid #4da3ff;
+  box-shadow: 0 0 20px rgba(77, 163, 255, 0.35);
+}
+
+.v8-phone-meta {
+  font-family: var(--font-geist-mono, "Geist Mono"), monospace;
+  font-size: 11px;
+}
+
+.v8-phone-gain {
+  font-family: var(--font-bricolage, "Bricolage Grotesque"), Geist, sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.v8-phone-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.v8-phone-actions button {
+  min-height: 60px;
+  border-radius: 18px;
+  font-size: 16px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.v8-phone-skip {
+  border: 1px solid #262a31;
+  background: transparent;
+  color: #f2f4f5;
+}
+
+.v8-phone-ship {
+  border: 0;
+  background: #4da3ff;
+  color: #0a0b0d;
+  font-weight: 600;
+  box-shadow: 0 0 22px rgba(77, 163, 255, 0.45);
+}
+
+.v8-phone-done {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+  animation: sfy-rise 0.4s ease both;
+}
+
+.v8-phone-done h1 {
+  margin: 0;
+  font-family: var(--font-bricolage, "Bricolage Grotesque"), Geist, sans-serif;
+  font-size: 38px;
+  line-height: 1;
+  letter-spacing: -1.2px;
+  font-weight: 700;
+}
+
+.v8-phone-done p {
+  margin: 0;
+  font-size: 16px;
+  color: #9aa1ab;
+  line-height: 1.5;
+}
+
+.v8-phone-replay {
+  align-self: flex-start;
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 14px;
+  border: 1px solid #262a31;
+  background: transparent;
+  color: #f2f4f5;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Bottom tabs — exact Phone.dc.html structure; also used by AppChrome on mobile */
+.v8-phone-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 2px;
+  margin: 0 -6px -8px;
+  padding-top: 10px;
+  border-top: 1px solid #1a1d22;
+}
+
+.v8-phone-tabs a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-height: 48px;
+  justify-content: center;
+  color: #9aa1ab;
+  text-decoration: none;
+  font-size: 11px;
+}
+
+.v8-phone-tabs a[aria-current="page"] {
+  color: #4da3ff;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v8-phone *,
+  .v8-phone-tabs * {
+    animation: none !important;
+  }
+}
+
+/* App chrome: Phone-style bottom tabs on narrow viewports */
+.v8-app-phone-tabs {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .v8-app-chrome {
+    padding-bottom: 0;
+  }
+
+  .v8-app-phone-tabs {
+    display: grid;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 46;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 2px;
+    padding: 6px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+    background: #0a0b0d;
+    border-top: 1px solid #1a1d22;
+  }
+
+  .v8-app-phone-tabs a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-height: 48px;
+    justify-content: center;
+    color: #9aa1ab;
+    text-decoration: none;
+    font-size: 11px;
+  }
+
+  .v8-app-phone-tabs a[aria-current="page"] {
+    color: #4da3ff;
+    font-weight: 600;
+  }
+
+  /* Phone-like content padding for main screens on mobile */
+  .v8-app-main > div {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+}

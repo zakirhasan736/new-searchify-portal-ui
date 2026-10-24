@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Searchify — All client sites</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0B0D}
+a{color:#D5F879}a:hover{color:#ECFFB8}
+button{font-family:inherit;cursor:pointer}
+@keyframes sfy-flicker{0%,100%{opacity:1}50%{opacity:.5}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="min-height: 1000px; background: #0A0B0D; display: flex; flex-wrap: wrap; align-items: stretch">
+<div style="flex: 1 1 248px; max-width: 100%; display: flex">
+<dc-import name="Nav" current="sites" hint-size="248px,1000px"></dc-import>
+</div>
+<div style="flex: 999 1 560px; min-width: 0; min-height: 1000px; background: #0A0B0D; color: #F2F4F5; font-family: Geist, 'Helvetica Neue', sans-serif; box-sizing: border-box; padding: 22px clamp(16px, 4vw, 56px) 56px; display: flex; flex-direction: column; gap: 32px">
+  <header style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+    <div style="display: flex; align-items: center; gap: 10px; margin-right: auto">
+      
+      <span style="font-weight: 600; font-size: 17px">Rivera Digital</span>
+    </div>
+    <a href="Settings.dc.html" aria-label="Settings" style="width: 40px; height: 40px; border-radius: 50%; background: #262A31; display: grid; place-items: center; color: #F2F4F5; text-decoration: none; font-size: 13px; font-weight: 600">AR</a>
+  </header>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Geist, sans-serif; font-size: clamp(36px, 4.6vw, 58px); line-height: 1; letter-spacing: -1.6px; font-weight: 700">Your clients</h1>
+      <div style="display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; color: #9AA1AB">
+        <span><strong style="color: #F2F4F5">6</strong> sites</span>
+        <span><strong style="color: #F2F4F5">13</strong> moves waiting</span>
+        <span style="color: #FF5A4E"><strong>1</strong> connection broken</span>
+      </div>
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center">
+      <div role="group" aria-label="Sort" style="display: inline-flex; padding: 3px; border-radius: 11px; background: #131519; border: 1px solid #1A1D22">
+        <sc-for list="{{sorts}}" as="s" hint-placeholder-count="2">
+          <sc-if value="{{s.on}}" hint-placeholder-val="{{false}}"><button type="button" aria-pressed="true" onClick="{{s.pick}}" style="min-height: 36px; padding: 0 12px; border-radius: 8px; border: 0; background: #262A31; color: #F2F4F5; font-size: 13px">{{s.label}}</button></sc-if>
+          <sc-if value="{{s.off}}" hint-placeholder-val="{{true}}"><button type="button" aria-pressed="false" onClick="{{s.pick}}" style="min-height: 36px; padding: 0 12px; border-radius: 8px; border: 0; background: transparent; color: #9AA1AB; font-size: 13px">{{s.label}}</button></sc-if>
+        </sc-for>
+      </div>
+      <a href="Connect.dc.html" style="display: inline-flex; align-items: center; min-height: 46px; padding: 0 18px; border-radius: 12px; background: #4DA3FF; color: #0A0B0D; text-decoration: none; font-size: 14px; font-weight: 600; box-shadow: 0 0 22px rgba(77,163,255,.4)">Add a site</a>
+    </div>
+  </div>
+
+  <div style="max-width: 1180px; width: 100%; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px">
+    <sc-for list="{{sites}}" as="s" hint-placeholder-count="6">
+      <a href="{{s.href}}" style="text-decoration: none; color: #F2F4F5; border-radius: 22px; background: #101215; border: 1px solid {{s.border}}; box-shadow: {{s.shadow}}; padding: 22px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <span style="width: 12px; height: 12px; border-radius: 50%; background: {{s.dot}}; box-shadow: 0 0 12px {{s.dot}}; animation: {{s.anim}}"></span>
+          <span style="flex: 1; display: flex; flex-direction: column; min-width: 0"><span style="font-size: 17px; font-weight: 600">{{s.name}}</span><span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #9AA1AB">{{s.domain}}</span></span>
+          <span style="font-size: 12px; color: {{s.qColor}}; white-space: nowrap">Level {{s.level}} · {{s.quality}}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; justify-content: space-between; font-size: 13px; color: #9AA1AB"><span><span style="color: #F2F4F5; font-family: 'Geist Mono', monospace">{{s.captured}}</span> of {{s.untapped}} captured</span><span>{{s.pct}}</span></div>
+          <div style="height: 6px; border-radius: 4px; background: #1A1D22; overflow: hidden"><div style="height: 6px; background: {{accent}}; width: {{s.pct}}"></div></div>
+        </div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; font-family: 'Geist Mono', monospace; font-size: 12px">
+          <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 7px; background: #131519"><span style="width: 8px; height: 8px; border-radius: 50%; background: #FF5A4E"></span>{{s.red}}</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 7px; background: #131519"><span style="width: 8px; height: 8px; border-radius: 50%; background: #FFC53D"></span>{{s.yellow}}</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 7px; background: #131519"><span style="width: 8px; height: 8px; border-radius: 50%; background: #4DA3FF"></span>{{s.blue}}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid #1A1D22; font-size: 13px">
+          <span style="display: inline-flex; gap: 14px; flex-wrap: wrap"><span title="{{s.p1title}}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: {{s.p1color}}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{s.p1color}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="filter: drop-shadow(0 0 5px {{s.p1color}})"><path d="M9 2v6"></path><path d="M15 2v6"></path><path d="M6 8h12v3a6 6 0 0 1-12 0z"></path><path d="M12 17v5"></path></svg>{{s.p1label}}</span><span title="{{s.p2title}}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: {{s.p2color}}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{s.p2color}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="filter: drop-shadow(0 0 5px {{s.p2color}})"><path d="M9 2v6"></path><path d="M15 2v6"></path><path d="M6 8h12v3a6 6 0 0 1-12 0z"></path><path d="M12 17v5"></path></svg>{{s.p2label}}</span></span>
+          <span style="color: #9AA1AB">{{s.waiting}}</span>
+        </div>
+      </a>
+    </sc-for>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#D5F879","options":["#D5F879","#9FE7F5","#FFD36E","#C9B8FF"]},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sort: 'attention' };
+  }
+  renderVals() {
+    const base = [
+      { name: 'Northline Roofing', domain: 'northline.example', level: 2, captured: 376, untapped: 1840, red: 6, yellow: 14, blue: 13, moves: 4, broken: false },
+      { name: 'Bowvalley Dental', domain: 'bowvalleydental.example', level: 3, captured: 610, untapped: 1320, red: 2, yellow: 8, blue: 21, moves: 3, broken: false },
+      { name: 'Chinook Auto Glass', domain: 'chinookglass.example', level: 1, captured: 40, untapped: 2210, red: 9, yellow: 11, blue: 2, moves: 5, broken: true },
+      { name: 'Prairie Coffee Co.', domain: 'prairiecoffee.example', level: 4, captured: 880, untapped: 960, red: 0, yellow: 2, blue: 30, moves: 0, broken: false },
+      { name: 'Elbow River Physio', domain: 'elbowphysio.example', level: 2, captured: 190, untapped: 1130, red: 1, yellow: 6, blue: 9, moves: 1, broken: false },
+      { name: 'Foothills Landscaping', domain: 'foothillsland.example', level: 1, captured: 0, untapped: 740, red: 3, yellow: 5, blue: 1, moves: 0, broken: false }
+    ];
+    const score = (s) => (s.broken ? 1000 : 0) + s.red * 10 + s.yellow;
+    let list = base.slice();
+    if (this.state.sort === 'attention') list.sort((a, b) => score(b) - score(a)); else list.sort((a, b) => a.name.localeCompare(b.name));
+    const sites = list.map((s) => {
+      const dot = s.broken ? '#FF5A4E' : (s.red > 0 ? '#FF5A4E' : (s.yellow > 0 ? '#FFC53D' : '#4DA3FF'));
+      return {
+        name: s.name, domain: s.domain, level: String(s.level), href: s.broken ? 'States.dc.html' : 'Home.dc.html',
+        captured: s.captured.toLocaleString('en-US'), untapped: s.untapped.toLocaleString('en-US'),
+        pct: Math.round(s.captured / s.untapped * 100) + '%',
+        red: String(s.red), yellow: String(s.yellow), blue: String(s.blue), dot: dot,
+        anim: s.broken || s.red >= 5 ? 'sfy-flicker 1.2s ease-in-out infinite' : 'none',
+        border: s.broken ? 'rgba(255,90,78,.55)' : '#1A1D22',
+        shadow: s.broken ? '0 0 26px rgba(255,90,78,.18)' : 'none',
+        status: s.broken ? 'WordPress cable unplugged — reconnect' : (s.captured === 0 && s.moves === 0 ? 'First scan running' : 'All cables live'),
+        statusColor: s.broken ? '#FF5A4E' : (s.captured === 0 && s.moves === 0 ? '#9AA1AB' : '#4DA3FF'),
+        quality: ['Poor', 'Fair', 'Good', 'Strong', 'Great', 'Excellent'][s.level - 1],
+        qColor: ['#FF5A4E', '#FF9F43', '#FFC53D', '#3DDC84', '#2CC7C0', '#4DA3FF'][s.level - 1],
+        p1color: '#3DDC84', p1label: 'Search Console', p1title: 'Search Console connected',
+        p2color: s.broken ? '#FF5A4E' : '#3DDC84', p2label: s.broken ? 'WordPress · reconnect' : 'WordPress', p2title: s.broken ? 'WordPress needs reconnecting' : 'WordPress connected',
+        waiting: s.moves > 0 ? s.moves + (s.moves === 1 ? ' move waiting' : ' moves waiting') : 'Nothing waiting'
+      };
+    });
+    const sorts = [['attention', 'Needs attention first'], ['az', 'A–Z']].map((o) => ({ label: o[1], on: this.state.sort === o[0], off: this.state.sort !== o[0], pick: () => this.setState({ sort: o[0] }) }));
+    return { accent: this.props.accent ?? '#D5F879', sites: sites, sorts: sorts };
+  }
+}
+</script>
+<script>window.__DC_FACTORY = function (DCLogic, React) {
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sort: 'attention' };
+  }
+  renderVals() {
+    const base = [
+      { name: 'Northline Roofing', domain: 'northline.example', level: 2, captured: 376, untapped: 1840, red: 6, yellow: 14, blue: 13, moves: 4, broken: false },
+      { name: 'Bowvalley Dental', domain: 'bowvalleydental.example', level: 3, captured: 610, untapped: 1320, red: 2, yellow: 8, blue: 21, moves: 3, broken: false },
+      { name: 'Chinook Auto Glass', domain: 'chinookglass.example', level: 1, captured: 40, untapped: 2210, red: 9, yellow: 11, blue: 2, moves: 5, broken: true },
+      { name: 'Prairie Coffee Co.', domain: 'prairiecoffee.example', level: 4, captured: 880, untapped: 960, red: 0, yellow: 2, blue: 30, moves: 0, broken: false },
+      { name: 'Elbow River Physio', domain: 'elbowphysio.example', level: 2, captured: 190, untapped: 1130, red: 1, yellow: 6, blue: 9, moves: 1, broken: false },
+      { name: 'Foothills Landscaping', domain: 'foothillsland.example', level: 1, captured: 0, untapped: 740, red: 3, yellow: 5, blue: 1, moves: 0, broken: false }
+    ];
+    const score = (s) => (s.broken ? 1000 : 0) + s.red * 10 + s.yellow;
+    let list = base.slice();
+    if (this.state.sort === 'attention') list.sort((a, b) => score(b) - score(a)); else list.sort((a, b) => a.name.localeCompare(b.name));
+    const sites = list.map((s) => {
+      const dot = s.broken ? '#FF5A4E' : (s.red > 0 ? '#FF5A4E' : (s.yellow > 0 ? '#FFC53D' : '#4DA3FF'));
+      return {
+        name: s.name, domain: s.domain, level: String(s.level), href: s.broken ? 'States.dc.html' : 'Home.dc.html',
+        captured: s.captured.toLocaleString('en-US'), untapped: s.untapped.toLocaleString('en-US'),
+        pct: Math.round(s.captured / s.untapped * 100) + '%',
+        red: String(s.red), yellow: String(s.yellow), blue: String(s.blue), dot: dot,
+        anim: s.broken || s.red >= 5 ? 'sfy-flicker 1.2s ease-in-out infinite' : 'none',
+        border: s.broken ? 'rgba(255,90,78,.55)' : '#1A1D22',
+        shadow: s.broken ? '0 0 26px rgba(255,90,78,.18)' : 'none',
+        status: s.broken ? 'WordPress cable unplugged — reconnect' : (s.captured === 0 && s.moves === 0 ? 'First scan running' : 'All cables live'),
+        statusColor: s.broken ? '#FF5A4E' : (s.captured === 0 && s.moves === 0 ? '#9AA1AB' : '#4DA3FF'),
+        quality: ['Poor', 'Fair', 'Good', 'Strong', 'Great', 'Excellent'][s.level - 1],
+        qColor: ['#FF5A4E', '#FF9F43', '#FFC53D', '#3DDC84', '#2CC7C0', '#4DA3FF'][s.level - 1],
+        p1color: '#3DDC84', p1label: 'Search Console', p1title: 'Search Console connected',
+        p2color: s.broken ? '#FF5A4E' : '#3DDC84', p2label: s.broken ? 'WordPress · reconnect' : 'WordPress', p2title: s.broken ? 'WordPress needs reconnecting' : 'WordPress connected',
+        waiting: s.moves > 0 ? s.moves + (s.moves === 1 ? ' move waiting' : ' moves waiting') : 'Nothing waiting'
+      };
+    });
+    const sorts = [['attention', 'Needs attention first'], ['az', 'A–Z']].map((o) => ({ label: o[1], on: this.state.sort === o[0], off: this.state.sort !== o[0], pick: () => this.setState({ sort: o[0] }) }));
+    return { accent: this.props.accent ?? '#D5F879', sites: sites, sorts: sorts };
+  }
+}
+
+return Component;
+};</script>
+<template data-dc-component="Nav" data-props='{"current":{"editor":"enum","options":["connect","scan","home","path","tracker","backlinks","results","reports","command","sites","clientreport","settings","billing"],"default":"home"},"$preview":{"width":248,"height":960}}'><x-dc>
+
+<nav aria-label="Main" style="flex: 1; align-self: stretch; width: 100%; min-height: 960px; box-sizing: border-box; padding: 22px 14px; background: #0D0E10; border-right: 1px solid #1A1D22; font-family: Geist, 'Helvetica Neue', sans-serif; color: #F2F4F5; display: flex; flex-direction: column; gap: 22px">
+  <a href="Home.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 0 8px; text-decoration: none; color: #F2F4F5">
+    <svg width="30" height="30" viewBox="0 0 32 32" role="img" aria-label="Searchify"><rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="#131519" stroke="#2E333B"></rect><circle cx="9" cy="12.5" r="2.9" fill="#FF5A4E"></circle><circle cx="16" cy="12.5" r="2.9" fill="#FF9F43"></circle><circle cx="23" cy="12.5" r="2.9" fill="#FFC53D"></circle><circle cx="9" cy="19.5" r="2.9" fill="#3DDC84"></circle><circle cx="16" cy="19.5" r="2.9" fill="#2CC7C0"></circle><circle cx="23" cy="19.5" r="2.9" fill="#4DA3FF"></circle></svg>
+    <span style="font-family: 'Bricolage Grotesque', Geist, sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.4px">searchify</span>
+  </a>
+
+  <a href="Portfolio.dc.html" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 48px; padding: 6px 12px; border-radius: 12px; border: 1px solid #262A31; background: #131519; color: #F2F4F5; text-decoration: none">
+    <span style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 12px; color: #9AA1AB">Working on</span><span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">northline.example</span></span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA1AB" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 10l5 5 5-5"></path></svg>
+  </a>
+
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <span style="padding: 0 10px 6px; font-size: 12px; font-weight: 600; color: #7D848E">Core features</span>
+    <sc-for list="{{core}}" as="it" hint-placeholder-count="8">
+      <sc-if value="{{it.on}}" hint-placeholder-val="{{false}}">
+        <a href="{{it.href}}" aria-current="page" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 11px; background: #131519; box-shadow: inset 3px 0 0 #4DA3FF; color: #F2F4F5; text-decoration: none; font-size: 14px; font-weight: 600">
+          <span style="width: 22px; height: 22px; flex: none; border-radius: 50%; background: #4DA3FF; color: #0A0B0D; display: grid; place-items: center; font-family: 'Geist Mono', monospace; font-size: 11px; font-weight: 500; box-shadow: 0 0 10px rgba(77,163,255,.6)">{{it.n}}</span>{{it.label}}
+        </a>
+      </sc-if>
+      <sc-if value="{{it.off}}" hint-placeholder-val="{{true}}">
+        <a href="{{it.href}}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 11px; color: #B4BAC3; text-decoration: none; font-size: 14px">
+          <span style="width: 22px; height: 22px; flex: none; border-radius: 50%; border: 1px solid #3A404A; box-sizing: border-box; display: grid; place-items: center; font-family: 'Geist Mono', monospace; font-size: 11px; color: #9AA1AB">{{it.n}}</span>{{it.label}}
+        </a>
+      </sc-if>
+    </sc-for>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <span style="padding: 0 10px 6px; font-size: 12px; font-weight: 600; color: #7D848E">Profile and sites</span>
+    <sc-for list="{{account}}" as="it" hint-placeholder-count="5">
+      <sc-if value="{{it.on}}" hint-placeholder-val="{{false}}">
+        <a href="{{it.href}}" aria-current="page" style="display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px; border-radius: 11px; background: #131519; box-shadow: inset 3px 0 0 #4DA3FF; color: #F2F4F5; text-decoration: none; font-size: 14px; font-weight: 600">{{it.label}}</a>
+      </sc-if>
+      <sc-if value="{{it.off}}" hint-placeholder-val="{{true}}">
+        <a href="{{it.href}}" style="display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px; border-radius: 11px; color: #B4BAC3; text-decoration: none; font-size: 14px">{{it.label}}</a>
+      </sc-if>
+    </sc-for>
+  </div>
+
+  <div style="flex: 1"></div>
+  <a href="Settings.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; border: 1px solid #1A1D22; color: #F2F4F5; text-decoration: none">
+    <span style="width: 34px; height: 34px; flex: none; border-radius: 50%; background: #262A31; display: grid; place-items: center; font-size: 12px; font-weight: 600">AR</span>
+    <span style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 14px; font-weight: 500">Alex Rivera</span><span style="font-size: 12px; color: #9AA1AB">Rivera Digital · Premium</span></span>
+  </a>
+</nav>
+</x-dc></template>
+<script>window.__DC_COMPONENTS = window.__DC_COMPONENTS || {}; window.__DC_COMPONENTS['Nav'] = function (DCLogic, React) {
+
+class Component extends DCLogic {
+  renderVals() {
+    const cur = this.props.current ?? 'home';
+    const core = [
+      ['connect', 'Plug in', 'Connect.dc.html'],
+      ['scan', 'Site scan', 'Scan.dc.html'],
+      ['home', 'Today’s moves', 'Home.dc.html'],
+      ['path', 'Page progress', 'Path.dc.html'],
+      ['tracker', 'Keyword tracker', 'Win.dc.html'],
+      ['backlinks', 'Backlinks', 'Backlinks.dc.html'],
+      ['results', 'Results', 'Results.dc.html'],
+      ['reports', 'Reports and change log', 'Changelog.dc.html']
+    ].map((d, i) => ({ n: String(i + 1), label: d[1], href: d[2], on: d[0] === cur, off: d[0] !== cur }));
+    const account = [
+      ['command', 'Agency command centre', 'Command.dc.html'],
+      ['sites', 'All client sites', 'Portfolio.dc.html'],
+      ['clientreport', 'Client report', 'Report.dc.html'],
+      ['settings', 'Settings', 'Settings.dc.html'],
+      ['billing', 'Plan and billing', 'Pricing.dc.html']
+    ].map((d) => ({ label: d[1], href: d[2], on: d[0] === cur, off: d[0] !== cur }));
+    return { core: core, account: account };
+  }
+}
+
+return Component;
+};</script>
+</body>
+</html>
