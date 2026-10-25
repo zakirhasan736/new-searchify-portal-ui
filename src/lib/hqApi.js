@@ -72,12 +72,13 @@ export async function saveHqShareholders(body) {
   );
 }
 
-export async function approvePartnerApplication(id, { rate = 30, founding = false } = {}) {
+/** founding: investors and developers (35-40%). Otherwise the affiliate program (20-25%). Rate defaults to the program's start. */
+export async function approvePartnerApplication(id, { rate = null, founding = false } = {}) {
   return json(
     await fetch(`/api/v1/hq/partners/applications/${encodeURIComponent(id)}/approve`, {
       method: "POST",
       headers: authHeaders(),
-      body: JSON.stringify({ rate, founding }),
+      body: JSON.stringify(rate == null ? { founding } : { rate, founding }),
     }),
   );
 }
@@ -96,6 +97,16 @@ export async function resendPartnerInvite(partnerId) {
     await fetch(`/api/v1/hq/partners/${encodeURIComponent(partnerId)}/invite`, {
       method: "POST",
       headers: authHeaders(),
+    }),
+  );
+}
+
+export async function runPartnerPayout(ids) {
+  return json(
+    await fetch("/api/v1/hq/partners/payout", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(ids ? { ids } : {}),
     }),
   );
 }

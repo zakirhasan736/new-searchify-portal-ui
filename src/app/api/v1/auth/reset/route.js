@@ -1,5 +1,5 @@
 import { forward } from "@/lib/backend";
 
 export async function POST(request) {
-  return forward(request, "/api/v1/auth/forgot-password");
+  return forward(request, "/api/v1/auth/reset");
 }

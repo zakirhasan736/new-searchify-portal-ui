@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { userLogout } from "@/utils/users/Helpers";
 import { PARTNER_KEY, PREVIEW_KEY, clearSessionFlag, isAdminAuthenticated } from "@/lib/authRoles";
+import SearchifyLoader from "@/components/v8/SearchifyLoader";
 import SearchifyMark from "@/components/landing/SearchifyMark";
 import "@/styles/searchify-v3.css";
 import "@/styles/v8-kit.css";
@@ -31,7 +32,7 @@ export default function AdminShell({ children }) {
 
   useEffect(() => {
     if (!isAdminAuthenticated()) {
-      router.replace("/login?next=" + encodeURIComponent(pathname || "/admin"));
+      router.replace("/admin/login?next=" + encodeURIComponent(pathname || "/admin"));
       return;
     }
     setReady(true);
@@ -43,11 +44,7 @@ export default function AdminShell({ children }) {
   };
 
   if (!ready) {
-    return (
-      <div style={{ minHeight: "40vh", background: "#0A0B0D", color: "#9AA1AB", padding: 28 }}>
-        Checking admin access…
-      </div>
-    );
+    return <SearchifyLoader full label="Opening Searchify HQ" />;
   }
 
   return (
@@ -77,13 +74,10 @@ export default function AdminShell({ children }) {
                 {item.label}
               </Link>
             ))}
-            <Link href="/app">Workspace</Link>
-            <Link href="/partners">Partner centre</Link>
+            <Link href="/admin">HQ</Link>
+            <Link href="/admin/settings">Settings</Link>
           </nav>
           <div style={{ marginTop: "auto", display: "grid", gap: 10 }}>
-            <Link href="/app" className="sf-link">
-              Customer workspace →
-            </Link>
             <button
               type="button"
               className="sf-link"
@@ -91,7 +85,7 @@ export default function AdminShell({ children }) {
                 clearSessionFlag(PARTNER_KEY);
                 clearSessionFlag(PREVIEW_KEY);
                 userLogout();
-                router.replace("/login?next=" + encodeURIComponent("/admin"));
+                router.replace("/admin/login");
               }}
             >
               Sign out

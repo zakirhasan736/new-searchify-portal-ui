@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import HqPanel from "@/components/admin/HqPanel";
+import HqPanel, { useFirstLoad } from "@/components/admin/HqPanel";
 import { getHqCustomers, hqCustomerAction } from "@/lib/hqApi";
+import { forgotPassword } from "@/lib/accountApi";
 
 const PLAN = { solo: ["Solo", 29], pro: ["Pro", 79], premium: ["Premium", 399] };
 const ST = {
@@ -38,12 +39,14 @@ function lk(n, ok) {
 }
 
 export default function HqCustomers() {
+  const [loading, firstLoad] = useFirstLoad();
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("all");
   const [sel, setSel] = useState("");
   const [confirm, setConfirm] = useState(null);
   const [plan, setPlan] = useState("premium");
   const [reason, setReason] = useState("Customer asked");
+  const [payAmount, setPayAmount] = useState("");
   const [toast, setToast] = useState("");
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
@@ -52,7 +55,7 @@ export default function HqCustomers() {
 
   useEffect(() => {
     let cancelled = false;
-    getHqCustomers().then((res) => {
+    firstLoad(getHqCustomers()).then((res) => {
       if (cancelled || !res.ok) return;
       const list = res.data?.items || [];
       setItems(list);
@@ -174,10 +177,40 @@ export default function HqCustomers() {
     setToast(res.data?.message || "Updated.");
   };
 
+  const sendReset = async () => {
+    if (!selCustomer.email || busy) return;
+    setBusy(true);
+    const res = await forgotPassword(selCustomer.email, "customer");
+    setBusy(false);
+    setToast(
+      res.ok
+        ? res.data?.emailConfigured === false
+          ? "Email isn't set up on the server, so no reset link could be sent."
+          : `A password reset link was sent to ${selCustomer.email}.`
+        : "Could not send a reset link.",
+    );
+  };
+
   const CF = {
+    pay: {
+      title: `Record a payment from ${selCustomer.name}`,
+      body: "Use this for an invoice, bank transfer or card payment taken outside Searchify. It is added to their payment history, marks them as paying, and starts any partner commission in the 30-day hold.",
+      btn: "Record payment",
+      btnBg: "#3DDC84",
+      border: "rgba(61,220,132,.45)",
+      go: () => runAction("record_payment", { amount: Number(payAmount) || price }),
+    },
+    failed: {
+      title: `Mark ${selCustomer.name}'s payment as failed?`,
+      body: "The account shows a failed payment and it appears under Problems, where you can email the customer.",
+      btn: "Mark as failed",
+      btnBg: "#FFC53D",
+      border: "rgba(255,197,61,.5)",
+      go: () => runAction("mark_failed"),
+    },
     free: {
       title: `Give ${selCustomer.name} a free month?`,
-      body: `Their next invoice (${money(price)}) is skipped and they get an email saying so. Affiliate commission is not paid on a free month.`,
+      body: `Their next bill (${money(price)}) shows as credited on the account. No email is sent; tell the customer yourself. Partner commission is not paid on a free month.`,
       btn: "Give free month",
       btnBg: "#D5F879",
       border: "#3A404A",
@@ -185,7 +218,7 @@ export default function HqCustomers() {
     },
     refund: {
       title: `Refund ${money(price)} to ${(selCustomer.card || "").split(" ·")[0]}?`,
-      body: "The money goes back in 5 to 10 business days. Any partner commission on this payment is reversed automatically before payout.",
+      body: "Recorded as refunded on the account, and any partner commission on it is reversed. No payment provider is connected yet, so send the money back in the tool you charged with.",
       btn: `Refund ${money(price)}`,
       btnBg: "#FFC53D",
       border: "rgba(255,197,61,.5)",
@@ -193,7 +226,7 @@ export default function HqCustomers() {
     },
     plan: {
       title: `Move ${selCustomer.name} to a different plan`,
-      body: "The change starts today. We charge or credit the difference for the rest of this month.",
+      body: "The new plan and its site limit apply today. Charge or credit any difference in the tool you bill with.",
       btn: "Change plan",
       btnBg: "#4DA3FF",
       border: "#3A404A",
@@ -201,7 +234,7 @@ export default function HqCustomers() {
     },
     cancel: {
       title: `Cancel ${selCustomer.name}'s subscription?`,
-      body: "They keep access until the end of the paid month, then billing stops. Their sites keep every change already shipped. Nothing is deleted.",
+      body: "The subscription is marked cancelled. Their sites keep every change already shipped. Nothing is deleted.",
       btn: "Cancel subscription",
       btnBg: "#FF8A80",
       border: "rgba(255,90,78,.5)",
@@ -220,7 +253,7 @@ export default function HqCustomers() {
   ];
 
   return (
-    <HqPanel showSample={!live}>
+    <HqPanel loading={loading} showSample={!live}>
       <div
         style={{
           maxWidth: 1240,
@@ -454,7 +487,7 @@ export default function HqCustomers() {
               <button
                 type="button"
                 disabled={busy || !selCustomer.id}
-                onClick={() => runAction("impersonate")}
+                onClick={sendReset}
                 style={{
                   minHeight: 44,
                   padding: "0 16px",
@@ -466,9 +499,11 @@ export default function HqCustomers() {
                   fontWeight: 600,
                 }}
               >
-                Log in as this customer
+                Send password reset link
               </button>
               {[
+                ["pay", "Record payment"],
+                ["failed", "Mark payment failed"],
                 ["free", "Give a free month"],
                 ["refund", "Refund last payment"],
                 ["plan", "Change plan"],
@@ -479,6 +514,7 @@ export default function HqCustomers() {
                   onClick={() => {
                     setConfirm(act);
                     if (act === "plan") setPlan(selCustomer.plan);
+                    if (act === "pay") setPayAmount(String(price || ""));
                     setToast("");
                   }}
                   style={{
@@ -533,6 +569,19 @@ export default function HqCustomers() {
                   {cf.title}
                 </h3>
                 <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>{cf.body}</span>
+                {confirm === "pay" ? (
+                  <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "#9AA1AB" }}>
+                    Amount paid (USD)
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={payAmount}
+                      onChange={(e) => setPayAmount(e.target.value)}
+                      style={{ minHeight: 42, padding: "0 10px", borderRadius: 10, border: "1px solid #262A31", background: "#0A0B0D", color: "#F2F4F5", font: "inherit", fontSize: 14, maxWidth: 200 }}
+                    />
+                  </label>
+                ) : null}
                 {confirm === "plan" ? (
                   <div role="group" aria-label="New plan" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {(["solo", "pro", "premium"]).map((p) => {

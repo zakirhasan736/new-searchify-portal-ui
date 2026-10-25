@@ -20,9 +20,10 @@ const AUTH = new Set([
   "/reset",
   "/reset-password",
   "/resetpassword",
+  "/admin/login",
 ]);
 const PARTNERS = (pathname) => pathname === "/partners" || pathname.startsWith("/partners/");
-const HQ = (pathname) => pathname === "/admin" || pathname.startsWith("/admin/hq");
+const HQ = (pathname) => pathname === "/admin" || pathname.startsWith("/admin/hq") || pathname === "/admin/settings";
 const SKINS = (pathname) => pathname === "/skins" || pathname.startsWith("/skins/");
 /** States.dc.html is full-bleed — no left Nav. */
 const STANDALONE_APP = (pathname) => pathname === "/app/states";

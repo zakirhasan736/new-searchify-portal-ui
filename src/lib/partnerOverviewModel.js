@@ -13,7 +13,8 @@ function nextPayoutLabel(now = new Date()) {
 
 export function buildPartnerOverviewModel(api, state) {
   const F = (api?.tier || "standard") === "founding";
-  const RATE = Number(api?.rate) || (F ? 0.35 : 0.3);
+  const PROG = api?.program || null;
+  const RATE = Number(api?.rate) || Number(PROG?.rate) || (F ? 0.35 : 0.2);
   const CLICKS = Array.isArray(api?.clicks) && api.clicks.length ? api.clicks : Array(8).fill(0);
   const SIGNUPS = Array.isArray(api?.signups) && api.signups.length ? api.signups : Array(CLICKS.length).fill(0);
   const PAYING = Array.isArray(api?.payingSeries) && api.payingSeries.length ? api.payingSeries : Array(CLICKS.length).fill(0);
@@ -171,36 +172,32 @@ export function buildPartnerOverviewModel(api, state) {
         method: "PayPal",
       })),
   );
-  const rate = F
-    ? {
-        title: "Your founding partner rate",
-        sub: "Of every payment, for each customer’s first 12 months. Locked in by your agreement.",
-        now: `${Math.round(RATE * 100)}%`,
-        next: "40% for good",
-        hasNext: true,
-        border: "rgba(213,248,121,.35)",
-        count: String(qual),
-        window: "6-month qualification window",
-        toGo: `${Math.max(0, 10 - qual)} more qualified referrals unlocks 40% for good.`,
-        aria: `${qual} of 10 qualified referrals`,
-        dots: Array.from({ length: 10 }, (_, i) => ({
-          bg: i < qual ? "#D5F879" : "#1A1D22",
-          glow: i < qual ? "0 0 8px rgba(213,248,121,.35)" : "none",
-        })),
-      }
-    : {
-        title: "Your rate",
-        sub: `Of every payment, for each customer’s first 12 months. ${api?.qualified || 0} qualified referrals in the last 6 months.`,
-        now: `${Math.round(RATE * 100)}%`,
-        next: "",
-        hasNext: false,
-        border: "#1A1D22",
-        count: "",
-        window: "",
-        toGo: "",
-        aria: "",
-        dots: [],
-      };
+  // Both programs step up after 10 referred customers start paying within 6 months (founding 35%→40%, affiliate 20%→25%).
+  const top = Number(PROG?.top) || (F ? 0.4 : 0.25);
+  const need = Number(PROG?.need) || 10;
+  const recent = PROG ? Number(PROG.qualified6m) || 0 : Math.min(need, qual);
+  const stepped = PROG ? Boolean(PROG.steppedUp) : RATE >= top;
+  const shown = Math.min(need, recent);
+  const rate = {
+    title: F ? "Your founding partner rate" : "Your affiliate rate",
+    sub: F
+      ? "Of every payment, for each customer’s first 12 months. Locked in by your agreement."
+      : "Of every payment, for each customer’s first 12 months.",
+    now: `${Math.round(RATE * 100)}%`,
+    next: stepped ? "Top rate, for good" : `${Math.round(top * 100)}% for good`,
+    hasNext: true,
+    border: F ? "rgba(213,248,121,.35)" : "#1A1D22",
+    count: String(stepped ? need : shown),
+    window: "6-month qualification window",
+    toGo: stepped
+      ? `You reached ${Math.round(top * 100)}%${PROG?.rateUpAt ? ` on ${PROG.rateUpAt}` : ""}. It stays for good.`
+      : `${Math.max(0, need - recent)} more paying referral${need - recent === 1 ? "" : "s"} in 6 months unlocks ${Math.round(top * 100)}% for good.`,
+    aria: `${stepped ? need : shown} of ${need} qualified referrals`,
+    dots: Array.from({ length: need }, (_, i) => {
+      const on = stepped || i < shown;
+      return { bg: on ? "#D5F879" : "#1A1D22", glow: on ? "0 0 8px rgba(213,248,121,.35)" : "none" };
+    }),
+  };
   const balances = [
     { label: "Cleared, paying next 15th", sub: "past the 30-day hold", value: money(monthly), color: "#3DDC84", valueColor: "#D5F879" },
     { label: "In the 30-day hold", sub: "clears over the next weeks", value: money(hold), color: "#4DA3FF", valueColor: "#F2F4F5" },

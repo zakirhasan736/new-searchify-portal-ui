@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useShellBusy } from "@/components/v8/ShellBusy";
 import PartnerShell, { usePartnerCtx } from "@/components/partners/PartnerShell";
 import { getPartnerPayout, savePartnerPayout } from "@/lib/partnerApi";
 
@@ -10,6 +11,7 @@ function nextPayoutLabel(now = new Date()) {
 }
 
 function PartnerPayoutBody() {
+  const track = useShellBusy();
   const { profile } = usePartnerCtx();
 
   const [method, setMethod] = useState("paypal");
@@ -27,7 +29,7 @@ function PartnerPayoutBody() {
 
   useEffect(() => {
     let cancelled = false;
-    getPartnerPayout().then((res) => {
+    track(getPartnerPayout()).then((res) => {
       if (cancelled || !res.ok) return;
       const po = res.data?.payout || {};
       setMethod(po.method || "paypal");

@@ -2,17 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import HqPanel from "@/components/admin/HqPanel";
+import HqPanel, { useFirstLoad } from "@/components/admin/HqPanel";
 import { getHqOverview } from "@/lib/hqApi";
 import { buildHqOverviewModel } from "@/lib/hqOverviewModel";
 
 export default function HqOverview() {
+  const [loading, firstLoad] = useFirstLoad();
   const [range, setRange] = useState("30");
   const [api, setApi] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
-    getHqOverview(range).then((res) => {
+    firstLoad(getHqOverview(range)).then((res) => {
       if (!cancelled && res.ok) setApi(res.data);
     });
     return () => {
@@ -65,7 +66,7 @@ export default function HqOverview() {
   );
 
   return (
-    <HqPanel headerExtra={rangeControl} shellGap={24} showSample={!d.live} problemsCount={d.problemsCount}>
+    <HqPanel loading={loading} headerExtra={rangeControl} shellGap={24} showSample={!d.live} problemsCount={d.problemsCount}>
       <div style={{ maxWidth: 1240, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 6 }}>
         <h1
           style={{

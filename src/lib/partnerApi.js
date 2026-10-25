@@ -80,3 +80,14 @@ export async function partnerSetPassword(token, password) {
     }),
   );
 }
+
+/** Pitch Studio: one campaign message with the partner's link and disclosure. AI when the server has it, templates otherwise. */
+export async function writePartnerMessage({ channel, audience, tone, angle }) {
+  return json(
+    await fetch("/api/v1/partners/write-message", {
+      method: "POST",
+      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ channel, audience, tone, angle }),
+    }),
+  );
+}

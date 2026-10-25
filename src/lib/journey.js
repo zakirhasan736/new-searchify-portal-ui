@@ -263,6 +263,8 @@ export function selectJourneySite(id) {
 export function requiredJourneyPath(pathname) {
   if (!pathname?.startsWith("/app")) return null;
   if (pathname === "/app/start" || pathname === "/app/plans") return null;
+  // Account settings (password, email) must work before a website is set up.
+  if (pathname === "/app/settings") return null;
   const state = loadJourney();
   if (!readySites(state).length) return "/app/start";
   if (!state.planId) return "/app/plans";

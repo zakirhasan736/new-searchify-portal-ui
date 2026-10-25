@@ -1,18 +1,73 @@
 'use client';
 
 import { useEffect, useMemo, useState } from "react";
+import { useShellBusy } from "@/components/v8/ShellBusy";
 import PartnerShell from "@/components/partners/PartnerShell";
 import { getPartnerEarnings } from "@/lib/partnerApi";
 import { buildPartnerEarningsModel } from "@/lib/partnerEarningsModel";
 
 function PartnerEarningsBody() {
+  const track = useShellBusy();
   const [filter, setFilter] = useState("all");
   const [stmt, setStmt] = useState("");
   const [api, setApi] = useState(null);
+  const thisYear = new Date().getFullYear();
+
+  // Real exports built from this partner's commission rows: [date, customer, plan, status, note, clears, amount].
+  const exportRows = () =>
+    (api?.rows || []).map((r) => ({
+      date: r[0] || "",
+      customer: r[1] || "",
+      plan: r[2] || "",
+      status: r[3] || "",
+      note: r[4] || "",
+      amount: r.length > 6 && r[6] != null ? Number(r[6]).toFixed(2) : "",
+    }));
+
+  const downloadCsv = () => {
+    const rows = exportRows();
+    if (!rows.length) {
+      setStmt("No commissions yet, so there is nothing to download.");
+      return;
+    }
+    const esc = (v) => `"${String(v).replace(/"/g, '""')}"`;
+    const csv = [["Date", "Customer", "Plan", "Status", "Note", "Commission (USD)"], ...rows.map((r) => [r.date, r.customer, r.plan, r.status, r.note, r.amount])]
+      .map((line) => line.map(esc).join(","))
+      .join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    a.download = `searchify-commissions-${thisYear}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    setStmt(`Downloaded ${rows.length} commission${rows.length === 1 ? "" : "s"} as CSV.`);
+  };
+
+  const printStatement = () => {
+    const rows = exportRows();
+    const t = api?.totals || {};
+    const win = window.open("", "_blank");
+    if (!win) {
+      setStmt("Allow pop-ups for this site to open the statement.");
+      return;
+    }
+    const cell = (v) => String(v).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Searchify partner statement ${thisYear}</title>
+      <style>body{font-family:Arial,sans-serif;color:#111;margin:32px}h1{font-size:20px}table{border-collapse:collapse;width:100%;font-size:13px}
+      th,td{border-bottom:1px solid #ddd;padding:6px 8px;text-align:left}td.n{text-align:right}</style></head><body>
+      <h1>Searchify partner earnings statement · ${thisYear}</h1>
+      <p>Paid out: $${Number(t.paid || 0).toFixed(2)} · Cleared: $${Number(t.cleared || 0).toFixed(2)} · In hold: $${Number(t.hold || 0).toFixed(2)} · Reversed: $${Math.abs(Number(t.rev || 0)).toFixed(2)}</p>
+      <table><thead><tr><th>Date</th><th>Customer</th><th>Plan</th><th>Status</th><th>Note</th><th>Commission</th></tr></thead><tbody>
+      ${rows.map((r) => `<tr><td>${cell(r.date)}</td><td>${cell(r.customer)}</td><td>${cell(r.plan)}</td><td>${cell(r.status)}</td><td>${cell(r.note)}</td><td class="n">${r.amount ? `$${r.amount}` : ""}</td></tr>`).join("") || '<tr><td colspan="6">No commissions yet.</td></tr>'}
+      </tbody></table></body></html>`);
+    win.document.close();
+    win.focus();
+    win.print();
+    setStmt("Statement opened. Choose Save as PDF in the print window.");
+  };
 
   useEffect(() => {
     let cancelled = false;
-    getPartnerEarnings().then((res) => {
+    track(getPartnerEarnings()).then((res) => {
       if (!cancelled && res.ok) setApi(res.data);
     });
     return () => {
@@ -278,12 +333,12 @@ function PartnerEarningsBody() {
                   fontSize: 14,
                 }}
               >
-                <option value="2026">2026 (so far)</option>
+                <option value={String(thisYear)}>{thisYear} (so far)</option>
               </select>
             </label>
             <button
               type="button"
-              onClick={() => setStmt("Your 2026 statement is ready. We’ve also emailed it to you.")}
+              onClick={printStatement}
               style={{
                 minHeight: 44,
                 borderRadius: 12,
@@ -298,7 +353,7 @@ function PartnerEarningsBody() {
             </button>
             <button
               type="button"
-              onClick={() => setStmt("CSV of every 2026 commission downloaded.")}
+              onClick={downloadCsv}
               style={{
                 minHeight: 44,
                 borderRadius: 12,
