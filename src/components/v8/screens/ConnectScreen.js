@@ -855,6 +855,245 @@ export default function ConnectScreen() {
           predictions get sharper for everyone — no one else ever sees your site or your data.
         </span>
       </div>
+
+      <PluginsAndMcpPanel siteHost={siteHost} />
+    </div>
+  );
+}
+
+const MCP_LEVELS = [
+  { id: "read", label: "Read", desc: "Ask questions about pages, moves and results" },
+  { id: "draft", label: "Read and draft", desc: "Propose moves into your Today queue" },
+  { id: "ship", label: "Ship within limits", desc: "Titles and links only, max 5 a week, auto-rollback" },
+];
+
+const PLUGIN_SOON = [
+  { name: "Shopify", desc: "Online stores: product and collection pages" },
+  { name: "Webflow", desc: "Webflow sites: pages and CMS collections" },
+];
+
+const SOCIAL_SOON = [
+  { name: "Google Business Profile", desc: "Posts and Q&A for local search" },
+  { name: "YouTube", desc: "Descriptions and chapters linked to pages" },
+];
+
+function PluginsAndMcpPanel({ siteHost }) {
+  const slug = String(siteHost || "workspace")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "workspace";
+  const mcpUrl = `https://mcp.searchify.io/${slug}`;
+
+  return (
+    <div
+      style={{
+        maxWidth: "1180px",
+        width: "100%",
+        margin: "0 auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: "16px",
+        paddingBottom: "24px",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: "14px",
+        }}
+      >
+        <section
+          aria-labelledby="plugins-h"
+          style={{
+            background: "#121417",
+            border: "1px solid #1A1D22",
+            borderRadius: "16px",
+            padding: "6px 20px 12px",
+            color: "#F2F4F5",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "14px 0 8px" }}>
+            <h2 id="plugins-h" style={{ margin: 0, fontSize: "16px", fontWeight: 600 }}>
+              Plugins
+            </h2>
+            <span style={{ fontSize: "12px", color: "#7D848E" }}>CMS · coming soon</span>
+          </div>
+          {PLUGIN_SOON.map((item) => (
+            <div
+              key={item.name}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 0",
+                borderTop: "1px solid #1A1D22",
+              }}
+            >
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
+                <span style={{ fontSize: "14px", fontWeight: 500, color: "#9AA1AB" }}>{item.name}</span>
+                <span style={{ fontSize: "13px", color: "#7D848E" }}>{item.desc}</span>
+              </div>
+              <span style={{ fontSize: "12px", fontWeight: 600, color: "#7D848E" }}>Coming soon</span>
+            </div>
+          ))}
+        </section>
+
+        <section
+          aria-labelledby="socials-h"
+          style={{
+            background: "#121417",
+            border: "1px solid #1A1D22",
+            borderRadius: "16px",
+            padding: "6px 20px 12px",
+            color: "#F2F4F5",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "14px 0 8px" }}>
+            <h2 id="socials-h" style={{ margin: 0, fontSize: "16px", fontWeight: 600 }}>
+              Social channels
+            </h2>
+            <span style={{ fontSize: "12px", color: "#7D848E" }}>media · coming soon</span>
+          </div>
+          {SOCIAL_SOON.map((item) => (
+            <div
+              key={item.name}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 0",
+                borderTop: "1px solid #1A1D22",
+              }}
+            >
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
+                <span style={{ fontSize: "14px", fontWeight: 500, color: "#9AA1AB" }}>{item.name}</span>
+                <span style={{ fontSize: "13px", color: "#7D848E" }}>{item.desc}</span>
+              </div>
+              <span style={{ fontSize: "12px", fontWeight: 600, color: "#7D848E" }}>Coming soon</span>
+            </div>
+          ))}
+        </section>
+      </div>
+
+      <section
+        aria-labelledby="mcp-h"
+        aria-disabled="true"
+        style={{
+          background: "#121417",
+          color: "#FFFFFF",
+          borderRadius: "16px",
+          padding: "24px",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "24px",
+          border: "1px solid #1A1D22",
+          opacity: 0.92,
+        }}
+      >
+        <div style={{ flex: "1 1 340px", display: "flex", flexDirection: "column", gap: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <div
+              style={{
+                fontSize: "12px",
+                fontWeight: 600,
+                letterSpacing: "0.6px",
+                textTransform: "uppercase",
+                color: "#D5F879",
+              }}
+            >
+              Searchify for AI assistants
+            </div>
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                letterSpacing: "0.4px",
+                textTransform: "uppercase",
+                color: "#0A0B0D",
+                background: "#D5F879",
+                padding: "4px 8px",
+                borderRadius: "6px",
+              }}
+            >
+              Coming soon
+            </span>
+          </div>
+          <h2 id="mcp-h" style={{ margin: 0, fontSize: "22px", fontWeight: 600, letterSpacing: "-0.4px" }}>
+            Use Searchify from Claude, ChatGPT or Cursor.
+          </h2>
+          <p style={{ margin: 0, fontSize: "14px", color: "#D7DADE", lineHeight: 1.55 }}>
+            MCP connectors are planned. When they ship, assistants will share the same moves, evidence and ledger —
+            and anything they propose will still land in your Today queue for approval. No MCP server is live yet.
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <code
+              style={{
+                fontFamily: "'Geist Mono', monospace",
+                fontSize: "14px",
+                background: "#1E2228",
+                border: "1px solid #2E3238",
+                padding: "10px 12px",
+                borderRadius: "8px",
+                color: "#7D848E",
+                wordBreak: "break-all",
+              }}
+            >
+              {mcpUrl}
+            </code>
+            <button
+              type="button"
+              disabled
+              title="MCP server is coming soon"
+              style={{
+                minHeight: "42px",
+                padding: "0 14px",
+                borderRadius: "9px",
+                border: 0,
+                background: "#262A31",
+                color: "#9AA1AB",
+                fontSize: "14px",
+                fontWeight: 600,
+                cursor: "not-allowed",
+              }}
+            >
+              Coming soon
+            </button>
+          </div>
+        </div>
+
+        <div
+          role="group"
+          aria-label="What assistants may do (coming soon)"
+          style={{ flex: "1 1 300px", display: "flex", flexDirection: "column", gap: "8px", opacity: 0.7 }}
+        >
+          <div style={{ fontSize: "13px", color: "#C9CDD2" }}>What assistants may do · preview</div>
+          {MCP_LEVELS.map((item, index) => {
+            const on = index === 1;
+            return (
+              <div
+                key={item.id}
+                style={{
+                  textAlign: "left",
+                  minHeight: "56px",
+                  padding: "10px 14px",
+                  borderRadius: "10px",
+                  border: on ? "1px solid #FFFFFF" : "1px solid #2E3238",
+                  background: on ? "#1E2228" : "transparent",
+                  color: "#FFFFFF",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "2px",
+                  pointerEvents: "none",
+                }}
+              >
+                <span style={{ fontSize: "14px", fontWeight: on ? 600 : 500 }}>{item.label}</span>
+                <span style={{ fontSize: "13px", color: on ? "#C9CDD2" : "#A9AEB5" }}>{item.desc}</span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

@@ -13,6 +13,8 @@ export const SKIN_SECTIONS = [
       { n: "04", t: "Page progress", d: "Poor to Excellent, page by page", href: "/app/path" },
       { n: "05", t: "Keyword tracker", d: "Did the change work, keyword by keyword", href: "/app/keywords" },
       { n: "05b", t: "Backlinks", d: "New and lost links, competitor gap", href: "/app/backlinks" },
+      { n: "05c", t: "AI visibility", d: "Engine scores and LLM gaps", href: "/app/visibility" },
+      { n: "05d", t: "Site audit report", d: "GSC, speed, titles, indexing", href: "/app/audit" },
     ],
   },
   {

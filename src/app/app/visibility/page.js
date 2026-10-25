@@ -1,8 +1,7 @@
-import { redirect } from "next/navigation";
+"use client";
 
-export const metadata = { title: "Results" };
+import VisibilityScreen from "@/components/v8/screens/VisibilityScreen";
 
-/** V8 has no AI-visibility board skin — map to Results. */
 export default function Page() {
-  redirect("/app/outcomes");
+  return <VisibilityScreen />;
 }

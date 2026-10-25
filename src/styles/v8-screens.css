@@ -272,6 +272,17 @@ body:has(.v8-app-chrome) {
   background: #0a0b0d;
 }
 
+/* Site audit report: left list scrolls with main; right summary stays pinned */
+.sf-audit-split > aside {
+  position: sticky;
+  top: 18px;
+  align-self: flex-start;
+  max-height: calc(100dvh - 36px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
 /* Right pane fills the screen. The top header spans that pane; page blocks center themselves. */
 .v8-app-main > div {
   box-sizing: border-box;

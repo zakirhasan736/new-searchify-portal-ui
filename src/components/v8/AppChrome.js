@@ -24,8 +24,10 @@ const CORE = [
   { id: "path", label: "Page progress", href: "/app/path", n: "4" },
   { id: "tracker", label: "Keyword tracker", href: "/app/keywords", n: "5" },
   { id: "backlinks", label: "Backlinks", href: "/app/backlinks", n: "6" },
-  { id: "results", label: "Results", href: "/app/outcomes", n: "7" },
-  { id: "reports", label: "Reports and change log", href: "/app/history", n: "8" },
+  { id: "visibility", label: "AI visibility", href: "/app/visibility", n: "7" },
+  { id: "audit", label: "Site audit report", href: "/app/audit", n: "8" },
+  { id: "results", label: "Results", href: "/app/outcomes", n: "9" },
+  { id: "reports", label: "Reports and change log", href: "/app/history", n: "10" },
 ];
 
 const ACCOUNT = [
