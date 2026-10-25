@@ -14,6 +14,7 @@ import {
 } from "@/lib/v1Api";
 import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
+import SearchifyLoader from "@/components/v8/SearchifyLoader";
 import "@/styles/v8-screens.css";
 
 const ACCENT = "#D5F879";
@@ -73,6 +74,7 @@ export default function ReviewScreen() {
   const { id } = useParams();
   const router = useRouter();
   const [change, setChange] = useState(null);
+  const [checked, setChecked] = useState(false);
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [draft, setDraft] = useState({ title: "", desc: "" });
@@ -106,13 +108,17 @@ export default function ReviewScreen() {
   }, []);
 
   const load = useCallback(async () => {
-    const res = await listChanges({ force: true });
-    const rows = Array.isArray(res.data) ? res.data : [];
-    const row = rows.find((x) => String(x.id) === String(id));
-    setChange(row || null);
-    if (row) applyProposed(row);
-    const ready = queueItems(rows).filter((x) => String(x.id) !== String(id));
-    setNextId(ready[0]?.id || null);
+    try {
+      const res = await listChanges({ force: true });
+      const rows = Array.isArray(res.data) ? res.data : [];
+      const row = rows.find((x) => String(x.id) === String(id));
+      setChange(row || null);
+      if (row) applyProposed(row);
+      const ready = queueItems(rows).filter((x) => String(x.id) !== String(id));
+      setNextId(ready[0]?.id || null);
+    } finally {
+      setChecked(true);
+    }
   }, [id, applyProposed]);
 
   useEffect(() => {
@@ -264,11 +270,15 @@ export default function ReviewScreen() {
 
   const googleCrumb = `${siteHostname}${pathLabel === "/" ? "" : pathLabel.replace(/\//g, " › ")}`;
 
+  if (!checked) {
+    return <SearchifyLoader label="Opening the editor" />;
+  }
+
   if (!change) {
     return (
       <div style={CONTENT_COL}>
         <div style={{ color: "#9AA1AB", fontSize: 15 }}>
-          Loading move… <Link href="/app">Back to Today&apos;s moves</Link>
+          This move is not in the queue. <Link href="/app">Back to Today&apos;s moves</Link>
         </div>
       </div>
     );

@@ -375,9 +375,11 @@
     font-weight: 600;
   }
 
-  /* Phone-like content padding for main screens on mobile */
+  /* Phone-like content padding for main screens on mobile.
+     Extra bottom space keeps Publish above the fixed tab bar. */
   .v8-app-main > div {
     padding-left: 18px !important;
     padding-right: 18px !important;
+    padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }

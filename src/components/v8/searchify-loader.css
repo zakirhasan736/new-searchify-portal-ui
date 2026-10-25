@@ -1,0 +1,79 @@
+.sf-mark-loader {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: min(70dvh, 640px);
+  display: grid;
+  place-items: center;
+  padding: 32px 16px calc(32px + env(safe-area-inset-bottom, 0px));
+  background: transparent;
+  color: #f2f4f5;
+}
+
+.sf-mark-loader.is-full {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  width: 100%;
+  height: 100dvh;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  padding: 24px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  background: #0a0b0d;
+}
+
+.sf-mark-loader-lockup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.sf-mark-loader-mark {
+  width: clamp(72px, 18vw, 96px);
+  height: auto;
+}
+
+.sf-mark-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sf-mark-dot 1.15s ease-in-out infinite;
+}
+
+.sf-mark-loader-word {
+  font-family: var(--font-bricolage), "Bricolage Grotesque", Geist, sans-serif;
+  font-weight: 800;
+  font-size: clamp(18px, 4vw, 22px);
+  letter-spacing: -0.4px;
+}
+
+.sf-mark-loader-label {
+  font-size: 13px;
+  color: #9aa1ab;
+  text-align: center;
+}
+
+@keyframes sf-mark-dot {
+  0%,
+  100% {
+    opacity: 0.28;
+    transform: scale(0.7);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@media (max-width: 900px) {
+  .sf-mark-loader:not(.is-full) {
+    min-height: calc(100dvh - 148px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-mark-dot {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -148,7 +148,7 @@ export default function TodayMoves() {
       setNote("Could not approve. Open the full review card.");
       return;
     }
-    const executed = await executeChange(move.id);
+    const executed = await executeChange(move.id, { includeOpenGraph: true, includeJsonLd: true });
     setBusy(false);
     if (!executed.ok) {
       setNote("Approved, but publish needs the WordPress connection. Open review to finish.");

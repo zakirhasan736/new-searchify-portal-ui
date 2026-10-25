@@ -76,7 +76,7 @@ export default function PhoneScreen() {
   const ship = async () => {
     if (m?.changeId) {
       await approveChange(m.changeId).catch(() => {});
-      await executeChange(m.changeId).catch(() => {});
+      await executeChange(m.changeId, { includeOpenGraph: true, includeJsonLd: true }).catch(() => {});
     }
     setI(i + 1);
     setPending(pending + (m?.mid || 0));

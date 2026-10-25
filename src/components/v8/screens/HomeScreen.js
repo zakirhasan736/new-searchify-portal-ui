@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   listChanges,
-  approveChange,
+  patchChange,
   executeChange,
   dismissChange,
   generateMetaCopy,
@@ -66,15 +66,30 @@ function starHighlight(text) {
   return `${words.slice(0, mid).join(" ")} *${words.slice(mid, mid + 2).join(" ")}* ${words.slice(mid + 2).join(" ")}`.trim();
 }
 
-function afterOptions(p) {
-  const title = p.title || "";
-  const desc = p.metaDescription || "";
-  const opts = [title, desc, title && desc ? `${title} — ${desc.slice(0, 80)}` : ""]
-    .filter(Boolean)
-    .map(starHighlight);
-  if (!opts.length) return ["Updated *title and description* for this page."];
-  while (opts.length < 3) opts.push(opts[opts.length - 1]);
-  return opts.slice(0, 3);
+function suggestionPairs(p) {
+  const pairs = [];
+  const push = (title, description) => {
+    const t = String(title || "").trim();
+    const d = String(description || "").trim();
+    if (!t && !d) return;
+    const key = `${t} ${d}`.toLowerCase();
+    if (pairs.some((row) => `${row.title} ${row.description}`.toLowerCase() === key)) return;
+    pairs.push({
+      title: t || "Updated title",
+      description: d || "A clearer description for this page.",
+    });
+  };
+  push(p.title, p.metaDescription || p.description);
+  (Array.isArray(p.aiAlternatives) ? p.aiAlternatives : []).forEach((alt) => {
+    push(alt?.title, alt?.description || alt?.metaDescription);
+  });
+  if (!pairs.length) {
+    pairs.push({
+      title: "Updated title and description",
+      description: "Regenerate to write a stronger listing from Search Console, Analytics, and Speed Index.",
+    });
+  }
+  return pairs.slice(0, 3);
 }
 
 function changeToMove(c) {
@@ -92,9 +107,23 @@ function changeToMove(c) {
   return {
     t: `${kind} · ${path}`,
     kind,
-    head: highlightHead(c.opportunity || `Ship a clearer *${kind.toLowerCase()}* for this page.`),
+    head: highlightHead(p.title || c.opportunity || `Ship a clearer *${kind.toLowerCase()}* for this page.`),
     before,
-    after: afterOptions(p),
+    beforeTitle:
+      p.liveTitle ||
+      p.beforeTitle ||
+      p.before ||
+      "(Not set on the live page.)",
+    beforeDescription: p.liveMetaDescription || p.beforeMetaDescription || p.beforeDescription || "",
+    after: suggestionPairs(p),
+    ogTitle: p.openGraphTitle || p.title || "",
+    ogDescription: p.openGraphDescription || p.metaDescription || "",
+    schemaLabel: (() => {
+      const ld = p.jsonLd || {};
+      const kind = ld["@type"] || (Array.isArray(p.schemaTypesPreserved) ? p.schemaTypesPreserved[0] : "") || "WebPage";
+      const name = ld.name || ld.headline || "";
+      return name ? `${kind} · ${name}` : String(kind);
+    })(),
     gain,
     mid: parseMid(gain),
     ships:
@@ -120,6 +149,8 @@ export default function HomeScreen() {
   const [untappedTotal, setUntappedTotal] = useState(0);
   const [userInitials, setUserInitials] = useState("??");
   const [cmd, setCmd] = useState("");
+  const [regenBusy, setRegenBusy] = useState(false);
+  const [regenNote, setRegenNote] = useState("");
   const [connectionStatus] = useConnectionStatus();
   const seededOnce = useRef(false);
   const router = useRouter();
@@ -271,29 +302,47 @@ export default function HomeScreen() {
     page: "",
     head: [],
     afterSegs: [],
+    afterDesc: "",
     before: "",
+    beforeTitle: "",
+    beforeDescription: "",
+    ogTitle: "",
+    ogDescription: "",
+    schemaLabel: "",
     gain: "",
     ships: "",
     proof: "",
     opt: "1",
+    optCount: 1,
+    afterAll: [],
     color: COLORS[col],
     changeId: null,
   };
 
   if (hasMove) {
     const it = list[ci];
-    const v = (variant[it.t] || 0) % 3;
+    const count = Math.max(it.after.length, 1);
+    const v = (variant[it.t] || 0) % count;
+    const pair = it.after[v] || { title: "", description: "" };
     m = {
       tag: TAG[col] + " · " + (ci + 1) + " OF " + list.length,
       kind: it.kind,
       page: it.t.split(" · ")[1],
       head: segs(it.head),
-      afterSegs: segs(it.after[v]),
+      afterSegs: segs(starHighlight(pair.title)),
+      afterDesc: pair.description,
       before: it.before,
+      beforeTitle: it.beforeTitle || it.before,
+      beforeDescription: it.beforeDescription || "",
+      ogTitle: v === 0 ? it.ogTitle || "" : pair.title,
+      ogDescription: v === 0 ? it.ogDescription || "" : pair.description,
+      schemaLabel: v === 0 ? it.schemaLabel || "" : "",
       gain: it.gain,
       ships: it.ships,
       proof: it.proof,
       opt: String(v + 1),
+      optCount: count,
+      afterAll: it.after,
       color: COLORS[col],
       changeId: it.changeId ?? null,
     };
@@ -311,8 +360,17 @@ export default function HomeScreen() {
 
   const handleShip = async () => {
     if (m.changeId) {
+      const picked = (m.afterAll || [])[Number(m.opt) - 1];
+      const primary = (m.afterAll || [])[0];
+      if (
+        picked &&
+        primary &&
+        (picked.title !== primary.title || picked.description !== primary.description)
+      ) {
+        await patchChange(m.changeId, { title: picked.title, metaDescription: picked.description });
+      }
       await approveChange(m.changeId);
-      await executeChange(m.changeId);
+      await executeChange(m.changeId, { includeOpenGraph: true, includeJsonLd: true });
       await reloadChanges();
     }
     advance("shipped");
@@ -327,15 +385,46 @@ export default function HomeScreen() {
   };
 
   const handleRegen = async () => {
-    if (!hasMove) return;
+    if (!hasMove || regenBusy) return;
     const k = list[ci].t;
-    if (m.changeId) {
-      await generateMetaCopy(m.changeId, { breadth: "balanced", objective: "balanced" });
-      await reloadChanges();
-      setVariant({ ...variant, [k]: 0 });
+    if (!m.changeId) {
+      setRegenNote("This card is not tied to a live page yet. Run a site scan, then regenerate.");
+      setVariant({ ...variant, [k]: (variant[k] || 0) + 1 });
       return;
     }
-    setVariant({ ...variant, [k]: (variant[k] || 0) + 1 });
+    setRegenBusy(true);
+    setRegenNote("Reading the live page, then Search Console, Analytics, and Speed Index. Searchify SEO is writing the title and description…");
+    try {
+      const res = await generateMetaCopy(m.changeId, { breadth: "balanced", objective: "balanced" });
+      if (!res.ok) {
+        const detail = res.data?.detail;
+        setRegenNote(typeof detail === "string" ? detail : "Could not regenerate the title and description.");
+        return;
+      }
+      const change = res.data?.change;
+      const options = Array.isArray(res.data?.options) ? res.data.options : [];
+      if (change?.id) {
+        const merge = (rows) =>
+          rows.map((row) => {
+            if (String(row.id) !== String(change.id)) return row;
+            const proposed = {
+              ...(row.proposed || {}),
+              ...(change.proposed || {}),
+            };
+            if (options.length) proposed.aiAlternatives = options;
+            return { ...row, ...change, proposed };
+          });
+        setRealChanges(merge);
+        setAllChanges(merge);
+      }
+      setVariant({ ...variant, [k]: 0 });
+      const nextTitle = change?.proposed?.title || options[0]?.title || "";
+      setRegenNote(nextTitle ? `New title ready: ${nextTitle}` : "New title and description are on this card.");
+    } catch {
+      setRegenNote("Regenerate did not finish. Try again in a moment.");
+    } finally {
+      setRegenBusy(false);
+    }
   };
 
   const handleEdit = () => {
@@ -481,7 +570,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <div style={{ flex: "999 1 560px", minWidth: 0, width: "100%", minHeight: "min(100%, 720px)", background: "#0A0B0D", color: "#F2F4F5", fontFamily: "Geist, 'Helvetica Neue', sans-serif", boxSizing: "border-box", padding: "22px clamp(16px, 4vw, 56px) 40px", display: "flex", flexDirection: "column", gap: 32 }}>
+    <div className="v8-home" style={{ flex: "999 1 560px", minWidth: 0, width: "100%", minHeight: "min(100%, 720px)", background: "#0A0B0D", color: "#F2F4F5", fontFamily: "Geist, 'Helvetica Neue', sans-serif", boxSizing: "border-box", padding: "22px clamp(16px, 4vw, 56px) 40px", display: "flex", flexDirection: "column", gap: 32 }}>
       {(loading || bootNote || queueEmpty) && (
         <div
           style={{
@@ -521,7 +610,7 @@ export default function HomeScreen() {
           )}
         </div>
       )}
-      <header style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+      <header className="v8-home-tools" style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginRight: "auto" }}>
           <Link
             href="/app/workspace"
@@ -859,7 +948,10 @@ export default function HomeScreen() {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
                   <div style={{ borderRadius: "16px", background: "#0E1013", border: "1px solid #1A1D22", padding: "18px", display: "flex", flexDirection: "column", gap: "8px" }}>
                     <span style={{ fontSize: "12px", color: "#7D848E", fontFamily: "'Geist Mono', monospace" }}>NOW</span>
-                    <span style={{ fontSize: "17px", lineHeight: 1.4, color: "#9AA1AB" }}>{m.before}</span>
+                    <span style={{ fontSize: "17px", lineHeight: 1.4, color: "#9AA1AB" }}>{m.beforeTitle || m.before}</span>
+                    {m.beforeDescription ? (
+                      <span style={{ fontSize: "14px", lineHeight: 1.45, color: "#7D848E" }}>{m.beforeDescription}</span>
+                    ) : null}
                   </div>
                   <div
                     style={{
@@ -873,11 +965,63 @@ export default function HomeScreen() {
                       gap: "8px",
                     }}
                   >
-                    <span style={{ display: "flex", justifyContent: "space-between", gap: "8px", fontSize: "12px", color: "#4DA3FF", fontFamily: "'Geist Mono', monospace" }}>
+                    <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", fontSize: "12px", color: "#4DA3FF", fontFamily: "'Geist Mono', monospace" }}>
                       <span>AFTER</span>
-                      <span style={{ color: "#7D848E" }}>OPTION {m.opt} OF 3</span>
+                      {m.optCount > 1 ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", flex: "none" }}>
+                          <button
+                            type="button"
+                            aria-label="Previous option"
+                            disabled={Number(m.opt) <= 1}
+                            onClick={() => setVariant({ ...variant, [it.t]: Number(m.opt) - 2 })}
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              borderRadius: "8px",
+                              border: "1px solid #262A31",
+                              background: "transparent",
+                              color: "#F2F4F5",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 0,
+                              cursor: Number(m.opt) <= 1 ? "default" : "pointer",
+                              opacity: Number(m.opt) <= 1 ? 0.35 : 1,
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M15 6l-6 6 6 6"></path>
+                            </svg>
+                          </button>
+                          <span style={{ color: "#9AA1AB", minWidth: "42px", textAlign: "center" }}>{m.opt} of {m.optCount}</span>
+                          <button
+                            type="button"
+                            aria-label="Next option"
+                            disabled={Number(m.opt) >= m.optCount}
+                            onClick={() => setVariant({ ...variant, [it.t]: Number(m.opt) })}
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              borderRadius: "8px",
+                              border: "1px solid #262A31",
+                              background: "transparent",
+                              color: "#F2F4F5",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 0,
+                              cursor: Number(m.opt) >= m.optCount ? "default" : "pointer",
+                              opacity: Number(m.opt) >= m.optCount ? 0.35 : 1,
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M9 6l6 6-6 6"></path>
+                            </svg>
+                          </button>
+                        </span>
+                      ) : null}
                     </span>
-                    <span style={{ fontSize: "17px", lineHeight: 1.55 }}>
+                    <span style={{ fontSize: "17px", lineHeight: 1.45 }}>
                       {m.afterSegs.map((s, idx) =>
                         s.hl ? (
                           <span
@@ -901,6 +1045,15 @@ export default function HomeScreen() {
                         )
                       )}
                     </span>
+                    {m.afterDesc ? (
+                      <span style={{ fontSize: "14px", lineHeight: 1.5, color: "#D7DADE" }}>{m.afterDesc}</span>
+                    ) : null}
+                    {m.ogTitle ? (
+                      <span style={{ fontSize: "12px", lineHeight: 1.4, color: "#9AA1AB" }}>Open Graph · {m.ogTitle}</span>
+                    ) : null}
+                    {m.schemaLabel ? (
+                      <span style={{ fontSize: "12px", lineHeight: 1.4, color: "#9AA1AB" }}>Schema · {m.schemaLabel}</span>
+                    ) : null}
                   </div>
                 </div>
 
@@ -908,6 +1061,8 @@ export default function HomeScreen() {
                   <button
                     type="button"
                     onClick={handleRegen}
+                    disabled={regenBusy}
+                    aria-busy={regenBusy}
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
@@ -919,14 +1074,18 @@ export default function HomeScreen() {
                       background: "transparent",
                       color: "#F2F4F5",
                       fontSize: "14px",
+                      opacity: regenBusy ? 0.7 : 1,
                     }}
                   >
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M21 12a9 9 0 1 1-3-6.7"></path>
                       <path d="M21 4v5h-5"></path>
                     </svg>
-                    Regenerate suggestion
+                    {regenBusy ? "Regenerating…" : "Regenerate suggestion"}
                   </button>
+                  {regenNote ? (
+                    <span style={{ flex: "1 1 220px", fontSize: "13px", color: regenNote.startsWith("New title") ? "#3DDC84" : "#9AA1AB", lineHeight: 1.4 }}>{regenNote}</span>
+                  ) : null}
                   <button
                     type="button"
                     onClick={handleEdit}
@@ -966,7 +1125,7 @@ export default function HomeScreen() {
                       {m.proof}
                     </span>
                   </div>
-                  <div style={{ flex: "none", display: "flex", gap: "10px", marginLeft: "auto" }}>
+                  <div className="v8-home-ship" style={{ flex: "none", display: "flex", gap: "10px", marginLeft: "auto" }}>
                     <button
                       type="button"
                       onClick={handleSkip}

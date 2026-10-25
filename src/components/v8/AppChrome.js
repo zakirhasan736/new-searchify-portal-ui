@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import SearchifyMarkSvg from "@/components/v8/SearchifyMarkSvg";
+import SearchifyLoader from "@/components/v8/SearchifyLoader";
 import PhoneTabBar from "@/components/v8/PhoneTabBar";
 import { authHeaders, getUser, userLogout } from "@/utils/users/Helpers";
 import { canAccessCustomerApp, isPartnerAuthenticated } from "@/lib/authRoles";
@@ -127,25 +128,49 @@ export default function AppChrome({ children, current }) {
     return () => window.removeEventListener("sf-site", onSite);
   }, []);
 
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onKey = (event) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
   if (!ready) {
-    return <div className="v8-screen-root v8-app-chrome" aria-busy="true" />;
+    return <SearchifyLoader full label="Opening your workspace" />;
   }
 
   return (
-    <div className="v8-screen-root v8-app-chrome">
+    <div className={`v8-screen-root v8-app-chrome${menuOpen ? " is-nav-open" : ""}`}>
       <div className="v8-app-mobilebar">
-        <button type="button" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)} className="v8-app-mobilebar-btn">
-          {menuOpen ? "Close" : "Menu"}
-        </button>
         <Link href="/app" className="v8-app-mobilebar-brand">
           <SearchifyMarkSvg size={28} />
           searchify
         </Link>
+        <button
+          type="button"
+          aria-expanded={menuOpen}
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          onClick={() => setMenuOpen((v) => !v)}
+          className={`v8-app-mobilebar-btn${menuOpen ? " is-open" : ""}`}
+        >
+          <span className="v8-app-burger" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+        </button>
       </div>
 
-      {menuOpen ? (
-        <button type="button" className="v8-app-nav-backdrop" aria-label="Close menu" onClick={() => setMenuOpen(false)} />
-      ) : null}
+      <button
+        type="button"
+        className="v8-app-nav-backdrop"
+        aria-label="Close menu"
+        tabIndex={menuOpen ? 0 : -1}
+        aria-hidden={menuOpen ? undefined : true}
+        onClick={() => setMenuOpen(false)}
+      />
 
       {/* Fixed left rail. Brand and account stay put; links scroll if the rail is short. */}
       <aside className={`v8-app-nav-col${menuOpen ? " is-open" : ""}`}>

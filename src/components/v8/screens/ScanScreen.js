@@ -7,6 +7,9 @@ import { activeSiteContext } from "@/lib/siteContext";
 import { findingsToScanTasks } from "@/lib/v8LiveData";
 import {
   approveChange,
+  createChange,
+  errorText,
+  patchChange,
   changePath,
   executeChange,
   featurePayload,
@@ -69,6 +72,8 @@ export default function ScanScreen() {
   const [filter, setFilter] = useState("red");
   const [order, setOrder] = useState("scan");
   const [page, setPage] = useState(0);
+  const [board, setBoard] = useState("desk");
+  const swipeX = useRef(null);
   const [sel, setSel] = useState(null);
   const [variant, setVariant] = useState({});
   const [pub, setPub] = useState({});
@@ -78,7 +83,11 @@ export default function ScanScreen() {
   const [untappedVisitors, setUntappedVisitors] = useState(0);
   const [liveTasks, setLiveTasks] = useState(null);
   const [changeByPath, setChangeByPath] = useState({});
+  const [liveChanges, setLiveChanges] = useState([]);
   const [scanLoading, setScanLoading] = useState(true);
+  const [regenBusy, setRegenBusy] = useState(false);
+  const [pubBusy, setPubBusy] = useState(false);
+  const [regenNote, setRegenNote] = useState("");
   const timerRef = useRef(null);
 
   const reloadLive = useCallback(async () => {
@@ -115,6 +124,7 @@ export default function ScanScreen() {
         if (p && p !== "—" && !byPath[p]) byPath[p] = c;
       });
       setChangeByPath(byPath);
+      setLiveChanges(changes);
       const crawl = auditRes?.ok ? auditRes.data : null;
       const built = buildAuditFindings({ audit, pages, queries, landings, changes, crawl });
       const locked = historyItems(changes)
@@ -137,6 +147,19 @@ export default function ScanScreen() {
       setScanLoading(false);
     }
   }, [urlInput]);
+
+  useEffect(() => {
+    const phone = window.matchMedia("(max-width: 700px)");
+    const tablet = window.matchMedia("(max-width: 1100px)");
+    const apply = () => setBoard(phone.matches ? "phone" : tablet.matches ? "tablet" : "desk");
+    apply();
+    phone.addEventListener("change", apply);
+    tablet.addEventListener("change", apply);
+    return () => {
+      phone.removeEventListener("change", apply);
+      tablet.removeEventListener("change", apply);
+    };
+  }, []);
 
   useEffect(() => {
     reloadLive().then((bundle) => {
@@ -223,7 +246,7 @@ export default function ScanScreen() {
     for (let i = 0; i < N; i++) tasks.push(all[(i * 37) % N]);
   }
 
-  const PER = 48;
+  const PER = board === "phone" ? 18 : board === "tablet" ? 24 : 48;
   const pagesCount = Math.max(1, Math.ceil(N / PER) || 1);
   const pg = Math.min(page, pagesCount - 1);
   const slice = tasks.slice(pg * PER, pg * PER + PER);
@@ -246,15 +269,21 @@ export default function ScanScreen() {
     const col = published ? COLORS.green : COLORS[task.c];
     const selected = effSel === task.t;
     return {
-      pick: () => setSel(task.t),
-      ring: selected ? "2px solid #F2F4F5" : "none",
+      pick: () => {
+        setHover(i);
+        setSel(task.t);
+      },
+      ring: selected || hover === i ? "2px solid #F2F4F5" : "none",
       selStr: String(selected),
       color: on ? col : "#1A1D22",
       op: !on ? "1" : match ? "1" : "0.14",
       shadow: on && !scanning && match ? "0 0 22px " + col : "none",
       anim: on && !scanning && match && !published ? "sfy-flicker 1.4s ease-in-out infinite" : "none",
       label: task.t + " — " + META[task.c].title.toLowerCase(),
-      hover: () => setHover(i),
+      hover: () => {
+        setHover(i);
+        setSel(task.t);
+      },
     };
   });
 
@@ -295,22 +324,35 @@ export default function ScanScreen() {
 
   const callsEstimate = Math.max(0, Math.round(untappedVisitors / 50));
 
-  const selTask = tasks.find((x) => x.t === sel) || tasks.find((x) => x.c === "red") || tasks[0] || emptyTask;
+  const selTask = hovered || tasks.find((x) => x.t === sel) || tasks.find((x) => x.c === "red") || tasks[0] || emptyTask;
   const parts = String(selTask.t || "").split(" · ");
   const action = parts[0] || "No findings";
-  const path = parts[1] || "/";
-  const matchedChange = changeByPath[path] || null;
-  const isBlog = path.indexOf("/blog") === 0;
-  const seg = path === "/" ? "" : path.split("/").pop();
+  const path = parts.slice(1).join(" · ") || "/";
+  const norm = (value) => {
+    const raw = String(value || "/").split("?")[0];
+    return raw.length > 1 ? raw.replace(/\/+$/, "") : raw || "/";
+  };
+  const matchedChange =
+    liveChanges.find((c) => {
+      if (norm(changePath(c)) !== norm(path)) return false;
+      const opp = String(c.opportunity || "").toLowerCase();
+      return opp && action && opp.includes(action.toLowerCase().slice(0, 24));
+    }) ||
+    liveChanges.find((c) => norm(changePath(c)) === norm(path)) ||
+    changeByPath[path] ||
+    null;
+  const pagePath = norm(path);
+  const isBlog = pagePath.indexOf("/blog") === 0;
+  const seg = pagePath === "/" ? "" : pagePath.split("/").filter(Boolean).pop() || "";
   const topic = seg
     ? seg
         .split("-")
         .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(" ")
     : brand;
-  const crumb = path === "/" ? "" : " › " + path.split("/").filter(Boolean).join(" › ");
+  const crumb = pagePath === "/" ? "" : " › " + pagePath.split("/").filter(Boolean).join(" › ");
   const nowT =
-    path === "/"
+    pagePath === "/"
       ? brand
       : topic + (isBlog ? ` | ${brand} Blog` : ` | ${brand}`);
   const nowD =
@@ -320,14 +362,15 @@ export default function ScanScreen() {
       ? "Read our latest post about " + topic.toLowerCase() + "."
       : "Learn more about our " + topic.toLowerCase() + " services.";
 
+  const subject = action && action !== "No findings" ? action : topic;
   const SUG = isBlog
     ? [
         [
-          `${topic}: A practical guide | ${brand}`,
+          `${subject}: ${topic} | ${brand}`,
           `What people need to know about ${topic.toLowerCase()}, with clear steps and when to get help.`,
         ],
         [
-          `${topic} — what to know | ${brand}`,
+          `${subject} — ${topic} | ${brand}`,
           `Plain answers on ${topic.toLowerCase()} from your team. Updated for this year.`,
         ],
         [
@@ -337,20 +380,19 @@ export default function ScanScreen() {
       ]
     : [
         [
-          `${path === "/" ? brand : topic} — clear next step | ${brand}`,
-          `${path === "/" ? "Services" : topic} with a clear call to action and proof on the page.`,
+          `${subject} — ${pagePath === "/" ? brand : topic} | ${brand}`,
+          `${pagePath === "/" ? "Homepage" : topic}: fix “${subject.toLowerCase()}” so the page says what it offers.`,
         ],
         [
-          `${path === "/" ? brand : topic} — get a quote | ${brand}`,
-          `Need ${path === "/" ? "help" : topic.toLowerCase()}? Make the offer and location obvious in the title.`,
+          `${subject} · ${pagePath === "/" ? brand : topic} | ${brand}`,
+          `Need ${pagePath === "/" ? "help" : topic.toLowerCase()}? Make the offer and location obvious in the title.`,
         ],
         [
-          `${topic} by ${brand}`,
-          `${path === "/" ? "Your homepage" : topic} written so searchers know they found the right page.`,
+          `${topic} · ${subject} | ${brand}`,
+          `${pagePath === "/" ? "Your homepage" : topic} written so searchers know they found the right page.`,
         ],
       ];
 
-  const v = (variant[selTask.t] || 0) % 3;
   const isPub = !!pub[selTask.t];
   const actionable = N > 0 && (selTask.c === "red" || selTask.c === "yellow");
   const STATUS = {
@@ -360,20 +402,51 @@ export default function ScanScreen() {
     blue: "Winning · locked",
   };
   const p = matchedChange?.proposed || {};
+  const choiceRows = [];
+  if (p.title || p.metaDescription) choiceRows.push({ title: p.title, description: p.metaDescription });
+  (Array.isArray(p.aiAlternatives) ? p.aiAlternatives : []).forEach((alt) => {
+    choiceRows.push({ title: alt?.title, description: alt?.description || alt?.metaDescription });
+  });
+  SUG.forEach(([title, description]) => choiceRows.push({ title, description }));
+  const choices = [];
+  choiceRows.forEach((row) => {
+    const title = String(row.title || "").trim();
+    const description = String(row.description || "").trim();
+    if (!title && !description) return;
+    const key = `${title} ${description}`.toLowerCase();
+    if (choices.some((item) => `${item.title} ${item.description}`.toLowerCase() === key)) return;
+    choices.push({ title: title || "Updated title", description });
+  });
+  const choiceCount = Math.max(Math.min(choices.length, 3), 1);
+  const shownChoices = choices.slice(0, 3);
+  const v = (variant[selTask.t] || 0) % choiceCount;
+  const picked = shownChoices[v] || { title: "", description: "" };
   const liveNowT = p.liveTitle || p.beforeTitle || nowT;
   const liveNowD = p.liveMetaDescription || p.beforeMetaDescription || p.beforeDescription || nowD;
-  const liveSugT = p.title || SUG[v][0];
-  const liveSugD = p.metaDescription || SUG[v][1];
+  const liveSugT = picked.title || p.title || SUG[0][0];
+  const liveSugD = picked.description || p.metaDescription || SUG[0][1];
 
   const insp = {
     task: N === 0 ? (scanLoading ? "Loading scan…" : "No findings yet") : action,
-    page: path,
+    topic: N === 0 ? "" : selTask.t,
+    page: pagePath,
     crumb: crumb,
     nowT: liveNowT,
     nowD: liveNowD,
     sugT: liveSugT,
     sugD: liveSugD,
-    optNo: matchedChange?.id ? "1" : String(v + 1),
+    ogTitle: v === 0 ? p.openGraphTitle || liveSugT : liveSugT,
+    schemaLabel: v === 0
+      ? (() => {
+          const ld = p.jsonLd || {};
+          const kind = ld["@type"] || (Array.isArray(p.schemaTypesPreserved) ? p.schemaTypesPreserved[0] : "") || "";
+          const name = ld.name || ld.headline || "";
+          if (!kind && !name) return "";
+          return name ? `${kind || "WebPage"} · ${name}` : String(kind);
+        })()
+      : "",
+    optNo: String(v + 1),
+    optCount: shownChoices.length,
     color: isPub ? COLORS.green : COLORS[selTask.c] || COLORS.green,
     status: N === 0 ? (scanLoading ? "Loading" : "Empty") : isPub ? "Published" : STATUS[selTask.c],
     border: isPub
@@ -396,12 +469,73 @@ export default function ScanScreen() {
         ? "This page is winning. Searchify has locked it and won't suggest changes."
         : "This passes. Nothing to change; Searchify rechecks it every week.",
     publish: async () => {
-      if (matchedChange?.id) {
-        await approveChange(matchedChange.id).catch(() => {});
-        await executeChange(matchedChange.id, { includeOpenGraph: true, includeJsonLd: true }).catch(() => {});
-        await reloadLive();
+      if (pubBusy || regenBusy) return;
+      if (!connectionStatus.wordpress) {
+        setRegenNote("Connect WordPress first. Publish writes this title, description, Open Graph, and schema onto that site. The page name stays the same.");
+        return;
       }
-      setPub({ ...pub, [selTask.t]: true });
+      const title = String(picked.title || "").trim();
+      const description = String(picked.description || "").trim();
+      if (!title || !description) {
+        setRegenNote("This dot needs a title and a description before it can go to WordPress.");
+        return;
+      }
+      setPubBusy(true);
+      setRegenNote("Publishing the title, description, Open Graph, and schema to WordPress…");
+      try {
+        let id = matchedChange?.id;
+        if (!id) {
+          const siteHref = activeSiteContext(loadJourney()).href || (scanHost ? `https://${scanHost}` : "");
+          const origin = String(siteHref || "").replace(/\/$/, "");
+          const targetUrl = origin
+            ? pagePath === "/"
+              ? `${origin}/`
+              : `${origin}${pagePath.startsWith("/") ? pagePath : `/${pagePath}`}`
+            : "";
+          const created = await createChange({
+            opportunity: selTask.t,
+            target_url: targetUrl,
+            change_type: "meta",
+            source: "scan",
+            draft_with_ai: false,
+            resource: "page",
+            title,
+            meta_description: description,
+          });
+          if (!created.ok || !created.data?.id) {
+            setRegenNote(errorText(created, "Could not prepare this page for WordPress."));
+            return;
+          }
+          id = created.data.id;
+        } else {
+          const storedTitle = String(p.title || "").trim();
+          const storedDesc = String(p.metaDescription || "").trim();
+          if (title !== storedTitle || description !== storedDesc) {
+            const patched = await patchChange(id, { title, metaDescription: description });
+            if (!patched.ok) {
+              setRegenNote(errorText(patched, "Could not save the wording you picked."));
+              return;
+            }
+          }
+        }
+        const approved = await approveChange(id);
+        if (!approved.ok) {
+          setRegenNote(errorText(approved, "This wording could not be approved."));
+          return;
+        }
+        const executed = await executeChange(id, { includeOpenGraph: true, includeJsonLd: true });
+        if (!executed.ok) {
+          setRegenNote(errorText(executed, "WordPress did not accept the update. Nothing on the live page was changed."));
+          return;
+        }
+        setPub({ ...pub, [selTask.t]: true });
+        setRegenNote("Published to WordPress. The page name was not changed. Undo puts the previous title and description back.");
+        await reloadLive();
+      } catch {
+        setRegenNote("Publish did not finish. The live page was not changed.");
+      } finally {
+        setPubBusy(false);
+      }
     },
     undo: async () => {
       if (matchedChange?.id) await undoChange(matchedChange.id).catch(() => {});
@@ -411,10 +545,26 @@ export default function ScanScreen() {
       await reloadLive();
     },
     regen: async () => {
+      if (regenBusy) return;
       if (matchedChange?.id) {
-        await generateMetaCopy(matchedChange.id, { breadth: "balanced", objective: "balanced" });
-        await reloadLive();
-        setVariant({ ...variant, [selTask.t]: 0 });
+        setRegenBusy(true);
+        setRegenNote("Reading the live page, then Search Console, Analytics, and Speed Index. Searchify SEO is writing the title and description…");
+        try {
+          const res = await generateMetaCopy(matchedChange.id, { breadth: "balanced", objective: "balanced" });
+          if (!res.ok) {
+            const detail = res.data?.detail;
+            setRegenNote(typeof detail === "string" ? detail : "Could not regenerate the title and description.");
+            return;
+          }
+          await reloadLive();
+          setVariant({ ...variant, [selTask.t]: 0 });
+          const nextTitle = res.data?.change?.proposed?.title || res.data?.options?.[0]?.title || "";
+          setRegenNote(nextTitle ? `New title ready: ${nextTitle}` : "New title and description are ready.");
+        } catch {
+          setRegenNote("Regenerate did not finish. Try again in a moment.");
+        } finally {
+          setRegenBusy(false);
+        }
         return;
       }
       setVariant({ ...variant, [selTask.t]: v + 1 });
@@ -423,6 +573,7 @@ export default function ScanScreen() {
 
   return (
     <div
+      className="v8-scan"
       style={{
         flex: "999 1 560px",
         minWidth: 0,
@@ -737,6 +888,11 @@ export default function ScanScreen() {
                 <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 600, letterSpacing: "-0.3px" }}>
                   {insp.task}
                 </h2>
+                {insp.topic ? (
+                  <p style={{ margin: 0, fontSize: "13px", lineHeight: 1.45, color: "#9AA1AB" }}>
+                    {insp.topic}
+                  </p>
+                ) : null}
                 <div
                   style={{
                     borderRadius: "14px",
@@ -791,13 +947,71 @@ export default function ScanScreen() {
                   >
                     <span
                       style={{
-                        fontFamily: "'Geist Mono', monospace",
-                        fontSize: "11px",
-                        color: "#1A5FB4",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "8px",
                         marginBottom: "4px",
                       }}
                     >
-                      WE SUGGEST · OPTION {insp.optNo} OF 3
+                      <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#1A5FB4" }}>
+                        {insp.topic || "THIS DOT"}
+                      </span>
+                      {insp.optCount > 1 ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", flex: "none" }}>
+                          <button
+                            type="button"
+                            aria-label="Previous option"
+                            disabled={v === 0}
+                            onClick={() => setVariant({ ...variant, [selTask.t]: v - 1 })}
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              borderRadius: "8px",
+                              border: "1px solid #D7DADE",
+                              background: "#fff",
+                              color: "#202124",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 0,
+                              cursor: v === 0 ? "default" : "pointer",
+                              opacity: v === 0 ? 0.35 : 1,
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M15 6l-6 6 6 6"></path>
+                            </svg>
+                          </button>
+                          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#3C4043", minWidth: "42px", textAlign: "center" }}>
+                            {insp.optNo} of {insp.optCount}
+                          </span>
+                          <button
+                            type="button"
+                            aria-label="Next option"
+                            disabled={v >= shownChoices.length - 1}
+                            onClick={() => setVariant({ ...variant, [selTask.t]: v + 1 })}
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              borderRadius: "8px",
+                              border: "1px solid #D7DADE",
+                              background: "#fff",
+                              color: "#202124",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 0,
+                              cursor: v >= shownChoices.length - 1 ? "default" : "pointer",
+                              opacity: v >= shownChoices.length - 1 ? 0.35 : 1,
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M9 6l6 6-6 6"></path>
+                            </svg>
+                          </button>
+                        </span>
+                      ) : null}
                     </span>
                     <span style={{ fontSize: "12px", color: "#3C4043" }}>
                       {scanHost || "your.site"}{insp.crumb}
@@ -816,6 +1030,12 @@ export default function ScanScreen() {
                     <span style={{ fontSize: "13px", color: "#4D5156", lineHeight: 1.45 }}>
                       {insp.sugD}
                     </span>
+                    {insp.ogTitle ? (
+                      <span style={{ fontSize: "12px", color: "#3C4043", lineHeight: 1.4 }}>Open Graph · {insp.ogTitle}</span>
+                    ) : null}
+                    {insp.schemaLabel ? (
+                      <span style={{ fontSize: "12px", color: "#3C4043", lineHeight: 1.4 }}>Schema · {insp.schemaLabel}</span>
+                    ) : null}
                   </div>
                 )}
                 {insp.canAct && (
@@ -823,6 +1043,8 @@ export default function ScanScreen() {
                     <button
                       type="button"
                       onClick={insp.publish}
+                      disabled={pubBusy}
+                      aria-busy={pubBusy}
                       style={{
                         minHeight: "50px",
                         padding: "0 22px",
@@ -833,13 +1055,16 @@ export default function ScanScreen() {
                         fontSize: "15px",
                         fontWeight: 600,
                         boxShadow: "0 0 22px rgba(77,163,255,.45)",
+                        opacity: pubBusy ? 0.7 : 1,
                       }}
                     >
-                      Publish change
+                      {pubBusy ? "Publishing…" : "Publish change"}
                     </button>
                     <button
                       type="button"
                       onClick={insp.regen}
+                      disabled={regenBusy}
+                      aria-busy={regenBusy}
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
@@ -851,6 +1076,7 @@ export default function ScanScreen() {
                         background: "transparent",
                         color: "#F2F4F5",
                         fontSize: "15px",
+                        opacity: regenBusy ? 0.7 : 1,
                       }}
                     >
                       <svg
@@ -867,10 +1093,13 @@ export default function ScanScreen() {
                         <path d="M21 12a9 9 0 1 1-3-6.7"></path>
                         <path d="M21 4v5h-5"></path>
                       </svg>
-                      Regenerate suggestion
+                      {regenBusy ? "Regenerating…" : "Regenerate suggestion"}
                     </button>
                   </div>
                 )}
+                {regenNote ? (
+                  <span style={{ fontSize: "13px", color: regenNote.startsWith("Published") || regenNote.startsWith("New title") ? "#3DDC84" : "#FFC53D", lineHeight: 1.45 }}>{regenNote}</span>
+                ) : null}
                 {insp.isPublished && (
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
                     <span
@@ -896,7 +1125,7 @@ export default function ScanScreen() {
                           animation: "sfy-breathe 1.2s ease-in-out infinite",
                         }}
                       ></span>
-                      Published · checking the live page
+                      Published to WordPress
                     </span>
                     <button
                       type="button"
@@ -999,9 +1228,11 @@ export default function ScanScreen() {
               >
                 <path d="M5 3l14 7-6 2-2 6z"></path>
               </svg>
-              HOVER OVER ANY DOT
+              <span className="v8-scan-hint-hover">HOVER OVER ANY DOT</span>
+              <span className="v8-scan-hint-tap">TAP ANY DOT</span>
             </div>
             <div
+              className="v8-scan-chips"
               role="group"
               aria-label="Show tasks by colour"
               style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}
@@ -1201,12 +1432,23 @@ export default function ScanScreen() {
             </div>
 
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(8, minmax(0, 1fr))",
-                gap: "clamp(8px, 1.2vw, 14px)",
-                minHeight: "280px",
-                alignContent: "start",
+              className="v8-scan-dots"
+              style={
+                board === "desk"
+                  ? undefined
+                  : {
+                      minHeight: Math.ceil((dots.length || 1) / (board === "phone" ? 6 : 8)) * (board === "phone" ? 62 : 74),
+                    }
+              }
+              onTouchStart={(e) => {
+                swipeX.current = e.changedTouches[0]?.clientX ?? null;
+              }}
+              onTouchEnd={(e) => {
+                if (swipeX.current == null || board === "desk") return;
+                const dx = (e.changedTouches[0]?.clientX ?? swipeX.current) - swipeX.current;
+                swipeX.current = null;
+                if (dx <= -48) setPage((p) => Math.min(pagesCount - 1, p + 1));
+                else if (dx >= 48) setPage((p) => Math.max(0, p - 1));
               }}
             >
               {dots.map((d, i) => (
@@ -1232,6 +1474,7 @@ export default function ScanScreen() {
                   }}
                 >
                   <div
+                    className="v8-scan-dot"
                     style={{
                       width: "58%",
                       aspectRatio: "1",
@@ -1240,7 +1483,7 @@ export default function ScanScreen() {
                       opacity: d.op,
                       boxShadow: d.shadow,
                       animation: d.anim,
-                      transition: "opacity .3s ease, box-shadow .3s ease",
+                      transition: "opacity .3s ease, box-shadow .3s ease, transform .2s ease",
                     }}
                   ></div>
                 </button>
@@ -1258,10 +1501,10 @@ export default function ScanScreen() {
               }}
             >
               <span style={{ fontSize: "14px", fontWeight: 600 }}>
-                {hovered ? hovered.t : META[f].title}
+                {hovered ? hovered.t : selTask.t || META[f].title}
               </span>
               <span style={{ fontSize: "13px", color: "#9AA1AB" }}>
-                {hovered ? META[hovered.c].title : META[f].sub}
+                {hovered || selTask.t ? META[(hovered || selTask).c]?.title || META[f].sub : META[f].sub}
               </span>
             </div>
           </div>

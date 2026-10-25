@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import PageSkeleton from "@/components/v3/PageSkeleton";
+import SearchifyLoader from "@/components/v8/SearchifyLoader";
 import "@/styles/searchify-v3.css";
 
 export default function ClientOnly({ children }) {
@@ -13,9 +13,7 @@ export default function ClientOnly({ children }) {
 
   if (!ready) {
     return (
-      <div className="sf-booting">
-        <PageSkeleton />
-      </div>
+      <SearchifyLoader full label="Opening Searchify" />
     );
   }
   return children;

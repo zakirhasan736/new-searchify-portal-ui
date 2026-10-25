@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { changePath, listChanges, queueItems } from "@/lib/v1Api";
 import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
+import SearchifyLoader from "@/components/v8/SearchifyLoader";
 import "@/styles/v8-screens.css";
 
 const LIVE = new Set(["applied", "monitoring", "closed", "published_unverified", "executing"]);
@@ -86,18 +87,23 @@ export default function PublishedScreen() {
   const { id } = useParams();
   const router = useRouter();
   const [change, setChange] = useState(null);
+  const [checked, setChecked] = useState(false);
   const [nextId, setNextId] = useState(null);
   const [hostname, setHostname] = useState("your site");
 
   const load = useCallback(async () => {
-    const { hostname: host } = activeSiteContext(loadJourney());
-    setHostname(host || "your site");
-    const res = await listChanges({ force: true });
-    const list = Array.isArray(res.data) ? res.data : res.data?.changes || [];
-    const row = list.find((x) => String(x.id) === String(id)) || null;
-    setChange(row);
-    const ready = queueItems(list).filter((x) => String(x.id) !== String(id));
-    setNextId(ready[0]?.id || null);
+    try {
+      const { hostname: host } = activeSiteContext(loadJourney());
+      setHostname(host || "your site");
+      const res = await listChanges({ force: true });
+      const list = Array.isArray(res.data) ? res.data : res.data?.changes || [];
+      const row = list.find((x) => String(x.id) === String(id)) || null;
+      setChange(row);
+      const ready = queueItems(list).filter((x) => String(x.id) !== String(id));
+      setNextId(ready[0]?.id || null);
+    } finally {
+      setChecked(true);
+    }
   }, [id]);
 
   useEffect(() => {
@@ -106,11 +112,15 @@ export default function PublishedScreen() {
     return () => clearInterval(t);
   }, [load]);
 
+  if (!checked) {
+    return <SearchifyLoader label="Opening this page" />;
+  }
+
   if (!change) {
     return (
       <div style={CONTENT_COL}>
         <p style={{ margin: 0, color: "#9AA1AB", fontSize: 15 }}>
-          Loading… or this change is gone. <Link href="/app">Back to Today&apos;s moves</Link>
+          This change is gone. <Link href="/app">Back to Today&apos;s moves</Link>
         </p>
       </div>
     );
