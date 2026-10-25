@@ -218,7 +218,8 @@ export default function BacklinksScreen() {
     let cancel = false;
     setLoading(true);
     Promise.all([
-      site ? researchBacklinks({ site, force: true }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
+      // Stored backlink data is reused for 24h; forcing on every visit spent the monthly refresh quota.
+      site ? researchBacklinks({ site, force: false }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
       loadFeature('backlinks').catch(() => ({ ok: false })),
       loadFeature('top-pages').catch(() => ({ ok: false })),
       getBusinessProfile().catch(() => ({ ok: false })),
