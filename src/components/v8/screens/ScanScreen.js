@@ -29,6 +29,31 @@ import { loadJourney } from "@/lib/journey";
 import { listingKept, listingStatus, pinKeptTitle, whyLines } from "@/lib/listingSuggestion";
 import "@/styles/v8-screens.css";
 
+function WhyRecommend({ lines }) {
+  if (!lines?.length) return null;
+  return (
+    <span className="sf-why">
+      <button type="button" className="sf-why-btn" aria-label="Why I recommend this version">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M12 11v5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <circle cx="12" cy="7.6" r="1" fill="currentColor" />
+        </svg>
+      </button>
+      <span className="sf-why-pop" role="tooltip">
+        <span className="sf-why-card">
+          <strong>Why I recommend this version</strong>
+          <ul>
+            {lines.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </span>
+      </span>
+    </span>
+  );
+}
+
 const COLORS = { red: "#FF5A4E", yellow: "#FFC53D", green: "#3DDC84", blue: "#4DA3FF" };
 const RGB = {
   red: "255,90,78",
@@ -1093,8 +1118,9 @@ export default function ScanScreen() {
                     {insp.sugT ? (
                       <>
                         <span style={{ fontSize: "13px", color: "#3C4043", lineHeight: 1.45 }}>{insp.statusLine}</span>
-                        <span style={{ marginTop: "8px", fontSize: "13px", fontWeight: 600, color: "#202124" }}>
-                          {`Recommended SEO metadata for ${insp.page || "/"}`}
+                        <span style={{ marginTop: "8px", fontSize: "13px", fontWeight: 600, color: "#202124", display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span>{`Recommended SEO metadata for ${insp.page || "/"}`}</span>
+                          <WhyRecommend lines={insp.why} />
                         </span>
                         <span style={{ marginTop: "8px", fontSize: "11px", fontWeight: 600, letterSpacing: "0.2px", color: "#5F6368" }}>
                           {insp.current ? "SEO title — current, kept" : "SEO title — recommended"}
@@ -1110,16 +1136,6 @@ export default function ScanScreen() {
                           Open Graph title
                         </span>
                         <span style={{ fontSize: "13px", color: "#202124", lineHeight: 1.4 }}>{insp.ogTitle || insp.sugT}</span>
-                        {insp.why?.length ? (
-                          <>
-                            <span style={{ marginTop: "8px", fontSize: "13px", fontWeight: 600, color: "#202124" }}>Why I recommend this version</span>
-                            <ul style={{ margin: "4px 0 0", paddingLeft: "18px", display: "flex", flexDirection: "column", gap: "4px" }}>
-                              {insp.why.map((line) => (
-                                <li key={line} style={{ fontSize: "13px", color: "#3C4043", lineHeight: 1.45 }}>{line}</li>
-                              ))}
-                            </ul>
-                          </>
-                        ) : null}
                       </>
                     ) : (
                       <span style={{ fontSize: "18px", color: "#1A0DAB", lineHeight: 1.3 }}>

@@ -653,6 +653,82 @@ body:has(.v8-app-chrome) {
   }
 }
 
+.sf-why {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.sf-why-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #1A5FB4;
+  background: #fff;
+  color: #1A5FB4;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+}
+
+.sf-why-btn:hover,
+.sf-why-btn:focus-visible {
+  background: #1A5FB4;
+  color: #fff;
+  outline: none;
+}
+
+.sf-why-pop {
+  display: none;
+  position: absolute;
+  z-index: 40;
+  top: 100%;
+  right: 0;
+  left: auto;
+  padding-top: 8px;
+  width: min(300px, calc(100vw - 48px));
+}
+
+.sf-why:hover .sf-why-pop,
+.sf-why:focus-within .sf-why-pop {
+  display: block;
+}
+
+.sf-why-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #1C2026;
+  border: 1px solid #3D4450;
+  color: #F2F4F5;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+  font-weight: 400;
+  text-align: left;
+}
+
+.sf-why-card strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sf-why-card ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sf-why-card li {
+  font-size: 13px;
+  line-height: 1.45;
+  color: #D7DADE;
+}
+
 @media (max-width: 900px) and (prefers-reduced-motion: reduce) {
   .v8-app-main > div,
   dialog,

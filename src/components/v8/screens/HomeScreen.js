@@ -23,6 +23,31 @@ import { listingKept, listingStatus, pinKeptTitle, whyLines } from "@/lib/listin
 import { Skel } from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
 
+function WhyRecommend({ lines }) {
+  if (!lines?.length) return null;
+  return (
+    <span className="sf-why">
+      <button type="button" className="sf-why-btn" aria-label="Why I recommend this version">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M12 11v5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <circle cx="12" cy="7.6" r="1" fill="currentColor" />
+        </svg>
+      </button>
+      <span className="sf-why-pop" role="tooltip">
+        <span className="sf-why-card">
+          <strong>Why I recommend this version</strong>
+          <ul>
+            {lines.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </span>
+      </span>
+    </span>
+  );
+}
+
 const QUALITY = ["Poor", "Fair", "Good", "Strong", "Great", "Excellent"];
 
 function kindFromChange(c) {
@@ -1121,23 +1146,16 @@ export default function HomeScreen() {
                       </span>
                     </span>
                     {m.statusLine ? <span style={{ fontSize: "13px", lineHeight: 1.45, color: "#D7DADE" }}>{m.statusLine}</span> : null}
-                    <span style={{ fontSize: "13px", fontWeight: 600, color: "#F2F4F5" }}>{`Recommended SEO metadata for ${m.page || "/"}`}</span>
+                    <span style={{ fontSize: "13px", fontWeight: 600, color: "#F2F4F5", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span>{`Recommended SEO metadata for ${m.page || "/"}`}</span>
+                      <WhyRecommend lines={m.why} />
+                    </span>
                     <span style={{ fontSize: "11px", fontWeight: 600, color: "#9AA1AB" }}>{m.current ? "SEO title — current, kept" : "SEO title — recommended"}</span>
                     <span style={{ fontSize: "17px", lineHeight: 1.45 }}>{m.afterSegs.map((s) => s.t).join("")}</span>
                     <span style={{ fontSize: "11px", fontWeight: 600, color: "#9AA1AB" }}>Meta description — recommended</span>
                     <span style={{ fontSize: "14px", lineHeight: 1.5, color: "#D7DADE" }}>{m.afterDesc || "(No description on this option.)"}</span>
                     <span style={{ fontSize: "11px", fontWeight: 600, color: "#9AA1AB" }}>Open Graph title</span>
                     <span style={{ fontSize: "14px", lineHeight: 1.4 }}>{m.ogTitle || m.afterSegs.map((s) => s.t).join("")}</span>
-                    {m.why?.length ? (
-                      <>
-                        <span style={{ fontSize: "13px", fontWeight: 600 }}>Why I recommend this version</span>
-                        <ul style={{ margin: 0, paddingLeft: "18px", display: "flex", flexDirection: "column", gap: "4px" }}>
-                          {m.why.map((line) => (
-                            <li key={line} style={{ fontSize: "13px", lineHeight: 1.45, color: "#D7DADE" }}>{line}</li>
-                          ))}
-                        </ul>
-                      </>
-                    ) : null}
                   </div>
                 </div>
 

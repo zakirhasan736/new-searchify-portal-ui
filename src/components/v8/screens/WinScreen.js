@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   researchKeywords,
+  getSiteScan,
   listChanges,
   changePath,
   historyItems,
@@ -42,6 +43,34 @@ function pctLabel(n) {
   const v = Number(n);
   const pct = v <= 1 ? v * 100 : v;
   return `${pct.toFixed(1)}%`;
+}
+
+function pathFrom(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("/")) return raw.split("?")[0] || "/";
+  try {
+    return new URL(raw.includes("://") ? raw : `https://${raw}`).pathname || "/";
+  } catch {
+    return raw.startsWith("/") ? raw : "";
+  }
+}
+
+function collectScanPages(payload) {
+  const root = payload?.scan || payload || {};
+  const rows = [];
+  const push = (path, title) => {
+    const clean = pathFrom(path);
+    if (!clean) return;
+    rows.push({ path: clean, title: String(title || clean).trim() || clean });
+  };
+  (root.pages || []).forEach((page) => {
+    if (typeof page === "string") push(page, page);
+    else if (page && typeof page === "object") push(page.url || page.path, page.title || page.h1 || page.path);
+  });
+  (root.dots || []).forEach((dot) => push(dot?.path, dot?.title || dot?.path));
+  (root.findings || []).forEach((item) => push(item?.path, item?.title || item?.path));
+  return rows;
 }
 
 function termKey(site) {
@@ -258,6 +287,8 @@ export default function WinScreen() {
   const [addTerm, setAddTerm] = useState("");
   const [tracking, setTracking] = useState(false);
   const [ideas, setIdeas] = useState([]);
+  const [ideaTab, setIdeaTab] = useState("all");
+  const [sitePages, setSitePages] = useState([]);
   const [pageNote, setPageNote] = useState("");
   const { hostname, href } = activeSiteContext(loadJourney());
 
@@ -266,14 +297,16 @@ export default function WinScreen() {
     setLoading(true);
     try {
       const localTerms = loadLocalTerms(site);
-      const [kwRes, organic, researchFeat, changeRes] = await Promise.all([
+      const [kwRes, organic, researchFeat, changeRes, scanRes] = await Promise.all([
         site
           ? researchKeywords({ site, terms: localTerms, force: true }).catch(() => ({ ok: false }))
           : Promise.resolve({ ok: false }),
         loadFeature("organic-search").catch(() => ({ ok: false })),
         loadFeature("keyword-research").catch(() => ({ ok: false })),
         listChanges({ force: true }).catch(() => ({ ok: false, data: [] })),
+        site ? getSiteScan(site).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
       ]);
+      setSitePages(scanRes?.ok ? collectScanPages(scanRes.data) : []);
 
       const byTerm = new Map();
       const ingest = (row) => {
@@ -314,6 +347,7 @@ export default function WinScreen() {
             volume: row.volume ?? null,
             difficulty: row.difficulty ?? null,
             intent: String(row.intent || "").trim(),
+            seed: String(row.seed || "").trim(),
           });
         });
       } else if (site) {
@@ -405,6 +439,44 @@ export default function WinScreen() {
     return { up, flat, down, measuring };
   }, [K]);
 
+  const ideaTabs = useMemo(() => {
+    const seeds = [];
+    const seen = new Set();
+    ideas.forEach((idea) => {
+      const seed = idea.seed;
+      if (!seed || seen.has(seed)) return;
+      seen.add(seed);
+      seeds.push(seed);
+    });
+    const tabs = [{ id: "all", label: "All" }];
+    if (seeds.length) {
+      seeds.forEach((seed) => tabs.push({ id: seed, label: seed }));
+    } else {
+      tabs.push(
+        { id: "questions", label: "Questions" },
+        { id: "buyers", label: "Buyers" },
+        { id: "guides", label: "Guides" },
+      );
+    }
+    return tabs;
+  }, [ideas]);
+
+  const visibleIdeas = useMemo(() => {
+    if (ideaTab === "all") return ideas;
+    if (ideas.some((idea) => idea.seed)) return ideas.filter((idea) => idea.seed === ideaTab);
+    return ideas.filter((idea) => {
+      const keyword = idea.keyword.toLowerCase();
+      const intent = String(idea.intent || "").toLowerCase();
+      const question = /^(how|what|why|when|where|who|which|can|does|is|are)\b/.test(keyword);
+      if (ideaTab === "questions") return question;
+      if (ideaTab === "buyers") return intent.includes("transaction") || intent.includes("commercial");
+      if (ideaTab === "guides") return intent.includes("inform") || (!question && !intent.includes("commercial") && !intent.includes("transaction"));
+      return true;
+    });
+  }, [ideas, ideaTab]);
+
+  const workedRows = useMemo(() => K.filter((row) => row.status === "worked"), [K]);
+
   const ST = {
     worked: {
       dot: "#3DDC84",
@@ -442,6 +514,20 @@ export default function WinScreen() {
 
   const cur = K.find((x) => x.id === selId) || K[0];
   const empty = !cur;
+  const similarPages = useMemo(() => {
+    const current = pathFrom(cur?.page || "");
+    const seen = new Set();
+    const rows = [];
+    const add = (path, title) => {
+      const clean = pathFrom(path);
+      if (!clean || clean === current || seen.has(clean)) return;
+      seen.add(clean);
+      rows.push({ path: clean, title: String(title || clean).trim() || clean });
+    };
+    sitePages.forEach((page) => add(page.path, page.title));
+    K.forEach((row) => add(row.page, row.page));
+    return rows;
+  }, [sitePages, K, cur]);
   const sc = empty ? ST.flat : ST[cur.status];
 
   const moveOf = (x) => {
@@ -623,76 +709,6 @@ export default function WinScreen() {
         <p style={{ maxWidth: "1120px", width: "100%", margin: "0 auto", fontSize: 14, lineHeight: 1.45, color: "#D7DADE" }}>
           {pageNote}
         </p>
-      ) : null}
-      {!loading ? (
-        <section
-          aria-label="Best keyword suggestions"
-          style={{
-            maxWidth: "1120px",
-            width: "100%",
-            margin: "0 auto",
-            borderRadius: 22,
-            background: "#101215",
-            border: "1px solid #1A1D22",
-            padding: "14px 8px 8px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 6,
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, margin: "0 12px 6px" }}>
-            <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#D7DADE" }}>Best keyword suggestions</h2>
-            <span style={{ fontSize: 12, color: "#7D848E", lineHeight: 1.4 }}>
-              Highest-demand searches this site is not tracking yet. Volume is an estimate. A blank volume means the number is unknown.
-            </span>
-          </div>
-          {ideas.length ? ideas.map((idea) => (
-            <div
-              key={idea.keyword}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                minHeight: 52,
-                padding: "8px 12px",
-                borderRadius: 13,
-              }}
-            >
-              <span style={{ flex: "1 1 180px", minWidth: 0, display: "flex", flexDirection: "column" }}>
-                <span style={{ fontSize: 14, lineHeight: 1.25 }}>{idea.keyword}</span>
-                <span style={{ fontSize: 12, color: "#7D848E" }}>
-                  {idea.intent ? idea.intent : "Intent unknown"}
-                  {idea.difficulty != null && idea.difficulty !== "" ? ` · difficulty ${idea.difficulty}` : ""}
-                </span>
-              </span>
-              <span style={{ flex: "none", width: 88, textAlign: "right", fontFamily: "'Geist Mono', monospace", fontSize: 13 }}>
-                {idea.volume == null || idea.volume === "" ? "—" : Number(idea.volume).toLocaleString()}
-              </span>
-              <button
-                type="button"
-                onClick={() => handleTrack(idea.keyword)}
-                disabled={tracking}
-                style={{
-                  flex: "none",
-                  minHeight: 36,
-                  padding: "0 12px",
-                  borderRadius: 999,
-                  border: 0,
-                  background: "#4DA3FF",
-                  color: "#0A0B0D",
-                  fontSize: 13,
-                  fontWeight: 600,
-                }}
-              >
-                Track
-              </button>
-            </div>
-          )) : (
-            <span style={{ margin: "0 12px 8px", fontSize: 13, color: "#9AA1AB" }}>
-              No extra suggestions yet. They show up after Searchify reads this site.
-            </span>
-          )}
-        </section>
       ) : null}
       {!loading && empty ? (
         <div
@@ -1150,7 +1166,7 @@ export default function WinScreen() {
                     boxShadow: "0 0 22px rgba(77,163,255,.45)",
                   }}
                 >
-                  Do the same on 3 similar pages
+                  Do the same on {similarPages.length} similar page{similarPages.length === 1 ? "" : "s"}
                 </Link>
                 <span style={{ fontSize: "13px", color: "#9AA1AB" }}>Added to your total and this month&apos;s client report.</span>
               </div>
@@ -1237,6 +1253,228 @@ export default function WinScreen() {
           </button>
         </div>
       )}
+
+      {!loading ? (
+        <section
+          aria-label="Keyword suggestions"
+          style={{
+            maxWidth: "1120px",
+            width: "100%",
+            margin: "0 auto",
+            borderRadius: 22,
+            background: "#101215",
+            border: "1px solid #1A1D22",
+            padding: "14px 8px 8px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, margin: "0 12px 2px" }}>
+            <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#D7DADE" }}>Keyword suggestions</h2>
+            <span style={{ fontSize: 12, color: "#7D848E", lineHeight: 1.4 }}>
+              Ideas from DataForSEO for searches this site is not tracking yet. Volume is an estimate. A blank volume means the number is unknown.
+            </span>
+          </div>
+          <div role="tablist" aria-label="Suggestion groups" style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "0 6px" }}>
+            {ideaTabs.map((tab) => {
+              const on = tab.id === ideaTab || (tab.id === "all" && !ideaTabs.some((item) => item.id === ideaTab));
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={on ? "true" : "false"}
+                  onClick={() => setIdeaTab(tab.id)}
+                  style={{
+                    minHeight: 36,
+                    padding: "0 14px",
+                    borderRadius: 999,
+                    border: on ? "1px solid #F2F4F5" : "1px solid #262A31",
+                    background: on ? "#F2F4F5" : "transparent",
+                    color: on ? "#0A0B0D" : "#D7DADE",
+                    fontSize: 13,
+                    fontWeight: on ? 600 : 400,
+                  }}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+          <div aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: 12, padding: "0 12px", fontFamily: "'Geist Mono', monospace", fontSize: 10, letterSpacing: ".5px", color: "#7D848E" }}>
+            <span style={{ flex: 1 }}>KEYWORD</span>
+            <span style={{ width: 88, textAlign: "right" }}>VOLUME</span>
+            <span style={{ width: 72 }}></span>
+          </div>
+          <div style={{ maxHeight: 320, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
+            {visibleIdeas.length ? visibleIdeas.map((idea) => (
+              <div key={`${idea.seed}-${idea.keyword}`} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 52, padding: "8px 12px", borderRadius: 13 }}>
+                <span style={{ flex: "1 1 180px", minWidth: 0, display: "flex", flexDirection: "column" }}>
+                  <span style={{ fontSize: 14, lineHeight: 1.25 }}>{idea.keyword}</span>
+                  <span style={{ fontSize: 12, color: "#7D848E" }}>
+                    {idea.intent ? idea.intent : "Intent unknown"}
+                    {idea.difficulty != null && idea.difficulty !== "" ? ` · difficulty ${idea.difficulty}` : ""}
+                  </span>
+                </span>
+                <span style={{ flex: "none", width: 88, textAlign: "right", fontFamily: "'Geist Mono', monospace", fontSize: 13 }}>
+                  {idea.volume == null || idea.volume === "" ? "—" : Number(idea.volume).toLocaleString()}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleTrack(idea.keyword)}
+                  disabled={tracking}
+                  style={{ flex: "none", minHeight: 36, padding: "0 12px", borderRadius: 999, border: 0, background: "#4DA3FF", color: "#0A0B0D", fontSize: 13, fontWeight: 600 }}
+                >
+                  Track
+                </button>
+              </div>
+            )) : (
+              <span style={{ margin: "0 12px 8px", fontSize: 13, color: "#9AA1AB" }}>
+                No suggestions in this tab yet. They show up after Searchify reads this site.
+              </span>
+            )}
+          </div>
+        </section>
+      ) : null}
+
+      {!loading ? (
+        <section
+          aria-label="It worked"
+          style={{
+            maxWidth: "1120px",
+            width: "100%",
+            margin: "0 auto",
+            borderRadius: 22,
+            background: "#101215",
+            border: "1px solid #1A1D22",
+            padding: "14px 8px 10px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, margin: "0 12px 4px" }}>
+            <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#D7DADE" }}>It worked</h2>
+            <span style={{ fontSize: 12, color: "#7D848E", lineHeight: 1.4 }}>
+              Keywords that moved up on Google. A smaller spot number is better.
+            </span>
+          </div>
+          {workedRows.length ? workedRows.map((row) => {
+            const item = list.find((entry) => entry.id === row.id) || row;
+            return (
+              <button
+                key={row.id}
+                type="button"
+                onClick={() => setSelId(row.id)}
+                aria-pressed={row.id === cur?.id ? "true" : "false"}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  width: "100%",
+                  minHeight: 52,
+                  padding: "8px 12px",
+                  borderRadius: 13,
+                  border: row.id === cur?.id ? "1px solid #3DDC84" : "1px solid transparent",
+                  background: "transparent",
+                  color: "#F2F4F5",
+                  textAlign: "left",
+                }}
+              >
+                <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#3DDC84", flex: "none" }} />
+                <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+                  <span style={{ fontSize: 14, fontWeight: 600 }}>{row.term}</span>
+                  <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: "#7D848E" }}>{row.page}</span>
+                </span>
+                <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 18, fontWeight: 700 }}>{item.nowRank || row.m.rank[1]}</span>
+                <span style={{ minWidth: 58, textAlign: "center", fontSize: 11, fontWeight: 600, padding: "4px 7px", borderRadius: 8, color: "#3DDC84", background: "rgba(61,220,132,.12)" }}>{item.move || "up"}</span>
+              </button>
+            );
+          }) : (
+            <span style={{ margin: "0 12px 8px", fontSize: 13, color: "#9AA1AB" }}>No keyword has moved up yet.</span>
+          )}
+        </section>
+      ) : null}
+
+      {!loading ? (
+        <section
+          aria-label="Similar pages"
+          style={{
+            maxWidth: "1120px",
+            width: "100%",
+            margin: "0 auto",
+            borderRadius: 22,
+            background: "#101215",
+            border: "1px solid #1A1D22",
+            padding: "16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#D7DADE" }}>Similar pages</h2>
+            <span style={{ fontSize: 12, color: "#7D848E", lineHeight: 1.4 }}>
+              Other pages on {hostname || "this site"} besides {cur?.page || "the selected page"}. The button count matches this list.
+            </span>
+          </div>
+          {similarPages.length ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: 240, overflowY: "auto" }}>
+              {similarPages.map((page) => (
+                <div key={page.path} style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 40 }}>
+                  <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 12, color: "#D7DADE" }}>{page.path}</span>
+                  {page.title !== page.path ? <span style={{ fontSize: 13, color: "#9AA1AB", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{page.title}</span> : null}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span style={{ fontSize: 13, color: "#9AA1AB" }}>No other pages yet. Run a site scan to find pages that can use the same change.</span>
+          )}
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            {similarPages.length ? (
+              <Link
+                href="/app"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  minHeight: 52,
+                  padding: "0 24px",
+                  borderRadius: 13,
+                  background: "#4DA3FF",
+                  color: "#0A0B0D",
+                  fontSize: 15,
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  boxShadow: "0 0 22px rgba(77,163,255,.45)",
+                }}
+              >
+                Do the same on {similarPages.length} similar page{similarPages.length === 1 ? "" : "s"}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                disabled
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  minHeight: 52,
+                  padding: "0 24px",
+                  borderRadius: 13,
+                  border: 0,
+                  background: "#262A31",
+                  color: "#9AA1AB",
+                  fontSize: 15,
+                  fontWeight: 600,
+                }}
+              >
+                Do the same on 0 similar pages
+              </button>
+            )}
+            <span style={{ fontSize: 13, color: "#9AA1AB" }}>Added to your total and this month&apos;s client report.</span>
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }
