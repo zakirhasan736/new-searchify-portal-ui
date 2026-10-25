@@ -12,6 +12,7 @@ import {
   featureKpi,
   featurePayload,
   getBusinessProfile,
+  getGoogleStatus,
   getProductWorkspace,
   historyItems,
   listChanges,
@@ -53,6 +54,16 @@ function changeRowCopy(c) {
   return { title: opp, sub: formatShortDate(c.appliedAt), result: mon.note || 'Shipped', accent: false };
 }
 
+// Search Console performance report for the connected property. Prefer the backend link;
+// build the same URL here when an older backend has not sent one yet.
+function searchConsoleLink(connection) {
+  const gsc = connection?.gsc || {};
+  if (gsc.links?.performance) return gsc.links.performance;
+  const property = String(gsc.siteUrl || connection?.gscSiteUrl || '').trim();
+  if (!property) return '';
+  return `https://search.google.com/search-console/performance/search-analytics?resource_id=${encodeURIComponent(property)}`;
+}
+
 function kpiNum(payload, part) {
   const raw = featureKpi(payload, part, '');
   if (!raw || raw === '—') return 0;
@@ -87,7 +98,21 @@ export default function ReportScreen() {
   const [copied, setCopied] = useState(false);
   const [view, setView] = useState(EMPTY);
   const [loading, setLoading] = useState(true);
+  const [gscLink, setGscLink] = useState('');
   const accent = '#D5F879';
+
+  useEffect(() => {
+    if (clientView) return undefined;
+    let cancelled = false;
+    getGoogleStatus()
+      .then((res) => {
+        if (!cancelled) setGscLink(searchConsoleLink(res?.data?.connection));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [clientView]);
 
   useEffect(() => {
     let cancelled = false;
@@ -301,6 +326,11 @@ export default function ReportScreen() {
             <Link href="/app/history" style={{ display: 'inline-flex', alignItems: 'center', minHeight: '38px', padding: '0 12px', borderRadius: '10px', border: '1px solid #262A31', color: '#D7DADE', textDecoration: 'none', fontSize: '13px' }}>
               Edit sections
             </Link>
+            {gscLink ? (
+              <a href={gscLink} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', minHeight: '38px', padding: '0 12px', borderRadius: '10px', border: '1px solid #262A31', color: '#D7DADE', textDecoration: 'none', fontSize: '13px' }}>
+                Open Search Console ↗
+              </a>
+            ) : null}
             <button type="button" onClick={downloadPdf} style={{ minHeight: '38px', padding: '0 12px', borderRadius: '10px', border: '1px solid #262A31', background: 'transparent', color: '#D7DADE', fontSize: '13px' }}>
               Download PDF
             </button>

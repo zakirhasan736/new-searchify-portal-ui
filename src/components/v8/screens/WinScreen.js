@@ -299,7 +299,7 @@ export default function WinScreen() {
       const localTerms = loadLocalTerms(site);
       const [kwRes, organic, researchFeat, changeRes, scanRes] = await Promise.all([
         site
-          ? researchKeywords({ site, terms: localTerms, force: true }).catch(() => ({ ok: false }))
+          ? researchKeywords({ site, terms: localTerms, force: false }).catch(() => ({ ok: false }))
           : Promise.resolve({ ok: false }),
         loadFeature("organic-search").catch(() => ({ ok: false })),
         loadFeature("keyword-research").catch(() => ({ ok: false })),
@@ -419,7 +419,8 @@ export default function WinScreen() {
     setAddTerm("");
     const site = href || "";
     if (site) {
-      await researchKeywords({ site, terms: next, force: true }).catch(() => {});
+      // A new term is not in the stored set, so the backend refreshes live without force (no wasted quota).
+      await researchKeywords({ site, terms: next, force: false }).catch(() => {});
     }
     await rebuild();
     setTracking(false);
