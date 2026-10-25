@@ -31,7 +31,7 @@ export default function AdminShell({ children }) {
 
   useEffect(() => {
     if (!isAdminAuthenticated()) {
-      router.replace("/login?next=" + encodeURIComponent(pathname || "/admin"));
+      router.replace("/admin/login?next=" + encodeURIComponent(pathname || "/admin"));
       return;
     }
     setReady(true);
@@ -77,13 +77,10 @@ export default function AdminShell({ children }) {
                 {item.label}
               </Link>
             ))}
-            <Link href="/app">Workspace</Link>
-            <Link href="/partners">Partner centre</Link>
+            <Link href="/admin">HQ</Link>
+            <Link href="/admin/settings">Settings</Link>
           </nav>
           <div style={{ marginTop: "auto", display: "grid", gap: 10 }}>
-            <Link href="/app" className="sf-link">
-              Customer workspace →
-            </Link>
             <button
               type="button"
               className="sf-link"
@@ -91,7 +88,7 @@ export default function AdminShell({ children }) {
                 clearSessionFlag(PARTNER_KEY);
                 clearSessionFlag(PREVIEW_KEY);
                 userLogout();
-                router.replace("/login?next=" + encodeURIComponent("/admin"));
+                router.replace("/admin/login");
               }}
             >
               Sign out

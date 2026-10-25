@@ -15,7 +15,7 @@ export default function RequireAdmin({ children }) {
         router.replace("/partners");
         return;
       }
-      router.replace("/login?next=" + encodeURIComponent("/admin"));
+      router.replace("/admin/login?next=" + encodeURIComponent(window.location.pathname || "/admin"));
       return;
     }
     setOk(true);

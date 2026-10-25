@@ -16,6 +16,8 @@ import { initials, planDisplayName } from '@/lib/v8LiveData';
 import { loadJourney, planById } from '@/lib/journey';
 import { SkeletonCard } from '@/components/v8/SkeletonWave';
 import { authHeaders } from '@/utils/users/Helpers';
+import Modal from '@/components/account/Modal';
+import PasswordChangeForm from '@/components/account/PasswordChangeForm';
 import '@/styles/v8-screens.css';
 
 const SETTINGS_KEY = 'sf_v8_settings_v1';
@@ -52,6 +54,7 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
   const [level, setLevel] = useState('ask');
   const [notif, setNotif] = useState({ results: true, weekly: true, broken: true, summary: false });
   const [profile, setProfile] = useState({ name: '', email: '', agency: '', timezone: '', photo: '' });
+  const [pwOpen, setPwOpen] = useState(false);
   const [people, setPeople] = useState([]);
   const [inviteEmail, setInviteEmail] = useState('');
   const [lockedExtra, setLockedExtra] = useState([]);
@@ -319,6 +322,9 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
 
   return (
     <div style={{ flex: '999 1 560px', minWidth: 0, minHeight: 1000, background: '#0A0B0D', color: '#F2F4F5', fontFamily: "Geist, 'Helvetica Neue', sans-serif", boxSizing: 'border-box', padding: '22px clamp(16px, 4vw, 56px) 56px', display: 'flex', flexDirection: 'column', gap: 32 }}>
+      <Modal open={pwOpen} title="Change password" onClose={() => setPwOpen(false)}>
+        <PasswordChangeForm area="customer" />
+      </Modal>
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
         <Link href="/app" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', minHeight: '40px', padding: '0 14px', borderRadius: '999px', border: '1px solid #262A31', color: '#F2F4F5', textDecoration: 'none', fontSize: '13px' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
@@ -417,9 +423,9 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
                 <button type="button" disabled={busy} onClick={saveProfile} style={{ minHeight: '48px', padding: '0 20px', borderRadius: '12px', border: 0, background: '#4DA3FF', color: '#0A0B0D', fontSize: '15px', fontWeight: '600' }}>
                   Save changes
                 </button>
-                <Link href="/resetpassword" style={{ display: 'inline-flex', alignItems: 'center', minHeight: '48px', padding: '0 16px', borderRadius: '12px', border: '1px solid #262A31', background: 'transparent', color: '#D7DADE', fontSize: '14px', textDecoration: 'none' }}>
+                <button type="button" onClick={() => setPwOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', minHeight: '48px', padding: '0 16px', borderRadius: '12px', border: '1px solid #262A31', background: 'transparent', color: '#D7DADE', fontSize: '14px', cursor: 'pointer' }}>
                   Change password
-                </Link>
+                </button>
               </div>
             </div>
           )}

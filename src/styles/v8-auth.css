@@ -322,6 +322,18 @@
 .v8-auth-foot a:hover {
   color: var(--text);
 }
+.v8-auth-linkbtn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.v8-auth-linkbtn:hover {
+  color: var(--text);
+}
 @media (prefers-reduced-motion: reduce) {
   .v8-auth * {
     animation: none !important;

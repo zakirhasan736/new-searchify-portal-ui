@@ -1,7 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { getHqProblems } from "@/lib/hqApi";
+import { getUser, userLogout } from "@/utils/users/Helpers";
 import SearchifyMarkSvg from "@/components/v8/SearchifyMarkSvg";
 import RequireAdmin from "@/components/admin/RequireAdmin";
 import "@/styles/v8-screens.css";
@@ -12,6 +15,7 @@ const TABS = [
   { href: "/admin/hq/partners", label: "Partners and payouts" },
   { href: "/admin/hq/problems", label: "Problems", badge: true },
   { href: "/admin/hq/shareholders", label: "Shareholders" },
+  { href: "/admin/settings", label: "Settings" },
 ];
 
 const tabBase = {
@@ -28,11 +32,37 @@ export default function HqPanel({
   children,
   headerExtra,
   shellGap = 22,
-  problemsCount = "9",
+  problemsCount,
   minHeight = 1200,
-  showSample = false,
+  // Kept for callers; HQ only shows real data, so there is no sample badge any more.
+  showSample: _showSample = false,
 }) {
   const pathname = usePathname() || "/admin";
+  const router = useRouter();
+  const [openProblems, setOpenProblems] = useState(null);
+  const [adminName, setAdminName] = useState("");
+
+  useEffect(() => {
+    setAdminName(getUser()?.result?.username || "");
+    if (problemsCount != null) return undefined;
+    let cancelled = false;
+    getHqProblems()
+      .then((res) => {
+        if (!cancelled && res?.ok) setOpenProblems(res.data?.openCount ?? null);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [problemsCount]);
+
+  const badgeCount = problemsCount != null ? problemsCount : openProblems;
+
+  // Admins have no customer workspace: leaving HQ signs out and returns to the admin sign-in.
+  const signOut = () => {
+    userLogout();
+    router.replace("/admin/login?signedout=1");
+  };
 
   return (
     <RequireAdmin>
@@ -96,25 +126,23 @@ export default function HqPanel({
             >
               HQ
             </span>
-            {showSample ? (
-              <span
-                style={{
-                  fontFamily: "'Geist Mono', monospace",
-                  fontSize: 11,
-                  padding: "3px 8px",
-                  borderRadius: 6,
-                  border: "1px solid #3A404A",
-                  color: "#9AA1AB",
-                }}
-              >
-                SAMPLE DATA
-              </span>
-            ) : null}
           </span>
           {headerExtra}
-          <Link href="/app" className="hq-exit" style={{ fontSize: 13, color: "#9AA1AB", textDecoration: "none" }}>
-            Exit HQ
-          </Link>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 14 }}>
+            {adminName ? (
+              <Link href="/admin/settings" style={{ fontSize: 13, color: "#9AA1AB", textDecoration: "none" }}>
+                {adminName}
+              </Link>
+            ) : null}
+            <button
+              type="button"
+              onClick={signOut}
+              className="hq-exit"
+              style={{ minHeight: 34, padding: "0 12px", borderRadius: 10, border: "1px solid #262A31", background: "transparent", fontSize: 13, color: "#D7DADE" }}
+            >
+              Sign out
+            </button>
+          </span>
         </header>
 
         <nav
@@ -146,7 +174,7 @@ export default function HqPanel({
                 }}
               >
                 {tab.label}
-                {tab.badge ? (
+                {tab.badge && badgeCount ? (
                   <span
                     style={{
                       fontFamily: "'Geist Mono', monospace",
@@ -157,7 +185,7 @@ export default function HqPanel({
                       color: "#FF8A80",
                     }}
                   >
-                    {problemsCount}
+                    {badgeCount}
                   </span>
                 ) : null}
               </Link>

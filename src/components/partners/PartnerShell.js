@@ -13,6 +13,7 @@ const TABS = [
   { href: "/partners/earnings", id: "earnings", label: "Earnings" },
   { href: "/partners/payout", id: "payout", label: "Payout and tax" },
   { href: "/partners/terms", id: "terms", label: "Agreement and rules" },
+  { href: "/partners/account", id: "account", label: "Account" },
 ];
 
 export const PartnerCtx = createContext({ ptype: "standard", setPtype: () => {}, me: null, overview: null });

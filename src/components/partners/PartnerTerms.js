@@ -1,10 +1,24 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PartnerShell, { usePartnerCtx } from "@/components/partners/PartnerShell";
+import { getPartnerOverview } from "@/lib/partnerApi";
 
 function PartnerTermsBody() {
-  const { ptype } = usePartnerCtx();
+  const { ptype, profile } = usePartnerCtx();
+  // Real monthly revenue from this partner's referrals (drives the founding-partner share steps).
+  const [refMrr, setRefMrr] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    getPartnerOverview()
+      .then((res) => {
+        if (!cancelled && res?.ok) setRefMrr(Number(res.data?.refMrr) || 0);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [copied, setCopied] = useState(-1);
   const [got, setGot] = useState({});
   const [dl, setDl] = useState(false);
@@ -14,7 +28,7 @@ function PartnerTermsBody() {
     const agData = F
       ? {
           title: "Founding Partner Agreement",
-          sub: "Signed at closing with Aequitas Marketing Corp. (Searchify) · Alberta law",
+          sub: `Founding partner${profile?.since ? ` since ${profile.since}` : ""} · Aequitas Marketing Corp. (Searchify) · Alberta law`,
           terms: [
             ["Your rate", "35%, rising to 40% for good after 10 qualified referrals in any 6 months"],
             ["How long", "Each customer’s first 12 months"],
@@ -28,7 +42,7 @@ function PartnerTermsBody() {
         }
       : {
           title: "Partner Program Terms",
-          sub: "Accepted May 4, 2026 · version 1.2 · Alberta law",
+          sub: `${profile?.since ? `Accepted ${profile.since}` : "Accepted when you applied"} · Alberta law`,
           terms: [
             ["Your rate", "30% of every payment"],
             ["How long", "Each customer’s first 12 months"],
@@ -39,13 +53,17 @@ function PartnerTermsBody() {
           ],
         };
     const STEPS = [2500, 5000, 10000, 20000, 40000];
+    const mrr = Number(refMrr) || 0;
+    const nextIdx = STEPS.findIndex((level) => mrr < level);
     const stepsList = STEPS.map((s, i) => {
-      const st =
-        i === 0
-          ? ["Earned · being approved", "#D5F879", "rgba(213,248,121,.06)", "rgba(213,248,121,.4)", "#D5F879", "#0A0B0D", "Held above $2,500 for Aug, Sep and Oct"]
-          : i === 1
-            ? ["Next", "#4DA3FF", "#0A0B0D", "#1A1D22", "#1A1D22", "#F2F4F5", "$2,253 a month to go"]
-            : ["", "#7D848E", "#0A0B0D", "#1A1D22", "#1A1D22", "#7D848E", "0.5% of the company"];
+      // From real referral revenue: reached levels, the next level and how far away it is.
+      const reached = mrr >= s;
+      const isNext = i === nextIdx;
+      const st = reached
+        ? ["Reached · held 3 months to earn", "#D5F879", "rgba(213,248,121,.06)", "rgba(213,248,121,.4)", "#D5F879", "#0A0B0D", `Your referrals bring in $${Math.round(mrr).toLocaleString("en-US")} a month`]
+        : isNext
+          ? ["Next", "#4DA3FF", "#0A0B0D", "#1A1D22", "#1A1D22", "#F2F4F5", `$${Math.round(s - mrr).toLocaleString("en-US")} a month to go`]
+          : ["", "#7D848E", "#0A0B0D", "#1A1D22", "#1A1D22", "#7D848E", "0.5% of the company"];
       return {
         n: String(i + 1),
         at: `$${s.toLocaleString("en-US")}`,
@@ -89,7 +107,7 @@ function PartnerTermsBody() {
       snips: SN,
       kit: KIT,
     };
-  }, [ptype]);
+  }, [ptype, profile, refMrr]);
 
   const copySnip = (i, text) => {
     try {
