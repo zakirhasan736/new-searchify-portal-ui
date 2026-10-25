@@ -3,49 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import HqPanel from "@/components/admin/HqPanel";
 import { getHqShareholders, saveHqShareholders } from "@/lib/hqApi";
+import Modal from "@/components/account/Modal";
 
-const HOLD = [
-  {
-    name: "Aadle Mohammad Faqiryar",
-    pct: 0.8,
-    shares: "8,000,000",
-    where: "Canada",
-    wh: 0,
-    note: "Canada · T5 slip",
-    noteColor: "#7D848E",
-    color: "#D5F879",
-  },
-  {
-    name: "Nicholas Petitt",
-    pct: 0.1,
-    shares: "1,000,000",
-    where: "United States",
-    wh: 0.15,
-    note: "US · NR301 on file · NR4 slip",
-    noteColor: "#7D848E",
-    color: "#9FE7F5",
-  },
-  {
-    name: "Emin Navasartian",
-    pct: 0.05,
-    shares: "500,000",
-    where: "United States",
-    wh: 0.25,
-    note: "US · NR301 missing: 25% until it arrives",
-    noteColor: "#FFC53D",
-    color: "#4DA3FF",
-  },
-  {
-    name: "Howard Wang",
-    pct: 0.05,
-    shares: "500,000",
-    where: "Canada",
-    wh: 0,
-    note: "Canada · T5 slip",
-    noteColor: "#7D848E",
-    color: "#8A93A3",
-  },
-];
+// Cap table colours by position (the owners themselves are stored in HQ, not in the code).
+const HOLDER_COLORS = ["#D5F879", "#4DA3FF", "#3DDC84", "#FFC53D", "#B48CFF", "#FF8A80"];
 
 const money = (v) => (v < 0 ? "−$" : "$") + Math.abs(Math.round(v)).toLocaleString("en-US");
 const cents = (v) => `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -90,6 +51,37 @@ export default function HqShareholders() {
       if (res.ok) setLive(Boolean(res.data?.live));
     });
   };
+
+  // Edit owners popup
+  const [ownersOpen, setOwnersOpen] = useState(false);
+  const [draft, setDraft] = useState([]);
+  const [ownersMsg, setOwnersMsg] = useState("");
+  const [ownersBusy, setOwnersBusy] = useState(false);
+  const openOwners = () => {
+    setDraft(
+      (holders.length ? holders : [{ name: "", pct: 1, shares: "", where: "", wh: 0, note: "" }]).map((h) => ({
+        ...h,
+        pctText: String(Math.round(Number(h.pct || 0) * 10000) / 100),
+        whText: String(Math.round(Number(h.wh || 0) * 10000) / 100),
+      })),
+    );
+    setOwnersMsg("");
+    setOwnersOpen(true);
+  };
+  const saveOwners = async () => {
+    const rows = draft
+      .filter((d) => d.name.trim())
+      .map((d) => ({ name: d.name, pct: Number(d.pctText) / 100, shares: d.shares, where: d.where, wh: Number(d.whText || 0) / 100, note: d.note }));
+    const total = rows.reduce((a, r) => a + (Number.isFinite(r.pct) ? r.pct : 0), 0);
+    if (total > 1.0001) return setOwnersMsg(`Ownership adds up to ${Math.round(total * 10000) / 100}%. It can't be more than 100%.`);
+    setOwnersBusy(true);
+    const res = await saveHqShareholders({ holders: rows });
+    setOwnersBusy(false);
+    if (!res.ok) return setOwnersMsg(typeof res.data?.detail === "string" ? res.data.detail : "Could not save the owners.");
+    setHolders(Array.isArray(res.data?.holders) ? res.data.holders : rows);
+    setOwnersOpen(false);
+  };
+  const setDraftRow = (i, patch) => setDraft(draft.map((d, k) => (k === i ? { ...d, ...patch } : d)));
 
   const data = useMemo(() => {
     const fallback =
@@ -192,6 +184,48 @@ export default function HqShareholders() {
 
   return (
     <HqPanel minHeight={1500} showSample={!live}>
+      <Modal open={ownersOpen} title="Who owns the company" onClose={() => setOwnersOpen(false)} width={760}>
+        <p style={{ margin: 0, fontSize: 13, color: "#9AA1AB" }}>
+          Ownership and withholding drive the dividend split. Withholding: 0% Canada, 15% US with NR301, 25% US without.
+        </p>
+        {draft.map((d, i) => (
+          <div key={i} style={{ display: "grid", gridTemplateColumns: "2fr 0.8fr 1.1fr 1fr 0.8fr auto", gap: 8, alignItems: "end" }}>
+            {[
+              ["Name", "name", "text"],
+              ["Own %", "pctText", "number"],
+              ["Shares", "shares", "text"],
+              ["Country", "where", "text"],
+              ["Withhold %", "whText", "number"],
+            ].map(([label, key, type]) => (
+              <label key={key} style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "#9AA1AB", minWidth: 0 }}>
+                {label}
+                <input
+                  type={type}
+                  value={d[key] ?? ""}
+                  onChange={(e) => setDraftRow(i, { [key]: e.target.value })}
+                  style={{ minHeight: 40, padding: "0 10px", borderRadius: 10, border: "1px solid #262A31", background: "#0A0B0D", color: "#F2F4F5", font: "inherit", fontSize: 14, minWidth: 0 }}
+                />
+              </label>
+            ))}
+            <button type="button" aria-label={`Remove ${d.name || "row"}`} onClick={() => setDraft(draft.filter((_, k) => k !== i))} style={{ minHeight: 40, padding: "0 10px", borderRadius: 10, border: "1px solid #262A31", background: "transparent", color: "#FF8A80", fontSize: 13 }}>
+              Remove
+            </button>
+            <label style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "#9AA1AB" }}>
+              Note (tax slip, forms on file)
+              <input type="text" value={d.note || ""} onChange={(e) => setDraftRow(i, { note: e.target.value })} style={{ minHeight: 38, padding: "0 10px", borderRadius: 10, border: "1px solid #262A31", background: "#0A0B0D", color: "#F2F4F5", font: "inherit", fontSize: 13 }} />
+            </label>
+          </div>
+        ))}
+        {ownersMsg ? <p role="alert" style={{ margin: 0, fontSize: 14, color: "#FF5A4E" }}>{ownersMsg}</p> : null}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button type="button" onClick={() => setDraft([...draft, { name: "", pctText: "", shares: "", where: "", whText: "0", note: "" }])} style={{ minHeight: 44, padding: "0 16px", borderRadius: 12, border: "1px solid #262A31", background: "transparent", color: "#F2F4F5", fontSize: 14 }}>
+            Add owner
+          </button>
+          <button type="button" disabled={ownersBusy} onClick={saveOwners} style={{ minHeight: 44, padding: "0 18px", borderRadius: 12, border: 0, background: "#4DA3FF", color: "#0A0B0D", fontSize: 14, fontWeight: 600 }}>
+            {ownersBusy ? "Saving…" : "Save owners"}
+          </button>
+        </div>
+      </Modal>
       <>
         <div
           style={{
@@ -320,9 +354,9 @@ export default function HqShareholders() {
                 <span style={{ color: data.t1ok ? "#3DDC84" : "#FF8A80" }}>{data.t1ok ? "Pass" : "Not yet"}</span>
               </span>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: 6 }}>
-                {data.D.m.map(([label, val]) => (
+                {data.D.m.map(([label, val], ix) => (
                   <div
-                    key={label}
+                    key={`${label}-${ix}`}
                     style={{
                       borderRadius: 10,
                       padding: "8px 4px",
@@ -500,9 +534,9 @@ export default function HqShareholders() {
                       <span style={{ textAlign: "right" }}>CANADIAN TAX WITHHELD</span>
                       <span style={{ textAlign: "right" }}>THEY RECEIVE</span>
                     </div>
-                    {split.map((s) => (
+                    {split.map((s, ix) => (
                       <div
-                        key={s.name}
+                        key={`${s.name}-${ix}`}
                         style={{
                           display: "grid",
                           gridTemplateColumns: "minmax(0, 1.4fr) 70px 110px 150px 110px",
@@ -596,8 +630,11 @@ export default function HqShareholders() {
             <h2 id="cap-h" style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>
               Who owns the company
             </h2>
-            {HOLD.map((c) => (
-              <div key={c.name} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "8px 0", borderTop: "1px solid #16181C" }}>
+            {holders.length === 0 ? (
+              <p style={{ margin: 0, fontSize: 14, color: "#9AA1AB" }}>No owners recorded yet. Add them so dividends split correctly.</p>
+            ) : null}
+            {holders.map((h, idx) => ({ ...h, color: HOLDER_COLORS[idx % HOLDER_COLORS.length] })).map((c, ix) => (
+              <div key={`${c.name}-${ix}`} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "8px 0", borderTop: "1px solid #16181C" }}>
                 <span style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 14 }}>
                   <span>{c.name}</span>
                   <span style={{ fontFamily: "'Geist Mono', monospace" }}>{Math.round(c.pct * 100)}%</span>
@@ -617,7 +654,18 @@ export default function HqShareholders() {
                 </span>
               </div>
             ))}
-            <span style={{ fontSize: 12, color: "#7D848E" }}>10,000,000 shares issued. One class: same vote and same dividend per share.</span>
+            {holders.length ? (
+              <span style={{ fontSize: 12, color: "#7D848E" }}>
+                {Math.round(holders.reduce((a, h) => a + Number(h.pct || 0), 0) * 10000) / 100}% of the company recorded. One class: same vote and same dividend per share.
+              </span>
+            ) : null}
+            <button
+              type="button"
+              onClick={openOwners}
+              style={{ alignSelf: "flex-start", minHeight: 38, padding: "0 14px", borderRadius: 10, border: "1px solid #262A31", background: "transparent", color: "#F2F4F5", fontSize: 13 }}
+            >
+              Edit owners
+            </button>
           </section>
         </div>
 
@@ -693,9 +741,9 @@ export default function HqShareholders() {
                   animation: "sfy-rise .25s ease both",
                 }}
               >
-                {QD.map(([label, value]) => (
+                {QD.map(([label, value], ix) => (
                   <div
-                    key={label}
+                    key={`${label}-${ix}`}
                     style={{
                       display: "flex",
                       justifyContent: "space-between",
@@ -831,9 +879,9 @@ export default function HqShareholders() {
                 </button>
               </span>
             </label>
-            {hwPays.map((h) => (
+            {hwPays.map((h, ix) => (
               <div
-                key={h.date}
+                key={`${h.date}-${ix}`}
                 style={{
                   display: "flex",
                   justifyContent: "space-between",

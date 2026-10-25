@@ -7,38 +7,22 @@ import {
   declinePartnerApplication,
   getHqPartners,
   resendPartnerInvite,
+  runPartnerPayout,
   saveHqPartners,
 } from "@/lib/hqApi";
 
 const money = (v) => (v < 0 ? "−$" : "$") + Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const RUN = [
-  { id: "sam", name: "Sam Ortiz", type: "Partner · 30%", cleared: 1512.3, rev: -42.6, method: "PayPal", tax: true, flag: "" },
-  { id: "wp", name: "WP Agency Collective", type: "Partner · 30%", cleared: 861.3, rev: -19.2, method: "Wise · GBP", tax: true, flag: "" },
-  { id: "lml", name: "Local Marketing Lab", type: "Partner · 30%", cleared: 318.0, rev: 0, method: "Bank · CAD", tax: false, flag: "" },
-  { id: "nick", name: "Nicholas Petitt", type: "Founding partner · 35%", cleared: 961.45, rev: 0, method: "PayPal", tax: true, flag: "" },
-  { id: "emin", name: "Emin Navasartian", type: "Founding partner · 35%", cleared: 96.95, rev: 0, method: "Wise · USD", tax: true, flag: "" },
-  { id: "dana", name: "Dana Kim", type: "Partner · 30%", cleared: 64.2, rev: 0, method: "PayPal", tax: true, flag: "Possible self-referral" },
-  { id: "howard", name: "Howard Wang", type: "Founding partner · 35%", cleared: 41.65, rev: 0, method: "Bank · CAD", tax: true, flag: "" },
-];
-
-const PARTNERS = [
-  { id: "sam", name: "Sam Ortiz", type: "Partner since May 2026", rate: 30, founding: false, qual: 38, paying: 41, life: 5779.7, flag: "" },
-  { id: "wp", name: "WP Agency Collective", type: "Partner since Jun 2026", rate: 30, founding: false, qual: 15, paying: 17, life: 2104.9, flag: "" },
-  { id: "lml", name: "Local Marketing Lab", type: "Partner since Jul 2026", rate: 30, founding: false, qual: 8, paying: 9, life: 744.0, flag: "Tax details missing" },
-  { id: "dana", name: "Dana Kim", type: "Partner since Aug 2026", rate: 30, founding: false, qual: 4, paying: 4, life: 128.4, flag: "2 sign-ups used Dana's card" },
-  { id: "nick", name: "Nicholas Petitt", type: "Founding partner", rate: 35, founding: true, qual: 8, paying: 13, life: 2502.7, flag: "" },
-  { id: "emin", name: "Emin Navasartian", type: "Founding partner", rate: 35, founding: true, qual: 3, paying: 4, life: 188.1, flag: "" },
-  { id: "howard", name: "Howard Wang", type: "Founding partner", rate: 35, founding: true, qual: 2, paying: 2, life: 83.3, flag: "" },
-];
-
 const STEPS = [2500, 5000, 10000, 20000, 40000];
-const FOUNDERS = [
-  { id: "nick", name: "Nicholas Petitt", qual: 8, mrr: 2747, held: 3 },
-  { id: "emin", name: "Emin Navasartian", qual: 3, mrr: 1210, held: 0 },
-  { id: "howard", name: "Howard Wang", qual: 2, mrr: 540, held: 0 },
-];
 
+// Payouts go out on the 15th: the next 15th from today, and the month after it for carried balances.
+const PAY_DATE = (() => {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth() + (now.getDate() > 15 ? 1 : 0), 15);
+  return d;
+})();
+const PAY_DAY = PAY_DATE.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const NEXT_MONTH = new Date(PAY_DATE.getFullYear(), PAY_DATE.getMonth() + 1, 1).toLocaleDateString("en-US", { month: "long" });
 function ini(n) {
   return n
     .split(" ")
@@ -57,6 +41,8 @@ export default function HqPartners() {
   const [cleared, setCleared] = useState({});
   const [grants, setGrants] = useState({});
   const [runRowsSrc, setRunRowsSrc] = useState([]);
+  const [payMsg, setPayMsg] = useState("");
+  const [payBusy, setPayBusy] = useState(false);
   // Real applications from the partner apply form only (no sample rows).
   const [appsSrc, setAppsSrc] = useState([]);
   const [appResult, setAppResult] = useState({});
@@ -149,7 +135,7 @@ export default function HqPartners() {
       checkColor: r.cc,
       canAct: !r.lock && !paid,
       locked: !!r.lock || paid,
-      lockLabel: isPaid ? "Paid Nov 15" : r.lock || (r.s === "held" ? "Held" : "Not in this run"),
+      lockLabel: isPaid ? `Paid ${PAY_DAY}` : r.lock || (r.s === "held" ? "Held" : "Not in this run"),
       lockColor: isPaid ? "#3DDC84" : r.lock === "Held" || r.s === "held" ? "#FFC53D" : "#9AA1AB",
       lockBg: isPaid
         ? "rgba(61,220,132,.12)"
@@ -165,13 +151,13 @@ export default function HqPartners() {
 
   const totals = [
     {
-      label: "Approved to pay Nov 15",
+      label: `Approved to pay ${PAY_DAY}`,
       value: money(payoutData.sumA),
       sub: `${payoutData.approved.length} partner${payoutData.approved.length === 1 ? "" : "s"}`,
       color: "#D5F879",
     },
     { label: "On hold", value: money(payoutData.held), sub: "missing tax details or under review", color: "#FFC53D" },
-    { label: "Carried to December", value: money(payoutData.carried), sub: "balances under $50", color: "#F2F4F5" },
+    { label: `Carried to ${NEXT_MONTH}`, value: money(payoutData.carried), sub: "balances under $50", color: "#F2F4F5" },
     { label: "Reversed this month", value: money(payoutData.reversed), sub: "refunds and chargebacks", color: "#F2F4F5" },
   ];
 
@@ -583,10 +569,22 @@ export default function HqPartners() {
             </button>
             <button
               type="button"
-              disabled={payDisabled}
-              onClick={() => {
-                setPaid(true);
-                persist({ paid: true });
+              disabled={payDisabled || payBusy}
+              onClick={async () => {
+                // Records each approved partner's cleared balance as paid; the partner centre shows it.
+                setPayBusy(true);
+                const res = await runPartnerPayout();
+                setPayBusy(false);
+                if (!res.ok) {
+                  setPayMsg(typeof res.data?.detail === "string" ? res.data.detail : "The payout could not be recorded.");
+                  return;
+                }
+                const d = res.data || {};
+                if (Array.isArray(d.run)) setRunRowsSrc(d.run);
+                if (Array.isArray(d.partners)) setPartnersSrc(d.partners);
+                setRun(d.state?.run || {});
+                setPaid(Boolean(d.state?.paid));
+                setPayMsg(d.message || "");
               }}
               style={{
                 minHeight: 46,
@@ -602,10 +600,10 @@ export default function HqPartners() {
                 cursor: payDisabled ? "not-allowed" : "pointer",
               }}
             >
-              {paid ? "Payout sent" : `Pay ${payoutData.approved.length} approved · ${money(payoutData.sumA)}`}
+              {payBusy ? "Recording…" : paid ? "Payout recorded" : `Pay ${payoutData.approved.length} approved · ${money(payoutData.sumA)}`}
             </button>
-            <span role="status" style={{ fontSize: 14, color: payNoteColor }}>
-              {payNote}
+            <span role="status" style={{ fontSize: 14, color: payMsg ? "#D7DADE" : payNoteColor }}>
+              {payMsg || payNote}
             </span>
           </div>
         </div>

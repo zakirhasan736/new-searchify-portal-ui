@@ -5,110 +5,6 @@ import Link from "next/link";
 import HqPanel from "@/components/admin/HqPanel";
 import { getHqProblems, hqProblemAction } from "@/lib/hqApi";
 
-const ITEMS = [
-  {
-    id: "cb1",
-    cat: "chargeback",
-    sev: "URGENT",
-    title: "Chargeback opened: $399.00",
-    who: "Southbank Creative",
-    since: "2 days ago · respond by Oct 27",
-    detail:
-      "The bank says the charge wasn't recognized. They've used Searchify daily (96 moves shipped), so the evidence is strong. The partner commission on this payment is on hold until it's decided.",
-    primaryLabel: "Send evidence pack",
-    doneText: "Evidence sent to Stripe: invoice, usage log and sign-up record.",
-  },
-  {
-    id: "pf1",
-    cat: "payment",
-    sev: "HIGH",
-    title: "Card declined: $79.00 Pro renewal",
-    who: "Wharf Street Agency",
-    since: "today · retry 2 of 4 on Oct 23",
-    detail: "Visa ending 2200, insufficient funds. They've had 2 reminder emails. Access continues until day 14.",
-    primaryLabel: "Retry the charge now",
-    doneText: "Charge retried: $79.00 paid.",
-  },
-  {
-    id: "pf2",
-    cat: "payment",
-    sev: "HIGH",
-    title: "Card expired: $29.00 Solo renewal",
-    who: "Kirkgate Café",
-    since: "4 days ago · retry 3 of 4 on Oct 24",
-    detail: "Mastercard ending 3391 expired in September. A new card is needed; retrying will fail.",
-    primaryLabel: "Send update-card link",
-    doneText: "Secure update-card link sent.",
-  },
-  {
-    id: "cn1",
-    cat: "connection",
-    sev: "HIGH",
-    title: "WordPress connection broken",
-    who: "Rivera Digital · northline-roofing.example",
-    since: "6 hours ago",
-    detail: "The site changed its login plugin and our access key stopped working. 4 approved moves are waiting to ship.",
-    primaryLabel: "Send reconnect steps",
-    doneText: "Reconnect steps sent. The moves ship once the key works.",
-  },
-  {
-    id: "cn2",
-    cat: "connection",
-    sev: "MEDIUM",
-    title: "Search Console access removed",
-    who: "Wharf Street Agency · kirkgate-cafe.example",
-    since: "1 day ago",
-    detail: "Their Google account removed Searchify. Rankings and clicks stop updating until it's reconnected.",
-    primaryLabel: "Send reconnect steps",
-    doneText: "Reconnect steps sent.",
-  },
-  {
-    id: "jb1",
-    cat: "job",
-    sev: "MEDIUM",
-    title: "Weekly scan stuck for 3 hours",
-    who: "Maple & Main Media",
-    since: "3 hours ago",
-    detail: "The scan stopped at page 214 of 380. The site started returning slow responses, likely a hosting limit.",
-    primaryLabel: "Restart at a slower pace",
-    doneText: "Restarted at half speed. Finishes in about 40 minutes.",
-  },
-  {
-    id: "jb2",
-    cat: "job",
-    sev: "LOW",
-    title: "2 drafted moves failed to save",
-    who: "Bright Smile Dental",
-    since: "yesterday",
-    detail: "Their page builder locked the pages while drafts were saving. Nothing changed on the live site.",
-    primaryLabel: "Try again",
-    doneText: "Saved. Both moves are back in their approval queue.",
-  },
-  {
-    id: "rb1",
-    cat: "rollback",
-    sev: "MEDIUM",
-    title: "Change rolled back automatically",
-    who: "Summit Roofing · /roof-repair",
-    since: "yesterday",
-    detail:
-      "A title change was followed by a 38% drop in clicks over 5 days, so Searchify restored the old title. Worth a look before a similar move ships elsewhere.",
-    primaryLabel: "Mark as reviewed",
-    doneText: "Reviewed. Added to the learning notes for title changes.",
-  },
-  {
-    id: "rb2",
-    cat: "rollback",
-    sev: "LOW",
-    title: "Customer undid 3 moves in a row",
-    who: "Desert Law Group",
-    since: "3 days ago",
-    detail: 'They undid three internal-link moves, then cancelled. The reason given: "links went to the wrong practice areas."',
-    primaryLabel: "Mark as reviewed",
-    doneText: "Reviewed and tagged for the product team.",
-  },
-];
-
 const SEV = {
   URGENT: ["#FF8A80", "rgba(255,90,78,.16)"],
   HIGH: ["#FFC53D", "rgba(255,197,61,.14)"],
@@ -129,6 +25,7 @@ export default function HqProblems() {
   const [cat, setCat] = useState("all");
   const [done, setDone] = useState({});
   const [emailed, setEmailed] = useState({});
+  const [notes, setNotes] = useState({});
   const [itemsSrc, setItemsSrc] = useState([]);
   const [live, setLive] = useState(false);
 
@@ -148,11 +45,14 @@ export default function HqProblems() {
 
   const act = async (id, action) => {
     const res = await hqProblemAction(id, action);
-    if (!res.ok) return;
+    if (!res.ok) {
+      setNotes((n) => ({ ...n, [id]: typeof res.data?.detail === "string" ? res.data.detail : "That did not work." }));
+      return;
+    }
     if (res.data?.done) setDone(res.data.done);
-    else if (action === "resolve") setDone((d) => ({ ...d, [id]: true }));
+    // Only what the server confirms: an email counts as sent only when the mail server accepted it.
     if (res.data?.emailed) setEmailed(res.data.emailed);
-    else if (action === "email") setEmailed((e) => ({ ...e, [id]: true }));
+    if (res.data?.message) setNotes((n) => ({ ...n, [id]: res.data.message }));
     setLive(true);
   };
 
@@ -181,13 +81,17 @@ export default function HqProblems() {
       sevColor: SEV[i.sev][0],
       sevBg: SEV[i.sev][1],
       isOpen: !d,
-      isDone: d || em,
-      doneText: d ? i.doneText : "Email sent to the customer with plain-language next steps.",
+      isDone: d || em || !!notes[i.id],
+      doneText: notes[i.id] || (d ? "Resolved." : em ? "Email sent to the customer." : ""),
+      canEmail: !!i.email,
     };
   });
 
   const headline = open.length
-    ? `${open.length} problems open. ${open.some((i) => i.sev === "URGENT") ? "1 needs an answer by Oct 27." : "Nothing urgent."}`
+    ? `${open.length} problem${open.length === 1 ? "" : "s"} open. ${(() => {
+        const urgent = open.filter((i) => i.sev === "URGENT" || i.sev === "HIGH").length;
+        return urgent ? `${urgent} high priority.` : "Nothing urgent.";
+      })()}`
     : "All clear.";
 
   const nDone = Object.keys(done).length;
@@ -336,8 +240,9 @@ export default function HqProblems() {
                       fontWeight: 600,
                     }}
                   >
-                    {i.primaryLabel}
+                    Mark resolved
                   </button>
+                  {i.canEmail ? (
                   <button
                     type="button"
                     onClick={() => act(i.id, "email")}
@@ -351,8 +256,9 @@ export default function HqProblems() {
                       fontSize: 13,
                     }}
                   >
-                    Email customer
+                    {i.primaryLabel || "Email customer"}
                   </button>
+                  ) : null}
                   <Link
                     href="/admin/hq/customers"
                     style={{
@@ -401,6 +307,9 @@ export default function HqProblems() {
             }}
           >
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>When a card is declined</h2>
+            <span style={{ fontSize: 12, color: "#7D848E" }}>
+              The plan once a payment provider is connected. Until then, retries and emails are done by hand from this page.
+            </span>
             {dunning.map((d) => (
               <div key={d.day} style={{ display: "flex", gap: 12, fontSize: 13, lineHeight: 1.45 }}>
                 <span style={{ width: 54, flex: "none", fontFamily: "'Geist Mono', monospace", color: "#D5F879" }}>{d.day}</span>

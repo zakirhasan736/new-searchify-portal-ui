@@ -99,3 +99,13 @@ export async function resendPartnerInvite(partnerId) {
     }),
   );
 }
+
+export async function runPartnerPayout(ids) {
+  return json(
+    await fetch("/api/v1/hq/partners/payout", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(ids ? { ids } : {}),
+    }),
+  );
+}
