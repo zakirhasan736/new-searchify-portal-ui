@@ -9,6 +9,7 @@ import {
   historyItems,
   loadFeature,
   featurePayload,
+  errorText,
 } from "@/lib/v1Api";
 import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
@@ -256,6 +257,8 @@ export default function WinScreen() {
   const [loading, setLoading] = useState(true);
   const [addTerm, setAddTerm] = useState("");
   const [tracking, setTracking] = useState(false);
+  const [ideas, setIdeas] = useState([]);
+  const [pageNote, setPageNote] = useState("");
   const { hostname, href } = activeSiteContext(loadJourney());
 
   const rebuild = useCallback(async () => {
@@ -294,13 +297,40 @@ export default function WinScreen() {
         }
       };
 
+      const suggestionRows = [];
       if (kwRes?.ok) {
         const data = kwRes.data || {};
         (data.tracked || []).forEach(ingest);
         (data.ranked || []).forEach(ingest);
         (data.keywords || []).forEach(ingest);
-        (data.ideas || []).forEach(ingest);
+        const seenIdeas = new Set();
+        (data.ideas || []).forEach((row) => {
+          const keyword = String(row?.keyword || row?.term || "").trim();
+          const key = keyword.toLowerCase();
+          if (!keyword || seenIdeas.has(key) || byTerm.has(key)) return;
+          seenIdeas.add(key);
+          suggestionRows.push({
+            keyword,
+            volume: row.volume ?? null,
+            difficulty: row.difficulty ?? null,
+            intent: String(row.intent || "").trim(),
+          });
+        });
+      } else if (site) {
+        setPageNote(errorText(kwRes, "Keyword suggestions could not be loaded. Tracked keywords below still use what is already saved."));
+      } else {
+        setPageNote("Add the website in setup so Searchify can suggest keywords for it.");
       }
+      const suggestionRank = (row) => {
+        const vol = Number(row.volume);
+        const hasVol = row.volume != null && row.volume !== "" && Number.isFinite(vol);
+        const diff = Number(row.difficulty);
+        const ease = Number.isFinite(diff) ? Math.max(0.2, (100 - Math.min(100, diff)) / 100) : 0.5;
+        return hasVol ? vol * ease : -1;
+      };
+      suggestionRows.sort((a, b) => suggestionRank(b) - suggestionRank(a));
+      setIdeas(suggestionRows.slice(0, 8));
+      if (kwRes?.ok) setPageNote("");
 
       const gsc = featurePayload(organic);
       (gsc.rows || gsc.queries || []).forEach(ingest);
@@ -335,6 +365,8 @@ export default function WinScreen() {
       const mapped = rows.map((row, idx) => mapKeywordRow(row, idx, changeByPath));
       setK(mapped);
       setSelId((prev) => (mapped.some((m) => m.id === prev) ? prev : mapped[0]?.id || ""));
+    } catch {
+      setPageNote("Keyword tracking could not be loaded. Try again in a moment.");
     } finally {
       setLoading(false);
     }
@@ -344,9 +376,9 @@ export default function WinScreen() {
     rebuild();
   }, [rebuild, hostname]);
 
-  const handleTrack = async () => {
-    const term = addTerm.trim();
-    if (!term) return;
+  const handleTrack = async (raw) => {
+    const term = String(raw ?? addTerm).trim();
+    if (!term || tracking) return;
     setTracking(true);
     const next = [...new Set([term, ...loadLocalTerms(href)])];
     saveLocalTerms(next, href);
@@ -587,6 +619,81 @@ export default function WinScreen() {
           <SkeletonCards count={2} lines={4} />
         </div>
       ) : null}
+      {!loading && pageNote ? (
+        <p style={{ maxWidth: "1120px", width: "100%", margin: "0 auto", fontSize: 14, lineHeight: 1.45, color: "#D7DADE" }}>
+          {pageNote}
+        </p>
+      ) : null}
+      {!loading ? (
+        <section
+          aria-label="Best keyword suggestions"
+          style={{
+            maxWidth: "1120px",
+            width: "100%",
+            margin: "0 auto",
+            borderRadius: 22,
+            background: "#101215",
+            border: "1px solid #1A1D22",
+            padding: "14px 8px 8px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, margin: "0 12px 6px" }}>
+            <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#D7DADE" }}>Best keyword suggestions</h2>
+            <span style={{ fontSize: 12, color: "#7D848E", lineHeight: 1.4 }}>
+              Highest-demand searches this site is not tracking yet. Volume is an estimate. A blank volume means the number is unknown.
+            </span>
+          </div>
+          {ideas.length ? ideas.map((idea) => (
+            <div
+              key={idea.keyword}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                minHeight: 52,
+                padding: "8px 12px",
+                borderRadius: 13,
+              }}
+            >
+              <span style={{ flex: "1 1 180px", minWidth: 0, display: "flex", flexDirection: "column" }}>
+                <span style={{ fontSize: 14, lineHeight: 1.25 }}>{idea.keyword}</span>
+                <span style={{ fontSize: 12, color: "#7D848E" }}>
+                  {idea.intent ? idea.intent : "Intent unknown"}
+                  {idea.difficulty != null && idea.difficulty !== "" ? ` · difficulty ${idea.difficulty}` : ""}
+                </span>
+              </span>
+              <span style={{ flex: "none", width: 88, textAlign: "right", fontFamily: "'Geist Mono', monospace", fontSize: 13 }}>
+                {idea.volume == null || idea.volume === "" ? "—" : Number(idea.volume).toLocaleString()}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleTrack(idea.keyword)}
+                disabled={tracking}
+                style={{
+                  flex: "none",
+                  minHeight: 36,
+                  padding: "0 12px",
+                  borderRadius: 999,
+                  border: 0,
+                  background: "#4DA3FF",
+                  color: "#0A0B0D",
+                  fontSize: 13,
+                  fontWeight: 600,
+                }}
+              >
+                Track
+              </button>
+            </div>
+          )) : (
+            <span style={{ margin: "0 12px 8px", fontSize: 13, color: "#9AA1AB" }}>
+              No extra suggestions yet. They show up after Searchify reads this site.
+            </span>
+          )}
+        </section>
+      ) : null}
       {!loading && empty ? (
         <div
           style={{
@@ -625,7 +732,7 @@ export default function WinScreen() {
               Plug in
             </Link>
         </div>
-      ) : (
+      ) : !loading && cur ? (
         <div
           style={{
             maxWidth: "1120px",
@@ -813,7 +920,7 @@ export default function WinScreen() {
               </label>
               <button
                 type="button"
-                onClick={handleTrack}
+                onClick={() => handleTrack()}
                 disabled={tracking || !addTerm.trim()}
                 style={{
                   flex: "none",
@@ -1071,7 +1178,7 @@ export default function WinScreen() {
             )}
           </main>
         </div>
-      )}
+      ) : null}
 
       {/* Always show add-keyword when empty so Track works without list chrome */}
       {empty && !loading && (
@@ -1113,7 +1220,7 @@ export default function WinScreen() {
           />
           <button
             type="button"
-            onClick={handleTrack}
+            onClick={() => handleTrack()}
             disabled={tracking || !addTerm.trim()}
             style={{
               minHeight: 44,
