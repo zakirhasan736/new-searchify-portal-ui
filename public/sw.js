@@ -6,7 +6,7 @@ self.addEventListener("install", () => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const path = event.notification.data && event.notification.data.url ? event.notification.data.url : "/app/phone";
+  const path = event.notification.data && event.notification.data.url ? event.notification.data.url : "/app";
   const target = new URL(path, self.location.origin).href;
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
@@ -23,7 +23,7 @@ self.addEventListener("notificationclick", (event) => {
 });
 
 self.addEventListener("push", (event) => {
-  let payload = { title: "Searchify", body: "", url: "/app/phone", tag: "searchify" };
+  let payload = { title: "Searchify", body: "", url: "/app", tag: "searchify" };
   try {
     payload = { ...payload, ...(event.data ? event.data.json() : {}) };
   } catch {
@@ -33,7 +33,7 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(payload.title || "Searchify", {
       body: payload.body || "",
       tag: payload.tag || "searchify",
-      data: { url: payload.url || "/app/phone" },
+      data: { url: payload.url || "/app" },
     }),
   );
 });
@@ -54,7 +54,7 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return;
   const keep =
-    url.pathname === "/app/phone" ||
+    url.pathname === "/app" ||
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.startsWith("/icon");
   if (!keep) return;
@@ -71,10 +71,10 @@ self.addEventListener("fetch", (event) => {
         const cached = await caches.match(request);
         if (cached) return cached;
         if (request.mode === "navigate") {
-          const home = await caches.match("/app/phone");
+          const home = await caches.match("/app");
           if (home) return home;
         }
-        return new Response("Offline. Open the phone report once while connected so the last report can be saved.", {
+        return new Response("Offline. Open the workspace once while connected so the last screen can be saved.", {
           status: 503,
           headers: { "Content-Type": "text/plain; charset=utf-8" },
         });

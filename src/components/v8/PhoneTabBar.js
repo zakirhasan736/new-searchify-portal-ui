@@ -8,7 +8,7 @@ export const PHONE_TABS = [
   {
     href: "/app",
     label: "Moves",
-    match: (p) => p === "/app" || p === "/app/phone",
+    match: (p) => p === "/app",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M4 13h4l2 3h4l2-3h4" />

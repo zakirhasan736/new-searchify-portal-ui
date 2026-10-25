@@ -176,7 +176,7 @@ export default function MonthView() {
         <p className="w-footnote">Page clicks are the stored Search Console window, not a before-and-after for that URL. The site-level click change is the pair of 14-day windows above.</p>
       </div>
 
-      <p className="w-footnote"><Link href="/app/phone">Phone report</Link> · <Link href="/app/queue">Approval queue</Link> · <Link href="/app/keywords">Keywords</Link></p>
+      <p className="w-footnote"><Link href="/app/queue">Approval queue</Link> · <Link href="/app/keywords">Keywords</Link></p>
     </section>
   );
 }

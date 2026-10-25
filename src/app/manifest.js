@@ -2,9 +2,9 @@ export default function manifest() {
   return {
     name: "Searchify",
     short_name: "Searchify",
-    description: "Phone report and approval inbox for the Searchify workspace.",
-    id: "/app/phone",
-    start_url: "/app/phone",
+    description: "Searchify workspace for site review and approved changes.",
+    id: "/",
+    start_url: "/",
     scope: "/",
     display: "standalone",
     background_color: "#101112",

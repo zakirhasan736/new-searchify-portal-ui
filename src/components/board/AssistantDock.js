@@ -155,9 +155,9 @@ function guideReply(text, brief) {
   }
   if (/phone|pwa|home screen|push|alert/.test(lower)) {
     return {
-      text: "The phone report is the same login as the workspace: this week beside last week, waiting approvals, and open issues. Add it to the home screen, turn on alerts if you want, and know that a tap only opens a card — it never publishes.",
-      href: "/app/phone",
-      label: "Open the phone report",
+      text: "The workspace uses the same login on a phone. Home shows the next move, and the approval queue holds anything waiting. A tap opens a card. It does not publish.",
+      href: "/app",
+      label: "Open the workspace",
     };
   }
   if (/keyword/.test(lower)) {

@@ -21,7 +21,7 @@ const BEFORE_LOGIN = new Set([
 /** App routes that show the fixed phone tab bar. */
 function abovePhoneTabs(pathname) {
   if (!pathname.startsWith("/app")) return false;
-  return pathname !== "/app/start" && pathname !== "/app/plans" && pathname !== "/app/phone" && pathname !== "/app/states";
+  return pathname !== "/app/start" && pathname !== "/app/plans" && pathname !== "/app/states";
 }
 
 /**

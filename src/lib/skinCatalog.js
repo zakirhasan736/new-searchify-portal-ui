@@ -13,7 +13,6 @@ export const SKIN_SECTIONS = [
       { n: "04", t: "Page progress", d: "Poor to Excellent, page by page", href: "/app/path" },
       { n: "05", t: "Keyword tracker", d: "Did the change work, keyword by keyword", href: "/app/keywords" },
       { n: "05b", t: "Backlinks", d: "New and lost links, competitor gap", href: "/app/backlinks" },
-      { n: "06", t: "Phone", d: "Approve on the go", href: "/app/phone" },
     ],
   },
   {
@@ -30,7 +29,6 @@ export const SKIN_SECTIONS = [
       { n: "14", t: "Problem and empty states", d: "Broken cable, plugin install, new site", href: "/app/states" },
       { n: "", t: "Privacy", d: "What we hold and why", href: "/privacy" },
       { n: "", t: "Terms", d: "Working terms for the site and workspace", href: "/terms" },
-      { n: "", t: "Brand mark", d: "Six lights, Poor to Excellent", href: "/brand" },
     ],
   },
   {

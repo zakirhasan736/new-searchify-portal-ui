@@ -9,7 +9,7 @@ import SkinWallPill from "@/components/v8/SkinWallPill";
 import { userIsAuthenticated } from "@/utils/users/Helpers";
 import { captureReferral } from "@/lib/referral";
 
-const MARKETING = new Set(["/", "/about", "/pricing", "/contact", "/terms", "/privacy", "/skins", "/brand"]);
+const MARKETING = new Set(["/", "/about", "/pricing", "/contact", "/terms", "/privacy", "/skins"]);
 
 const AUTH = new Set([
   "/login",
@@ -24,8 +24,8 @@ const AUTH = new Set([
 const PARTNERS = (pathname) => pathname === "/partners" || pathname.startsWith("/partners/");
 const HQ = (pathname) => pathname === "/admin" || pathname.startsWith("/admin/hq");
 const SKINS = (pathname) => pathname === "/skins" || pathname.startsWith("/skins/");
-/** Presentation Phone.dc.html / States.dc.html are full-bleed — no left Nav. */
-const STANDALONE_APP = (pathname) => pathname === "/app/phone" || pathname === "/app/states";
+/** States.dc.html is full-bleed — no left Nav. */
+const STANDALONE_APP = (pathname) => pathname === "/app/states";
 
 /**
  * Post-login + marketing shell. HQ uses HqPanel only (no v3 AdminShell).
