@@ -71,3 +71,31 @@ export async function saveHqShareholders(body) {
     }),
   );
 }
+
+export async function approvePartnerApplication(id, { rate = 30, founding = false } = {}) {
+  return json(
+    await fetch(`/api/v1/hq/partners/applications/${encodeURIComponent(id)}/approve`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ rate, founding }),
+    }),
+  );
+}
+
+export async function declinePartnerApplication(id) {
+  return json(
+    await fetch(`/api/v1/hq/partners/applications/${encodeURIComponent(id)}/decline`, {
+      method: "POST",
+      headers: authHeaders(),
+    }),
+  );
+}
+
+export async function resendPartnerInvite(partnerId) {
+  return json(
+    await fetch(`/api/v1/hq/partners/${encodeURIComponent(partnerId)}/invite`, {
+      method: "POST",
+      headers: authHeaders(),
+    }),
+  );
+}

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import SearchifyMarkSvg from "@/components/v8/SearchifyMarkSvg";
 import { PARTNER_KEY, PREVIEW_KEY, clearSessionFlag, writeSessionFlag } from "@/lib/authRoles";
-import { partnerApply, partnerResetPassword, partnerSignIn } from "@/lib/partnerApi";
+import { partnerApply, partnerResetPassword, partnerSetPassword, partnerSignIn } from "@/lib/partnerApi";
 import { parseJwt, userLogin, userLogout } from "@/utils/users/Helpers";
 
 const LOGIN_CSS = `
@@ -50,6 +50,27 @@ export default function PartnerLogin() {
   const [applyCountry, setApplyCountry] = useState("United States");
   const [resetEmail, setResetEmail] = useState("");
   const [errMsg, setErrMsg] = useState("");
+  // Set-password links from the approval email (?setup=) or a reset email (?reset=).
+  const [linkToken, setLinkToken] = useState("");
+  const [linkKind, setLinkKind] = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [newPass2, setNewPass2] = useState("");
+  const [setErrText, setSetErrText] = useState("");
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const setup = params.get("setup");
+      const reset = params.get("reset");
+      if (setup || reset) {
+        setLinkToken(setup || reset);
+        setLinkKind(setup ? "setup" : "reset");
+        setView("set");
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const finishSignedIn = (tokenPayload) => {
     clearSessionFlag(PREVIEW_KEY);
@@ -104,6 +125,37 @@ export default function PartnerLogin() {
     setBusy(false);
     if (res.ok) setApplied(true);
     else setErrMsg(typeof res.data?.detail === "string" ? res.data.detail : "Could not send application.");
+  };
+
+  const savePassword = async () => {
+    setSetErrText("");
+    if (newPass.length < 8) {
+      setSetErrText("Use at least 8 characters.");
+      return;
+    }
+    if (newPass !== newPass2) {
+      setSetErrText("The two passwords don't match.");
+      return;
+    }
+    setBusy(true);
+    const res = await partnerSetPassword(linkToken, newPass);
+    setBusy(false);
+    if (!res.ok || !res.data?.token) {
+      setSetErrText(typeof res.data?.detail === "string" ? res.data.detail : "This link has expired or was already used.");
+      return;
+    }
+    const decoded = parseJwt(res.data.token) || {};
+    userLogout();
+    userLogin({
+      result: { token: res.data.token, username: res.data.username, userType: "partner" },
+      data: { ...decoded, exp: decoded.exp, role: decoded.role || "ROLE_PARTNER", userType: "partner" },
+    });
+    try {
+      window.history.replaceState(null, "", "/partners/login");
+    } catch {
+      /* ignore */
+    }
+    finishSignedIn(res.data);
   };
 
   const sendReset = async () => {
@@ -516,6 +568,79 @@ export default function PartnerLogin() {
                 }}
               >
                 Back to sign in
+              </button>
+            </div>
+          ) : null}
+
+          {view === "set" ? (
+            <div
+              style={{
+                flex: "1 1 360px",
+                maxWidth: 440,
+                minWidth: 0,
+                boxSizing: "border-box",
+                borderRadius: 24,
+                background: "#131519",
+                border: "1px solid #262A31",
+                padding: 28,
+                display: "flex",
+                flexDirection: "column",
+                gap: 16,
+                ...cardAnim,
+              }}
+            >
+              <h2 style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>
+                {linkKind === "setup" ? "Welcome. Set your password" : "Choose a new password"}
+              </h2>
+              <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>
+                {linkKind === "setup"
+                  ? "Your partner application is approved. Pick a password to open the partner centre."
+                  : "Pick a new password for your partner account."}
+              </span>
+              <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "#9AA1AB" }}>
+                New password
+                <input type="password" autoComplete="new-password" value={newPass} onChange={(e) => setNewPass(e.target.value)} style={inputStyle} />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "#9AA1AB" }}>
+                Type it again
+                <input type="password" autoComplete="new-password" value={newPass2} onChange={(e) => setNewPass2(e.target.value)} style={inputStyle} />
+              </label>
+              {setErrText ? (
+                <p role="alert" style={{ margin: 0, fontSize: 14, color: "#FF5A4E", lineHeight: 1.5 }}>
+                  {setErrText}
+                </p>
+              ) : null}
+              <button
+                type="button"
+                disabled={busy}
+                onClick={savePassword}
+                style={{
+                  minHeight: 52,
+                  borderRadius: 14,
+                  border: 0,
+                  background: "#4DA3FF",
+                  color: "#0A0B0D",
+                  fontSize: 16,
+                  fontWeight: 600,
+                  opacity: busy ? 0.7 : 1,
+                }}
+              >
+                {busy ? "Saving…" : "Save password and open the partner centre"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("reset")}
+                style={{
+                  alignSelf: "flex-start",
+                  padding: 0,
+                  border: 0,
+                  background: "none",
+                  color: "#9AA1AB",
+                  fontSize: 14,
+                  textDecoration: "underline",
+                }}
+              >
+                Link expired? Send a new one
               </button>
             </div>
           ) : null}

@@ -70,3 +70,13 @@ export function partnerInitials(name) {
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
+
+export async function partnerSetPassword(token, password) {
+  return json(
+    await fetch("/api/v1/partners/set-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, password }),
+    }),
+  );
+}

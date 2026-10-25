@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import HqPanel from "@/components/admin/HqPanel";
-import { getHqPartners, saveHqPartners } from "@/lib/hqApi";
+import {
+  approvePartnerApplication,
+  declinePartnerApplication,
+  getHqPartners,
+  resendPartnerInvite,
+  saveHqPartners,
+} from "@/lib/hqApi";
 
 const money = (v) => (v < 0 ? "−$" : "$") + Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -14,39 +20,6 @@ const RUN = [
   { id: "emin", name: "Emin Navasartian", type: "Founding partner · 35%", cleared: 96.95, rev: 0, method: "Wise · USD", tax: true, flag: "" },
   { id: "dana", name: "Dana Kim", type: "Partner · 30%", cleared: 64.2, rev: 0, method: "PayPal", tax: true, flag: "Possible self-referral" },
   { id: "howard", name: "Howard Wang", type: "Founding partner · 35%", cleared: 41.65, rev: 0, method: "Bank · CAD", tax: true, flag: "" },
-];
-
-const APPS = [
-  {
-    id: "a1",
-    name: "Marisol Vega",
-    email: "marisol@wpstudio.example",
-    country: "Mexico",
-    when: "Oct 18",
-    where: "YouTube channel on WordPress for small businesses, 42k subscribers",
-    note: "Looks like a strong fit.",
-    noteColor: "#3DDC84",
-  },
-  {
-    id: "a2",
-    name: "Ben Carter",
-    email: "ben@bestdeals.example",
-    country: "United States",
-    when: "Oct 17",
-    where: "Coupon and discount code website",
-    note: "Coupon sites tend to claim sales that would have happened anyway.",
-    noteColor: "#FFC53D",
-  },
-  {
-    id: "a3",
-    name: "Grace Liu",
-    email: "grace@growthlocal.example",
-    country: "Canada",
-    when: "Oct 15",
-    where: "Local SEO newsletter, 6,800 readers, plus client referrals",
-    note: "Looks like a strong fit.",
-    noteColor: "#3DDC84",
-  },
 ];
 
 const PARTNERS = [
@@ -84,7 +57,11 @@ export default function HqPartners() {
   const [cleared, setCleared] = useState({});
   const [grants, setGrants] = useState({});
   const [runRowsSrc, setRunRowsSrc] = useState(RUN);
-  const [appsSrc, setAppsSrc] = useState(APPS);
+  // Real applications from the partner apply form only (no sample rows).
+  const [appsSrc, setAppsSrc] = useState([]);
+  const [appResult, setAppResult] = useState({});
+  const [appBusy, setAppBusy] = useState("");
+  const [copiedLink, setCopiedLink] = useState("");
   const [partnersSrc, setPartnersSrc] = useState(PARTNERS);
   const [foundersSrc, setFoundersSrc] = useState(FOUNDERS);
   const [stepsSrc, setStepsSrc] = useState(STEPS);
@@ -96,7 +73,7 @@ export default function HqPartners() {
       if (cancelled || !res.ok) return;
       const d = res.data || {};
       if (Array.isArray(d.run) && d.run.length) setRunRowsSrc(d.run);
-      if (Array.isArray(d.applications) && d.applications.length) setAppsSrc(d.applications);
+      if (Array.isArray(d.applications)) setAppsSrc(d.applications);
       if (Array.isArray(d.partners) && d.partners.length) setPartnersSrc(d.partners);
       if (Array.isArray(d.founders) && d.founders.length) setFoundersSrc(d.founders);
       if (Array.isArray(d.steps) && d.steps.length) setStepsSrc(d.steps);
@@ -200,16 +177,60 @@ export default function HqPartners() {
 
   const appRows = appsSrc.map((a) => {
     const s = apps[a.id];
+    const result = appResult[a.id] || {};
+    const emailed = result.emailed ?? a.emailed;
+    // Say exactly what happened: an email is only claimed when the mail server accepted it.
+    const doneLabel =
+      s === "ok"
+        ? emailed
+          ? "Approved. Welcome email with the set-password link was sent."
+          : "Approved. Email isn't set up, so send the set-password link yourself."
+        : emailed
+          ? "Declined. A polite email was sent."
+          : "Declined. No email was sent (email isn't set up).";
     return {
       ...a,
       initials: ini(a.name),
       open: !s,
       closed: !!s,
       border: s === "ok" ? "rgba(61,220,132,.4)" : "#1A1D22",
-      doneLabel: s === "ok" ? "Approved. Welcome email and partner link sent." : "Declined. A polite email was sent.",
+      doneLabel,
       doneColor: s === "ok" ? "#3DDC84" : "#9AA1AB",
+      setupUrl: result.setupUrl || "",
+      needsLink: s === "ok" && !emailed,
+      error: result.error || "",
     };
   });
+
+  const decide = async (a, action) => {
+    setAppBusy(a.id);
+    const res = action === "approve" ? await approvePartnerApplication(a.id, { rate: 30 }) : await declinePartnerApplication(a.id);
+    setAppBusy("");
+    if (!res.ok) {
+      const detail = res.data?.detail;
+      setAppResult({ ...appResult, [a.id]: { error: typeof detail === "string" ? detail : "That did not work. Try again." } });
+      return;
+    }
+    setAppResult({ ...appResult, [a.id]: { emailed: Boolean(res.data?.emailed), setupUrl: res.data?.setupUrl || "" } });
+    setApps({ ...apps, [a.id]: action === "approve" ? "ok" : "no" });
+  };
+
+  const newLink = async (a) => {
+    if (!a.partnerId) return;
+    setAppBusy(a.id);
+    const res = await resendPartnerInvite(a.partnerId);
+    setAppBusy("");
+    if (res.ok) setAppResult({ ...appResult, [a.id]: { emailed: Boolean(res.data?.emailed), setupUrl: res.data?.setupUrl || "" } });
+  };
+
+  const copyLink = (a) => {
+    try {
+      navigator.clipboard.writeText(a.setupUrl);
+      setCopiedLink(a.id);
+    } catch {
+      /* ignore */
+    }
+  };
   const openApps = appRows.filter((a) => a.open).length;
 
   const partnerRows = partnersSrc.map((p) => {
@@ -603,6 +624,11 @@ export default function HqPartners() {
             animation: "sfy-rise .3s ease both",
           }}
         >
+          {appRows.length === 0 ? (
+            <p style={{ margin: 0, fontSize: 14, color: "#9AA1AB" }}>
+              No applications yet. They appear here when someone applies on the partner sign-in page.
+            </p>
+          ) : null}
           {appRows.map((a) => (
             <div
               key={a.id}
@@ -646,10 +672,8 @@ export default function HqPartners() {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     type="button"
-                    onClick={() => {
-                      setApps({ ...apps, [a.id]: "ok" });
-                      persist({ apps: { [a.id]: "ok" } });
-                    }}
+                    disabled={appBusy === a.id}
+                    onClick={() => decide(a, "approve")}
                     style={{
                       minHeight: 42,
                       padding: "0 16px",
@@ -665,10 +689,8 @@ export default function HqPartners() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      setApps({ ...apps, [a.id]: "no" });
-                      persist({ apps: { [a.id]: "no" } });
-                    }}
+                    disabled={appBusy === a.id}
+                    onClick={() => decide(a, "decline")}
                     style={{
                       minHeight: 42,
                       padding: "0 16px",
@@ -685,6 +707,31 @@ export default function HqPartners() {
               ) : (
                 <span style={{ fontSize: 14, fontWeight: 600, color: a.doneColor }}>{a.doneLabel}</span>
               )}
+              {a.error ? <span style={{ fontSize: 13, color: "#FF5A4E" }}>{a.error}</span> : null}
+              {a.needsLink && a.setupUrl ? (
+                <div style={{ display: "flex", gap: 8, alignItems: "center", minWidth: 0 }}>
+                  <span style={{ flex: 1, minWidth: 0, fontFamily: "'Geist Mono', monospace", fontSize: 12, color: "#D7DADE", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {a.setupUrl}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => copyLink(a)}
+                    style={{ minHeight: 36, padding: "0 12px", borderRadius: 10, border: 0, background: "#4DA3FF", color: "#0A0B0D", fontSize: 13, fontWeight: 600 }}
+                  >
+                    {copiedLink === a.id ? "Copied" : "Copy link"}
+                  </button>
+                </div>
+              ) : null}
+              {a.needsLink && !a.setupUrl && a.partnerId ? (
+                <button
+                  type="button"
+                  disabled={appBusy === a.id}
+                  onClick={() => newLink(a)}
+                  style={{ alignSelf: "flex-start", minHeight: 36, padding: "0 12px", borderRadius: 10, border: "1px solid #262A31", background: "transparent", color: "#F2F4F5", fontSize: 13 }}
+                >
+                  Get a new set-password link
+                </button>
+              ) : null}
             </div>
           ))}
         </section>
