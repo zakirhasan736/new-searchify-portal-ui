@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { deleteCmsConnection, disconnectGoogle, forgetWebsite, previewSiteScan, runSiteScan, startGoogleOAuth } from "@/lib/v1Api";
 import ConnectDialog, { useConnectionStatus } from "@/components/board/ConnectDialog";
+import V8PropertyPicker from "@/components/v8/V8PropertyPicker";
 import { activeSiteContext } from "@/lib/siteContext";
 import { addReadyWebsite, dropReadyWebsite, loadJourney, readySites, selectJourneySite, websiteLabel } from "@/lib/journey";
 import { getBillingAccount } from "@/lib/billingApi";
@@ -56,13 +57,30 @@ export default function ConnectScreen() {
     return () => window.removeEventListener("sf-site", onSite);
   }, []);
 
+  // After Google OAuth redirect (?google=connected), refresh and scroll to property picker.
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (!params.get("google")) return;
+    refreshStatus().then(() => {
+      window.requestAnimationFrame(() => {
+        document.getElementById("google-properties")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      const url = new URL(window.location.href);
+      url.searchParams.delete("google");
+      url.searchParams.delete("email");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+    });
+  }, [refreshStatus]);
+
+  useEffect(() => {
+    const googleSignedIn = status.googleAccount === "connected" || Boolean(status.google?.connected);
     // Sync state from actual connection status — no fake counters.
     setState((prev) => ({
       ...prev,
-      gsc: status.gsc ? "live" : prev.gsc === "connecting" ? "connecting" : "off",
+      gsc: status.gsc ? "live" : googleSignedIn && !status.gsc ? "pick" : prev.gsc === "connecting" ? "connecting" : "off",
       wp: status.wordpress ? "live" : prev.wp === "connecting" ? "connecting" : "off",
-      ga: status.ga ? "live" : prev.ga === "connecting" ? "connecting" : "off",
+      ga: status.ga ? "live" : googleSignedIn && !status.ga ? "pick" : prev.ga === "connecting" ? "connecting" : "off",
     }));
     setRows({
       gsc: status.gsc ? Number(status.gscRows || status.gscCount || 0) : 0,
@@ -181,6 +199,7 @@ export default function ConnectScreen() {
   const plugs = defs.map((d) => {
     const s = state[d.id];
     const live = s === "live";
+    const pick = s === "pick";
     const conn = s === "connecting";
     const locked = s === "soon";
     const n = rows[d.id] || 0;
@@ -192,11 +211,12 @@ export default function ConnectScreen() {
         d.tag.indexOf("REQUIRED") === 0
           ? "0 0 14px rgba(61,220,132,.35), inset 0 0 8px rgba(61,220,132,.12)"
           : "none",
-      tagDot: live ? "#3DDC84" : "#5B616B",
-      tagDotGlow: live ? "0 0 8px #3DDC84" : "none",
+      tagDot: live ? "#3DDC84" : pick ? "#FFC53D" : "#5B616B",
+      tagDotGlow: live ? "0 0 8px #3DDC84" : pick ? "0 0 8px #FFC53D" : "none",
       canPlug: s === "off",
       isConnecting: conn,
       isLive: live,
+      needsProperty: pick,
       isLocked: locked,
       shift: live || conn ? "30px" : "0px",
       cable: live ? BLUE : locked ? "#1A1D22" : "#3A404A",
@@ -209,18 +229,26 @@ export default function ConnectScreen() {
       flowOp: live ? "0.9" : "0",
       srvOp: live ? "1" : "0",
       border: live ? "rgba(77,163,255,.45)" : "#1A1D22",
-      statusColor: live ? BLUE : "#7D848E",
+      statusColor: live ? BLUE : pick ? "#FFC53D" : "#7D848E",
       statusText: live
         ? n > 0
           ? `● LIVE · ${n.toLocaleString("en-US")} ${d.unit} synced`
           : "● LIVE · connected"
+        : pick
+        ? "● Signed in · choose property below"
         : conn
         ? "Handshaking…"
         : locked
         ? "Coming soon"
         : "Not connected yet",
-      aria: d.name + (live ? " connected, data flowing" : " not connected"),
-      plug: () => handlePlug(d.id),
+      aria: d.name + (live ? " connected, data flowing" : pick ? " signed in, choose property" : " not connected"),
+      plug: () => {
+        if (pick) {
+          document.getElementById("google-properties")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
+        handlePlug(d.id);
+      },
       unplug: () => handleUnplug(d.id),
     };
   });
@@ -735,6 +763,25 @@ export default function ConnectScreen() {
                   Plug in
                 </button>
               )}
+              {p.needsProperty && (
+                <button
+                  type="button"
+                  onClick={p.plug}
+                  style={{
+                    minHeight: "50px",
+                    width: "132px",
+                    borderRadius: "14px",
+                    border: 0,
+                    background: "#FFC53D",
+                    color: "#0A0B0D",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    boxShadow: "0 0 18px rgba(255,197,61,.35)",
+                  }}
+                >
+                  Choose property
+                </button>
+              )}
               {p.isConnecting && (
                 <span
                   style={{
@@ -855,6 +902,16 @@ export default function ConnectScreen() {
           predictions get sharper for everyone — no one else ever sees your site or your data.
         </span>
       </div>
+
+      {status.googleAccount === "connected" || status.google?.connected ? (
+        <V8PropertyPicker
+          google={status.google}
+          siteLabel={status.wordpressUrl || siteHref || ""}
+          onSaved={async () => {
+            await refreshStatus();
+          }}
+        />
+      ) : null}
 
       <PluginsAndMcpPanel siteHost={siteHost} />
     </div>
