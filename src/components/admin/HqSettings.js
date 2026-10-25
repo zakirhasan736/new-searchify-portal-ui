@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import HqPanel from "@/components/admin/HqPanel";
+import HqPanel, { useFirstLoad } from "@/components/admin/HqPanel";
 import PasswordChangeForm from "@/components/account/PasswordChangeForm";
 import { authHeaders } from "@/utils/users/Helpers";
 
@@ -18,10 +18,11 @@ const card = {
 
 export default function HqSettings() {
   const [me, setMe] = useState(null);
+  const [loading, firstLoad] = useFirstLoad();
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/v1/auth/me", { headers: authHeaders(), cache: "no-store" })
+    firstLoad(fetch("/api/v1/auth/me", { headers: authHeaders(), cache: "no-store" }))
       .then((r) => r.json().catch(() => null))
       .then((data) => {
         if (!cancelled && data?.email) setMe(data);
@@ -33,7 +34,7 @@ export default function HqSettings() {
   }, []);
 
   return (
-    <HqPanel minHeight={900}>
+    <HqPanel loading={loading} minHeight={900}>
       <section style={{ maxWidth: 1240, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 6 }}>
         <h1 style={{ margin: 0, fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 700, letterSpacing: "-0.02em" }}>Settings</h1>
         <p style={{ margin: 0, fontSize: 15, color: "#9AA1AB" }}>Your HQ admin account.</p>

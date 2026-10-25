@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { userLogout } from "@/utils/users/Helpers";
 import { PARTNER_KEY, PREVIEW_KEY, clearSessionFlag, isAdminAuthenticated } from "@/lib/authRoles";
+import SearchifyLoader from "@/components/v8/SearchifyLoader";
 import SearchifyMark from "@/components/landing/SearchifyMark";
 import "@/styles/searchify-v3.css";
 import "@/styles/v8-kit.css";
@@ -43,11 +44,7 @@ export default function AdminShell({ children }) {
   };
 
   if (!ready) {
-    return (
-      <div style={{ minHeight: "40vh", background: "#0A0B0D", color: "#9AA1AB", padding: 28 }}>
-        Checking admin access…
-      </div>
-    );
+    return <SearchifyLoader full label="Opening Searchify HQ" />;
   }
 
   return (

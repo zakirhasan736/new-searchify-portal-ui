@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import HqPanel from "@/components/admin/HqPanel";
+import HqPanel, { useFirstLoad } from "@/components/admin/HqPanel";
 import {
   approvePartnerApplication,
   declinePartnerApplication,
@@ -33,6 +33,7 @@ function ini(n) {
 }
 
 export default function HqPartners() {
+  const [loading, firstLoad] = useFirstLoad();
   const [tab, setTab] = useState("payout");
   const [run, setRun] = useState({});
   const [paid, setPaid] = useState(false);
@@ -55,7 +56,7 @@ export default function HqPartners() {
 
   useEffect(() => {
     let cancelled = false;
-    getHqPartners().then((res) => {
+    firstLoad(getHqPartners()).then((res) => {
       if (cancelled || !res.ok) return;
       const d = res.data || {};
       if (Array.isArray(d.run)) setRunRowsSrc(d.run);
@@ -87,7 +88,24 @@ export default function HqPartners() {
       if (partial.rates) setRates(st.rates || {});
       if (partial.cleared) setCleared(st.cleared || {});
       if (partial.grants) setGrants(st.grants || {});
+      if (partial.programs || partial.rates) {
+        if (Array.isArray(res.data?.partners)) setPartnersSrc(res.data.partners);
+        if (Array.isArray(res.data?.founders)) setFoundersSrc(res.data.founders);
+      }
       setLive(Boolean(res.data?.live));
+    });
+  };
+  const [rateErr, setRateErr] = useState("");
+  const saveRate = (id, value) => {
+    setRateErr("");
+    saveHqPartners({ rates: { [id]: value } }).then((res) => {
+      if (!res.ok) {
+        setRateErr(typeof res.data?.detail === "string" ? res.data.detail : "That rate could not be saved.");
+        return;
+      }
+      setRates(res.data?.state?.rates || {});
+      if (Array.isArray(res.data?.partners)) setPartnersSrc(res.data.partners);
+      if (Array.isArray(res.data?.founders)) setFoundersSrc(res.data.founders);
     });
   };
 
@@ -188,9 +206,9 @@ export default function HqPartners() {
     };
   });
 
-  const decide = async (a, action) => {
+  const decide = async (a, action, founding = false) => {
     setAppBusy(a.id);
-    const res = action === "approve" ? await approvePartnerApplication(a.id, { rate: 30 }) : await declinePartnerApplication(a.id);
+    const res = action === "approve" ? await approvePartnerApplication(a.id, { founding }) : await declinePartnerApplication(a.id);
     setAppBusy("");
     if (!res.ok) {
       const detail = res.data?.detail;
@@ -220,9 +238,12 @@ export default function HqPartners() {
   const openApps = appRows.filter((a) => a.open).length;
 
   const partnerRows = partnersSrc.map((p) => {
-    const rate = rates[p.id] || p.rate;
-    const base = p.founding ? p.rate : 30;
-    const opts = [30, 35, 40].filter((v) => v >= base);
+    // The server's rate is the truth (it may have stepped up on its own).
+    const rate = p.rate;
+    const lo = Math.round((p.program?.base ?? (p.founding ? 0.35 : 0.2)) * 100);
+    const hi = Math.round((p.program?.top ?? (p.founding ? 0.4 : 0.25)) * 100);
+    // Founding rates only move up; affiliates can be set anywhere in 20-25%.
+    const opts = Array.from({ length: hi - lo + 1 }, (_, i) => lo + i).filter((v) => !p.founding || v >= rate);
     const flagCleared = cleared[p.id];
     const flag = flagCleared ? "Reviewed" : p.flag || "None";
     return {
@@ -237,7 +258,8 @@ export default function HqPartners() {
   });
 
   const founderRows = foundersSrc.map((f) => {
-    const rate = (rates[f.id] || 35) >= 40 || f.qual >= 10 ? 40 : 35;
+    const rate = f.rate || 35;
+    const topPct = Math.round((f.program?.top ?? 0.4) * 100);
     const reached = stepsSrc.filter((s) => f.mrr >= s).length;
     const granted = grants[f.id] || 0;
     const earned = f.held >= 3 ? reached : 0;
@@ -258,9 +280,9 @@ export default function HqPartners() {
       rate,
       qualPct: `${Math.min(100, f.qual * 10)}%`,
       qualNote:
-        rate >= 40
-          ? "Unlocked: 40% for good."
-          : `${10 - f.qual} more qualified referrals within 6 months unlocks 40% for good.`,
+        rate >= topPct
+          ? `Unlocked: ${topPct}% for good.`
+          : `${Math.max(0, 10 - f.qual)} more paying referrals within 6 months unlocks ${topPct}% for good (applied automatically).`,
       mrrStr: `$${f.mrr.toLocaleString("en-US")} / mo`,
       steps,
       canGrant: earned > granted,
@@ -277,7 +299,10 @@ export default function HqPartners() {
         : `November payout run: ${money(payoutData.rows.filter((r) => !r.lock).reduce((a, r) => a + r.net, 0))} to review.`,
       "Runs on the 15th. Approve each partner, or hold anyone who needs a look.",
     ],
-    apps: [`${openApps} application${openApps === 1 ? "" : "s"} waiting.`, "Approved partners start at the public rate of 30%."],
+    apps: [
+      `${openApps} application${openApps === 1 ? "" : "s"} waiting.`,
+      "Affiliates (TikTok, Facebook, Instagram, YouTube, blogs) start at 20% and rise to 25%. Investors and developers join the founding program: 35%, rising to 40%. The rise is automatic after 10 paying referrals in 6 months.",
+    ],
     all: [`${partnersSrc.length} active partners.`, "Rates, results and anything that needs a second look."],
     founding: ["Founding partners.", "35% now, 40% for good after 10 qualified referrals in any 6 months, plus performance shares."],
   }[tab];
@@ -298,7 +323,7 @@ export default function HqPartners() {
   ];
 
   return (
-    <HqPanel showSample={!live}>
+    <HqPanel loading={loading} showSample={!live}>
       <div
         style={{
           maxWidth: 1240,
@@ -667,11 +692,12 @@ export default function HqPartners() {
               <span style={{ fontSize: 14, lineHeight: 1.5 }}>{a.where}</span>
               <span style={{ fontSize: 13, color: a.noteColor }}>{a.note}</span>
               {a.open ? (
-                <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button
                     type="button"
                     disabled={appBusy === a.id}
-                    onClick={() => decide(a, "approve")}
+                    onClick={() => decide(a, "approve", false)}
+                    title="Creators and affiliates on TikTok, Facebook, Instagram, YouTube and blogs"
                     style={{
                       minHeight: 42,
                       padding: "0 16px",
@@ -683,7 +709,25 @@ export default function HqPartners() {
                       fontWeight: 600,
                     }}
                   >
-                    Approve at 30%
+                    Approve as affiliate · 20%
+                  </button>
+                  <button
+                    type="button"
+                    disabled={appBusy === a.id}
+                    onClick={() => decide(a, "approve", true)}
+                    title="Investors and developers"
+                    style={{
+                      minHeight: 42,
+                      padding: "0 16px",
+                      borderRadius: 12,
+                      border: "1px solid #D5F879",
+                      background: "transparent",
+                      color: "#D5F879",
+                      fontSize: 14,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Approve as founding · 35%
                   </button>
                   <button
                     type="button"
@@ -783,9 +827,18 @@ export default function HqPartners() {
                     fontSize: 14,
                   }}
                 >
-                  <span style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                  <span style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
                     <span style={{ fontWeight: 500 }}>{p.name}</span>
                     <span style={{ fontSize: 12, color: "#7D848E" }}>{p.type}</span>
+                    <select
+                      aria-label={`Program for ${p.name}`}
+                      value={p.founding ? "founding" : "standard"}
+                      onChange={(e) => persist({ programs: { [p.id]: e.target.value } })}
+                      style={{ alignSelf: "flex-start", minHeight: 30, padding: "0 6px", borderRadius: 8, border: "1px solid #262A31", background: "#0A0B0D", color: "#D7DADE", font: "inherit", fontSize: 12 }}
+                    >
+                      <option value="standard">Affiliate · 20–25%</option>
+                      <option value="founding">Founding (investor, developer) · 35–40%</option>
+                    </select>
                   </span>
                   <label style={{ display: "flex", flexDirection: "column", fontSize: 11, color: "#7D848E" }}>
                     <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
@@ -793,7 +846,7 @@ export default function HqPartners() {
                     </span>
                     <select
                       value={String(p.rate)}
-                      onChange={(e) => (() => { const nv = Number(e.target.value); setRates({ ...rates, [p.id]: nv }); persist({ rates: { [p.id]: nv } }); })()}
+                      onChange={(e) => saveRate(p.id, Number(e.target.value))}
                       style={{
                         minHeight: 36,
                         padding: "0 8px",
@@ -839,8 +892,13 @@ export default function HqPartners() {
               ))}
             </div>
           </div>
+          {rateErr ? (
+            <span role="alert" style={{ fontSize: 13, color: "#FF5A4E" }}>
+              {rateErr}
+            </span>
+          ) : null}
           <span style={{ fontSize: 12, color: "#7D848E" }}>
-            Founding partners can only be moved up. Their agreement says the rate can&apos;t be lowered without their written consent.
+            Affiliates: 20–25%. Founding partners: 35–40%, and only moved up. Their agreement says the rate can&apos;t be lowered without their written consent.
           </span>
         </section>
       ) : null}

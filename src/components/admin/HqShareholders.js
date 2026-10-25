@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import HqPanel from "@/components/admin/HqPanel";
+import HqPanel, { useFirstLoad } from "@/components/admin/HqPanel";
 import { getHqShareholders, saveHqShareholders } from "@/lib/hqApi";
 import Modal from "@/components/account/Modal";
 
@@ -12,6 +12,7 @@ const money = (v) => (v < 0 ? "−$" : "$") + Math.abs(Math.round(v)).toLocaleSt
 const cents = (v) => `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export default function HqShareholders() {
+  const [loading, firstLoad] = useFirstLoad();
   const [sc, setSc] = useState("actual");
   const [amount, setAmount] = useState(6000);
   const [solvent, setSolvent] = useState(false);
@@ -26,7 +27,7 @@ export default function HqShareholders() {
 
   useEffect(() => {
     let cancelled = false;
-    getHqShareholders().then((res) => {
+    firstLoad(getHqShareholders()).then((res) => {
       if (cancelled || !res.ok) return;
       const d = res.data || {};
       if (Array.isArray(d.holders)) setHolders(d.holders);
@@ -183,7 +184,7 @@ export default function HqShareholders() {
     : "No dividend yet. Here's what's missing.";
 
   return (
-    <HqPanel minHeight={1500} showSample={!live}>
+    <HqPanel loading={loading} minHeight={1500} showSample={!live}>
       <Modal open={ownersOpen} title="Who owns the company" onClose={() => setOwnersOpen(false)} width={760}>
         <p style={{ margin: 0, fontSize: 13, color: "#9AA1AB" }}>
           Ownership and withholding drive the dividend split. Withholding: 0% Canada, 15% US with NR301, 25% US without.

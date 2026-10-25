@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import HqPanel from "@/components/admin/HqPanel";
+import HqPanel, { useFirstLoad } from "@/components/admin/HqPanel";
 import { getHqProblems, hqProblemAction } from "@/lib/hqApi";
 
 const SEV = {
@@ -22,6 +22,7 @@ const CAT = [
 ];
 
 export default function HqProblems() {
+  const [loading, firstLoad] = useFirstLoad();
   const [cat, setCat] = useState("all");
   const [done, setDone] = useState({});
   const [emailed, setEmailed] = useState({});
@@ -31,7 +32,7 @@ export default function HqProblems() {
 
   useEffect(() => {
     let cancelled = false;
-    getHqProblems().then((res) => {
+    firstLoad(getHqProblems()).then((res) => {
       if (cancelled || !res.ok) return;
       if (Array.isArray(res.data?.items)) setItemsSrc(res.data.items);
       setDone(res.data?.done || {});
@@ -105,7 +106,7 @@ export default function HqProblems() {
   ];
 
   return (
-    <HqPanel problemsCount={openCount} showSample={!live}>
+    <HqPanel loading={loading} problemsCount={openCount} showSample={!live}>
       <div style={{ maxWidth: 1240, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 6 }}>
         <h1
           style={{
