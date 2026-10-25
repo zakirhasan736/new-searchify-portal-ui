@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import SearchifyMarkSvg from "@/components/v8/SearchifyMarkSvg";
@@ -86,6 +86,8 @@ export default function SetupScreen() {
   const [goal, setGoal] = useState("both");
   const [brief, setBrief] = useState({ business: "", areas: "", different: "", moneyPages: "" });
   const [wpOpen, setWpOpen] = useState(false);
+  const wantAutoScan = useRef(false);
+  const autoScanStarted = useRef(false);
 
   useEffect(() => {
     if (!userIsAuthenticated()) {
@@ -99,7 +101,10 @@ export default function SetupScreen() {
       await hydrateJourney();
       if (cancelled) return;
       const pending = normalizeSiteUrl(params.get("site") || peekPendingSite() || "");
-      if (pending) seedDraftSite(pending);
+      if (pending) {
+        seedDraftSite(pending);
+        wantAutoScan.current = true;
+      }
       const draft = draftForSetup(isNew);
       if (!draft && !isNew) {
         /* already have ready sites — still allow setup if they navigated here */
@@ -229,6 +234,12 @@ export default function SetupScreen() {
     }
     setReading(false);
   };
+
+  useEffect(() => {
+    if (!ready || !wantAutoScan.current || autoScanStarted.current || !url) return;
+    autoScanStarted.current = true;
+    readSite();
+  }, [ready, url]);
 
   const connectGsc = async () => {
     setErr("");
@@ -402,7 +413,7 @@ export default function SetupScreen() {
               opacity: reading ? 0.6 : 1,
             }}
           >
-            {reading ? "Reading…" : "Read my site"}
+            {reading ? "Scanning…" : "Scan it free"}
           </button>
         </div>
 

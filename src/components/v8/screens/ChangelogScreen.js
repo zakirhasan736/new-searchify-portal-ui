@@ -5,13 +5,18 @@ import Link from 'next/link';
 import { activeSiteContext } from '@/lib/siteContext';
 import {
   changePath,
+  featureKpi,
+  featurePayload,
   historyItems,
   listChanges,
+  loadFeature,
+  queueItems,
   undoChange,
   getBusinessProfile,
   getProductUsage,
 } from '@/lib/v1Api';
 import { loadJourney, planById } from '@/lib/journey';
+import { SkeletonRows } from '@/components/v8/SkeletonWave';
 import '@/styles/v8-screens.css';
 
 function formatChangelogDate(iso) {
@@ -85,6 +90,10 @@ function mapApiChange(c) {
     by: c.approvedByName || c.appliedByName || 'you',
     before: proposed.beforeTitle || proposed.beforeMetaDescription || proposed.beforeDescription || proposed.before || '(unknown)',
     after: proposed.title || proposed.metaDescription || proposed.after || '—',
+    beforeTitle: proposed.beforeTitle || proposed.liveTitle || '',
+    afterTitle: proposed.title || '',
+    beforeDescription: proposed.liveMetaDescription || proposed.beforeMetaDescription || proposed.beforeDescription || '',
+    afterDescription: proposed.metaDescription || '',
   };
 }
 
@@ -106,6 +115,45 @@ function downloadCsv(rows, hostname) {
   URL.revokeObjectURL(url);
 }
 
+const REPORT_TOPICS = [
+  { id: 'gsc', label: 'Search Console' },
+  { id: 'speed', label: 'Speed Insights' },
+  { id: 'title', label: 'Title tags' },
+  { id: 'desc', label: 'Descriptions' },
+  { id: 'image', label: 'Images' },
+  { id: 'schema', label: 'Schema' },
+  { id: 'links', label: 'Links' },
+  { id: 'content', label: 'Content' },
+  { id: 'results', label: 'Results: visitors and calls gained' },
+  { id: 'changelog', label: 'Change log with before and after' },
+  { id: 'health', label: 'Site health board' },
+  { id: 'compare', label: 'How you compare with similar businesses' },
+  { id: 'next', label: 'Coming up next month' },
+];
+
+function TopicCard({ title, children }) {
+  return (
+    <section style={{ borderRadius: '20px', background: '#101215', border: '1px solid #1A1D22', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '10px', minWidth: 0 }}>
+      <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+function ReportLines({ rows, empty }) {
+  if (!rows.length) return <p style={{ margin: 0, fontSize: '14px', color: '#9AA1AB' }}>{empty}</p>;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      {rows.map((row) => (
+        <div key={row.key} style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: '12px', color: '#7D848E' }}>{row.meta}</span>
+          <span style={{ fontSize: '14px', lineHeight: 1.45, overflowWrap: 'anywhere' }}>{row.text}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function ChangelogScreen() {
   const [tab, setTab] = useState('log');
   const [type, setType] = useState('all');
@@ -120,6 +168,8 @@ export default function ChangelogScreen() {
   const [agencyName, setAgencyName] = useState('Searchify (default)');
   const [planLabel, setPlanLabel] = useState('PRO');
   const [periodLabel, setPeriodLabel] = useState('');
+  const [sources, setSources] = useState({ gsc: {}, speed: {}, queue: [] });
+  const [include, setInclude] = useState(() => Object.fromEntries(REPORT_TOPICS.map((topic) => [topic.id, true])));
 
   const [all, setAll] = useState([]);
   const [hostname, setHostname] = useState('');
@@ -129,14 +179,24 @@ export default function ChangelogScreen() {
     try {
       const journey = loadJourney();
       setHostname(activeSiteContext(journey).hostname || 'Your site');
-      const [chRes, prof, usage] = await Promise.all([
+      const [chRes, prof, usage, organic, audit] = await Promise.all([
         listChanges({ force: true }),
         getBusinessProfile().catch(() => ({ ok: false })),
         getProductUsage().catch(() => ({ ok: false })),
+        loadFeature('organic-search').catch(() => ({ ok: false })),
+        loadFeature('site-audit').catch(() => ({ ok: false })),
       ]);
       const raw = Array.isArray(chRes.data) ? chRes.data : chRes.data?.changes || [];
       const mapped = historyItems(raw).map(mapApiChange);
       setAll(mapped);
+      setSources({
+        gsc: featurePayload(organic),
+        speed: featurePayload(audit),
+        queue: queueItems(raw).slice(0, 6).map((item) => ({
+          page: changePath(item),
+          change: changeSummary(item),
+        })),
+      });
       setOpen((prev) => (mapped.some((m) => m.id === prev) ? prev : mapped[0]?.id || ''));
 
       if (prof?.ok && prof.data) {
@@ -242,6 +302,47 @@ export default function ChangelogScreen() {
     return d.toLocaleString('en-US', { month: 'long', day: 'numeric' });
   })();
 
+  const gscKpis = [
+    ['Clicks', featureKpi(sources.gsc, 'click')],
+    ['Impressions', featureKpi(sources.gsc, 'impr')],
+    ['CTR', featureKpi(sources.gsc, 'ctr')],
+    ['Average position', featureKpi(sources.gsc, 'pos')],
+  ];
+  const gscQueries = (sources.gsc.rows || []).slice(0, 5).map((row, index) => ({
+    key: `q-${index}`,
+    meta: String(row[0] || 'Query'),
+    text: `Clicks ${row[1] ?? '—'} · impressions ${row[2] ?? '—'}`,
+  }));
+  const speedKpis = (sources.speed.kpis || sources.speed.panels?.kpis || []).slice(0, 6);
+  const listingRows = (kind, beforeKey, afterKey) =>
+    all
+      .filter((row) => {
+        if (kind === 'title') return row.afterTitle && row.afterTitle !== row.beforeTitle;
+        if (kind === 'desc') return row.afterDescription && row.afterDescription !== row.beforeDescription;
+        return row.type === kind;
+      })
+      .slice(0, 6)
+      .map((row) => ({
+        key: `${kind}-${row.id}`,
+        meta: `${row.date} · ${row.page}`,
+        text: kind === 'title'
+          ? `${row.beforeTitle || '(not set)'} → ${row.afterTitle}`
+          : kind === 'desc'
+          ? `${row.beforeDescription || '(not set)'} → ${row.afterDescription}`
+          : `${row.before} → ${row.after}`,
+      }));
+  const titleRows = listingRows('title');
+  const descRows = listingRows('desc');
+  const imageRows = listingRows('image');
+  const schemaRows = listingRows('schema');
+  const linkRows = listingRows('links');
+  const contentRows = listingRows('content');
+  const logRows = all.slice(0, 6).map((row) => ({
+    key: `log-${row.id}`,
+    meta: `${row.date} · ${TYPES[row.type] || row.type} · ${row.page}`,
+    text: `${row.before} → ${row.after}`,
+  }));
+
   return (
       <div style={{ flex: '999 1 560px', minWidth: 0, minHeight: 1240, background: '#0A0B0D', color: '#F2F4F5', fontFamily: 'Geist, \'Helvetica Neue\', sans-serif', boxSizing: 'border-box', padding: '22px clamp(16px, 4vw, 56px) 56px', display: 'flex', flexDirection: 'column', gap: 28 }}>
         <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
@@ -312,6 +413,7 @@ export default function ChangelogScreen() {
                 ? 'No shipped changes yet.'
                 : `Showing ${rows.length} ${rows.length === 1 ? 'change' : 'changes'}${gained > 0 ? ` · +${gained} visitors / mo from these` : ''}`}
             </div>
+            {loading ? <SkeletonRows count={6} /> : null}
 
             <div style={{ borderRadius: '22px', background: '#101215', border: '1px solid #1A1D22', overflow: 'hidden' }}>
               {rows.length === 0 && (
@@ -410,11 +512,17 @@ export default function ChangelogScreen() {
               </div>
               <fieldset style={{ border: '0', margin: '0', padding: '0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <legend style={{ fontSize: '13px', color: '#9AA1AB', marginBottom: '8px' }}>Include</legend>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px' }}><input type="checkbox" defaultChecked style={{ width: '18px', height: '18px', accentColor: '#4DA3FF' }} />Results: visitors and calls gained</label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px' }}><input type="checkbox" defaultChecked style={{ width: '18px', height: '18px', accentColor: '#4DA3FF' }} />Change log with before and after</label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px' }}><input type="checkbox" defaultChecked style={{ width: '18px', height: '18px', accentColor: '#4DA3FF' }} />Site health board</label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px' }}><input type="checkbox" defaultChecked style={{ width: '18px', height: '18px', accentColor: '#4DA3FF' }} />How you compare with similar businesses</label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px' }}><input type="checkbox" defaultChecked style={{ width: '18px', height: '18px', accentColor: '#4DA3FF' }} />Coming up next month</label>
+                {REPORT_TOPICS.map((topic) => (
+                  <label key={topic.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px' }}>
+                    <input
+                      type="checkbox"
+                      checked={include[topic.id] !== false}
+                      onChange={() => setInclude((prev) => ({ ...prev, [topic.id]: !prev[topic.id] }))}
+                      style={{ width: '18px', height: '18px', accentColor: '#4DA3FF' }}
+                    />
+                    {topic.label}
+                  </label>
+                ))}
               </fieldset>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
                 {used < 5 ? (
@@ -459,6 +567,83 @@ export default function ChangelogScreen() {
                 ))}
               </div>
             </aside>
+
+            <div style={{ flex: '1 1 100%', display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 }}>
+              <h2 style={{ margin: '4px 0 0', fontSize: '22px', fontWeight: 600 }}>In this report</h2>
+              {include.gsc ? (
+                <TopicCard title="Search Console">
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px' }}>
+                    {gscKpis.map((kpi) => (
+                      <span key={kpi[0]} style={{ minWidth: '120px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: '11px', color: '#7D848E' }}>{kpi[0]}</span>
+                        <span style={{ fontSize: '18px' }}>{kpi[1]}</span>
+                      </span>
+                    ))}
+                  </div>
+                  <ReportLines rows={gscQueries} empty="Search Console has no stored queries for this site yet." />
+                </TopicCard>
+              ) : null}
+              {include.speed ? (
+                <TopicCard title="Speed Insights">
+                  {speedKpis.length ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px' }}>
+                      {speedKpis.map((kpi, index) => (
+                        <span key={`${kpi[0]}-${index}`} style={{ minWidth: '120px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: '11px', color: '#7D848E' }}>{kpi[0]}</span>
+                          <span style={{ fontSize: '18px' }}>{kpi[1] ?? '—'}</span>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: '14px', color: '#9AA1AB' }}>Speed Insights has not been read for this site yet.</p>
+                  )}
+                </TopicCard>
+              ) : null}
+              {include.title ? <TopicCard title="Title tags"><ReportLines rows={titleRows} empty="No title changes have shipped yet." /></TopicCard> : null}
+              {include.desc ? <TopicCard title="Descriptions"><ReportLines rows={descRows} empty="No description changes have shipped yet." /></TopicCard> : null}
+              {include.image ? <TopicCard title="Images"><ReportLines rows={imageRows} empty="No image changes have shipped yet." /></TopicCard> : null}
+              {include.schema ? <TopicCard title="Schema"><ReportLines rows={schemaRows} empty="No schema changes have shipped yet." /></TopicCard> : null}
+              {include.links ? <TopicCard title="Links"><ReportLines rows={linkRows} empty="No link changes have shipped yet." /></TopicCard> : null}
+              {include.content ? <TopicCard title="Content"><ReportLines rows={contentRows} empty="No content changes have shipped yet." /></TopicCard> : null}
+              {include.results ? (
+                <TopicCard title="Results: visitors and calls gained">
+                  <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.5 }}>
+                    Shipped changes account for <strong style={{ color: '#D5F879' }}>+{totalCaptured}</strong> visitors / mo.
+                    {' '}Search Console clicks for this site: {featureKpi(sources.gsc, 'click')}. Calls are shown when Analytics has stored them.
+                  </p>
+                </TopicCard>
+              ) : null}
+              {include.changelog ? <TopicCard title="Change log with before and after"><ReportLines rows={logRows} empty="No shipped changes to show yet." /></TopicCard> : null}
+              {include.health ? (
+                <TopicCard title="Site health board">
+                  {speedKpis.length ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px' }}>
+                      {speedKpis.map((kpi, index) => (
+                        <span key={`health-${kpi[0]}-${index}`} style={{ fontSize: '14px' }}>{kpi[0]} · {kpi[1] ?? '—'}</span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: '14px', color: '#9AA1AB' }}>Site health has not been read for this site yet.</p>
+                  )}
+                </TopicCard>
+              ) : null}
+              {include.compare ? (
+                <TopicCard title="How you compare with similar businesses">
+                  <ReportLines
+                    rows={Object.entries(BENCH).map(([key, text]) => ({ key, meta: TYPES[key] || key, text }))}
+                    empty="No comparison notes yet."
+                  />
+                </TopicCard>
+              ) : null}
+              {include.next ? (
+                <TopicCard title="Coming up next month">
+                  <ReportLines
+                    rows={sources.queue.map((item, index) => ({ key: `next-${index}`, meta: item.page, text: item.change }))}
+                    empty="Nothing is waiting in the queue for next month."
+                  />
+                </TopicCard>
+              ) : null}
+            </div>
           </div>
         )}
       </div>

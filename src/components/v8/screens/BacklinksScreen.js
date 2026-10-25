@@ -10,6 +10,7 @@ import {
 } from '@/lib/v1Api';
 import { activeSiteContext } from '@/lib/siteContext';
 import { loadJourney } from '@/lib/journey';
+import { SkeletonCards } from '@/components/v8/SkeletonWave';
 import '@/styles/v8-screens.css';
 
 function strengthScore(link) {
@@ -569,21 +570,22 @@ export default function BacklinksScreen() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {loading ? <SkeletonCards count={2} lines={3} /> : null}
+                {!loading && (
                 <h2 style={{ margin: '0', fontSize: '21px', fontWeight: '600' }}>
-                  {loading
-                    ? 'Reading your link index…'
-                    : liveLinks?.length
+                  {liveLinks?.length
                       ? "That's every link move for this week."
                       : 'No link moves yet.'}
                 </h2>
+                )}
+                {!loading && (
                 <span style={{ fontSize: '14px', color: '#9AA1AB', lineHeight: '1.5' }}>
-                  {loading
-                    ? 'Pulling referring domains and outreach ideas for this site.'
-                    : liveLinks?.length
+                  {liveLinks?.length
                       ? (nd ? `You sent or started ${nd}.` : "You skipped them all; they'll come back next week.") +
                         " We'll check those pages weekly and tell you when a link appears."
                       : 'Run a backlink refresh or wait for the weekly crawl to draft outreach here.'}
                 </span>
+                )}
                 {!loading && !liveLinks?.length && (
                   <Link
                     href="/app/connections"

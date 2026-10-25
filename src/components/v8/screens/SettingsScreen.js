@@ -14,6 +14,7 @@ import {
 } from '@/lib/v1Api';
 import { initials, planDisplayName } from '@/lib/v8LiveData';
 import { loadJourney, planById } from '@/lib/journey';
+import { SkeletonCard } from '@/components/v8/SkeletonWave';
 import { authHeaders } from '@/utils/users/Helpers';
 import '@/styles/v8-screens.css';
 
@@ -352,11 +353,9 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
               {saved}
             </p>
           ) : null}
-          {loading ? (
-            <p style={{ margin: 0, fontSize: '14px', color: '#9AA1AB' }}>Loading settings…</p>
-          ) : null}
+          {loading ? <SkeletonCard lines={5} /> : null}
 
-          {isProfile && (
+          {!loading && isProfile && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', animation: 'sfy-rise .25s ease both' }}>
               <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '600' }}>Profile</h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -425,7 +424,7 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
             </div>
           )}
 
-          {isTeam && (
+          {!loading && isTeam && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', animation: 'sfy-rise .25s ease both' }}>
               <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '600' }}>Team and clients</h2>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -464,7 +463,7 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
             </div>
           )}
 
-          {isNotif && (
+          {!loading && isNotif && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', animation: 'sfy-rise .25s ease both' }}>
               <h2 style={{ margin: '0 0 10px', fontSize: '22px', fontWeight: '600' }}>Notifications</h2>
               {notifs.map((n) => (
@@ -481,7 +480,7 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
             </div>
           )}
 
-          {isAuto && (
+          {!loading && isAuto && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', animation: 'sfy-rise .25s ease both' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '600' }}>How much can Searchify do on its own?</h2>
@@ -543,7 +542,7 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
             </div>
           )}
 
-          {isBilling && (
+          {!loading && isBilling && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', animation: 'sfy-rise .25s ease both' }}>
               <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '600' }}>Plan and billing</h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', padding: '18px', borderRadius: '16px', border: '1px solid #4DA3FF', boxShadow: '0 0 24px rgba(77,163,255,.18)' }}>

@@ -12,6 +12,7 @@ import {
 } from "@/lib/v1Api";
 import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
+import { SkeletonCards } from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
 
 const TRACK_KEY = "sfy-tracked-keywords";
@@ -42,19 +43,37 @@ function pctLabel(n) {
   return `${pct.toFixed(1)}%`;
 }
 
-function loadLocalTerms() {
+function termKey(site) {
   try {
-    const raw = localStorage.getItem(TRACK_KEY);
-    const list = raw ? JSON.parse(raw) : [];
-    return Array.isArray(list) ? list.map((t) => String(t).trim()).filter(Boolean) : [];
+    const host = new URL(String(site || "").includes("://") ? site : `https://${site}`).hostname.replace(/^www\./, "");
+    return host ? `${TRACK_KEY}:${host}` : TRACK_KEY;
+  } catch {
+    return TRACK_KEY;
+  }
+}
+
+function parseTerms(raw) {
+  const list = raw ? JSON.parse(raw) : [];
+  return Array.isArray(list) ? list.map((t) => String(t).trim()).filter(Boolean) : [];
+}
+
+function loadLocalTerms(site) {
+  try {
+    const key = termKey(site);
+    const own = localStorage.getItem(key);
+    if (own) return parseTerms(own);
+    if (key === TRACK_KEY) return [];
+    const legacy = parseTerms(localStorage.getItem(TRACK_KEY));
+    if (legacy.length) localStorage.setItem(key, JSON.stringify(legacy.slice(0, 80)));
+    return legacy;
   } catch {
     return [];
   }
 }
 
-function saveLocalTerms(terms) {
+function saveLocalTerms(terms, site) {
   try {
-    localStorage.setItem(TRACK_KEY, JSON.stringify(terms.slice(0, 80)));
+    localStorage.setItem(termKey(site), JSON.stringify(terms.slice(0, 80)));
   } catch {
     /* ignore */
   }
@@ -243,7 +262,7 @@ export default function WinScreen() {
     const site = href || activeSiteContext(loadJourney()).href || "";
     setLoading(true);
     try {
-      const localTerms = loadLocalTerms();
+      const localTerms = loadLocalTerms(site);
       const [kwRes, organic, researchFeat, changeRes] = await Promise.all([
         site
           ? researchKeywords({ site, terms: localTerms, force: true }).catch(() => ({ ok: false }))
@@ -329,8 +348,8 @@ export default function WinScreen() {
     const term = addTerm.trim();
     if (!term) return;
     setTracking(true);
-    const next = [...new Set([term, ...loadLocalTerms()])];
-    saveLocalTerms(next);
+    const next = [...new Set([term, ...loadLocalTerms(href)])];
+    saveLocalTerms(next, href);
     setAddTerm("");
     const site = href || "";
     if (site) {
@@ -533,7 +552,7 @@ export default function WinScreen() {
             </svg>
             KEYWORD TRACKER
           </span>
-          <span style={{ fontSize: "15px", color: "#9AA1AB" }}>{loading ? "Loading live keyword ranks…" : trackedLabel}</span>
+          <span style={{ fontSize: "15px", color: "#9AA1AB" }}>{loading ? "" : trackedLabel}</span>
         </div>
         {!empty && (
           <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "13px", color: "#9AA1AB", minWidth: "300px" }}>
@@ -563,7 +582,12 @@ export default function WinScreen() {
         )}
       </header>
 
-      {empty ? (
+      {loading ? (
+        <div style={{ maxWidth: "1120px", width: "100%", margin: "0 auto" }}>
+          <SkeletonCards count={2} lines={4} />
+        </div>
+      ) : null}
+      {!loading && empty ? (
         <div
           style={{
             maxWidth: "1120px",
@@ -582,12 +606,9 @@ export default function WinScreen() {
           }}
         >
           <span style={{ flex: "1 1 240px" }}>
-            {loading
-              ? "Reading Search Console and keyword research…"
-              : "No keyword data yet. Connect Search Console or add a keyword below to start tracking."}
+            No keyword data yet. Connect Search Console or add a keyword below to start tracking.
           </span>
-          {!loading && (
-            <Link
+          <Link
               href="/app/connections"
               style={{
                 minHeight: 40,
@@ -603,7 +624,6 @@ export default function WinScreen() {
             >
               Plug in
             </Link>
-          )}
         </div>
       ) : (
         <div

@@ -18,7 +18,9 @@ import {
 } from "@/lib/v1Api";
 import { useConnectionStatus } from "@/components/board/ConnectDialog";
 import { activeSiteContext } from "@/lib/siteContext";
+import { normalizeSiteUrl, seedDraftSite } from "@/lib/journey";
 import { initials } from "@/lib/v8LiveData";
+import { SkeletonCards } from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
 
 const QUALITY = ["Poor", "Fair", "Good", "Strong", "Great", "Excellent"];
@@ -149,6 +151,7 @@ export default function HomeScreen() {
   const [untappedTotal, setUntappedTotal] = useState(0);
   const [userInitials, setUserInitials] = useState("??");
   const [cmd, setCmd] = useState("");
+  const [freeUrl, setFreeUrl] = useState("");
   const [regenBusy, setRegenBusy] = useState(false);
   const [regenNote, setRegenNote] = useState("");
   const [connectionStatus] = useConnectionStatus();
@@ -571,7 +574,8 @@ export default function HomeScreen() {
 
   return (
     <div className="v8-home" style={{ flex: "999 1 560px", minWidth: 0, width: "100%", minHeight: "min(100%, 720px)", background: "#0A0B0D", color: "#F2F4F5", fontFamily: "Geist, 'Helvetica Neue', sans-serif", boxSizing: "border-box", padding: "22px clamp(16px, 4vw, 56px) 40px", display: "flex", flexDirection: "column", gap: 32 }}>
-      {(loading || bootNote || queueEmpty) && (
+      {loading ? <SkeletonCards count={3} lines={4} /> : null}
+      {!loading && (bootNote || queueEmpty) && (
         <div
           style={{
             padding: "14px 16px",
@@ -587,19 +591,35 @@ export default function HomeScreen() {
           }}
         >
           <span style={{ flex: "1 1 220px" }}>
-            {loading
-              ? bootNote || "Loading today’s moves from your workspace…"
-              : bootNote ||
-                (needsPlugIn
-                  ? "Connect Search Console or WordPress to draft live moves for this site."
-                  : "No open moves yet. Run a site scan or wait for Search Console to propose the next batch.")}
+            {bootNote ||
+              (needsPlugIn
+                ? "Connect Search Console or WordPress to draft live moves for this site."
+                : "No open moves yet. Run a site scan or wait for Search Console to propose the next batch.")}
           </span>
-          {!loading && needsPlugIn && (
-            <Link href="/app/connections" style={{ color: "#0A0B0D", background: accent, padding: "8px 12px", borderRadius: 999, fontWeight: 600, textDecoration: "none" }}>
-              Plug in
-            </Link>
+          {needsPlugIn && (
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                const site = normalizeSiteUrl(freeUrl);
+                if (!site || !site.includes(".")) return;
+                seedDraftSite(site);
+                router.push("/app/start");
+              }}
+              style={{ display: "flex", flexWrap: "wrap", gap: 8, flex: "1 1 280px" }}
+            >
+              <input
+                value={freeUrl}
+                onChange={(event) => setFreeUrl(event.target.value)}
+                placeholder="yourwebsite.com"
+                aria-label="Website to scan free"
+                style={{ minHeight: 40, flex: "1 1 180px", borderRadius: 999, border: "1px solid #262A31", background: "#0A0B0D", color: "#F2F4F5", padding: "0 14px" }}
+              />
+              <button type="submit" style={{ color: "#0A0B0D", background: accent, padding: "8px 12px", borderRadius: 999, fontWeight: 600, border: 0, cursor: "pointer" }}>
+                Scan it free
+              </button>
+            </form>
           )}
-          {!loading && queueEmpty && !needsPlugIn && (
+          {queueEmpty && !needsPlugIn && (
             <button
               type="button"
               onClick={() => reloadChanges({ seed: true })}

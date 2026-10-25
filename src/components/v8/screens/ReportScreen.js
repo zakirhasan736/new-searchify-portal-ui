@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { SkeletonCards } from '@/components/v8/SkeletonWave';
 import { buildAuditFindings } from '@/lib/auditFindings';
 import { activeSiteContext } from '@/lib/siteContext';
 import { clickHalves, issueCounts, monthEmail, publishedRows } from '@/lib/monthReport';
@@ -311,8 +312,8 @@ export default function ReportScreen() {
       )}
 
       <main style={{ maxWidth: '900px', width: '100%', margin: '0 auto', boxSizing: 'border-box', padding: '48px clamp(16px, 4vw, 32px) 72px', display: 'flex', flexDirection: 'column', gap: '44px' }}>
-        {loading && <p style={{ margin: 0, fontSize: '14px', color: '#9AA1AB' }}>Building this month&apos;s report…</p>}
-
+        {loading ? <SkeletonCards count={3} lines={4} /> : (
+        <>
         <header style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', fontSize: '13px', color: '#9AA1AB' }}>
             <span style={{ fontWeight: '600', color: '#F2F4F5' }}>{view.agency}</span>
@@ -441,6 +442,8 @@ export default function ReportScreen() {
           ) : null}{' '}
           · Made with Searchify
         </footer>
+        </>
+        )}
       </main>
     </div>
   );

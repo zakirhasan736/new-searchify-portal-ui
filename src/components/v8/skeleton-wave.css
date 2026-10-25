@@ -1,0 +1,122 @@
+.v8-skel {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #1a1d22;
+  min-height: 12px;
+}
+
+.v8-skel::after,
+.v8-skel-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.07) 42%, transparent 70%);
+  transform: translateX(-120%);
+  animation: v8-skel-wave 1.35s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.v8-skel.is-light {
+  background: #e8eaed;
+}
+
+.v8-skel.is-light::after {
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.85) 42%, transparent 70%);
+}
+
+.v8-skel-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 18px;
+  background: #101215;
+  border: 1px solid #1a1d22;
+}
+
+.v8-skel-card.is-light {
+  background: #fff;
+  border-color: #e8eaed;
+}
+
+.v8-skel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  width: 100%;
+}
+
+.v8-skel-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.v8-skel-rows {
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+  background: #101215;
+  border: 1px solid #1a1d22;
+  overflow: hidden;
+}
+
+.v8-skel-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-bottom: 1px solid #1a1d22;
+}
+
+.v8-skel-row:last-child {
+  border-bottom: 0;
+}
+
+.v8-skel-row-copy {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.v8-skel-page {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 28px clamp(16px, 4vw, 48px) 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.v8-skel-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes v8-skel-wave {
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v8-skel::after,
+  .v8-skel-card::after {
+    animation: none;
+  }
+}

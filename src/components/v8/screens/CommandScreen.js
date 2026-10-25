@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { SkeletonCards } from '@/components/v8/SkeletonWave';
 import {
   clientLabelForChange,
   hostFromUrl,
@@ -434,7 +435,7 @@ export default function CommandScreen() {
   ];
 
   const headline = loading
-    ? 'Loading your client queue…'
+    ? 'Your clients'
     : open.length
       ? `${open.length} moves waiting across your clients.`
       : 'Everything is approved. Nice work.';
@@ -467,7 +468,7 @@ export default function CommandScreen() {
       </header>
 
       <section aria-label="This week" style={{ maxWidth: '1120px', width: '100%', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-        {stats.map((s, i) => (
+        {loading ? <div style={{ gridColumn: '1 / -1' }}><SkeletonCards count={4} lines={2} /></div> : stats.map((s, i) => (
           <div key={i} style={{ borderRadius: '18px', padding: '18px', background: '#101215', border: `1px solid ${s.border}`, display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#9AA1AB' }}>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: s.color, boxShadow: `0 0 8px ${s.color}` }} />

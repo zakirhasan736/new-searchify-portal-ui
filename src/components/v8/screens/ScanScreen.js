@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { Skel } from "@/components/v8/SkeletonWave";
 import { buildAuditFindings } from "@/lib/auditFindings";
 import { activeSiteContext } from "@/lib/siteContext";
 import { findingsToScanTasks } from "@/lib/v8LiveData";
@@ -362,36 +363,16 @@ export default function ScanScreen() {
       ? "Read our latest post about " + topic.toLowerCase() + "."
       : "Learn more about our " + topic.toLowerCase() + " services.";
 
-  const subject = action && action !== "No findings" ? action : topic;
-  const SUG = isBlog
-    ? [
-        [
-          `${subject}: ${topic} | ${brand}`,
-          `What people need to know about ${topic.toLowerCase()}, with clear steps and when to get help.`,
-        ],
-        [
-          `${subject} — ${topic} | ${brand}`,
-          `Plain answers on ${topic.toLowerCase()} from your team. Updated for this year.`,
-        ],
-        [
-          `${topic}, step by step | ${brand}`,
-          `A step-by-step guide to ${topic.toLowerCase()} for people searching right now.`,
-        ],
-      ]
-    : [
-        [
-          `${subject} — ${pagePath === "/" ? brand : topic} | ${brand}`,
-          `${pagePath === "/" ? "Homepage" : topic}: fix “${subject.toLowerCase()}” so the page says what it offers.`,
-        ],
-        [
-          `${subject} · ${pagePath === "/" ? brand : topic} | ${brand}`,
-          `Need ${pagePath === "/" ? "help" : topic.toLowerCase()}? Make the offer and location obvious in the title.`,
-        ],
-        [
-          `${topic} · ${subject} | ${brand}`,
-          `${pagePath === "/" ? "Your homepage" : topic} written so searchers know they found the right page.`,
-        ],
-      ];
+  const isFillerListing = (title, description) => {
+    const blob = `${title || ""} ${description || ""}`.toLowerCase();
+    return (
+      blob.includes("so the page says what it offers") ||
+      blob.includes("obvious in the title") ||
+      blob.includes("written so searchers know they found the right page") ||
+      blob.includes("fix “") ||
+      blob.includes('fix "')
+    );
+  };
 
   const isPub = !!pub[selTask.t];
   const actionable = N > 0 && (selTask.c === "red" || selTask.c === "yellow");
@@ -407,12 +388,12 @@ export default function ScanScreen() {
   (Array.isArray(p.aiAlternatives) ? p.aiAlternatives : []).forEach((alt) => {
     choiceRows.push({ title: alt?.title, description: alt?.description || alt?.metaDescription });
   });
-  SUG.forEach(([title, description]) => choiceRows.push({ title, description }));
   const choices = [];
   choiceRows.forEach((row) => {
     const title = String(row.title || "").trim();
     const description = String(row.description || "").trim();
     if (!title && !description) return;
+    if (isFillerListing(title, description)) return;
     const key = `${title} ${description}`.toLowerCase();
     if (choices.some((item) => `${item.title} ${item.description}`.toLowerCase() === key)) return;
     choices.push({ title: title || "Updated title", description });
@@ -423,8 +404,8 @@ export default function ScanScreen() {
   const picked = shownChoices[v] || { title: "", description: "" };
   const liveNowT = p.liveTitle || p.beforeTitle || nowT;
   const liveNowD = p.liveMetaDescription || p.beforeMetaDescription || p.beforeDescription || nowD;
-  const liveSugT = picked.title || p.title || SUG[0][0];
-  const liveSugD = picked.description || p.metaDescription || SUG[0][1];
+  const liveSugT = picked.title || "";
+  const liveSugD = picked.description || "";
 
   const insp = {
     task: N === 0 ? (scanLoading ? "Loading scan…" : "No findings yet") : action,
@@ -446,7 +427,7 @@ export default function ScanScreen() {
         })()
       : "",
     optNo: String(v + 1),
-    optCount: shownChoices.length,
+    optCount: Math.max(shownChoices.length, 1),
     color: isPub ? COLORS.green : COLORS[selTask.c] || COLORS.green,
     status: N === 0 ? (scanLoading ? "Loading" : "Empty") : isPub ? "Published" : STATUS[selTask.c],
     border: isPub
@@ -569,6 +550,44 @@ export default function ScanScreen() {
       }
       setVariant({ ...variant, [selTask.t]: v + 1 });
     },
+  };
+
+  const moreToWrite = Boolean(matchedChange?.id) && shownChoices.length < 3;
+  const nextLocked = regenBusy || (v >= Math.max(shownChoices.length, 1) - 1 && !moreToWrite);
+  const showOptionNav = shownChoices.length > 1 || Boolean(matchedChange?.id);
+
+  const goNext = async () => {
+    if (regenBusy) return;
+    if (v < shownChoices.length - 1) {
+      setVariant({ ...variant, [selTask.t]: v + 1 });
+      return;
+    }
+    if (!matchedChange?.id || shownChoices.length >= 3) return;
+    setRegenBusy(true);
+    setRegenNote("Searchify SEO is writing the next title and description…");
+    try {
+      const res = await generateMetaCopy(matchedChange.id, { breadth: "balanced", objective: "balanced" });
+      if (!res.ok) {
+        setRegenNote(errorText(res, "Could not write the next title and description."));
+        return;
+      }
+      const options = Array.isArray(res.data?.options) ? res.data.options : [];
+      const realCount = options.filter(
+        (row) => row?.title && row?.description && !isFillerListing(row.title, row.description),
+      ).length;
+      await reloadLive();
+      if (realCount < 2) {
+        setVariant({ ...variant, [selTask.t]: 0 });
+        setRegenNote("One listing is ready. A second distinct title did not pass the checks.");
+        return;
+      }
+      setVariant({ ...variant, [selTask.t]: 1 });
+      setRegenNote("");
+    } catch {
+      setRegenNote("The next title and description did not finish. Try again in a moment.");
+    } finally {
+      setRegenBusy(false);
+    }
   };
 
   return (
@@ -886,7 +905,7 @@ export default function ScanScreen() {
                   </span>
                 </div>
                 <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 600, letterSpacing: "-0.3px" }}>
-                  {insp.task}
+                  {scanLoading ? <Skel w="72%" h={22} radius={8} /> : insp.task}
                 </h2>
                 {insp.topic ? (
                   <p style={{ margin: 0, fontSize: "13px", lineHeight: 1.45, color: "#9AA1AB" }}>
@@ -957,7 +976,7 @@ export default function ScanScreen() {
                       <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#1A5FB4" }}>
                         {insp.topic || "THIS DOT"}
                       </span>
-                      {insp.optCount > 1 ? (
+                      {showOptionNav ? (
                         <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", flex: "none" }}>
                           <button
                             type="button"
@@ -989,8 +1008,8 @@ export default function ScanScreen() {
                           <button
                             type="button"
                             aria-label="Next option"
-                            disabled={v >= shownChoices.length - 1}
-                            onClick={() => setVariant({ ...variant, [selTask.t]: v + 1 })}
+                            disabled={nextLocked}
+                            onClick={goNext}
                             style={{
                               width: "28px",
                               height: "28px",
@@ -1002,8 +1021,8 @@ export default function ScanScreen() {
                               alignItems: "center",
                               justifyContent: "center",
                               padding: 0,
-                              cursor: v >= shownChoices.length - 1 ? "default" : "pointer",
-                              opacity: v >= shownChoices.length - 1 ? 0.35 : 1,
+                              cursor: nextLocked ? "default" : "pointer",
+                              opacity: nextLocked ? 0.35 : 1,
                             }}
                           >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1025,10 +1044,14 @@ export default function ScanScreen() {
                         textOverflow: "ellipsis",
                       }}
                     >
-                      {insp.sugT}
+                      {scanLoading ? (
+                        <Skel light w="84%" h={18} radius={8} />
+                      ) : (
+                        insp.sugT || (regenBusy ? "Searchify SEO is writing the title and description…" : "Next writes another title and description for this page.")
+                      )}
                     </span>
                     <span style={{ fontSize: "13px", color: "#4D5156", lineHeight: 1.45 }}>
-                      {insp.sugD}
+                      {scanLoading ? <Skel light w="100%" h={12} /> : insp.sugD}
                     </span>
                     {insp.ogTitle ? (
                       <span style={{ fontSize: "12px", color: "#3C4043", lineHeight: 1.4 }}>Open Graph · {insp.ogTitle}</span>

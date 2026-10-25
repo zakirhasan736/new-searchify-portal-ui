@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 import LandingShell from "@/components/landing/LandingShell";
 import TestimonialsSlider from "@/components/landing/TestimonialsSlider";
 import { normalizeSiteUrl, seedDraftSite, stashPendingSite } from "@/lib/journey";
+import { previewSiteScan } from "@/lib/v1Api";
 import { userIsAuthenticated } from "@/utils/users/Helpers";
+import { SkeletonCards } from "@/components/v8/SkeletonWave";
 
 
 const COLORS = { red: "#FF5A4E", yellow: "#FFC53D", green: "#3DDC84", blue: "#4DA3FF" };
@@ -140,6 +142,9 @@ export default function HomeView() {
   const [undone, setUndone] = useState({});
   const [heroUrl, setHeroUrl] = useState("");
   const [footUrl, setFootUrl] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const [scan, setScan] = useState(null);
+  const [scanError, setScanError] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => setFocus((value) => (value + 1) % 4), 2200);
@@ -167,16 +172,39 @@ export default function HomeView() {
     return { ...row, reverted };
   });
 
-  const goScan = (raw) => {
+  const runPreview = async (raw) => {
     const site = normalizeSiteUrl(raw);
-    if (site) stashPendingSite(site);
-    if (userIsAuthenticated()) {
-      if (site) seedDraftSite(site);
-      router.push(site ? "/app/start" : "/app/results");
+    if (!site || !hostLabel(site).includes(".")) {
+      setScanError("Enter a website address, like example.com.");
       return;
     }
-    const q = new URLSearchParams({ next: "/app/start" });
-    if (site) q.set("site", site);
+    setScanError("");
+    setScan(null);
+    setScanning(true);
+    const res = await previewSiteScan(site);
+    setScanning(false);
+    if (!res.ok) {
+      const detail = res.data?.detail;
+      setScanError(typeof detail === "string" ? detail : "Could not read that site. Check the address and try again.");
+      return;
+    }
+    const next = res.data?.scan || null;
+    setScan(next);
+    if (next?.home) stashPendingSite(next.home);
+    const board = document.getElementById("scan");
+    board?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const openFullScan = () => {
+    const site = scan?.home || normalizeSiteUrl(heroUrl || footUrl);
+    if (!site) return;
+    stashPendingSite(site);
+    if (userIsAuthenticated()) {
+      seedDraftSite(site);
+      router.push("/app/start");
+      return;
+    }
+    const q = new URLSearchParams({ next: "/app/start", site });
     router.push(`/signup?${q}`);
   };
 
@@ -196,7 +224,7 @@ export default function HomeView() {
             className="sf-urlrow"
             onSubmit={(event) => {
               event.preventDefault();
-              goScan(heroUrl);
+              runPreview(heroUrl);
             }}
           >
             <label className="sf-urlfield">
@@ -210,24 +238,64 @@ export default function HomeView() {
                 onChange={(event) => setHeroUrl(event.target.value)}
               />
             </label>
-            <button className="sf-btn-blue lg" type="submit">
-              Scan it free
+            <button className="sf-btn-blue lg" type="submit" disabled={scanning}>
+              {scanning ? "Scanning…" : "Scan it free"}
             </button>
           </form>
-          <span className="sf-note">
-            {userIsAuthenticated()
-              ? "Opens setup with your site. About 60 seconds. Nothing on your site changes until you approve."
-              : "Quick account, then your first scan. About 60 seconds. Nothing on your site changes."}
-          </span>
+          <span className="sf-note">No account. Nothing on your site changes. A few live pages, colour-coded.</span>
+          {scanError ? (
+            <p role="alert" className="sf-note" style={{ color: "#FF5A4E" }}>
+              {scanError}
+            </p>
+          ) : null}
+          {scanning ? <SkeletonCards count={1} lines={3} /> : null}
+          {scan ? (
+            <div className="sf-card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <strong>
+                {scan.host} · {scan.pagesRead} {scan.pagesRead === 1 ? "page" : "pages"} read
+              </strong>
+              <span className="sf-note" style={{ margin: 0 }}>
+                {scan.counts?.red || 0} dire · {scan.counts?.yellow || 0} medium · {scan.counts?.green || 0} in place
+              </span>
+              {(scan.findings || []).length ? (
+                <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {scan.findings.map((item) => (
+                    <li key={`${item.path}-${item.label}`} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                      <i style={{ width: 10, height: 10, marginTop: 6, borderRadius: "50%", background: COLORS[item.color] || COLORS.yellow, flex: "none" }} />
+                      <span>
+                        <strong>{item.label}</strong>
+                        <span className="sf-note" style={{ display: "block" }}>
+                          {item.path} · {item.detail}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <span className="sf-note" style={{ margin: 0 }}>
+                  The pages we read already have a title and description.
+                </span>
+              )}
+              <button className="sf-btn-blue" type="button" onClick={openFullScan}>
+                {userIsAuthenticated() ? "Continue this scan in Searchify" : "Save this scan and continue"}
+              </button>
+            </div>
+          ) : null}
         </div>
 
-        <div className="sf-hero-board" aria-hidden="true">
+        <div className="sf-hero-board" aria-hidden={scan ? undefined : true}>
           <div className="sf-hero-board-top">
-            <span>{previewHost}</span>
-            <span style={{ color: COLORS[focusKey] }}>{LABELS[focusKey]}</span>
+            <span>{scan?.host || previewHost}</span>
+            <span style={{ color: scan ? COLORS.red : COLORS[focusKey] }}>
+              {scanning
+                ? "READING"
+                : scan
+                  ? `${scan.counts?.red || 0} DIRE`
+                  : LABELS[focusKey]}
+            </span>
           </div>
           <div className="sf-dots">
-            {dots.map((dot, index) => (
+            {(scan ? scan.dots.map((dot) => ({ color: COLORS[dot.color] || COLORS.green, op: 1, shadow: `0 0 16px ${COLORS[dot.color] || COLORS.green}`, anim: false })) : dots).map((dot, index) => (
               <div className="sf-dot-cell" key={index}>
                 <div
                   className={`sf-dot${dot.anim ? " is-live" : ""}`}
@@ -545,7 +613,7 @@ export default function HomeView() {
           className="sf-urlrow center"
           onSubmit={(event) => {
             event.preventDefault();
-            goScan(footUrl || heroUrl);
+            runPreview(footUrl || heroUrl);
           }}
         >
           <label className="sf-urlfield">
@@ -559,9 +627,9 @@ export default function HomeView() {
               onChange={(event) => setFootUrl(event.target.value)}
             />
           </label>
-          <button className="sf-btn-blue lg" type="submit">
-            Scan it free
-          </button>
+            <button className="sf-btn-blue lg" type="submit" disabled={scanning}>
+              {scanning ? "Scanning…" : "Scan it free"}
+            </button>
         </form>
         <p className="sf-note">
           Prefer to explore first?{" "}

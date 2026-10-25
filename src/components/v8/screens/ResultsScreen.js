@@ -10,6 +10,7 @@ import {
 } from "@/lib/v8LiveData";
 import { featurePayload, listChanges, loadFeature } from "@/lib/v1Api";
 import { loadJourney } from "@/lib/journey";
+import SkeletonPage from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
 
 function emptyModel(hostname) {
@@ -109,7 +110,11 @@ export default function ResultsScreen() {
   const { N, START, CH, clicks, impr, pos, leads, hostname } = model;
   const empty = N < 4;
 
-  if (loading || empty) {
+  if (loading) {
+    return <SkeletonPage />;
+  }
+
+  if (empty) {
     return (
       <div
         style={{
@@ -164,15 +169,12 @@ export default function ResultsScreen() {
             fontWeight: "700",
           }}
         >
-          {loading ? "Loading results…" : "No results data yet."}
+          No results data yet.
         </h1>
         <p style={{ margin: 0, fontSize: "15px", color: "#9AA1AB", maxWidth: 560 }}>
-          {loading
-            ? "Reading Search Console and shipped changes for this site."
-            : `Connect Search Console for ${hostname || "your site"} and wait for a few weeks of clicks. Shipped changes will appear on the chart once organic-search data is available.`}
+          {`Connect Search Console for ${hostname || "your site"} and wait for a few weeks of clicks. Shipped changes will appear on the chart once organic-search data is available.`}
         </p>
-        {!loading && (
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <Link
               href="/app/connections"
               style={{
@@ -205,7 +207,6 @@ export default function ResultsScreen() {
               Today&apos;s moves
             </Link>
           </div>
-        )}
       </div>
     );
   }

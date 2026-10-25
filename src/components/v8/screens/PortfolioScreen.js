@@ -22,6 +22,7 @@ import {
   setActiveSite,
 } from '@/lib/v1Api';
 import { loadJourney, planById, readySites, selectJourneySite } from '@/lib/journey';
+import { SkeletonCards } from '@/components/v8/SkeletonWave';
 import { activeSiteContext } from '@/lib/siteContext';
 import '@/styles/v8-screens.css';
 
@@ -275,7 +276,7 @@ export default function PortfolioScreen() {
             )}
           </div>
           <Link
-            href="/app/connect"
+            href="/app/connections"
             style={{ display: 'inline-flex', alignItems: 'center', minHeight: '46px', padding: '0 18px', borderRadius: '12px', background: '#4DA3FF', color: '#0A0B0D', textDecoration: 'none', fontSize: '14px', fontWeight: '600', boxShadow: '0 0 22px rgba(77,163,255,.4)' }}
           >
             Add a site
@@ -284,10 +285,15 @@ export default function PortfolioScreen() {
       </div>
 
       <div style={{ maxWidth: '1180px', width: '100%', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '14px' }}>
+        {loading ? (
+          <div style={{ gridColumn: '1 / -1' }}>
+            <SkeletonCards count={3} lines={4} />
+          </div>
+        ) : null}
         {!loading && sites.length === 0 && (
           <div style={{ gridColumn: '1 / -1', borderRadius: '22px', background: '#101215', border: '1px solid #1A1D22', padding: '28px', display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-start' }}>
             <p style={{ margin: 0, fontSize: '15px', color: '#9AA1AB' }}>No client sites yet. Connect WordPress or add a site to start.</p>
-            <Link href="/app/connect" style={{ color: '#4DA3FF', textDecoration: 'none', fontWeight: 600, fontSize: 14 }}>
+            <Link href="/app/connections" style={{ color: '#4DA3FF', textDecoration: 'none', fontWeight: 600, fontSize: 14 }}>
               Add a site
             </Link>
           </div>

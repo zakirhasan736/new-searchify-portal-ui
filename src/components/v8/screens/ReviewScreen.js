@@ -14,7 +14,7 @@ import {
 } from "@/lib/v1Api";
 import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
-import SearchifyLoader from "@/components/v8/SearchifyLoader";
+import SkeletonPage from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
 
 const ACCENT = "#D5F879";
@@ -271,7 +271,7 @@ export default function ReviewScreen() {
   const googleCrumb = `${siteHostname}${pathLabel === "/" ? "" : pathLabel.replace(/\//g, " › ")}`;
 
   if (!checked) {
-    return <SearchifyLoader label="Opening the editor" />;
+    return <SkeletonPage />;
   }
 
   if (!change) {

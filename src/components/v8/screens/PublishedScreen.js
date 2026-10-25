@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { changePath, listChanges, queueItems } from "@/lib/v1Api";
 import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
-import SearchifyLoader from "@/components/v8/SearchifyLoader";
+import SkeletonPage from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
 
 const LIVE = new Set(["applied", "monitoring", "closed", "published_unverified", "executing"]);
@@ -113,7 +113,7 @@ export default function PublishedScreen() {
   }, [load]);
 
   if (!checked) {
-    return <SearchifyLoader label="Opening this page" />;
+    return <SkeletonPage />;
   }
 
   if (!change) {

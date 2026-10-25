@@ -376,6 +376,16 @@ export async function proposeFromGsc({ breadth = "balanced", site = null, limit 
   return res;
 }
 
+export async function previewSiteScan(site) {
+  return json(
+    await fetch("/api/v1/public/site-scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ site }),
+    }),
+  );
+}
+
 export async function runSiteScan({ site = null, force = false } = {}) {
   return json(await fetch("/api/v1/operator/site-scan", {
     method: "POST",

@@ -8,6 +8,7 @@ import { activeSiteContext } from "@/lib/siteContext";
 import { queueItemsFromChanges } from "@/lib/v8LiveData";
 import { approveChange, dismissChange, executeChange, featurePayload, listChanges, loadFeature } from "@/lib/v1Api";
 import { loadJourney } from "@/lib/journey";
+import { SkeletonCard } from "@/components/v8/SkeletonWave";
 import "@/styles/v8-phone.css";
 
 function mapChangeToMove(c) {
@@ -43,6 +44,7 @@ export default function PhoneScreen() {
   const [moves, setMoves] = useState([]);
   const [hostname, setHostname] = useState("site");
   const [captured, setCaptured] = useState({ now: 0, total: 0 });
+  const [loading, setLoading] = useState(true);
   const accent = "#D5F879";
 
   useEffect(() => {
@@ -59,7 +61,8 @@ export default function PhoneScreen() {
         const queue = queueItemsFromChanges(chRes.data);
         setMoves(queue.slice(0, 8).map(mapChangeToMove));
       })
-      .catch(() => setMoves([]));
+      .catch(() => setMoves([]))
+      .finally(() => setLoading(false));
   }, []);
 
   const hasQueue = moves.length > 0;
@@ -117,7 +120,11 @@ export default function PhoneScreen() {
         </div>
       </div>
 
-      {hasMove && m ? (
+      {loading ? (
+        <article className="v8-phone-card">
+          <SkeletonCard lines={5} />
+        </article>
+      ) : hasMove && m ? (
         <>
           <article className="v8-phone-card">
             <span className="v8-phone-kind">

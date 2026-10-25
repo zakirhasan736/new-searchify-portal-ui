@@ -316,6 +316,49 @@ export function setSiteAnswer(siteId, key, value) {
   return site;
 }
 
+export function addReadyWebsite(raw, limit) {
+  const state = loadJourney();
+  const cap = Number(limit) > 0 ? Number(limit) : planById(state.planId)?.sites || 1;
+  let href = String(raw || "").trim();
+  if (!href) return { ok: false, error: "Enter the website address." };
+  if (!/^https?:\/\//i.test(href)) href = `https://${href}`;
+  let host = "";
+  try {
+    const url = new URL(href);
+    host = url.hostname.replace(/^www\./, "");
+    if (!host.includes(".")) return { ok: false, error: "Enter a full website address, like example.com." };
+    href = url.origin;
+  } catch {
+    return { ok: false, error: "Enter a full website address, like example.com." };
+  }
+  const ready = readySites(state);
+  const existing = ready.find((site) => {
+    const current = String(site.answers?.site || "")
+      .replace(/^https?:\/\//i, "")
+      .replace(/^www\./, "")
+      .split("/")[0];
+    return current === host;
+  });
+  if (existing) {
+    state.activeId = existing.id;
+    save(state);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("sf-site", { detail: { id: existing.id } }));
+    }
+    return { ok: true, site: existing, switched: true, limit: cap };
+  }
+  if (ready.length >= cap) return { ok: false, error: "limit", limit: cap };
+  const id = Date.now();
+  const site = { id, answers: { site: href }, status: "ready", createdAt: id };
+  state.sites.push(site);
+  state.activeId = id;
+  save(state);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("sf-site", { detail: { id } }));
+  }
+  return { ok: true, site, limit: cap };
+}
+
 export function beginAnotherWebsite() {
   const state = loadJourney();
   const plan = planById(state.planId);

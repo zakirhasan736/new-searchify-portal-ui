@@ -3,6 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getGoogleStatus, listCmsConnections, saveCmsConnection, startGoogleOAuth } from "@/lib/v1Api";
 import { markConnection } from "@/lib/journey";
+import { activeSiteContext } from "@/lib/siteContext";
+
+function hostOf(url) {
+  try {
+    return new URL(String(url || "").includes("://") ? url : `https://${url}`).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
 
 const COPY = {
   wordpress: {
@@ -138,10 +147,13 @@ export default function ConnectDialog({ provider, siteUrl = "", onClose, onDone 
 
 export function useConnectionStatus() {
   const [status, setStatus] = useState({ wordpress: false, gsc: false, ga: false, wordpressId: null, wordpressUrl: "", google: null });
+  const [ready, setReady] = useState(false);
   const refresh = useCallback(() => {
     Promise.all([listCmsConnections({ force: true }), getGoogleStatus({ force: true })]).then(([cms, google]) => {
       const sites = cms.data?.connections || [];
-      const wp = sites.find((item) => item.provider === "wordpress" && item.status === "connected");
+      const active = hostOf(activeSiteContext().href);
+      const wordpress = sites.filter((item) => item.provider === "wordpress" && item.status === "connected");
+      const wp = (active && wordpress.find((item) => hostOf(item.siteUrl) === active)) || (!active ? wordpress[0] : null);
       const g = google.data?.connection || {};
       setStatus({
         wordpress: Boolean(wp),
@@ -154,8 +166,8 @@ export function useConnectionStatus() {
         googleAccount: g.account?.status || (g.connected ? "connected" : "disconnected"),
         google: g,
       });
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => setReady(true));
   }, []);
   useEffect(() => { refresh(); }, [refresh]);
-  return [status, refresh];
+  return [status, refresh, ready];
 }

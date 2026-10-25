@@ -12,6 +12,7 @@ import {
 } from "@/lib/v1Api";
 import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
+import { SkeletonRows } from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
 
 const DEFS = [
@@ -395,7 +396,8 @@ export default function PathScreen() {
         )}
       </div>
 
-      {(loading || empty) && (
+      {loading ? <SkeletonRows count={6} /> : null}
+      {!loading && empty && (
         <div
           style={{
             maxWidth: "1120px",
@@ -414,11 +416,9 @@ export default function PathScreen() {
           }}
         >
           <span style={{ flex: "1 1 240px" }}>
-            {loading
-              ? "Reading audit, scan and change history…"
-              : `No page progress yet. Run a site scan to see levels for ${hostname || "your site"}.`}
+            {`No page progress yet. Run a site scan to see levels for ${hostname || "your site"}.`}
           </span>
-          {!loading && empty && (
+          {empty && (
             <Link
               href="/app/results"
               style={{

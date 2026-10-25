@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { changePath, listChanges, queueItems } from "@/lib/v1Api";
 import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
-import SearchifyLoader from "@/components/v8/SearchifyLoader";
+import SkeletonPage from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
 
 const CONTENT_COL = {
@@ -82,7 +82,7 @@ export default function QueueScreen({ autoOpen = false } = {}) {
   }, [autoOpen, router]);
 
   if (rows === null || (autoOpen && rows.length > 0)) {
-    return <SearchifyLoader label={rows === null ? "Loading drafts" : "Opening draft"} />;
+    return <SkeletonPage />;
   }
 
   return (

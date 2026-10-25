@@ -15,6 +15,7 @@ import {
 } from "@/lib/v1Api";
 import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
+import { SkeletonCards } from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
 
 const SETTINGS_KEY = "sf_v8_settings_v1";
@@ -88,6 +89,7 @@ export default function StatesScreen() {
   const [wpDialog, setWpDialog] = useState(false);
   const [textReady, setTextReady] = useState(true);
   const [checkingPlugin, setCheckingPlugin] = useState(false);
+  const [pageReady, setPageReady] = useState(false);
 
   const { hostname, href } = useMemo(() => activeSiteContext(loadJourney()), []);
   const siteKey = useMemo(
@@ -145,10 +147,11 @@ export default function StatesScreen() {
 
     const local = loadLocal();
     setTextReady(local.textWhenReady !== false);
+    setPageReady(true);
   }, []);
 
   useEffect(() => {
-    reload();
+    reload().finally(() => setPageReady(true));
   }, [reload]);
 
   const wpLive = Boolean(status.wordpress) && !wpMeta.lastError;
@@ -259,6 +262,14 @@ export default function StatesScreen() {
     const notif = { ...(local.notif || {}), weekly: on, broken: true };
     saveLocal({ textWhenReady: on, notif });
   };
+
+  if (!pageReady) {
+    return (
+      <div style={{ padding: "28px clamp(16px, 4vw, 56px) 56px", background: "#0A0B0D" }}>
+        <SkeletonCards count={3} lines={4} />
+      </div>
+    );
+  }
 
   return (
     <>

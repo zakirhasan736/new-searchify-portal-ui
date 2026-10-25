@@ -1,18 +1,30 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { deleteCmsConnection, disconnectGoogle, startGoogleOAuth } from "@/lib/v1Api";
+import { deleteCmsConnection, disconnectGoogle, previewSiteScan, runSiteScan, startGoogleOAuth } from "@/lib/v1Api";
 import ConnectDialog, { useConnectionStatus } from "@/components/board/ConnectDialog";
 import { activeSiteContext } from "@/lib/siteContext";
+import { addReadyWebsite, loadJourney, readySites, selectJourneySite, websiteLabel } from "@/lib/journey";
+import { getBillingAccount } from "@/lib/billingApi";
+import { SkeletonCards } from "@/components/v8/SkeletonWave";
+
+const TONE = { red: "#FF5A4E", yellow: "#FFC53D", green: "#3DDC84", blue: "#4DA3FF" };
 import "@/styles/v8-screens.css";
 
 const BLUE = "#4DA3FF";
 
 export default function ConnectScreen() {
   const router = useRouter();
-  const [status, refreshStatus] = useConnectionStatus();
+  const [status, refreshStatus, plugsReady] = useConnectionStatus();
   const [wpDialog, setWpDialog] = useState(false);
+  const [siteLimit, setSiteLimit] = useState(null);
+  const [siteUrl, setSiteUrl] = useState("");
+  const [siteNote, setSiteNote] = useState("");
+  const [freeScan, setFreeScan] = useState(null);
+  const [freeBusy, setFreeBusy] = useState(false);
+  const [sitesTick, setSitesTick] = useState(0);
   const [state, setState] = useState({
     gsc: "off",
     wp: "off",
@@ -22,6 +34,17 @@ export default function ConnectScreen() {
   });
   const [rows, setRows] = useState({ gsc: 0, wp: 0, ga: 0 });
   const { href: siteHref } = activeSiteContext();
+  const savedSites = sitesTick >= 0 ? readySites(loadJourney()) : [];
+  const activeId = loadJourney().activeId;
+
+  useEffect(() => {
+    getBillingAccount().then((res) => {
+      if (res.ok && Number(res.data?.siteLimit) > 0) setSiteLimit(Number(res.data.siteLimit));
+    });
+    const onSite = () => setSitesTick((n) => n + 1);
+    window.addEventListener("sf-site", onSite);
+    return () => window.removeEventListener("sf-site", onSite);
+  }, []);
 
   useEffect(() => {
     // Sync state from actual connection status — no fake counters.
@@ -265,6 +288,138 @@ export default function ConnectScreen() {
           The two green tags are required. A grey light means not connected yet; it turns green, and
           the cable glows blue, once data is flowing into Searchify.
         </p>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!siteLimit) {
+              setSiteNote("Checking your plan…");
+              return;
+            }
+            const added = addReadyWebsite(siteUrl, siteLimit);
+            if (!added.ok && added.error === "limit") {
+              setSiteNote(`This plan includes ${added.limit} website${added.limit === 1 ? "" : "s"}. Open Plan and billing to raise it.`);
+              return;
+            }
+            if (!added.ok) {
+              setSiteNote(added.error || "That website could not be added.");
+              return;
+            }
+            setSiteUrl("");
+            setFreeScan(null);
+            setFreeBusy(true);
+            setSiteNote(
+              added.switched
+                ? `Scanning ${websiteLabel(added.site)} free. Nothing on the site changes.`
+                : `${websiteLabel(added.site)} added. Scanning it free now.`,
+            );
+            const address = added.site?.answers?.site || "";
+            previewSiteScan(address).then((res) => {
+              setFreeBusy(false);
+              if (res.ok && res.data?.scan) setFreeScan(res.data.scan);
+              else setSiteNote(typeof res.data?.detail === "string" ? res.data.detail : "The free scan could not read that site.");
+            });
+            runSiteScan({ site: added.site, force: false }).catch(() => {});
+            setSitesTick((n) => n + 1);
+            refreshStatus();
+          }}
+          style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center", marginTop: "8px" }}
+        >
+          <input
+            value={siteUrl}
+            onChange={(event) => setSiteUrl(event.target.value)}
+            placeholder="Add a website, like client.com"
+            aria-label="Website address"
+            style={{
+              minHeight: "46px",
+              flex: "1 1 240px",
+              maxWidth: "420px",
+              borderRadius: "12px",
+              border: "1px solid #1A1D22",
+              background: "#101215",
+              color: "#F2F4F5",
+              padding: "0 14px",
+              fontSize: "15px",
+            }}
+          />
+          <button
+            type="submit"
+            style={{
+              minHeight: "46px",
+              padding: "0 16px",
+              borderRadius: "12px",
+              border: 0,
+              background: "#4DA3FF",
+              color: "#0A0B0D",
+              fontWeight: 600,
+            }}
+          >
+            {freeBusy ? "Scanning…" : "Scan it free"}
+          </button>
+          <span style={{ fontSize: "13px", color: "#9AA1AB" }}>
+            {siteLimit ? `${savedSites.length} of ${siteLimit} websites on this plan` : "Checking your plan…"}
+          </span>
+        </form>
+        {savedSites.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+            {savedSites.map((site) => {
+              const on = String(site.id) === String(activeId);
+              return (
+                <button
+                  key={site.id}
+                  type="button"
+                  onClick={() => {
+                    selectJourneySite(site.id);
+                    setSiteNote(`${websiteLabel(site)} is selected. Scan, keywords, and backlinks use this site.`);
+                    setSitesTick((n) => n + 1);
+                    refreshStatus();
+                  }}
+                  style={{
+                    minHeight: "36px",
+                    padding: "0 12px",
+                    borderRadius: "999px",
+                    border: on ? "1px solid #4DA3FF" : "1px solid #1A1D22",
+                    background: on ? "rgba(77,163,255,.16)" : "#101215",
+                    color: "#F2F4F5",
+                    fontSize: "13px",
+                  }}
+                >
+                  {websiteLabel(site)}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {siteNote ? (
+          <p style={{ margin: 0, fontSize: "14px", color: "#D7DADE" }}>
+            {siteNote}{" "}
+            {siteNote.includes("Plan and billing") ? (
+              <Link href="/app/billing" style={{ color: "#4DA3FF" }}>
+                Plan and billing
+              </Link>
+            ) : null}
+          </p>
+        ) : (
+          <p style={{ margin: 0, fontSize: "14px", color: "#9AA1AB" }}>
+            Pick a website here, or from All client sites. Scan it free reads a few live pages. Nothing on the site changes.
+          </p>
+        )}
+        {freeBusy ? <SkeletonCards count={1} lines={3} /> : null}
+        {freeScan ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <span style={{ fontSize: 14, color: "#F2F4F5" }}>
+              {freeScan.host} · {freeScan.pagesRead} pages · {freeScan.counts?.red || 0} dire · {freeScan.counts?.yellow || 0} medium · {freeScan.counts?.green || 0} in place
+            </span>
+            {(freeScan.findings || []).slice(0, 4).map((item) => (
+              <span key={`${item.path}-${item.label}`} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 14, color: "#D7DADE" }}>
+                <i style={{ width: 8, height: 8, marginTop: 6, borderRadius: "50%", background: TONE[item.color] || TONE.yellow, flex: "none" }} />
+                {item.label} · {item.path}
+              </span>
+            ))}
+            <Link href="/app/results" style={{ color: "#4DA3FF", fontSize: 14 }}>
+              Open the full site scan
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       <div
@@ -277,7 +432,7 @@ export default function ConnectScreen() {
           gap: "12px",
         }}
       >
-        {plugs.map((p) => (
+        {plugsReady ? plugs.map((p) => (
           <div
             key={p.id}
             style={{
@@ -572,7 +727,9 @@ export default function ConnectScreen() {
               )}
             </div>
           </div>
-        ))}
+        )) : (
+          <SkeletonCards count={5} lines={2} />
+        )}
       </div>
 
       <div

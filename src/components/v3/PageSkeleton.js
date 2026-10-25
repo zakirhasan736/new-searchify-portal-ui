@@ -1,6 +1,6 @@
-import SearchifyLoader from "@/components/v8/SearchifyLoader";
+import SkeletonPage from "@/components/v8/SkeletonWave";
 
-/** In-pane wait. Keeps the app chrome and replaces the gray full-page skeleton. */
+/** In-pane wait. Wave skeleton for the page and its cards. */
 export default function PageSkeleton() {
-  return <SearchifyLoader label="Loading this page" />;
+  return <SkeletonPage />;
 }

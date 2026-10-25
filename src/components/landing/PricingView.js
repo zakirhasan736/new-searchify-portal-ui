@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import SearchifyMark from "@/components/landing/SearchifyMark";
 import { V8Button, V8Field, V8Segmented } from "@/components/v8/primitives";
 import { getBillingAccount, getBillingCatalog, requestEnterpriseQuote, startCheckout } from "@/lib/billingApi";
+import { SkeletonCards } from "@/components/v8/SkeletonWave";
 import { PLAN_ALIAS, choosePlan, hydrateJourney, syncJourneyNow } from "@/lib/journey";
 import { getUser, userIsAuthenticated } from "@/utils/users/Helpers";
 import "@/styles/v8-kit.css";
@@ -24,6 +25,7 @@ const FALLBACK = [
       "One move at a time, with results",
       "Change log, one-click undo, unlimited CSV export",
       "1 branded PDF report per month",
+      "2 site scans, 10 tracked keywords, and 5 backlink checks a month",
     ],
   },
   {
@@ -38,6 +40,7 @@ const FALLBACK = [
       "5 branded reports per site, per month",
       "1 scheduled client send + 3 client logins per site",
       "AI answer tracking and autopilot within limits",
+      "8 site scans, 40 keyword checks (50 tracked), and 20 backlink checks a month",
     ],
   },
   {
@@ -52,6 +55,7 @@ const FALLBACK = [
       "Unlimited scheduled sends and client logins",
       "Social channels via Postiz",
       "All-clients view and team seats",
+      "30 site scans, 150 keyword checks (200 tracked), and 60 backlink checks a month",
     ],
   },
   {
@@ -110,8 +114,10 @@ export default function PricingView({ embedded = false }) {
           })),
         );
         setLive(Boolean(res.data.live));
+      } else {
+        setLive(true);
       }
-    });
+    }).catch(() => setLive(true));
     if (!userIsAuthenticated()) return;
     getBillingAccount().then((res) => {
       if (!res.ok || !res.data?.planId) return;
@@ -222,6 +228,15 @@ export default function PricingView({ embedded = false }) {
                 Your plan is <strong>{account.name}</strong>
                 {" · "}
                 {account.sitesUsed} of {account.siteLimit} websites
+                {account.allowance?.features?.audits?.limit != null
+                  ? ` · ${account.allowance.features.audits.used} of ${account.allowance.features.audits.limit} scans`
+                  : ""}
+                {account.allowance?.features?.keywords?.limit != null
+                  ? ` · ${account.allowance.features.keywords.used} of ${account.allowance.features.keywords.limit} keyword checks`
+                  : ""}
+                {account.allowance?.features?.backlinks?.limit != null
+                  ? ` · ${account.allowance.features.backlinks.used} of ${account.allowance.features.backlinks.limit} backlink checks`
+                  : ""}
                 {" · "}
                 {account.billing === "annual" ? "billed yearly" : "billed monthly"}
                 {account.status === "trial" ? " · 14-day trial" : ""}
@@ -255,11 +270,10 @@ export default function PricingView({ embedded = false }) {
             { value: "year", label: "Yearly · 2 months free", accent: "green" },
           ]}
         />
-        {live ? null : <span className="v8-pricing-fine">Loading live catalog…</span>}
       </div>
 
       <div className="v8-wrap v8-pricing-grid">
-        {plans.map((pl) => (
+        {!live ? <div style={{ gridColumn: "1 / -1" }}><SkeletonCards count={4} lines={5} /></div> : plans.map((pl) => (
           <article key={pl.id} className={`v8-card${pl.on ? " is-on" : ""}`}>
             <div className="v8-pricing-card-top">
               <h2>{pl.name}</h2>
