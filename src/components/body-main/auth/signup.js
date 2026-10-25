@@ -9,6 +9,7 @@ import { PARTNER_KEY, PREVIEW_KEY, clearSessionFlag } from "@/lib/authRoles";
 import { hydrateJourney, normalizeSiteUrl, postLoginPath, seedDraftSite, stashPendingSite } from "@/lib/journey";
 import { parseJwt, userLogin } from "@/utils/users/Helpers";
 import { fetchProjectByUserId } from "@/utils/users/ProjectUtil";
+import { readReferral } from "@/lib/referral";
 
 /**
  * Create access — same V8 auth shell as presentation/signin.html.
@@ -85,6 +86,8 @@ export default function SignUp() {
           password: pwd,
           email: mail,
           roles: ["ROLE_CLIENT"],
+          // Partner handle from a ?ref= link in the last 60 days (attributes the sign-up).
+          ref: readReferral(),
         }),
       });
       const created = await res.json().catch(() => ({}));

@@ -7,6 +7,7 @@ import AdminShell from "@/components/v3/AdminShell";
 import ClientOnly from "@/components/shell/ClientOnly";
 import SkinWallPill from "@/components/v8/SkinWallPill";
 import { userIsAuthenticated } from "@/utils/users/Helpers";
+import { captureReferral } from "@/lib/referral";
 
 const MARKETING = new Set(["/", "/about", "/pricing", "/contact", "/terms", "/privacy", "/skins", "/brand"]);
 
@@ -33,6 +34,11 @@ const STANDALONE_APP = (pathname) => pathname === "/app/phone" || pathname === "
 export default function ProductShell({ children }) {
   const pathname = usePathname() || "/";
   const router = useRouter();
+
+  // Partner links (?ref=handle) can land on any page; remember the handle for sign-up.
+  useEffect(() => {
+    captureReferral();
+  }, [pathname]);
 
   useEffect(() => {
     if (
