@@ -160,8 +160,17 @@ export default function V8PropertyPicker({ google, siteLabel = "", onSaved }) {
         {siteLabel ? ` ${siteHost || siteLabel}` : " this website"}. Confirm and sync so keyword tracking, site audit, site scan, and Today’s moves can load.
       </p>
       {google?.googleEmail || google?.account?.email ? (
-        <p style={{ margin: 0, fontSize: "13px", color: "#7D848E" }}>Signed in as {google?.googleEmail || google?.account?.email}</p>
+        <p style={{ margin: 0, fontSize: "13px", color: "#7D848E" }}>
+          Signed in as <strong style={{ color: "#F2F4F5" }}>{google?.googleEmail || google?.account?.email}</strong>
+          {" — this exact email must be Full on the Search Console property you pick."}
+        </p>
       ) : null}
+      <p style={{ margin: 0, fontSize: "13px", color: "#9AA1AB", lineHeight: 1.5 }}>
+        Domain property <code style={{ color: "#D7DADE" }}>sc-domain:…</code> is not the same as{" "}
+        <code style={{ color: "#D7DADE" }}>https://…</code> or <code style={{ color: "#D7DADE" }}>https://www.…</code>.
+        Your client must add you on the exact property Searchify selects (often the Domain one).
+      </p>
+      {google?.lastError ? <p style={warnStyle}>{google.lastError}</p> : null}
 
       {match?.gsc?.status === "matched" && match.gsc.selected === gsc ? (
         <p style={hintStyle}>Search Console matched: {gsc}</p>
@@ -185,7 +194,7 @@ export default function V8PropertyPicker({ google, siteLabel = "", onSaved }) {
             {gscSites.map((site) => (
               <option key={site.siteUrl} value={site.siteUrl}>
                 {site.siteUrl}
-                {site.permissionLevel ? ` · ${site.permissionLevel}` : ""}
+                {site.permissionLevel ? ` · ${String(site.permissionLevel).replace(/^site/, "")}` : ""}
               </option>
             ))}
           </select>
