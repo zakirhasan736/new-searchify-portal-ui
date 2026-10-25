@@ -987,112 +987,115 @@ export default function ScanScreen() {
                     <span
                       style={{
                         display: "flex",
-                        alignItems: "flex-start",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "12px",
+                        marginBottom: "2px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          flex: "1 1 auto",
+                          minWidth: 0,
+                          fontFamily: "'Geist Mono', monospace",
+                          fontSize: "11px",
+                          color: "#1A5FB4",
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {insp.topic || "THIS DOT"}
+                      </span>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", flex: "none" }}>
+                        {showOptionNav ? (
+                          <button
+                            type="button"
+                            aria-label="Previous option"
+                            disabled={v === 0}
+                            onClick={() => setVariant({ ...variant, [selTask.t]: v - 1 })}
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              borderRadius: "8px",
+                              border: "1px solid #D7DADE",
+                              background: "#fff",
+                              color: "#202124",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 0,
+                              cursor: v === 0 ? "default" : "pointer",
+                              opacity: v === 0 ? 0.35 : 1,
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M15 6l-6 6 6 6"></path>
+                            </svg>
+                          </button>
+                        ) : null}
+                        <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#3C4043", whiteSpace: "nowrap" }}>
+                          {insp.optNo} of {insp.optCount}
+                        </span>
+                        {showOptionNav ? (
+                          <button
+                            type="button"
+                            aria-label="Next option"
+                            disabled={nextLocked}
+                            onClick={goNext}
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              borderRadius: "8px",
+                              border: "1px solid #D7DADE",
+                              background: "#fff",
+                              color: "#202124",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 0,
+                              cursor: nextLocked ? "default" : "pointer",
+                              opacity: nextLocked ? 0.35 : 1,
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M9 6l6 6-6 6"></path>
+                            </svg>
+                          </button>
+                        ) : null}
+                      </span>
+                    </span>
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
                         justifyContent: "space-between",
                         gap: "12px",
                         flexWrap: "wrap",
                         marginBottom: "6px",
                       }}
                     >
-                      <span
-                        style={{
-                          flex: "1 1 180px",
-                          minWidth: 0,
-                          fontSize: "13px",
-                          color: "#202124",
-                          lineHeight: 1.4,
-                          overflowWrap: "anywhere",
-                        }}
-                      >
+                      <span style={{ flex: "1 1 160px", minWidth: 0, fontSize: "12px", color: "#3C4043", lineHeight: 1.4 }}>
                         {scanHost || "your.site"}
                         {insp.crumb}
                       </span>
-                      <span
-                        style={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          alignItems: "center",
-                          justifyContent: "flex-end",
-                          gap: "8px",
-                          marginLeft: "auto",
-                          flex: "1 1 220px",
-                        }}
-                      >
-                        {showOptionNav ? (
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                            <button
-                              type="button"
-                              aria-label="Previous option"
-                              disabled={v === 0}
-                              onClick={() => setVariant({ ...variant, [selTask.t]: v - 1 })}
-                              style={{
-                                width: "28px",
-                                height: "28px",
-                                borderRadius: "8px",
-                                border: "1px solid #D7DADE",
-                                background: "#fff",
-                                color: "#202124",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                padding: 0,
-                                cursor: v === 0 ? "default" : "pointer",
-                                opacity: v === 0 ? 0.35 : 1,
-                              }}
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d="M15 6l-6 6 6 6"></path>
-                              </svg>
-                            </button>
-                            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#3C4043", whiteSpace: "nowrap" }}>
-                              {insp.optNo} of {insp.optCount}
+                      {(insp.judgeScore || insp.ctrFit || insp.seoScore) ? (
+                        <span style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: "6px", marginLeft: "auto" }}>
+                          {insp.judgeScore ? (
+                            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#1A5FB4", whiteSpace: "nowrap", padding: "3px 8px", borderRadius: "999px", background: "rgba(77,163,255,.12)" }}>
+                              {`Score ${insp.judgeScore}${insp.liveScore ? ` vs live ${insp.liveScore}` : ""}`}
                             </span>
-                            <button
-                              type="button"
-                              aria-label="Next option"
-                              disabled={nextLocked}
-                              onClick={goNext}
-                              style={{
-                                width: "28px",
-                                height: "28px",
-                                borderRadius: "8px",
-                                border: "1px solid #D7DADE",
-                                background: "#fff",
-                                color: "#202124",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                padding: 0,
-                                cursor: nextLocked ? "default" : "pointer",
-                                opacity: nextLocked ? 0.35 : 1,
-                              }}
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d="M9 6l6 6-6 6"></path>
-                              </svg>
-                            </button>
-                          </span>
-                        ) : null}
-                        {(insp.judgeScore || insp.ctrFit || insp.seoScore) ? (
-                          <span style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: "6px" }}>
-                            {insp.judgeScore ? (
-                              <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#1A5FB4", whiteSpace: "nowrap", padding: "3px 8px", borderRadius: "999px", background: "rgba(77,163,255,.12)" }}>
-                                {`Score ${insp.judgeScore}${insp.liveScore ? ` vs live ${insp.liveScore}` : ""}`}
-                              </span>
-                            ) : null}
-                            {insp.ctrFit ? (
-                              <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#1A5FB4", whiteSpace: "nowrap", padding: "3px 8px", borderRadius: "999px", background: "rgba(77,163,255,.12)" }}>
-                                {`CTR ${insp.ctrFit}`}
-                              </span>
-                            ) : null}
-                            {insp.seoScore ? (
-                              <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#1A5FB4", whiteSpace: "nowrap", padding: "3px 8px", borderRadius: "999px", background: "rgba(77,163,255,.12)" }}>
-                                {`SEO ${insp.seoScore}`}
-                              </span>
-                            ) : null}
-                          </span>
-                        ) : null}
-                      </span>
+                          ) : null}
+                          {insp.ctrFit ? (
+                            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#1A5FB4", whiteSpace: "nowrap", padding: "3px 8px", borderRadius: "999px", background: "rgba(77,163,255,.12)" }}>
+                              {`CTR ${insp.ctrFit}`}
+                            </span>
+                          ) : null}
+                          {insp.seoScore ? (
+                            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#1A5FB4", whiteSpace: "nowrap", padding: "3px 8px", borderRadius: "999px", background: "rgba(77,163,255,.12)" }}>
+                              {`SEO ${insp.seoScore}`}
+                            </span>
+                          ) : null}
+                        </span>
+                      ) : null}
                     </span>
                     <span
                       style={{
