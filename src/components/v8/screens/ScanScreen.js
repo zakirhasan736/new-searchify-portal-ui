@@ -986,26 +986,26 @@ export default function ScanScreen() {
                   >
                     <span
                       style={{
-                        display: "flex",
+                        display: "grid",
+                        gridTemplateColumns: "minmax(0, 1fr) auto",
+                        columnGap: "16px",
+                        rowGap: "8px",
                         alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: "12px",
-                        marginBottom: "2px",
+                        width: "100%",
+                        marginBottom: "8px",
                       }}
                     >
                       <span
                         style={{
-                          flex: "1 1 auto",
-                          minWidth: 0,
                           fontFamily: "'Geist Mono', monospace",
-                          fontSize: "11px",
+                          fontSize: "12px",
                           color: "#1A5FB4",
                           lineHeight: 1.4,
                         }}
                       >
                         {insp.topic || "THIS DOT"}
                       </span>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", flex: "none" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", justifySelf: "end" }}>
                         {showOptionNav ? (
                           <button
                             type="button"
@@ -1062,23 +1062,12 @@ export default function ScanScreen() {
                           </button>
                         ) : null}
                       </span>
-                    </span>
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: "12px",
-                        flexWrap: "wrap",
-                        marginBottom: "6px",
-                      }}
-                    >
-                      <span style={{ flex: "1 1 160px", minWidth: 0, fontSize: "12px", color: "#3C4043", lineHeight: 1.4 }}>
+                      <span style={{ fontSize: "12px", color: "#3C4043", lineHeight: 1.4 }}>
                         {scanHost || "your.site"}
                         {insp.crumb}
                       </span>
                       {(insp.judgeScore || insp.ctrFit || insp.seoScore) ? (
-                        <span style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: "6px", marginLeft: "auto" }}>
+                        <span style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: "6px", justifySelf: "end" }}>
                           {insp.judgeScore ? (
                             <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#1A5FB4", whiteSpace: "nowrap", padding: "3px 8px", borderRadius: "999px", background: "rgba(77,163,255,.12)" }}>
                               {`Score ${insp.judgeScore}${insp.liveScore ? ` vs live ${insp.liveScore}` : ""}`}
