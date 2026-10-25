@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { getHqProblems } from "@/lib/hqApi";
 import { getUser, userLogout } from "@/utils/users/Helpers";
 import SearchifyMarkSvg from "@/components/v8/SearchifyMarkSvg";
 import RequireAdmin from "@/components/admin/RequireAdmin";
+import SearchifyLoader from "@/components/v8/SearchifyLoader";
 import "@/styles/v8-screens.css";
 
 const TABS = [
@@ -17,6 +18,21 @@ const TABS = [
   { href: "/admin/hq/shareholders", label: "Shareholders" },
   { href: "/admin/settings", label: "Settings" },
 ];
+
+/**
+ * `const [loading, firstLoad] = useFirstLoad();` then `firstLoad(getHqSomething())`.
+ * `loading` stays true until the first wrapped request settles (success or failure); later requests don't reset it.
+ */
+export function useFirstLoad() {
+  const [loading, setLoading] = useState(true);
+  const firstLoad = useCallback((promise) => {
+    const done = () => setLoading(false);
+    if (promise && typeof promise.then === "function") promise.then(done, done);
+    else done();
+    return promise;
+  }, []);
+  return [loading, firstLoad];
+}
 
 const tabBase = {
   minHeight: 38,
@@ -36,11 +52,20 @@ export default function HqPanel({
   minHeight = 1200,
   // Kept for callers; HQ only shows real data, so there is no sample badge any more.
   showSample: _showSample = false,
+  // True until the screen's first data has arrived: the full-screen six-dot loader covers the page meanwhile.
+  loading = false,
 }) {
   const pathname = usePathname() || "/admin";
   const router = useRouter();
   const [openProblems, setOpenProblems] = useState(null);
   const [adminName, setAdminName] = useState("");
+  const [capped, setCapped] = useState(false);
+
+  useEffect(() => {
+    // A request that never answers must not trap the admin behind the loader.
+    const t = window.setTimeout(() => setCapped(true), 15000);
+    return () => window.clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     setAdminName(getUser()?.result?.username || "");
@@ -66,6 +91,7 @@ export default function HqPanel({
 
   return (
     <RequireAdmin>
+      {loading && !capped ? <SearchifyLoader full label="Opening Searchify HQ" /> : null}
       <style>{`
         @keyframes sfy-grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
         .hq-shell a.hq-exit:hover{color:#ECFFB8}

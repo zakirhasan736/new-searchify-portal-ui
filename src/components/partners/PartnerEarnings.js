@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from "react";
+import { useShellBusy } from "@/components/v8/ShellBusy";
 import PartnerShell from "@/components/partners/PartnerShell";
 import { getPartnerEarnings } from "@/lib/partnerApi";
 import { buildPartnerEarningsModel } from "@/lib/partnerEarningsModel";
 
 function PartnerEarningsBody() {
+  const track = useShellBusy();
   const [filter, setFilter] = useState("all");
   const [stmt, setStmt] = useState("");
   const [api, setApi] = useState(null);
@@ -65,7 +67,7 @@ function PartnerEarningsBody() {
 
   useEffect(() => {
     let cancelled = false;
-    getPartnerEarnings().then((res) => {
+    track(getPartnerEarnings()).then((res) => {
       if (!cancelled && res.ok) setApi(res.data);
     });
     return () => {

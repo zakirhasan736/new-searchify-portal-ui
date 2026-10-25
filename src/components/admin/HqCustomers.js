@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import HqPanel from "@/components/admin/HqPanel";
+import HqPanel, { useFirstLoad } from "@/components/admin/HqPanel";
 import { getHqCustomers, hqCustomerAction } from "@/lib/hqApi";
 import { forgotPassword } from "@/lib/accountApi";
 
@@ -39,6 +39,7 @@ function lk(n, ok) {
 }
 
 export default function HqCustomers() {
+  const [loading, firstLoad] = useFirstLoad();
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("all");
   const [sel, setSel] = useState("");
@@ -54,7 +55,7 @@ export default function HqCustomers() {
 
   useEffect(() => {
     let cancelled = false;
-    getHqCustomers().then((res) => {
+    firstLoad(getHqCustomers()).then((res) => {
       if (cancelled || !res.ok) return;
       const list = res.data?.items || [];
       setItems(list);
@@ -252,7 +253,7 @@ export default function HqCustomers() {
   ];
 
   return (
-    <HqPanel showSample={!live}>
+    <HqPanel loading={loading} showSample={!live}>
       <div
         style={{
           maxWidth: 1240,

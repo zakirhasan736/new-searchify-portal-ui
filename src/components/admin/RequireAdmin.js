@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import SearchifyLoader from "@/components/v8/SearchifyLoader";
 import { isAdminAuthenticated, isPartnerAuthenticated } from "@/lib/authRoles";
 
 /** HQ / admin routes require an admin JWT — customer or partner sessions are rejected. */
@@ -22,11 +23,7 @@ export default function RequireAdmin({ children }) {
   }, [router]);
 
   if (!ok) {
-    return (
-      <div style={{ minHeight: "40vh", background: "#0A0B0D", color: "#9AA1AB", padding: 28, fontFamily: "Geist, system-ui, sans-serif" }}>
-        Checking admin access…
-      </div>
-    );
+    return <SearchifyLoader full label="Opening Searchify HQ" />;
   }
 
   return children;

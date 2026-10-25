@@ -4,6 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import SearchifyMarkSvg from "@/components/v8/SearchifyMarkSvg";
+import SearchifyLoader from "@/components/v8/SearchifyLoader";
+import { ShellBusyProvider } from "@/components/v8/ShellBusy";
 import { getPartnerMe, partnerInitials } from "@/lib/partnerApi";
 import { userLogout } from "@/utils/users/Helpers";
 import { PARTNER_KEY, clearSessionFlag, isPartnerAuthenticated } from "@/lib/authRoles";
@@ -136,20 +138,7 @@ export default function PartnerShell({
   };
 
   if (!ready) {
-    return (
-      <div
-        className="partner-v8-root"
-        style={{
-          minHeight: 200,
-          background: "#0A0B0D",
-          color: "#9AA1AB",
-          fontFamily: "Geist, 'Helvetica Neue', sans-serif",
-          padding: 22,
-        }}
-      >
-        Loading partner centre…
-      </div>
-    );
+    return <SearchifyLoader full label="Opening your partner centre" />;
   }
 
   const types = [
@@ -346,7 +335,7 @@ export default function PartnerShell({
           })}
         </nav>
 
-        {children}
+        <ShellBusyProvider label="Opening your partner centre">{children}</ShellBusyProvider>
       </div>
     </PartnerCtx.Provider>
   );

@@ -2,11 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useShellBusy } from "@/components/v8/ShellBusy";
 import PartnerShell, { usePartnerCtx } from "@/components/partners/PartnerShell";
 import { getPartnerOverview } from "@/lib/partnerApi";
 import { buildPartnerOverviewModel } from "@/lib/partnerOverviewModel";
 
 function PartnerOverviewBody() {
+  const track = useShellBusy();
   const { profile } = usePartnerCtx();
   const [range, setRange] = useState("all");
   const [metric, setMetric] = useState("signups");
@@ -17,7 +19,7 @@ function PartnerOverviewBody() {
 
   useEffect(() => {
     let cancelled = false;
-    getPartnerOverview().then((res) => {
+    track(getPartnerOverview()).then((res) => {
       if (!cancelled && res.ok) setApi(res.data);
     });
     return () => {
@@ -29,7 +31,7 @@ function PartnerOverviewBody() {
   const data = useMemo(() => {
     const payload = api || {
       tier: profile?.tier || "standard",
-      rate: profile?.rate || 0.3,
+      rate: profile?.rate || 0.2,
       handle: profile?.handle || "partner",
       since: profile?.since || "this year",
       qualified: profile?.qualified || 0,
