@@ -157,6 +157,61 @@ body:has(.v8-app-chrome) {
   border-top: 1px solid #1a1d22;
 }
 
+.v8-app-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.v8-app-user-id {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid #1a1d22;
+  color: #f2f4f5;
+  text-decoration: none;
+}
+
+.v8-app-user-avatar {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 50%;
+  background: #262a31;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.v8-app-user-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.v8-app-user-name {
+  font-size: 14px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.v8-app-user-plan {
+  font-size: 11px;
+  line-height: 1.2;
+  color: #9aa1ab;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .v8-app-nav {
   flex: 1 1 auto;
   width: 100%;
@@ -177,14 +232,28 @@ body:has(.v8-app-chrome) {
 }
 
 .v8-app-signout {
-  min-height: 36px;
+  flex: none;
+  width: 58px;
+  min-height: 52px;
   margin-top: 0;
-  border-radius: 10px;
+  padding: 6px 4px;
+  border-radius: 12px;
   border: 1px solid #262a31;
   background: transparent;
-  color: #9aa1ab;
-  font-size: 12px;
+  color: #d7dade;
+  font-size: 10px;
+  line-height: 1.1;
   cursor: pointer;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.v8-app-signout:hover {
+  color: #f2f4f5;
+  border-color: #3d4450;
 }
 
 .v8-app-main {

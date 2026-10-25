@@ -53,7 +53,7 @@ export function buildPartnerEarningsModel(api, filter) {
     cleared: money(clearedN),
     hold: money(holdN),
     totals: [
-      { label: "Cleared", value: money(clearedN), sub: "paying on Nov 15", color: "#D5F879", dot: "#3DDC84" },
+      { label: "Cleared", value: money(clearedN), sub: "included in the next payout on the 15th", color: "#D5F879", dot: "#3DDC84" },
       {
         label: "In the 30-day hold",
         value: money(holdN),
@@ -72,7 +72,7 @@ export function buildPartnerEarningsModel(api, filter) {
     ],
     minNote:
       clearedN >= 50
-        ? `You’re over the minimum: ${money(clearedN)} goes out Nov 15.`
+        ? `You’re over the minimum: ${money(clearedN)} goes out on the next 15th.`
         : `You’re under the $50 minimum. Cleared balance: ${money(clearedN)}.`,
     rows,
     taxNote: isFounding

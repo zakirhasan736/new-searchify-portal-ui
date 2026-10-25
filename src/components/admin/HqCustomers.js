@@ -105,22 +105,12 @@ export default function HqCustomers() {
     selected: c.id === selCustomer.id,
   }));
 
-  const pays =
-    selCustomer.ltv === 0
-      ? []
-      : [
-          ["Oct 3, 2026", price, "Paid"],
-          ["Sep 3, 2026", price, "Paid"],
-          ["Aug 3, 2026", price, "Paid"],
-        ].slice(0, Math.max(1, Math.round(selCustomer.ltv / price)));
-
-  let payments = pays.map((p) => ({ date: p[0], amount: money(p[1]), status: p[2] }));
-  if (selCustomer.status === "failed") {
-    payments = [{ date: "Oct 20, 2026", amount: money(price), status: "Declined" }, ...payments];
-  }
-  if (selCustomer.refunded) {
-    payments = payments.map((p, i) => (i === 0 ? { ...p, status: "Refunded" } : p));
-  }
+  const sourcePayments = Array.isArray(selCustomer.payments) ? selCustomer.payments : [];
+  let payments = sourcePayments.map((p) => ({
+    date: p.date,
+    amount: p.amount === "" || p.amount == null ? "" : money(Number(p.amount) || 0),
+    status: p.status || "Paid",
+  }));
   payments = payments.map((p) => ({
     ...p,
     color: (PSTYLE[p.status] || PSTYLE.Paid)[0],
@@ -156,16 +146,15 @@ export default function HqCustomers() {
     })),
   };
 
-  const baseLog = [
-    { when: "Oct 18", text: "Approved 12 low-risk moves across 3 sites", who: selCustomer.owner },
-    { when: "Oct 3", text: `Paid invoice ${money(price)}`, who: "Stripe" },
-    {
-      when: selCustomer.since,
-      text: `Signed up on ${(PLAN[selCustomer.plan] || PLAN.solo)[0]}${String(selCustomer.ref || "").indexOf("Direct") === 0 ? "" : ` through ${selCustomer.ref}`}`,
-      who: "System",
-    },
-  ];
-  const log = [...(selCustomer.log || []), ...baseLog];
+  const log = selCustomer.log?.length
+    ? selCustomer.log
+    : [
+        {
+          when: selCustomer.since,
+          text: `Signed up on ${(PLAN[selCustomer.plan] || PLAN.solo)[0]}${String(selCustomer.ref || "").indexOf("Direct") === 0 ? "" : ` through ${selCustomer.ref}`}`,
+          who: "System",
+        },
+      ];
 
   const applyCustomer = (next) => {
     setItems((prev) => prev.map((c) => (c.id === next.id ? next : c)));

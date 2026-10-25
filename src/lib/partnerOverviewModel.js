@@ -6,6 +6,11 @@ function money(v) {
 
 const PRICE = { Solo: 29, Pro: 79, Premium: 399 };
 
+function nextPayoutLabel(now = new Date()) {
+  const day = now.getDate() > 15 ? new Date(now.getFullYear(), now.getMonth() + 1, 15) : new Date(now.getFullYear(), now.getMonth(), 15);
+  return day.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 export function buildPartnerOverviewModel(api, state) {
   const F = (api?.tier || "standard") === "founding";
   const RATE = Number(api?.rate) || (F ? 0.35 : 0.3);
@@ -204,6 +209,7 @@ export function buildPartnerOverviewModel(api, state) {
 
   return {
     nextPayout: money(monthly),
+    payoutOn: nextPayoutLabel(),
     earnedLine: `${money(paid + monthly)} earned since ${since} · ${money(paid)} already paid out · your referrals bring in ${money(refMrr)} a month`,
     rate,
     balances,

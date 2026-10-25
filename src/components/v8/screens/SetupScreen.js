@@ -301,10 +301,6 @@ export default function SetupScreen() {
       setErr(`Saved on this device, but not to your account yet. ${sync.error || ""} Try again.`);
       return;
     }
-    if (!status.gsc || !status.wordpress) {
-      router.push("/app/connections");
-      return;
-    }
     router.push(path);
   };
 

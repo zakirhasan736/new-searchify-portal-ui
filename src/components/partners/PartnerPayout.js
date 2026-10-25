@@ -4,6 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import PartnerShell, { usePartnerCtx } from "@/components/partners/PartnerShell";
 import { getPartnerPayout, savePartnerPayout } from "@/lib/partnerApi";
 
+function nextPayoutLabel(now = new Date()) {
+  const day = now.getDate() > 15 ? new Date(now.getFullYear(), now.getMonth() + 1, 15) : new Date(now.getFullYear(), now.getMonth(), 15);
+  return day.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
 function PartnerPayoutBody() {
   const { profile } = usePartnerCtx();
 
@@ -239,7 +244,7 @@ function PartnerPayoutBody() {
             </span>
             <span style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
               <span>Next payout</span>
-              <span style={{ color: "#F2F4F5" }}>Nov 15, 2026</span>
+              <span style={{ color: "#F2F4F5" }}>{nextPayoutLabel()}</span>
             </span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>

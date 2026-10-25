@@ -99,7 +99,7 @@ function PartnerOverviewBody() {
               fontWeight: 700,
             }}
           >
-            Your next payout is <span style={{ color: "#D5F879" }}>{data.nextPayout}</span> on Nov 15.
+            Your next payout is <span style={{ color: "#D5F879" }}>{data.nextPayout}</span> on {data.payoutOn}.
           </h1>
           <span style={{ fontSize: 15, color: "#9AA1AB" }}>{data.earnedLine}</span>
         </div>

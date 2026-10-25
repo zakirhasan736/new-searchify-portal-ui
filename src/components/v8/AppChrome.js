@@ -10,7 +10,7 @@ import { authHeaders, getUser, userLogout } from "@/utils/users/Helpers";
 import { canAccessCustomerApp, isPartnerAuthenticated } from "@/lib/authRoles";
 import { activeJourneySite, hydrateJourney, loadJourney, planById, requiredJourneyPath } from "@/lib/journey";
 import { activeSiteContext } from "@/lib/siteContext";
-import { activateGoogleSite, getBusinessProfile, syncGoogle } from "@/lib/v1Api";
+import { activateGoogleSite, syncGoogle } from "@/lib/v1Api";
 import { invalidateV3Cache } from "@/lib/v3Store";
 import SkeletonPage from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
@@ -86,11 +86,10 @@ export default function AppChrome({ children, current }) {
     let live = true;
     Promise.all([
       hydrateJourney(),
-      getBusinessProfile().catch(() => ({ ok: false })),
       fetch("/api/v1/profile", { headers: authHeaders(), cache: "no-store" })
         .then((r) => (r.ok ? r.json() : null))
         .catch(() => null),
-    ]).then(([_, bp, acct]) => {
+    ]).then(([_, acct]) => {
       if (!live) return;
       const gate = requiredJourneyPath(pathname);
       if (gate) {
@@ -104,7 +103,6 @@ export default function AppChrome({ children, current }) {
         bootedScope.current = true;
         scopeWorkspace(current?.answers?.site || "", () => live);
       }
-      const profile = bp?.data?.profile || {};
       const name =
         acct?.displayName ||
         acct?.username ||
@@ -115,10 +113,7 @@ export default function AppChrome({ children, current }) {
         user?.result?.email ||
         "You";
       const plan = planById(state.planId)?.name || "";
-      const biz = String(profile.business || "").trim();
-      const mail = String(acct?.email || user?.result?.email || "").trim();
-      const sub = [biz, plan].filter(Boolean).join(" · ") || mail || "Workspace";
-      setWho({ name, sub, initials: initials(name) });
+      setWho({ name, sub: plan, initials: initials(name) });
       setReady(true);
     });
     return () => {
@@ -386,28 +381,34 @@ export default function AppChrome({ children, current }) {
         </nav>
 
         <div className="v8-app-nav-foot">
-          <Link
-            href="/app/settings"
-            style={{ display: "flex", alignItems: "center", gap: 10, padding: 10, borderRadius: 12, border: "1px solid #1A1D22", color: "#F2F4F5", textDecoration: "none" }}
-          >
-            <span style={{ width: 34, height: 34, flex: "none", borderRadius: "50%", background: "#262A31", display: "grid", placeItems: "center", fontSize: 12, fontWeight: 600 }}>
-              {who.initials}
-            </span>
-            <span style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-              <span style={{ fontSize: 14, fontWeight: 500 }}>{who.name}</span>
-              <span style={{ fontSize: 12, color: "#9AA1AB" }}>{who.sub}</span>
-            </span>
-          </Link>
-          <button
-            type="button"
-            className="v8-app-signout"
-            onClick={() => {
-              userLogout();
-              router.replace("/login");
-            }}
-          >
-            Sign out
-          </button>
+          <div className="v8-app-user">
+            <Link href="/app/settings" className="v8-app-user-id">
+              <span className="v8-app-user-avatar" aria-hidden="true">
+                {who.initials}
+              </span>
+              <span className="v8-app-user-copy">
+                <span className="v8-app-user-name">{who.name}</span>
+                {who.sub ? <span className="v8-app-user-plan">{who.sub}</span> : null}
+              </span>
+            </Link>
+            <button
+              type="button"
+              className="v8-app-signout"
+              aria-label="Sign out"
+              title="Sign out"
+              onClick={() => {
+                userLogout();
+                router.replace("/login");
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 6H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3" />
+                <path d="M14 16l4-4-4-4" />
+                <path d="M18 12H9" />
+              </svg>
+              <span>Sign out</span>
+            </button>
+          </div>
         </div>
       </aside>
 

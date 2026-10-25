@@ -129,14 +129,14 @@ export default function HqProblems() {
   const [cat, setCat] = useState("all");
   const [done, setDone] = useState({});
   const [emailed, setEmailed] = useState({});
-  const [itemsSrc, setItemsSrc] = useState(ITEMS);
+  const [itemsSrc, setItemsSrc] = useState([]);
   const [live, setLive] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     getHqProblems().then((res) => {
       if (cancelled || !res.ok) return;
-      if (Array.isArray(res.data?.items) && res.data.items.length) setItemsSrc(res.data.items);
+      if (Array.isArray(res.data?.items)) setItemsSrc(res.data.items);
       setDone(res.data?.done || {});
       setEmailed(res.data?.emailed || {});
       setLive(Boolean(res.data?.live));

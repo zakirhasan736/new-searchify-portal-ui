@@ -7,7 +7,7 @@ import SearchifyMark from "@/components/landing/SearchifyMark";
 import { V8Button, V8Field, V8Segmented } from "@/components/v8/primitives";
 import { getBillingAccount, getBillingCatalog, requestEnterpriseQuote, startCheckout } from "@/lib/billingApi";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
-import { PLAN_ALIAS, choosePlan, hydrateJourney, syncJourneyNow } from "@/lib/journey";
+import { PLAN_ALIAS, choosePlan, hydrateJourney, readySites, syncJourneyNow } from "@/lib/journey";
 import { getUser, userIsAuthenticated } from "@/utils/users/Helpers";
 import "@/styles/v8-kit.css";
 import "@/styles/v8-pricing.css";
@@ -83,7 +83,7 @@ function userEmail() {
   return String(u?.result?.email || u?.data?.email || u?.result?.username || "").trim();
 }
 
-export default function PricingView({ embedded = false }) {
+export default function PricingView({ embedded = false, onboarding = false }) {
   const router = useRouter();
   const [period, setPeriod] = useState("month");
   const [pick, setPick] = useState("premium");
@@ -118,6 +118,11 @@ export default function PricingView({ embedded = false }) {
         setLive(true);
       }
     }).catch(() => setLive(true));
+    if (onboarding && userIsAuthenticated()) {
+      hydrateJourney({ force: true }).then(() => {
+        if (!readySites().length) router.replace("/app/start");
+      });
+    }
     if (!userIsAuthenticated()) return;
     getBillingAccount().then((res) => {
       if (!res.ok || !res.data?.planId) return;
@@ -126,7 +131,7 @@ export default function PricingView({ embedded = false }) {
       if (res.data.billing === "annual") setPeriod("year");
       if (res.data.email && String(res.data.email).includes("@")) setEmail(res.data.email);
     });
-  }, []);
+  }, [onboarding, router]);
 
   const plans = useMemo(
     () =>
@@ -195,6 +200,10 @@ export default function PricingView({ embedded = false }) {
       setAccount(fresh.data);
       setPick(fresh.data.planId);
     }
+    if (onboarding) {
+      router.push("/app");
+      return;
+    }
     if (embedded) return;
     router.push(res.data?.next || path || "/app/connections");
   };
@@ -251,8 +260,8 @@ export default function PricingView({ embedded = false }) {
             <span>searchify</span>
           </Link>
         )}
-        <Link href={embedded ? "/app/settings" : userIsAuthenticated() ? "/app" : "/login"} className="v8-pricing-back">
-          {embedded ? "Settings" : userIsAuthenticated() ? "Back to app" : "Sign in"}
+        <Link href={onboarding ? "/app/start" : embedded ? "/app/settings" : userIsAuthenticated() ? "/app" : "/login"} className="v8-pricing-back">
+          {onboarding ? "Back" : embedded ? "Settings" : userIsAuthenticated() ? "Back to app" : "Sign in"}
         </Link>
       </header>
 

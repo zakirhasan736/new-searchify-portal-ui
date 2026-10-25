@@ -51,14 +51,15 @@ const money = (v) => (v < 0 ? "−$" : "$") + Math.abs(Math.round(v)).toLocaleSt
 const cents = (v) => `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export default function HqShareholders() {
-  const [sc, setSc] = useState("sample");
+  const [sc, setSc] = useState("actual");
   const [amount, setAmount] = useState(6000);
   const [solvent, setSolvent] = useState(false);
   const [prepared, setPrepared] = useState(false);
   const [qu, setQu] = useState("none");
   const [hw, setHw] = useState([]);
   const [hwInput, setHwInput] = useState("1000");
-  const [holders, setHolders] = useState(HOLD);
+  const [holders, setHolders] = useState([]);
+  const [report, setReport] = useState(null);
   const [scenarios, setScenarios] = useState(null);
   const [live, setLive] = useState(false);
 
@@ -67,7 +68,8 @@ export default function HqShareholders() {
     getHqShareholders().then((res) => {
       if (cancelled || !res.ok) return;
       const d = res.data || {};
-      if (Array.isArray(d.holders) && d.holders.length) setHolders(d.holders);
+      if (Array.isArray(d.holders)) setHolders(d.holders);
+      if (Array.isArray(d.report)) setReport(d.report);
       if (d.scenarios) setScenarios(d.scenarios);
       const st = d.state || {};
       if (st.scenario) setSc(st.scenario);
@@ -91,7 +93,9 @@ export default function HqShareholders() {
 
   const data = useMemo(() => {
     const fallback =
-      sc === "sample"
+      sc === "actual"
+        ? { m: [["", 0], ["", 0], ["", 0], ["", 0], ["", 0], ["", 0]], cash: 0, exp: 0 }
+        : sc === "sample"
         ? {
             m: [
               ["Apr", 1840],
@@ -152,7 +156,7 @@ export default function HqShareholders() {
   const left = Math.max(0, 7500 - hwPaid);
   const prepDisabled = !data.t3ok || data.amt <= 0 || prepared;
 
-  const QD =
+  const QD = report || (
     sc === "sample"
       ? [
           ["Revenue", "$71,240"],
@@ -171,7 +175,8 @@ export default function HqShareholders() {
           ["Paying customers", "0 · launch planned Feb 2027"],
           ["Dealings with your other businesses", "None"],
           ["Change in ownership", "None"],
-        ];
+        ]
+  );
 
   const hwPays = [
     ...hw

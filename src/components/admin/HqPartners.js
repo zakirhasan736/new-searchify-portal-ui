@@ -56,14 +56,14 @@ export default function HqPartners() {
   const [rates, setRates] = useState({});
   const [cleared, setCleared] = useState({});
   const [grants, setGrants] = useState({});
-  const [runRowsSrc, setRunRowsSrc] = useState(RUN);
+  const [runRowsSrc, setRunRowsSrc] = useState([]);
   // Real applications from the partner apply form only (no sample rows).
   const [appsSrc, setAppsSrc] = useState([]);
   const [appResult, setAppResult] = useState({});
   const [appBusy, setAppBusy] = useState("");
   const [copiedLink, setCopiedLink] = useState("");
-  const [partnersSrc, setPartnersSrc] = useState(PARTNERS);
-  const [foundersSrc, setFoundersSrc] = useState(FOUNDERS);
+  const [partnersSrc, setPartnersSrc] = useState([]);
+  const [foundersSrc, setFoundersSrc] = useState([]);
   const [stepsSrc, setStepsSrc] = useState(STEPS);
   const [live, setLive] = useState(false);
 
@@ -72,11 +72,11 @@ export default function HqPartners() {
     getHqPartners().then((res) => {
       if (cancelled || !res.ok) return;
       const d = res.data || {};
-      if (Array.isArray(d.run) && d.run.length) setRunRowsSrc(d.run);
+      if (Array.isArray(d.run)) setRunRowsSrc(d.run);
       if (Array.isArray(d.applications)) setAppsSrc(d.applications);
-      if (Array.isArray(d.partners) && d.partners.length) setPartnersSrc(d.partners);
-      if (Array.isArray(d.founders) && d.founders.length) setFoundersSrc(d.founders);
-      if (Array.isArray(d.steps) && d.steps.length) setStepsSrc(d.steps);
+      if (Array.isArray(d.partners)) setPartnersSrc(d.partners);
+      if (Array.isArray(d.founders)) setFoundersSrc(d.founders);
+      if (Array.isArray(d.steps)) setStepsSrc(d.steps);
       const st = d.state || {};
       setRun(st.run || {});
       setPaid(Boolean(st.paid));
