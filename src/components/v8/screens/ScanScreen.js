@@ -26,33 +26,7 @@ import {
 } from "@/lib/v1Api";
 import { useConnectionStatus } from "@/components/board/ConnectDialog";
 import { loadJourney } from "@/lib/journey";
-import { listingKept, listingStatus, pinKeptTitle, whyLines } from "@/lib/listingSuggestion";
 import "@/styles/v8-screens.css";
-
-function WhyRecommend({ lines }) {
-  if (!lines?.length) return null;
-  return (
-    <span className="sf-why">
-      <button type="button" className="sf-why-btn" aria-label="Why I recommend this version">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
-          <path d="M12 11v5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          <circle cx="12" cy="7.6" r="1" fill="currentColor" />
-        </svg>
-      </button>
-      <span className="sf-why-pop" role="tooltip">
-        <span className="sf-why-card">
-          <strong>Why I recommend this version</strong>
-          <ul>
-            {lines.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        </span>
-      </span>
-    </span>
-  );
-}
 
 const COLORS = { red: "#FF5A4E", yellow: "#FFC53D", green: "#3DDC84", blue: "#4DA3FF" };
 const RGB = {
@@ -279,17 +253,20 @@ export default function ScanScreen() {
   const slice = tasks.slice(pg * PER, pg * PER + PER);
   const lit = stage === "input" ? 0 : stage === "scanning" ? Math.round((pct / 100) * slice.length) : slice.length;
   const f = filter;
+  const brand =
+    (scanHost || "")
+      .replace(/^www\./, "")
+      .split(".")[0]
+      .replace(/[-_]/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase()) || "Your site";
   const emptyTask = { c: "green", t: "No findings yet · /" };
-  const fallbackTask = slice.find((task) => task.c === f) || slice[0] || tasks.find((task) => task.c === f) || tasks[0] || null;
-  const clickedTask = (sel ? tasks.find((task) => task.t === sel) : null) || (N > 0 ? fallbackTask : null);
-  const activeKey = clickedTask?.t || null;
   const dots = slice.map((task, i) => {
     const on = i < lit;
     const scanning = stage === "scanning";
     const match = scanning || f === task.c;
     const published = !!pub[task.t];
     const col = published ? COLORS.green : COLORS[task.c];
-    const selected = activeKey != null && task.t === activeKey;
+    const selected = sel === task.t;
     return {
       pick: () => setSel(task.t),
       ring: selected ? "2px solid #F2F4F5" : "none",
@@ -340,6 +317,7 @@ export default function ScanScreen() {
 
   const callsEstimate = Math.max(0, Math.round(untappedVisitors / 50));
 
+  const clickedTask = sel ? tasks.find((x) => x.t === sel) || null : null;
   const selTask = clickedTask || emptyTask;
   const waitingForClick = N > 0 && !scanLoading && !clickedTask;
   const parts = String(selTask.t || "").split(" · ");
@@ -359,15 +337,25 @@ export default function ScanScreen() {
     changeByPath[path] ||
     null;
   const pagePath = norm(path);
+  const isBlog = pagePath.indexOf("/blog") === 0;
+  const seg = pagePath === "/" ? "" : pagePath.split("/").filter(Boolean).pop() || "";
+  const topic = seg
+    ? seg
+        .split("-")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ")
+    : brand;
   const crumb = pagePath === "/" ? "" : " › " + pagePath.split("/").filter(Boolean).join(" › ");
-  const scannedPage = (scanData?.pages || []).find((page) => {
-    const raw = String(page?.url || page?.path || "");
-    try {
-      return norm(new URL(raw).pathname) === pagePath;
-    } catch {
-      return norm(raw) === pagePath;
-    }
-  });
+  const nowT =
+    pagePath === "/"
+      ? brand
+      : topic + (isBlog ? ` | ${brand} Blog` : ` | ${brand}`);
+  const nowD =
+    action.indexOf("description") >= 0 && action.indexOf("Add") === 0
+      ? "(No description. Google shows a random sentence from the page.)"
+      : isBlog
+      ? "Read our latest post about " + topic.toLowerCase() + "."
+      : "Learn more about our " + topic.toLowerCase() + " services.";
 
   const isFillerListing = (title, description) => {
     const blob = `${title || ""} ${description || ""}`.toLowerCase();
@@ -390,9 +378,9 @@ export default function ScanScreen() {
   };
   const p = matchedChange?.proposed || {};
   const choiceRows = [];
-  if (p.title || p.metaDescription) choiceRows.push({ title: p.title, description: p.metaDescription, ctrFit: p.ctrFit, seoScore: p.seoScore });
+  if (p.title || p.metaDescription) choiceRows.push({ title: p.title, description: p.metaDescription, ctrFit: p.ctrFit, seoScore: p.seoScore, judgeScore: p.judgeScore });
   (Array.isArray(p.aiAlternatives) ? p.aiAlternatives : []).forEach((alt) => {
-    choiceRows.push({ title: alt?.title, description: alt?.description || alt?.metaDescription, ctrFit: alt?.ctrFit, seoScore: alt?.seoScore });
+    choiceRows.push({ title: alt?.title, description: alt?.description || alt?.metaDescription, ctrFit: alt?.ctrFit, seoScore: alt?.seoScore, judgeScore: alt?.judgeScore });
   });
   const choices = [];
   choiceRows.forEach((row) => {
@@ -404,28 +392,22 @@ export default function ScanScreen() {
     if (choices.some((item) => `${item.title} ${item.description}`.toLowerCase() === key)) return;
     const fit = Number(row.ctrFit);
     const seo = Number(row.seoScore);
+    const judge = Number(row.judgeScore);
     choices.push({
+      judgeScore: Number.isFinite(judge) && judge > 0 ? Math.round(judge) : 0,
       title: title || "Updated title",
       description,
       ctrFit: Number.isFinite(fit) && fit > 0 ? Math.round(fit) : 0,
       seoScore: Number.isFinite(seo) && seo > 0 ? Math.round(seo) : 0,
     });
   });
-  choices.sort((a, b) => (b.ctrFit || 0) - (a.ctrFit || 0) || (b.seoScore || 0) - (a.seoScore || 0));
-  const liveNowT = String(p.liveTitle || p.beforeTitle || scannedPage?.title || "").trim() || "(No title tag on this page.)";
-  const liveNowD = String(p.liveMetaDescription || p.beforeMetaDescription || p.beforeDescription || scannedPage?.description || "").trim() || "(No meta description on this page.)";
-  const keepListing = listingKept(p);
-  pinKeptTitle(choices, {
-    keep: keepListing,
-    liveTitle: liveNowT,
-    liveDescription: liveNowD,
-    ctrFit: Number.isFinite(Number(p.ctrFit)) ? Math.round(Number(p.ctrFit)) : 0,
-    seoScore: Number.isFinite(Number(p.seoScore)) ? Math.round(Number(p.seoScore)) : 0,
-  });
+  choices.sort((a, b) => (b.judgeScore || 0) - (a.judgeScore || 0) || (b.ctrFit || 0) - (a.ctrFit || 0) || (b.seoScore || 0) - (a.seoScore || 0));
   const choiceCount = Math.max(Math.min(choices.length, 3), 1);
   const shownChoices = choices.slice(0, 3);
   const v = (variant[selTask.t] || 0) % choiceCount;
   const picked = shownChoices[v] || { title: "", description: "" };
+  const liveNowT = p.liveTitle || p.beforeTitle || nowT;
+  const liveNowD = p.liveMetaDescription || p.beforeMetaDescription || p.beforeDescription || nowD;
   const liveSugT = picked.title || "";
   const liveSugD = picked.description || "";
 
@@ -437,7 +419,7 @@ export default function ScanScreen() {
           ? "Loading scan…"
           : "No findings yet"
         : action,
-    topic: waitingForClick ? "Hover a dot to read it. Nothing is selected until you click." : N === 0 ? "" : pagePath,
+    topic: waitingForClick ? "Hover a dot to read it. Nothing is selected until you click." : N === 0 ? "" : selTask.t,
     page: waitingForClick ? "" : pagePath,
     crumb: crumb,
     nowT: liveNowT,
@@ -458,11 +440,8 @@ export default function ScanScreen() {
     optCount: Math.max(shownChoices.length, 1),
     ctrFit: picked.ctrFit || 0,
     seoScore: picked.seoScore || 0,
-    current: Boolean(picked.current) || (keepListing && liveSugT && liveSugT === liveNowT),
-    statusLine: keepListing && !picked.current && liveSugT && liveSugT !== liveNowT
-      ? `This is another option. ${listingStatus(liveNowT, { keep: true })}`
-      : listingStatus(liveNowT, { keep: keepListing || Boolean(picked.current) }),
-    why: whyLines(p),
+    judgeScore: picked.judgeScore || 0,
+    liveScore: Math.round(Number(p.liveScore) || 0),
     color: waitingForClick ? "#9AA1AB" : isPub ? COLORS.green : COLORS[selTask.c] || COLORS.green,
     status: waitingForClick ? "No dot selected" : N === 0 ? (scanLoading ? "Loading" : "Empty") : isPub ? "Published" : STATUS[selTask.c],
     border: waitingForClick
@@ -566,61 +545,28 @@ export default function ScanScreen() {
     },
     regen: async () => {
       if (regenBusy) return;
-      setRegenBusy(true);
-      setRegenNote("Reading the live page, then writing a title and description…");
-      try {
-        let id = matchedChange?.id;
-        if (!id) {
-          const siteHref = activeSiteContext(loadJourney()).href || (scanHost ? `https://${scanHost}` : "");
-          const origin = String(siteHref || "").replace(/\/$/, "");
-          const targetUrl = origin
-            ? pagePath === "/"
-              ? `${origin}/`
-              : `${origin}${pagePath.startsWith("/") ? pagePath : `/${pagePath}`}`
-            : "";
-          if (!targetUrl) {
-            setRegenNote("Add the website address first. This page has no URL to write for.");
+      if (matchedChange?.id) {
+        setRegenBusy(true);
+        setRegenNote("Reading the live page, then Search Console, Analytics, and Speed Index. Searchify SEO is writing the title and description…");
+        try {
+          const res = await generateMetaCopy(matchedChange.id, { breadth: "balanced", objective: "balanced" });
+          if (!res.ok) {
+            const detail = res.data?.detail;
+            setRegenNote(typeof detail === "string" ? detail : "Could not regenerate the title and description.");
             return;
           }
-          const created = await createChange({
-            opportunity: selTask.t,
-            target_url: targetUrl,
-            change_type: "meta",
-            source: "scan",
-            draft_with_ai: false,
-            resource: "page",
-            before_title: liveNowT.startsWith("(") ? "" : liveNowT,
-            before_description: liveNowD.startsWith("(") ? "" : liveNowD,
-          });
-          if (!created.ok || !created.data?.id) {
-            setRegenNote(errorText(created, "Could not open a suggestion for this page."));
-            return;
-          }
-          id = created.data.id;
           await reloadLive();
+          setVariant({ ...variant, [selTask.t]: 0 });
+          const nextTitle = res.data?.change?.proposed?.title || res.data?.options?.[0]?.title || "";
+          setRegenNote(nextTitle ? `New title ready: ${nextTitle}` : "New title and description are ready.");
+        } catch {
+          setRegenNote("Regenerate did not finish. Try again in a moment.");
+        } finally {
+          setRegenBusy(false);
         }
-        const res = await generateMetaCopy(id, { breadth: "balanced", objective: "balanced" });
-        if (!res.ok) {
-          const detail = res.data?.detail;
-          setRegenNote(typeof detail === "string" ? detail : errorText(res, "Could not regenerate the title and description."));
-          return;
-        }
-        await reloadLive();
-        setVariant({ ...variant, [selTask.t]: 0 });
-        const nextTitle = res.data?.change?.proposed?.title || res.data?.options?.[0]?.title || "";
-        const kept = res.data?.change?.proposed?.recommendKeep || res.data?.change?.proposed?.decision === "KEEP_CURRENT";
-        setRegenNote(
-          kept
-            ? "The published title is still the stronger choice. Nothing was replaced."
-            : nextTitle
-              ? `New title ready: ${nextTitle}`
-              : "New title and description are ready.",
-        );
-      } catch {
-        setRegenNote("Regenerate did not finish. Try again in a moment.");
-      } finally {
-        setRegenBusy(false);
+        return;
       }
+      setVariant({ ...variant, [selTask.t]: v + 1 });
     },
   };
 
@@ -1048,100 +994,92 @@ export default function ScanScreen() {
                       }}
                     >
                       <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#1A5FB4" }}>
-                        SUGGESTED
+                        {insp.topic || "THIS DOT"}
                       </span>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", marginLeft: "auto", flex: "none" }}>
-                        {showOptionNav ? (
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                            <button
-                              type="button"
-                              aria-label="Previous option"
-                              disabled={v === 0}
-                              onClick={() => setVariant({ ...variant, [selTask.t]: v - 1 })}
-                              style={{
-                                width: "28px",
-                                height: "28px",
-                                borderRadius: "8px",
-                                border: "1px solid #D7DADE",
-                                background: "#fff",
-                                color: "#202124",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                padding: 0,
-                                cursor: v === 0 ? "default" : "pointer",
-                                opacity: v === 0 ? 0.35 : 1,
-                              }}
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d="M15 6l-6 6 6 6"></path>
-                              </svg>
-                            </button>
-                            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#3C4043", whiteSpace: "nowrap" }}>
-                              {insp.optNo} of {insp.optCount}
-                            </span>
-                            <button
-                              type="button"
-                              aria-label="Next option"
-                              disabled={nextLocked}
-                              onClick={goNext}
-                              style={{
-                                width: "28px",
-                                height: "28px",
-                                borderRadius: "8px",
-                                border: "1px solid #D7DADE",
-                                background: "#fff",
-                                color: "#202124",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                padding: 0,
-                                cursor: nextLocked ? "default" : "pointer",
-                                opacity: nextLocked ? 0.35 : 1,
-                              }}
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d="M9 6l6 6-6 6"></path>
-                              </svg>
-                            </button>
-                          </span>
-                        ) : (
-                          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#3C4043", whiteSpace: "nowrap" }}>
+                      {showOptionNav ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", flex: "none" }}>
+                          <button
+                            type="button"
+                            aria-label="Previous option"
+                            disabled={v === 0}
+                            onClick={() => setVariant({ ...variant, [selTask.t]: v - 1 })}
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              borderRadius: "8px",
+                              border: "1px solid #D7DADE",
+                              background: "#fff",
+                              color: "#202124",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 0,
+                              cursor: v === 0 ? "default" : "pointer",
+                              opacity: v === 0 ? 0.35 : 1,
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M15 6l-6 6 6 6"></path>
+                            </svg>
+                          </button>
+                          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#3C4043", whiteSpace: "nowrap", textAlign: "center" }}>
                             {insp.optNo} of {insp.optCount}
+                            {(insp.judgeScore || insp.ctrFit || insp.seoScore) ? ` · ${[insp.judgeScore ? `Score ${insp.judgeScore}${insp.liveScore ? ` vs live ${insp.liveScore}` : ""}` : "", insp.ctrFit ? `CTR ${insp.ctrFit}` : "", insp.seoScore ? `SEO ${insp.seoScore}` : ""].filter(Boolean).join(" · ")}` : ""}
                           </span>
-                        )}
-                        <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#1A5FB4", whiteSpace: "nowrap" }}>
-                          {`CTR ${insp.ctrFit || "—"} · SEO ${insp.seoScore || "—"}`}
+                          <button
+                            type="button"
+                            aria-label="Next option"
+                            disabled={nextLocked}
+                            onClick={goNext}
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              borderRadius: "8px",
+                              border: "1px solid #D7DADE",
+                              background: "#fff",
+                              color: "#202124",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 0,
+                              cursor: nextLocked ? "default" : "pointer",
+                              opacity: nextLocked ? 0.35 : 1,
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M9 6l6 6-6 6"></path>
+                            </svg>
+                          </button>
                         </span>
-                      </span>
+                      ) : null}
                     </span>
-                    {insp.sugT ? (
-                      <>
-                        <span style={{ fontSize: "13px", color: "#3C4043", lineHeight: 1.45 }}>{insp.statusLine}</span>
-                        <span style={{ marginTop: "8px", fontSize: "13px", fontWeight: 600, color: "#202124", display: "flex", alignItems: "center", gap: "8px" }}>
-                          <span>{`Recommended SEO metadata for ${insp.page || "/"}`}</span>
-                          <WhyRecommend lines={insp.why} />
-                        </span>
-                        <span style={{ marginTop: "8px", fontSize: "11px", fontWeight: 600, letterSpacing: "0.2px", color: "#5F6368" }}>
-                          {insp.current ? "SEO title — current, kept" : "SEO title — recommended"}
-                        </span>
-                        <span style={{ fontSize: "18px", color: "#1A0DAB", lineHeight: 1.3 }}>{insp.sugT}</span>
-                        <span style={{ marginTop: "8px", fontSize: "11px", fontWeight: 600, letterSpacing: "0.2px", color: "#5F6368" }}>
-                          Meta description — recommended
-                        </span>
-                        <span style={{ fontSize: "13px", color: "#4D5156", lineHeight: 1.45 }}>
-                          {insp.sugD || "(No description on this option.)"}
-                        </span>
-                        <span style={{ marginTop: "8px", fontSize: "11px", fontWeight: 600, letterSpacing: "0.2px", color: "#5F6368" }}>
-                          Open Graph title
-                        </span>
-                        <span style={{ fontSize: "13px", color: "#202124", lineHeight: 1.4 }}>{insp.ogTitle || insp.sugT}</span>
-                      </>
-                    ) : (
-                      <span style={{ fontSize: "18px", color: "#1A0DAB", lineHeight: 1.3 }}>
-                        {regenBusy ? "Searchify SEO is writing the title and description…" : "No suggestion yet. Regenerate writes a title and description for this page."}
-                      </span>
-                    )}
+                    <span style={{ fontSize: "12px", color: "#3C4043" }}>
+                      {scanHost || "your.site"}{insp.crumb}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "18px",
+                        color: "#1A0DAB",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {scanLoading ? (
+                        <Skel light w="84%" h={18} radius={8} />
+                      ) : (
+                        insp.sugT || (regenBusy ? "Searchify SEO is writing the title and description…" : "Next writes another title and description for this page.")
+                      )}
+                    </span>
+                    <span style={{ fontSize: "13px", color: "#4D5156", lineHeight: 1.45 }}>
+                      {scanLoading ? <Skel light w="100%" h={12} /> : insp.sugD}
+                    </span>
+                    {insp.ogTitle ? (
+                      <span style={{ fontSize: "12px", color: "#3C4043", lineHeight: 1.4 }}>Open Graph · {insp.ogTitle}</span>
+                    ) : null}
+                    {insp.schemaLabel ? (
+                      <span style={{ fontSize: "12px", color: "#3C4043", lineHeight: 1.4 }}>Schema · {insp.schemaLabel}</span>
+                    ) : null}
                   </div>
                 )}
                 {insp.canAct && (

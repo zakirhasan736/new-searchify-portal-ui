@@ -19,34 +19,8 @@ import {
 import { useConnectionStatus } from "@/components/board/ConnectDialog";
 import { activeSiteContext } from "@/lib/siteContext";
 import { initials } from "@/lib/v8LiveData";
-import { listingKept, listingStatus, pinKeptTitle, whyLines } from "@/lib/listingSuggestion";
 import { Skel } from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
-
-function WhyRecommend({ lines }) {
-  if (!lines?.length) return null;
-  return (
-    <span className="sf-why">
-      <button type="button" className="sf-why-btn" aria-label="Why I recommend this version">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
-          <path d="M12 11v5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          <circle cx="12" cy="7.6" r="1" fill="currentColor" />
-        </svg>
-      </button>
-      <span className="sf-why-pop" role="tooltip">
-        <span className="sf-why-card">
-          <strong>Why I recommend this version</strong>
-          <ul>
-            {lines.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        </span>
-      </span>
-    </span>
-  );
-}
 
 const QUALITY = ["Poor", "Fair", "Good", "Strong", "Great", "Excellent"];
 
@@ -98,9 +72,18 @@ function choiceScore(value) {
   return Number.isFinite(number) && number > 0 ? Math.round(number) : 0;
 }
 
+function scoreLabel(ctrFit, seoScore, judgeScore) {
+  const parts = [];
+  // Blind-review score (0–100) is the real ranking; CTR/SEO fit are secondary hints.
+  if (judgeScore) parts.push(`Score ${judgeScore}`);
+  if (ctrFit) parts.push(`CTR ${ctrFit}`);
+  if (seoScore) parts.push(`SEO ${seoScore}`);
+  return parts.join(" · ");
+}
+
 function suggestionPairs(p) {
   const pairs = [];
-  const push = (title, description, ctrFit, seoScore) => {
+  const push = (title, description, ctrFit, seoScore, judgeScore) => {
     const t = String(title || "").trim();
     const d = String(description || "").trim();
     if (!t && !d) return;
@@ -111,20 +94,20 @@ function suggestionPairs(p) {
       description: d || "A clearer description for this page.",
       ctrFit: choiceScore(ctrFit),
       seoScore: choiceScore(seoScore),
+      judgeScore: choiceScore(judgeScore),
     });
   };
-  push(p.title, p.metaDescription || p.description, p.ctrFit, p.seoScore);
+  push(p.title, p.metaDescription || p.description, p.ctrFit, p.seoScore, p.judgeScore);
   (Array.isArray(p.aiAlternatives) ? p.aiAlternatives : []).forEach((alt) => {
-    push(alt?.title, alt?.description || alt?.metaDescription, alt?.ctrFit, alt?.seoScore);
+    push(alt?.title, alt?.description || alt?.metaDescription, alt?.ctrFit, alt?.seoScore, alt?.judgeScore);
   });
-  pairs.sort((a, b) => (b.ctrFit || 0) - (a.ctrFit || 0) || (b.seoScore || 0) - (a.seoScore || 0));
-  pinKeptTitle(pairs, {
-    keep: listingKept(p),
-    liveTitle: p.liveTitle || p.beforeTitle || "",
-    liveDescription: p.liveMetaDescription || p.beforeMetaDescription || p.beforeDescription || "",
-    ctrFit: choiceScore(p.ctrFit),
-    seoScore: choiceScore(p.seoScore),
-  });
+  pairs.sort((a, b) => (b.judgeScore || 0) - (a.judgeScore || 0) || (b.ctrFit || 0) - (a.ctrFit || 0) || (b.seoScore || 0) - (a.seoScore || 0));
+  if (!pairs.length) {
+    pairs.push({
+      title: "Updated title and description",
+      description: "Regenerate to write a stronger listing from Search Console, Analytics, and Speed Index.",
+    });
+  }
   return pairs.slice(0, 3);
 }
 
@@ -167,9 +150,6 @@ function changeToMove(c) {
         ? "Ships to WordPress · checked live · one-click undo"
         : "Ships to WordPress · checked live · one-click undo",
     proof: p.reason || "Based on Search Console and live reads for this site.",
-    keepListing: listingKept(p),
-    statusLine: listingStatus(p.liveTitle || p.beforeTitle || "", { keep: listingKept(p) }),
-    why: whyLines(p),
     changeId: c.id,
   };
 }
@@ -292,10 +272,7 @@ export default function HomeScreen() {
   const doneMap = done;
 
   let ci = cur[col];
-  if (!(typeof ci === "number" && ci >= 0 && ci < list.length)) {
-    const openIdx = list.findIndex((item) => !doneMap[item.t]);
-    ci = list.length ? (openIdx >= 0 ? openIdx : 0) : -1;
-  }
+  if (ci === undefined || ci === null || ci < 0) ci = -1;
   const actionable = col === "red" || col === "yellow";
   const openCount = (c) => Q[c].filter((x) => !doneMap[x.t]).length;
 
@@ -386,9 +363,7 @@ export default function HomeScreen() {
       optCount: count,
       ctrFit: pair.ctrFit || 0,
       seoScore: pair.seoScore || 0,
-      current: Boolean(pair.current),
-      statusLine: it.keepListing && !pair.current ? `This is another option. ${it.statusLine || ""}` : it.statusLine || "",
-      why: it.why || [],
+      judgeScore: pair.judgeScore || 0,
       afterAll: it.after,
       color: COLORS[col],
       changeId: it.changeId ?? null,
@@ -1086,76 +1061,98 @@ export default function HomeScreen() {
                   >
                     <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", fontSize: "12px", color: "#4DA3FF", fontFamily: "'Geist Mono', monospace" }}>
                       <span>AFTER</span>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
-                        {m.optCount > 1 ? (
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                            <button
-                              type="button"
-                              aria-label="Previous option"
-                              disabled={Number(m.opt) <= 1}
-                              onClick={() => setVariant({ ...variant, [it.t]: Number(m.opt) - 2 })}
-                              style={{
-                                width: "28px",
-                                height: "28px",
-                                borderRadius: "8px",
-                                border: "1px solid #262A31",
-                                background: "transparent",
-                                color: "#F2F4F5",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                padding: 0,
-                                cursor: Number(m.opt) <= 1 ? "default" : "pointer",
-                                opacity: Number(m.opt) <= 1 ? 0.35 : 1,
-                              }}
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d="M15 6l-6 6 6 6"></path>
-                              </svg>
-                            </button>
-                            <span style={{ color: "#9AA1AB", whiteSpace: "nowrap" }}>{m.opt} of {m.optCount}</span>
-                            <button
-                              type="button"
-                              aria-label="Next option"
-                              disabled={Number(m.opt) >= m.optCount}
-                              onClick={() => setVariant({ ...variant, [it.t]: Number(m.opt) })}
-                              style={{
-                                width: "28px",
-                                height: "28px",
-                                borderRadius: "8px",
-                                border: "1px solid #262A31",
-                                background: "transparent",
-                                color: "#F2F4F5",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                padding: 0,
-                                cursor: Number(m.opt) >= m.optCount ? "default" : "pointer",
-                                opacity: Number(m.opt) >= m.optCount ? 0.35 : 1,
-                              }}
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d="M9 6l6 6-6 6"></path>
-                              </svg>
-                            </button>
+                      {m.optCount > 1 ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", flex: "none" }}>
+                          <button
+                            type="button"
+                            aria-label="Previous option"
+                            disabled={Number(m.opt) <= 1}
+                            onClick={() => setVariant({ ...variant, [it.t]: Number(m.opt) - 2 })}
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              borderRadius: "8px",
+                              border: "1px solid #262A31",
+                              background: "transparent",
+                              color: "#F2F4F5",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 0,
+                              cursor: Number(m.opt) <= 1 ? "default" : "pointer",
+                              opacity: Number(m.opt) <= 1 ? 0.35 : 1,
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M15 6l-6 6 6 6"></path>
+                            </svg>
+                          </button>
+                          <span style={{ color: "#9AA1AB", whiteSpace: "nowrap", textAlign: "center" }}>
+                            {m.opt} of {m.optCount}
+                            {scoreLabel(m.ctrFit, m.seoScore, m.judgeScore) ? ` · ${scoreLabel(m.ctrFit, m.seoScore, m.judgeScore)}` : ""}
+                          </span>
+                          <button
+                            type="button"
+                            aria-label="Next option"
+                            disabled={Number(m.opt) >= m.optCount}
+                            onClick={() => setVariant({ ...variant, [it.t]: Number(m.opt) })}
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              borderRadius: "8px",
+                              border: "1px solid #262A31",
+                              background: "transparent",
+                              color: "#F2F4F5",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 0,
+                              cursor: Number(m.opt) >= m.optCount ? "default" : "pointer",
+                              opacity: Number(m.opt) >= m.optCount ? 0.35 : 1,
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M9 6l6 6-6 6"></path>
+                            </svg>
+                          </button>
+                        </span>
+                      ) : scoreLabel(m.ctrFit, m.seoScore, m.judgeScore) ? (
+                        <span style={{ color: "#9AA1AB", whiteSpace: "nowrap" }}>{scoreLabel(m.ctrFit, m.seoScore, m.judgeScore)}</span>
+                      ) : null}
+                    </span>
+                    <span style={{ fontSize: "17px", lineHeight: 1.45 }}>
+                      {m.afterSegs.map((s, idx) =>
+                        s.hl ? (
+                          <span
+                            key={idx}
+                            style={{
+                              padding: "0.04em 0.22em 0.08em",
+                              margin: "0 0.02em",
+                              color: "#0A0B0D",
+                              fontWeight: 600,
+                              borderRadius: "0.3em 0.8em 0.4em 0.7em",
+                              WebkitBoxDecorationBreak: "clone",
+                              boxDecorationBreak: "clone",
+                              background:
+                                "repeating-linear-gradient(178deg, rgba(10,11,13,0) 0 3px, rgba(10,11,13,.07) 3px 4px), linear-gradient(100deg, rgba(213,248,121,0) 0%, rgba(213,248,121,.92) 3%, rgba(213,248,121,.76) 14%, rgba(213,248,121,.66) 86%, rgba(213,248,121,.9) 96%, rgba(213,248,121,0) 100%)",
+                            }}
+                          >
+                            {s.t}
                           </span>
                         ) : (
-                          <span style={{ color: "#9AA1AB", whiteSpace: "nowrap" }}>{m.opt} of {m.optCount}</span>
-                        )}
-                        <span style={{ color: "#F2F4F5", whiteSpace: "nowrap" }}>{`CTR ${m.ctrFit || "—"} · SEO ${m.seoScore || "—"}`}</span>
-                      </span>
+                          <span key={idx}>{s.t}</span>
+                        )
+                      )}
                     </span>
-                    {m.statusLine ? <span style={{ fontSize: "13px", lineHeight: 1.45, color: "#D7DADE" }}>{m.statusLine}</span> : null}
-                    <span style={{ fontSize: "13px", fontWeight: 600, color: "#F2F4F5", display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span>{`Recommended SEO metadata for ${m.page || "/"}`}</span>
-                      <WhyRecommend lines={m.why} />
-                    </span>
-                    <span style={{ fontSize: "11px", fontWeight: 600, color: "#9AA1AB" }}>{m.current ? "SEO title — current, kept" : "SEO title — recommended"}</span>
-                    <span style={{ fontSize: "17px", lineHeight: 1.45 }}>{m.afterSegs.map((s) => s.t).join("")}</span>
-                    <span style={{ fontSize: "11px", fontWeight: 600, color: "#9AA1AB" }}>Meta description — recommended</span>
-                    <span style={{ fontSize: "14px", lineHeight: 1.5, color: "#D7DADE" }}>{m.afterDesc || "(No description on this option.)"}</span>
-                    <span style={{ fontSize: "11px", fontWeight: 600, color: "#9AA1AB" }}>Open Graph title</span>
-                    <span style={{ fontSize: "14px", lineHeight: 1.4 }}>{m.ogTitle || m.afterSegs.map((s) => s.t).join("")}</span>
+                    {m.afterDesc ? (
+                      <span style={{ fontSize: "14px", lineHeight: 1.5, color: "#D7DADE" }}>{m.afterDesc}</span>
+                    ) : null}
+                    {m.ogTitle ? (
+                      <span style={{ fontSize: "12px", lineHeight: 1.4, color: "#9AA1AB" }}>Open Graph · {m.ogTitle}</span>
+                    ) : null}
+                    {m.schemaLabel ? (
+                      <span style={{ fontSize: "12px", lineHeight: 1.4, color: "#9AA1AB" }}>Schema · {m.schemaLabel}</span>
+                    ) : null}
                   </div>
                 </div>
 
