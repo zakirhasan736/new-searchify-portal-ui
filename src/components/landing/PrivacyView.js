@@ -10,7 +10,7 @@ export default function PrivacyView() {
       kicker="PRIVACY"
       title="What we hold, and why."
       lede="This policy covers the Searchify website and the customer workspace. We keep what the product needs to run an account, a connected site, and a change you can review."
-      updated="October 25, 2026"
+      updated="October 26, 2026"
       actions={
         <>
           <Link className="sf-btn-blue" href="/terms">

@@ -1257,12 +1257,15 @@ html:has(.sf-land) {
   max-width: none;
   padding: 56px 0 96px;
 }
-.sf-legal-close p {
+.sf-legal-close-copy {
   margin: 0;
   max-width: 42ch;
   color: var(--muted);
   font-size: 16px;
   line-height: 1.5;
+}
+.sf-legal-close-copy a {
+  color: var(--lime);
 }
 .sf-legal-close a:not(.sf-btn-blue) {
   color: var(--lime);

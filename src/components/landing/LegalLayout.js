@@ -51,7 +51,7 @@ export default function LegalLayout({
 
         <section className="sf-closing sf-legal-close">
           <h2>{closeTitle}</h2>
-          <p>{closeText}</p>
+          <div className="sf-legal-close-copy">{closeText}</div>
           <Link className="sf-btn-blue lg" href={closeHref}>
             {closeLabel}
           </Link>

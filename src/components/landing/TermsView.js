@@ -10,7 +10,7 @@ export default function TermsView() {
       kicker="TERMS"
       title="The rules for the work."
       lede="These terms cover the Searchify website, your account, and the customer workspace. They are the working agreement for using Searchify. They are not legal advice for your own clients."
-      updated="October 25, 2026"
+      updated="October 26, 2026"
       actions={
         <>
           <Link className="sf-btn-blue" href="/privacy">

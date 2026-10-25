@@ -11,6 +11,9 @@ const nextConfig = {
       { source: "/forgotpassword", destination: "/forgot", permanent: false },
       { source: "/resetpassword", destination: "/reset-password", permanent: false },
       { source: "/reset", destination: "/reset-password", permanent: false },
+      // Removed HTML reference skins (Phone.dc.html / Logo.dc.html)
+      { source: "/app/phone", destination: "/app", permanent: true },
+      { source: "/brand", destination: "/", permanent: true },
     ];
   },
   images: {
