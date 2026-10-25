@@ -21,11 +21,13 @@ import {
   errorText,
   getBusinessProfile,
   getSiteScan,
+  previewSiteScan,
   runSiteScan,
   saveBusinessProfile,
   startGoogleOAuth,
 } from "@/lib/v1Api";
 import { userIsAuthenticated } from "@/utils/users/Helpers";
+import { SkeletonCards } from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
 
 const ACCENT = "#D5F879";
@@ -83,6 +85,7 @@ export default function SetupScreen() {
   const [finishing, setFinishing] = useState(false);
   const [err, setErr] = useState("");
   const [scanMeta, setScanMeta] = useState({ pages: 0, seconds: 0, host: "" });
+  const [freePreview, setFreePreview] = useState(null);
   const [goal, setGoal] = useState("both");
   const [brief, setBrief] = useState({ business: "", areas: "", different: "", moneyPages: "" });
   const [wpOpen, setWpOpen] = useState(false);
@@ -201,27 +204,43 @@ export default function SetupScreen() {
     }
     setUrl(site);
     setReading(true);
+    setFreePreview(null);
     const started = Date.now();
     const answers = { ...buildAnswers(), site };
     saveDraft(answers, 1);
     try {
+      const preview = await previewSiteScan(site);
+      const seconds = Math.max(1, Math.round((Date.now() - started) / 1000));
+      const look = preview.ok ? preview.data?.scan : null;
+      if (look?.pagesRead) {
+        setFreePreview(look);
+        setScanMeta({
+          pages: Number(look.pagesRead) || 0,
+          seconds,
+          host: look.host || "",
+        });
+        setShowBrief(true);
+      }
       const res = await runSiteScan({
         site: { answers },
-        force: true,
+        force: false,
       });
-      const seconds = Math.max(1, Math.round((Date.now() - started) / 1000));
       if (!res.ok) {
-        setErr(errorText(res, "Could not read that site. Check the address and try again."));
+        if (!look?.pagesRead) {
+          setErr(errorText(res, errorText(preview, "Could not read that site. Check the address and try again.")));
+        }
         setReading(false);
         return;
       }
       const scan = res.data?.scan || {};
       const from = briefFromScan(scan);
-      setScanMeta({
-        pages: Number(scan.pagesRead) || 0,
-        seconds,
-        host: scan.host || "",
-      });
+      if (scan.pagesRead) {
+        setScanMeta({
+          pages: Number(scan.pagesRead) || look?.pagesRead || 0,
+          seconds: Math.max(seconds, Math.round((Date.now() - started) / 1000)),
+          host: scan.host || look?.host || "",
+        });
+      }
       setBrief((b) => ({
         business: b.business || from.business,
         areas: b.areas || from.areas,
@@ -300,7 +319,7 @@ export default function SetupScreen() {
           padding: 28,
         }}
       >
-        Loading setup…
+        <SkeletonCards count={2} lines={3} light />
       </div>
     );
   }
@@ -421,6 +440,20 @@ export default function SetupScreen() {
           <p role="alert" style={{ margin: 0, color: "#B42318", fontSize: 14 }}>
             {err}
           </p>
+        ) : null}
+        {reading ? <SkeletonCards count={1} lines={3} light /> : null}
+        {freePreview?.findings?.length ? (
+          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+            {freePreview.findings.slice(0, 4).map((item) => (
+              <li key={`${item.path}-${item.label}`} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 14, color: "#3A3F46" }}>
+                <i style={{ width: 10, height: 10, marginTop: 5, borderRadius: "50%", background: item.color === "red" ? "#FF5A4E" : "#FFC53D", flex: "none" }} />
+                <span>
+                  <strong>{item.label}</strong>
+                  <span style={{ display: "block", color: "#5B616B" }}>{item.path} · {item.detail}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
         ) : null}
 
         {showBrief ? (

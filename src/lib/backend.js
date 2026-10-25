@@ -16,13 +16,15 @@ export async function forward(request, path) {
     }
   }
 
+  const incoming = new URL(request.url).search;
+  const target = path.includes("?") || !incoming ? path : `${path}${incoming}`;
   let upstream;
   try {
     try {
-      upstream = await fetch(`${apiUrl}${path}`, init);
+      upstream = await fetch(`${apiUrl}${target}`, init);
     } catch {
       await new Promise((resolve) => setTimeout(resolve, 400));
-      upstream = await fetch(`${apiUrl}${path}`, init);
+      upstream = await fetch(`${apiUrl}${target}`, init);
     }
     const text = await upstream.text();
     const outHeaders = { "Content-Type": "application/json" };

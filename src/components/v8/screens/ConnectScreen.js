@@ -309,8 +309,8 @@ export default function ConnectScreen() {
             setFreeBusy(true);
             setSiteNote(
               added.switched
-                ? `Scanning ${websiteLabel(added.site)} free. Nothing on the site changes.`
-                : `${websiteLabel(added.site)} added. Scanning it free now.`,
+                ? `${websiteLabel(added.site)} is selected. Reading a few live pages. Nothing on the site changes.`
+                : `${websiteLabel(added.site)} added. Reading a few live pages. Nothing on the site changes.`,
             );
             const address = added.site?.answers?.site || "";
             previewSiteScan(address).then((res) => {
@@ -353,7 +353,7 @@ export default function ConnectScreen() {
               fontWeight: 600,
             }}
           >
-            {freeBusy ? "Scanning…" : "Scan it free"}
+            {freeBusy ? "Adding…" : "Add website"}
           </button>
           <span style={{ fontSize: "13px", color: "#9AA1AB" }}>
             {siteLimit ? `${savedSites.length} of ${siteLimit} websites on this plan` : "Checking your plan…"}
@@ -400,7 +400,7 @@ export default function ConnectScreen() {
           </p>
         ) : (
           <p style={{ margin: 0, fontSize: "14px", color: "#9AA1AB" }}>
-            Pick a website here, or from All client sites. Scan it free reads a few live pages. Nothing on the site changes.
+            Pick a website here, or from All client sites. Adding a site reads a few live pages. Nothing on the site changes.
           </p>
         )}
         {freeBusy ? <SkeletonCards count={1} lines={3} /> : null}

@@ -74,7 +74,7 @@ export default function PortfolioScreen() {
     setLoading(true);
     Promise.all([
       getProductWorkspace({ force: true }),
-      listChanges({ force: true }),
+      listChanges({ force: true, all: true }),
       loadFeature('organic-search'),
       loadFeature('site-audit'),
       loadFeature('top-pages'),

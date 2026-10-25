@@ -9,7 +9,10 @@ import PhoneTabBar from "@/components/v8/PhoneTabBar";
 import { authHeaders, getUser, userLogout } from "@/utils/users/Helpers";
 import { canAccessCustomerApp, isPartnerAuthenticated } from "@/lib/authRoles";
 import { activeJourneySite, hydrateJourney, loadJourney, planById, requiredJourneyPath } from "@/lib/journey";
-import { getBusinessProfile } from "@/lib/v1Api";
+import { activeSiteContext } from "@/lib/siteContext";
+import { activateGoogleSite, getBusinessProfile, syncGoogle } from "@/lib/v1Api";
+import { invalidateV3Cache } from "@/lib/v3Store";
+import SkeletonPage from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
 import "@/styles/v8-phone.css";
 
@@ -61,9 +64,13 @@ export default function AppChrome({ children, current }) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [host, setHost] = useState("Your site");
+  const [scopeKey, setScopeKey] = useState(0);
+  const [switching, setSwitching] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [who, setWho] = useState({ name: "You", sub: "Workspace", initials: "YO" });
   const mainRef = useRef(null);
+  const bootedScope = useRef(false);
+  const scopeGen = useRef(0);
 
   useEffect(() => {
     // Customer workspace needs a customer or admin JWT — not partner-only or preview-only session.
@@ -91,7 +98,12 @@ export default function AppChrome({ children, current }) {
         return;
       }
       const state = loadJourney();
-      setHost(hostOf(activeJourneySite(state)));
+      const current = activeJourneySite(state);
+      setHost(hostOf(current));
+      if (!bootedScope.current) {
+        bootedScope.current = true;
+        scopeWorkspace(current?.answers?.site || "", () => live);
+      }
       const profile = bp?.data?.profile || {};
       const name =
         acct?.displayName ||
@@ -119,10 +131,49 @@ export default function AppChrome({ children, current }) {
     mainRef.current?.scrollTo({ top: 0 });
   }, [pathname]);
 
+  const scopeWorkspace = async (siteUrl, stillLive = () => true) => {
+    const gen = ++scopeGen.current;
+    const ctx = activeSiteContext();
+    const address = siteUrl || ctx.href || "";
+    setHost(ctx.hostname && ctx.hostname !== "your-site" ? ctx.hostname : hostOf(activeJourneySite()));
+    setSwitching(true);
+    invalidateV3Cache("all");
+    let needsSync = false;
+    try {
+      const res = await activateGoogleSite(address);
+      needsSync = Boolean(res?.data?.needsSync);
+    } catch {
+      needsSync = false;
+    }
+    if (gen !== scopeGen.current) return;
+    if (!stillLive()) {
+      setSwitching(false);
+      setReady(true);
+      return;
+    }
+    if (needsSync) {
+      try {
+        await syncGoogle();
+      } catch {
+        /* The selected site stays selected even when Google has nothing new to read. */
+      }
+      invalidateV3Cache("all");
+    }
+    if (gen !== scopeGen.current) return;
+    if (!stillLive()) {
+      setSwitching(false);
+      setReady(true);
+      return;
+    }
+    setScopeKey((value) => value + 1);
+    setSwitching(false);
+    setReady(true);
+  };
+
   useEffect(() => {
-    const onSite = (event) => {
-      if (event?.detail?.label) setHost(event.detail.label);
-      else setHost(hostOf(activeJourneySite()));
+    const onSite = () => {
+      const site = activeJourneySite();
+      scopeWorkspace(site?.answers?.site || "");
     };
     window.addEventListener("sf-site", onSite);
     return () => window.removeEventListener("sf-site", onSite);
@@ -360,7 +411,9 @@ export default function AppChrome({ children, current }) {
         </div>
       </aside>
 
-      <main ref={mainRef} className="v8-app-main">{children}</main>
+      <main ref={mainRef} className="v8-app-main">
+        {switching ? <SkeletonPage /> : <div key={scopeKey}>{children}</div>}
+      </main>
 
       {/* Phone.dc.html bottom tabs — mobile layout reference applied app-wide */}
       <PhoneTabBar className="v8-app-phone-tabs" />

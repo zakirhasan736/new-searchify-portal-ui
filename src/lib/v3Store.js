@@ -26,14 +26,15 @@ export const useV3Store = create((set, get) => ({
     set((s) => ({ features: { ...s.features, [kind]: { at: Date.now(), res } } }));
   },
 
-  getGoogle() {
+  getGoogle(host = "") {
     const hit = get().google;
-    if (hit && Date.now() - hit.at < STATUS_TTL_MS) return hit.res;
-    return null;
+    if (!hit || Date.now() - hit.at >= STATUS_TTL_MS) return null;
+    if (host && hit.host !== host) return null;
+    return hit.res;
   },
 
-  setGoogle(res) {
-    set({ google: { at: Date.now(), res } });
+  setGoogle(res, host = "") {
+    set({ google: { at: Date.now(), host, res } });
   },
 
   getCms() {
@@ -46,14 +47,15 @@ export const useV3Store = create((set, get) => ({
     set({ cms: { at: Date.now(), res } });
   },
 
-  getChanges() {
+  getChanges(host = "") {
     const hit = get().changes;
-    if (hit && Date.now() - hit.at < FEATURE_TTL_MS) return hit.res;
-    return null;
+    if (!hit || Date.now() - hit.at >= FEATURE_TTL_MS) return null;
+    if (host && hit.host !== host) return null;
+    return hit.res;
   },
 
-  setChanges(res) {
-    set({ changes: { at: Date.now(), res } });
+  setChanges(res, host = "") {
+    set({ changes: { at: Date.now(), host, res } });
   },
 
   getProfile() {

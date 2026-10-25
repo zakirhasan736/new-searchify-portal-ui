@@ -209,6 +209,20 @@ export default function HomeView() {
   };
 
   const previewHost = hostLabel(heroUrl || footUrl);
+  const boardDots = scan
+    ? Array.from({ length: 40 }, (_, index) => {
+        const item = scan.dots?.[index];
+        if (!item) return { color: "#2C3138", op: 0.35, shadow: "none", anim: false, title: "" };
+        const color = COLORS[item.color] || COLORS.yellow;
+        return {
+          color,
+          op: 1,
+          shadow: `0 0 16px ${color}`,
+          anim: false,
+          title: item.path || "",
+        };
+      })
+    : dots;
 
   return (
     <LandingShell current="home">
@@ -230,9 +244,10 @@ export default function HomeView() {
             <label className="sf-urlfield">
               <span className="sf-sr">Your website</span>
               <input
-                type="url"
+                type="text"
                 inputMode="url"
                 autoComplete="url"
+                spellCheck={false}
                 placeholder="yourwebsite.com"
                 value={heroUrl}
                 onChange={(event) => setHeroUrl(event.target.value)}
@@ -295,8 +310,8 @@ export default function HomeView() {
             </span>
           </div>
           <div className="sf-dots">
-            {(scan ? scan.dots.map((dot) => ({ color: COLORS[dot.color] || COLORS.green, op: 1, shadow: `0 0 16px ${COLORS[dot.color] || COLORS.green}`, anim: false })) : dots).map((dot, index) => (
-              <div className="sf-dot-cell" key={index}>
+            {boardDots.map((dot, index) => (
+              <div className="sf-dot-cell" key={index} title={dot.title || undefined}>
                 <div
                   className={`sf-dot${dot.anim ? " is-live" : ""}`}
                   style={{
@@ -619,9 +634,10 @@ export default function HomeView() {
           <label className="sf-urlfield">
             <span className="sf-sr">Your website</span>
             <input
-              type="url"
+              type="text"
               inputMode="url"
               autoComplete="url"
+              spellCheck={false}
               placeholder="yourwebsite.com"
               value={footUrl}
               onChange={(event) => setFootUrl(event.target.value)}

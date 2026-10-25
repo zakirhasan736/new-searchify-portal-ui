@@ -2,6 +2,20 @@ import { authHeaders } from "@/utils/users/Helpers";
 import { HOT_FEATURES, invalidateV3Cache, useV3Store } from "@/lib/v3Store";
 import { briefFromAnswers } from "@/lib/businessBrief";
 import { activeJourneySite } from "@/lib/journey";
+import { activeSiteContext } from "@/lib/siteContext";
+
+function activeHost() {
+  if (typeof window === "undefined") return "";
+  const host = activeSiteContext().hostname || "";
+  return host && host !== "your-site" ? host : "";
+}
+
+function withSite(path) {
+  const host = activeHost();
+  if (!host) return path;
+  const join = path.includes("?") ? "&" : "?";
+  return `${path}${join}site=${encodeURIComponent(host)}`;
+}
 
 async function json(res) {
   const data = await res.json().catch(() => ({}));
@@ -45,13 +59,14 @@ async function cachedFetch(key, runner, { force = false, getter, setter } = {}) 
 }
 
 export async function getGoogleStatus({ force = false } = {}) {
+  const host = activeHost();
   return cachedFetch(
-    "google",
-    async () => json(await fetch("/api/v1/oauth/google/status", { headers: authHeaders() })),
+    host ? `google:${host}` : "google",
+    async () => json(await fetch(withSite("/api/v1/oauth/google/status"), { headers: authHeaders() })),
     {
       force,
-      getter: (s) => s.getGoogle(),
-      setter: (s, res) => s.setGoogle(res),
+      getter: (s) => s.getGoogle(host),
+      setter: (s, res) => s.setGoogle(res, host),
     },
   );
 }
@@ -175,12 +190,28 @@ export async function enrichGoogle() {
   return json(await fetch("/api/v1/oauth/google/enrich", { method: "POST", headers: authHeaders() }));
 }
 
+export async function activateGoogleSite(site) {
+  const address = site || activeSiteContext().href || "";
+  if (!address) return { ok: false, data: {} };
+  return json(
+    await fetch("/api/v1/oauth/google/activate-site", {
+      method: "POST",
+      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ site: address }),
+    }),
+  );
+}
+
 export async function syncGoogle(cmsConnectionId = null) {
+  const body = {};
+  if (cmsConnectionId) body.cms_connection_id = cmsConnectionId;
+  const host = activeHost();
+  if (host) body.site = host;
   return json(
     await fetch("/api/v1/oauth/google/sync", {
       method: "POST",
-      headers: authHeaders(),
-      body: JSON.stringify(cmsConnectionId ? { cms_connection_id: cmsConnectionId } : {}),
+      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     }),
   );
 }
@@ -292,14 +323,18 @@ export async function deleteCmsConnection(id) {
   return res;
 }
 
-export async function listChanges({ force = false } = {}) {
+export async function listChanges({ force = false, all = false } = {}) {
+  if (all) {
+    return json(await fetch("/api/v1/operator/changes", { headers: authHeaders() }));
+  }
+  const host = activeHost();
   return cachedFetch(
-    "changes",
-    async () => json(await fetch("/api/v1/operator/changes", { headers: authHeaders() })),
+    host ? `changes:${host}` : "changes",
+    async () => json(await fetch(withSite("/api/v1/operator/changes"), { headers: authHeaders() })),
     {
       force,
-      getter: (s) => s.getChanges(),
-      setter: (s, res) => s.setChanges(res),
+      getter: (s) => s.getChanges(host),
+      setter: (s, res) => s.setChanges(res, host),
     },
   );
 }
@@ -632,35 +667,38 @@ function normalizeFeatureRes(res) {
  * Deduplicates concurrent requests for the same kind.
  */
 export async function loadFeature(kind, { force = false } = {}) {
+  const host = activeHost();
+  const cacheKey = host ? `feature:${kind}:${host}` : `feature:${kind}`;
   return cachedFetch(
-    `feature:${kind}`,
+    cacheKey,
     async () => {
       const res = await json(
-        await fetch(`/api/v1/features/${kind}`, {
+        await fetch(withSite(`/api/v1/features/${kind}`), {
           headers: authHeaders(),
-          // Allow browser HTTP cache for repeat navigations; store handles freshness
         }),
       );
       return normalizeFeatureRes(res);
     },
     {
       force,
-      getter: (s) => s.getFeature(kind),
-      setter: (s, res) => s.setFeature(kind, res),
+      getter: (s) => s.getFeature(cacheKey),
+      setter: (s, res) => s.setFeature(cacheKey, res),
     },
   );
 }
 
 export async function loadWorkspace() {
-  const res = await json(await fetch("/api/v1/operator/workspace", { headers: authHeaders() }));
+  const res = await json(await fetch(withSite("/api/v1/operator/workspace"), { headers: authHeaders() }));
   if (res.ok && res.data) {
     const store = useV3Store.getState();
-    if (res.data.google) store.setGoogle({ ok: true, status: 200, data: res.data.google });
+    const host = activeHost();
+    if (res.data.google) store.setGoogle({ ok: true, status: 200, data: res.data.google }, host);
     if (res.data.cms) store.setCms({ ok: true, status: 200, data: res.data.cms });
-    if (res.data.changes) store.setChanges({ ok: true, status: 200, data: res.data.changes });
+    if (res.data.changes) store.setChanges({ ok: true, status: 200, data: res.data.changes }, host);
     Object.entries(res.data.features || {}).forEach(([kind, feat]) => {
       if (!isLivePayload(feat?.payload || feat)) return;
-      store.setFeature(kind, { ok: true, status: 200, data: feat });
+      const key = host ? `feature:${kind}:${host}` : kind;
+      store.setFeature(key, { ok: true, status: 200, data: feat });
     });
   }
   return res;
