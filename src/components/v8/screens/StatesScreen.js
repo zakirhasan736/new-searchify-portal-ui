@@ -150,8 +150,8 @@ export default function StatesScreen() {
   }, []);
 
   useEffect(() => {
-    reload();
     reload().finally(() => setPageReady(true));
+  }, [reload]);
 
   const wpLive = Boolean(status.wordpress) && !wpMeta.lastError;
   const wpMissing = !status.wordpress;
@@ -262,7 +262,6 @@ export default function StatesScreen() {
     saveLocal({ textWhenReady: on, notif });
   };
 
-  return (
   if (!pageReady) {
     return (
       <div style={{ padding: "28px clamp(16px, 4vw, 56px) 56px", background: "#0A0B0D" }}>
@@ -271,6 +270,7 @@ export default function StatesScreen() {
     );
   }
 
+  return (
     <>
       <style
         dangerouslySetInnerHTML={{

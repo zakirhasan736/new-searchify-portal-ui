@@ -416,9 +416,11 @@ export default function PathScreen() {
         >
           <span style={{ flex: "1 1 240px" }}>
             {loading
-            {`No page progress yet. Run a site scan to see levels for ${hostname || "your site"}.`}
+              ? "Reading audit, scan and change history…"
+              : `No page progress yet. Run a site scan to see levels for ${hostname || "your site"}.`}
           </span>
-          {empty && (
+          {!loading && empty && (
+            <Link
               href="/app/results"
               style={{
                 minHeight: "40px",
