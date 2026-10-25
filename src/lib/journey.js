@@ -284,6 +284,13 @@ export function resumeSetup() {
   return "/app/start";
 }
 
+export async function dropReadyWebsite(site) {
+  const href = site?.answers?.site || site?.siteUrl || site?.url || "";
+  removeJourneySite(site?.id);
+  const saved = await syncJourneyNow();
+  return { ...saved, href };
+}
+
 export function removeJourneySite(id) {
   const state = loadJourney();
   state.sites = state.sites.filter((site) => String(site.id) !== String(id));

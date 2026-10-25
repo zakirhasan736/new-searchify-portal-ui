@@ -58,6 +58,18 @@ function journeySitesAsCms(journey) {
   });
 }
 
+function clientSites(journey, cmsSites) {
+  const cmsByHost = new Map();
+  for (const site of cmsSites) {
+    const domain = hostFromUrl(site.siteUrl);
+    if (domain) cmsByHost.set(domain, site);
+  }
+  return journeySitesAsCms(journey).map((site) => {
+    const linked = cmsByHost.get(hostFromUrl(site.siteUrl));
+    return linked ? { ...site, status: linked.status, cmsId: linked.id } : site;
+  });
+}
+
 export default function PortfolioScreen() {
   const router = useRouter();
   const [sort, setSort] = useState('attention');
@@ -66,8 +78,15 @@ export default function PortfolioScreen() {
   const [avatar, setAvatar] = useState('??');
   const [loading, setLoading] = useState(true);
   const [gscOk, setGscOk] = useState(true);
+  const [sitesTick, setSitesTick] = useState(0);
 
   const accent = '#D5F879';
+
+  useEffect(() => {
+    const onSite = () => setSitesTick((n) => n + 1);
+    window.addEventListener('sf-site', onSite);
+    return () => window.removeEventListener('sf-site', onSite);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,8 +116,8 @@ export default function PortfolioScreen() {
           ),
         );
 
-        let sites = ws.ok ? ws.data?.sites || [] : [];
-        if (!sites.length) sites = journeySitesAsCms(journey);
+        const cmsSites = ws.ok ? ws.data?.sites || [] : [];
+        const sites = clientSites(journey, cmsSites);
 
         const changes = Array.isArray(chRes.data) ? chRes.data : chRes.data?.changes || [];
         const queue = queueItemsFromChanges(changes);
@@ -159,7 +178,7 @@ export default function PortfolioScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [sitesTick]);
 
   const totals = useMemo(
     () => ({

@@ -311,6 +311,18 @@ export async function saveCmsConnection(body) {
   return res;
 }
 
+export async function forgetWebsite(site) {
+  const res = await json(
+    await fetch("/api/v1/operator/sites/forget", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ site }),
+    }),
+  );
+  if (res.ok) invalidateV3Cache("all");
+  return res;
+}
+
 export async function deleteCmsConnection(id) {
   const res = await json(
     await fetch(`/api/v1/operator/connections/${id}`, {

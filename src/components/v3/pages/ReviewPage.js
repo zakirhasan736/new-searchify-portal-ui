@@ -87,6 +87,14 @@ export default function ReviewPage() {
 
   const p = change.proposed || {};
   const evidence = p.evidence || {};
+  const gscStatus = p.evidenceRecord?.search_console?.status || evidence.status || "";
+  const gscCaption = gscStatus === "verified"
+    ? "Search Console, this page"
+    : gscStatus === "partial"
+      ? "Search Console returned a partial page result"
+      : gscStatus
+        ? "Search Console page data is not verified"
+        : "Search Console page data unknown";
   const editable = EDITABLE.has(change.status);
   const dirty = title !== (p.title || "") || description !== (p.metaDescription || "");
   const beforeTitle = p.beforeTitle || p.currentTitle || "—";
@@ -202,9 +210,9 @@ export default function ReviewPage() {
         <h2>Why this page?</h2>
         <p>{change.opportunity || "This recommendation came from the connected search data."}</p>
         <div className="w-metrics">
-          <div className="w-metric"><span>Impressions</span><strong>{evidence.impressions ?? "—"}</strong><small>Search Console, last 28 days</small></div>
-          <div className="w-metric"><span>Clicks</span><strong>{evidence.clicks ?? "—"}</strong><small>Search Console, last 28 days</small></div>
-          <div className="w-metric"><span>Average position</span><strong>{evidence.position ?? "—"}</strong><small>Search Console, last 28 days</small></div>
+          <div className="w-metric"><span>Impressions</span><strong>{evidence.impressions ?? "—"}</strong><small>{gscCaption}</small></div>
+          <div className="w-metric"><span>Clicks</span><strong>{evidence.clicks ?? "—"}</strong><small>{gscCaption}</small></div>
+          <div className="w-metric"><span>Average position</span><strong>{evidence.position ?? "—"}</strong><small>{gscCaption}</small></div>
         </div>
         <WhyThisDraft proposed={p} evidence={evidence} />
         <DraftChecks proposed={p} />

@@ -260,31 +260,23 @@ export default function ScanScreen() {
       .replace(/[-_]/g, " ")
       .replace(/\b\w/g, (c) => c.toUpperCase()) || "Your site";
   const emptyTask = { c: "green", t: "No findings yet · /" };
-  const effSel = sel || (tasks.find((x) => x.c === "red") || tasks[0] || emptyTask).t;
-
   const dots = slice.map((task, i) => {
     const on = i < lit;
     const scanning = stage === "scanning";
     const match = scanning || f === task.c;
     const published = !!pub[task.t];
     const col = published ? COLORS.green : COLORS[task.c];
-    const selected = effSel === task.t;
+    const selected = sel === task.t;
     return {
-      pick: () => {
-        setHover(i);
-        setSel(task.t);
-      },
-      ring: selected || hover === i ? "2px solid #F2F4F5" : "none",
+      pick: () => setSel(task.t),
+      ring: selected ? "2px solid #F2F4F5" : "none",
       selStr: String(selected),
       color: on ? col : "#1A1D22",
       op: !on ? "1" : match ? "1" : "0.14",
       shadow: on && !scanning && match ? "0 0 22px " + col : "none",
-      anim: on && !scanning && match && !published ? "sfy-flicker 1.4s ease-in-out infinite" : "none",
+      anim: on && !scanning && match && !published && !selected ? "sfy-flicker 1.4s ease-in-out infinite" : "none",
       label: task.t + " — " + META[task.c].title.toLowerCase(),
-      hover: () => {
-        setHover(i);
-        setSel(task.t);
-      },
+      hover: () => setHover(i),
     };
   });
 
@@ -325,7 +317,9 @@ export default function ScanScreen() {
 
   const callsEstimate = Math.max(0, Math.round(untappedVisitors / 50));
 
-  const selTask = hovered || tasks.find((x) => x.t === sel) || tasks.find((x) => x.c === "red") || tasks[0] || emptyTask;
+  const clickedTask = sel ? tasks.find((x) => x.t === sel) || null : null;
+  const selTask = clickedTask || emptyTask;
+  const waitingForClick = N > 0 && !scanLoading && !clickedTask;
   const parts = String(selTask.t || "").split(" · ");
   const action = parts[0] || "No findings";
   const path = parts.slice(1).join(" · ") || "/";
@@ -384,9 +378,9 @@ export default function ScanScreen() {
   };
   const p = matchedChange?.proposed || {};
   const choiceRows = [];
-  if (p.title || p.metaDescription) choiceRows.push({ title: p.title, description: p.metaDescription });
+  if (p.title || p.metaDescription) choiceRows.push({ title: p.title, description: p.metaDescription, ctrFit: p.ctrFit, seoScore: p.seoScore });
   (Array.isArray(p.aiAlternatives) ? p.aiAlternatives : []).forEach((alt) => {
-    choiceRows.push({ title: alt?.title, description: alt?.description || alt?.metaDescription });
+    choiceRows.push({ title: alt?.title, description: alt?.description || alt?.metaDescription, ctrFit: alt?.ctrFit, seoScore: alt?.seoScore });
   });
   const choices = [];
   choiceRows.forEach((row) => {
@@ -396,8 +390,16 @@ export default function ScanScreen() {
     if (isFillerListing(title, description)) return;
     const key = `${title} ${description}`.toLowerCase();
     if (choices.some((item) => `${item.title} ${item.description}`.toLowerCase() === key)) return;
-    choices.push({ title: title || "Updated title", description });
+    const fit = Number(row.ctrFit);
+    const seo = Number(row.seoScore);
+    choices.push({
+      title: title || "Updated title",
+      description,
+      ctrFit: Number.isFinite(fit) && fit > 0 ? Math.round(fit) : 0,
+      seoScore: Number.isFinite(seo) && seo > 0 ? Math.round(seo) : 0,
+    });
   });
+  choices.sort((a, b) => (b.ctrFit || 0) - (a.ctrFit || 0) || (b.seoScore || 0) - (a.seoScore || 0));
   const choiceCount = Math.max(Math.min(choices.length, 3), 1);
   const shownChoices = choices.slice(0, 3);
   const v = (variant[selTask.t] || 0) % choiceCount;
@@ -408,9 +410,15 @@ export default function ScanScreen() {
   const liveSugD = picked.description || "";
 
   const insp = {
-    task: N === 0 ? (scanLoading ? "Loading scan…" : "No findings yet") : action,
-    topic: N === 0 ? "" : selTask.t,
-    page: pagePath,
+    task: waitingForClick
+      ? "Click a dot to open its suggestion"
+      : N === 0
+        ? scanLoading
+          ? "Loading scan…"
+          : "No findings yet"
+        : action,
+    topic: waitingForClick ? "Hover a dot to read it. Nothing is selected until you click." : N === 0 ? "" : selTask.t,
+    page: waitingForClick ? "" : pagePath,
     crumb: crumb,
     nowT: liveNowT,
     nowD: liveNowD,
@@ -428,21 +436,27 @@ export default function ScanScreen() {
       : "",
     optNo: String(v + 1),
     optCount: Math.max(shownChoices.length, 1),
-    color: isPub ? COLORS.green : COLORS[selTask.c] || COLORS.green,
-    status: N === 0 ? (scanLoading ? "Loading" : "Empty") : isPub ? "Published" : STATUS[selTask.c],
-    border: isPub
-      ? "rgba(61,220,132,.5)"
-      : "rgba(" + (RGB[selTask.c] || RGB.green) + ",.5)",
-    glow:
-      "0 0 26px rgba(" +
-      (isPub ? "61,220,132" : RGB[selTask.c] || RGB.green) +
-      ",.15)",
-    hasSug: actionable,
-    canAct: actionable && !isPub,
+    ctrFit: picked.ctrFit || 0,
+    seoScore: picked.seoScore || 0,
+    color: waitingForClick ? "#9AA1AB" : isPub ? COLORS.green : COLORS[selTask.c] || COLORS.green,
+    status: waitingForClick ? "No dot selected" : N === 0 ? (scanLoading ? "Loading" : "Empty") : isPub ? "Published" : STATUS[selTask.c],
+    border: waitingForClick
+      ? "#262A31"
+      : isPub
+        ? "rgba(61,220,132,.5)"
+        : "rgba(" + (RGB[selTask.c] || RGB.green) + ",.5)",
+    glow: waitingForClick
+      ? "none"
+      : "0 0 26px rgba(" +
+        (isPub ? "61,220,132" : RGB[selTask.c] || RGB.green) +
+        ",.15)",
+    hasSug: actionable && !waitingForClick,
+    canAct: actionable && !isPub && !waitingForClick,
     isPublished: isPub,
-    hasNote: !actionable,
-    note:
-      N === 0
+    hasNote: waitingForClick || !actionable,
+    note: waitingForClick
+      ? "Hover shows what the dot is. Click it to put that page in the suggestion."
+      : N === 0
         ? scanLoading
           ? "Pulling audit and Search Console signals for this site."
           : "Connect Search Console or run an audit to fill this colour map."
@@ -912,6 +926,7 @@ export default function ScanScreen() {
                     {insp.topic}
                   </p>
                 ) : null}
+                {!waitingForClick ? (
                 <div
                   style={{
                     borderRadius: "14px",
@@ -949,6 +964,7 @@ export default function ScanScreen() {
                     {insp.nowD}
                   </span>
                 </div>
+                ) : null}
                 {insp.hasSug && (
                   <div
                     style={{
@@ -1002,8 +1018,9 @@ export default function ScanScreen() {
                               <path d="M15 6l-6 6 6 6"></path>
                             </svg>
                           </button>
-                          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#3C4043", minWidth: "42px", textAlign: "center" }}>
+                          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#3C4043", whiteSpace: "nowrap", textAlign: "center" }}>
                             {insp.optNo} of {insp.optCount}
+                            {(insp.ctrFit || insp.seoScore) ? ` · ${[insp.ctrFit ? `CTR ${insp.ctrFit}` : "", insp.seoScore ? `SEO ${insp.seoScore}` : ""].filter(Boolean).join(" · ")}` : ""}
                           </span>
                           <button
                             type="button"
@@ -1251,8 +1268,8 @@ export default function ScanScreen() {
               >
                 <path d="M5 3l14 7-6 2-2 6z"></path>
               </svg>
-              <span className="v8-scan-hint-hover">HOVER OVER ANY DOT</span>
-              <span className="v8-scan-hint-tap">TAP ANY DOT</span>
+              <span className="v8-scan-hint-hover">HOVER TO READ · CLICK TO OPEN</span>
+              <span className="v8-scan-hint-tap">TAP A DOT TO OPEN</span>
             </div>
             <div
               className="v8-scan-chips"
@@ -1524,10 +1541,14 @@ export default function ScanScreen() {
               }}
             >
               <span style={{ fontSize: "14px", fontWeight: 600 }}>
-                {hovered ? hovered.t : selTask.t || META[f].title}
+                {hovered ? hovered.t : clickedTask ? clickedTask.t : "Hover a dot to read it"}
               </span>
               <span style={{ fontSize: "13px", color: "#9AA1AB" }}>
-                {hovered || selTask.t ? META[(hovered || selTask).c]?.title || META[f].sub : META[f].sub}
+                {hovered
+                  ? META[hovered.c]?.title || META[f].sub
+                  : clickedTask
+                    ? META[clickedTask.c]?.title || META[f].sub
+                    : "Click a dot to open its suggestion"}
               </span>
             </div>
           </div>

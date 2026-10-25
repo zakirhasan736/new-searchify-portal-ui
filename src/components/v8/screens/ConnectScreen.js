@@ -3,10 +3,10 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { deleteCmsConnection, disconnectGoogle, previewSiteScan, runSiteScan, startGoogleOAuth } from "@/lib/v1Api";
+import { deleteCmsConnection, disconnectGoogle, forgetWebsite, previewSiteScan, runSiteScan, startGoogleOAuth } from "@/lib/v1Api";
 import ConnectDialog, { useConnectionStatus } from "@/components/board/ConnectDialog";
 import { activeSiteContext } from "@/lib/siteContext";
-import { addReadyWebsite, loadJourney, readySites, selectJourneySite, websiteLabel } from "@/lib/journey";
+import { addReadyWebsite, dropReadyWebsite, loadJourney, readySites, selectJourneySite, websiteLabel } from "@/lib/journey";
 import { getBillingAccount } from "@/lib/billingApi";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
 
@@ -14,6 +14,16 @@ const TONE = { red: "#FF5A4E", yellow: "#FFC53D", green: "#3DDC84", blue: "#4DA3
 import "@/styles/v8-screens.css";
 
 const BLUE = "#4DA3FF";
+
+function hostOf(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    return new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`).hostname.replace(/^www\./i, "").toLowerCase();
+  } catch {
+    return "";
+  }
+}
 
 export default function ConnectScreen() {
   const router = useRouter();
@@ -91,10 +101,32 @@ export default function ConnectScreen() {
     [setStatus, refreshStatus]
   );
 
+  const removeSavedSite = useCallback(
+    async (site) => {
+      const label = websiteLabel(site);
+      const href = site?.answers?.site || "";
+      if (!window.confirm(`Remove ${label}? It leaves Plug in and All client sites.`)) return;
+      if (href) await forgetWebsite(href).catch(() => {});
+      await dropReadyWebsite(site);
+      setSitesTick((n) => n + 1);
+      setSiteNote(`${label} was removed.`);
+      setFreeScan(null);
+      await refreshStatus();
+    },
+    [refreshStatus],
+  );
+
   const handleUnplug = useCallback(
     async (id) => {
-      if (id === "wp" && status.wordpressId) {
-        await deleteCmsConnection(status.wordpressId).catch(() => {});
+      if (id === "wp") {
+        const host = hostOf(status.wordpressUrl) || hostOf(siteHref);
+        const match = readySites(loadJourney()).find((site) => hostOf(site.answers?.site) === host);
+        if (status.wordpressId) await deleteCmsConnection(status.wordpressId).catch(() => {});
+        if (host) await forgetWebsite(status.wordpressUrl || `https://${host}`).catch(() => {});
+        if (match) await dropReadyWebsite(match);
+        setSitesTick((n) => n + 1);
+        setSiteNote(host ? `${host} was removed.` : "WordPress was unplugged.");
+        setFreeScan(null);
         await refreshStatus();
         return;
       }
@@ -105,7 +137,7 @@ export default function ConnectScreen() {
       }
       setStatus(id, "off");
     },
-    [setStatus, refreshStatus, status.wordpressId]
+    [setStatus, refreshStatus, status.wordpressId, status.wordpressUrl, siteHref]
   );
 
   const defs = [
@@ -363,28 +395,58 @@ export default function ConnectScreen() {
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
             {savedSites.map((site) => {
               const on = String(site.id) === String(activeId);
+              const label = websiteLabel(site);
               return (
-                <button
+                <span
                   key={site.id}
-                  type="button"
-                  onClick={() => {
-                    selectJourneySite(site.id);
-                    setSiteNote(`${websiteLabel(site)} is selected. Scan, keywords, and backlinks use this site.`);
-                    setSitesTick((n) => n + 1);
-                    refreshStatus();
-                  }}
                   style={{
+                    display: "inline-flex",
+                    alignItems: "center",
                     minHeight: "36px",
-                    padding: "0 12px",
                     borderRadius: "999px",
                     border: on ? "1px solid #4DA3FF" : "1px solid #1A1D22",
                     background: on ? "rgba(77,163,255,.16)" : "#101215",
-                    color: "#F2F4F5",
-                    fontSize: "13px",
+                    overflow: "hidden",
                   }}
                 >
-                  {websiteLabel(site)}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      selectJourneySite(site.id);
+                      setSiteNote(`${label} is selected. Scan, keywords, and backlinks use this site.`);
+                      setSitesTick((n) => n + 1);
+                      refreshStatus();
+                    }}
+                    style={{
+                      minHeight: "36px",
+                      padding: "0 12px",
+                      border: 0,
+                      background: "transparent",
+                      color: "#F2F4F5",
+                      fontSize: "13px",
+                    }}
+                  >
+                    {label}
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Remove ${label}`}
+                    title={`Remove ${label}`}
+                    onClick={() => removeSavedSite(site)}
+                    style={{
+                      width: "32px",
+                      minHeight: "36px",
+                      border: 0,
+                      borderLeft: "1px solid #1A1D22",
+                      background: "transparent",
+                      color: "#9AA1AB",
+                      fontSize: "16px",
+                      lineHeight: 1,
+                    }}
+                  >
+                    ×
+                  </button>
+                </span>
               );
             })}
           </div>

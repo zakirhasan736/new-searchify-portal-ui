@@ -396,8 +396,7 @@ export default function PathScreen() {
         )}
       </div>
 
-      {loading ? <SkeletonRows count={6} /> : null}
-      {!loading && empty && (
+      {(loading || empty) && (
         <div
           style={{
             maxWidth: "1120px",
@@ -416,10 +415,10 @@ export default function PathScreen() {
           }}
         >
           <span style={{ flex: "1 1 240px" }}>
+            {loading
             {`No page progress yet. Run a site scan to see levels for ${hostname || "your site"}.`}
           </span>
           {empty && (
-            <Link
               href="/app/results"
               style={{
                 minHeight: "40px",

@@ -72,14 +72,18 @@ export function WhyThisDraft({ proposed, evidence = null, compact = false }) {
   const meet = analysis.meetCompetitor || p.meetCompetitor?.title || "";
   const gsc = evidence || p.evidence || {};
   const keep = p.recommendKeep || analysis.recommendKeep;
+  const decision = p.decision || analysis.decision || "";
+  const warnings = analysis.dataQualityWarnings || p.evidenceRecord?.data_quality_warnings || [];
   if (!sources.length && !keyword && !jev.score && !p.reason) return null;
   return (
     <div className="why-draft">
       <div className="dash-eyebrow">Why this recommendation</div>
       <p>
-        {keep
-          ? "Analysis compared candidates to the published listing and recommends keeping the current title and description."
-          : "Built from live page signals plus keyword, competitor, and Searchify SEO research — not by copying the H1 word for word."}
+        {decision === "INSUFFICIENT_EVIDENCE"
+          ? "Searchify does not have reliable page evidence for a change, so the published title and description stay in place."
+          : keep
+            ? "Analysis compared candidates with the published listing and recommends keeping the current title and description."
+            : "A candidate showed a material improvement backed by this page's evidence. Nothing is published until you approve it."}
         {" "}Open Graph stays aligned with the listing. JSON-LD updates WebPage name/description without removing other live schema types.
       </p>
       <div className="evidence-row">
@@ -88,12 +92,19 @@ export function WhyThisDraft({ proposed, evidence = null, compact = false }) {
         {keyword ? <span className="w-pill">{`Keyword · ${keyword}`}</span> : null}
         {analysis.keywordSource ? <span className="w-pill">{`Keyword source · ${analysis.keywordSource}`}</span> : null}
         {meet ? <span className="w-pill">{`Meet · ${meet}`}</span> : <span className="w-pill">No same-keyword competitor stored</span>}
+        {decision ? <span className={`w-pill ${decision === "RECOMMEND_CHANGE" ? "good" : "warn"}`}>{decision.replaceAll("_", " ")}</span> : null}
         {keep ? <span className="w-pill good">Keep published listing</span> : p.beatsLive ? <span className="w-pill good">Beats live</span> : p.beatsLive === false ? <span className="w-pill warn">Not stronger than live yet</span> : null}
         {analysis.contentWriter ? <span className="w-pill">Searchify SEO content writer used</span> : null}
         {jev.score != null ? <span className={`w-pill ${jevBandClass(jev.band)}`}>{`JEV ${jev.score}/100 · ${jev.band || "inbox"}`}</span> : <span className="w-pill warn">JEV not scored</span>}
         {gsc.clicks != null && gsc.clicks !== "—" ? <span className="w-pill">{`GSC clicks · ${gsc.clicks}`}</span> : null}
         {gsc.impressions != null && gsc.impressions !== "—" ? <span className="w-pill">{`GSC reach · ${gsc.impressions}`}</span> : null}
       </div>
+      {!compact && warnings.length ? (
+        <ul className="claim-list">
+          {warnings.slice(0, 4).map((warning) => <li key={warning}>{warning}</li>)}
+        </ul>
+      ) : null}
+      {!compact && analysis.comparisonSummary ? <p className="w-footnote"><strong>Comparison:</strong> {analysis.comparisonSummary}</p> : null}
       {!compact && analysis.currentAssessment ? <p className="w-footnote"><strong>Current listing:</strong> {analysis.currentAssessment}</p> : null}
       {!compact && analysis.improvement ? <p className="w-footnote"><strong>Improvement:</strong> {analysis.improvement}</p> : null}
       {!compact && analysis.tradeOff ? <p className="w-footnote"><strong>Trade-off:</strong> {analysis.tradeOff}</p> : null}

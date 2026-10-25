@@ -19,7 +19,7 @@ import {
 import { useConnectionStatus } from "@/components/board/ConnectDialog";
 import { activeSiteContext } from "@/lib/siteContext";
 import { initials } from "@/lib/v8LiveData";
-import { SkeletonCards } from "@/components/v8/SkeletonWave";
+import { Skel } from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
 
 const QUALITY = ["Poor", "Fair", "Good", "Strong", "Great", "Excellent"];
@@ -67,9 +67,21 @@ function starHighlight(text) {
   return `${words.slice(0, mid).join(" ")} *${words.slice(mid, mid + 2).join(" ")}* ${words.slice(mid + 2).join(" ")}`.trim();
 }
 
+function choiceScore(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? Math.round(number) : 0;
+}
+
+function scoreLabel(ctrFit, seoScore) {
+  const parts = [];
+  if (ctrFit) parts.push(`CTR ${ctrFit}`);
+  if (seoScore) parts.push(`SEO ${seoScore}`);
+  return parts.join(" · ");
+}
+
 function suggestionPairs(p) {
   const pairs = [];
-  const push = (title, description) => {
+  const push = (title, description, ctrFit, seoScore) => {
     const t = String(title || "").trim();
     const d = String(description || "").trim();
     if (!t && !d) return;
@@ -78,12 +90,15 @@ function suggestionPairs(p) {
     pairs.push({
       title: t || "Updated title",
       description: d || "A clearer description for this page.",
+      ctrFit: choiceScore(ctrFit),
+      seoScore: choiceScore(seoScore),
     });
   };
-  push(p.title, p.metaDescription || p.description);
+  push(p.title, p.metaDescription || p.description, p.ctrFit, p.seoScore);
   (Array.isArray(p.aiAlternatives) ? p.aiAlternatives : []).forEach((alt) => {
-    push(alt?.title, alt?.description || alt?.metaDescription);
+    push(alt?.title, alt?.description || alt?.metaDescription, alt?.ctrFit, alt?.seoScore);
   });
+  pairs.sort((a, b) => (b.ctrFit || 0) - (a.ctrFit || 0) || (b.seoScore || 0) - (a.seoScore || 0));
   if (!pairs.length) {
     pairs.push({
       title: "Updated title and description",
@@ -152,6 +167,7 @@ export default function HomeScreen() {
   const [cmd, setCmd] = useState("");
   const [regenBusy, setRegenBusy] = useState(false);
   const [regenNote, setRegenNote] = useState("");
+  const [hoverIdx, setHoverIdx] = useState(-1);
   const [connectionStatus] = useConnectionStatus();
   const seededOnce = useRef(false);
   const router = useRouter();
@@ -251,15 +267,9 @@ export default function HomeScreen() {
 
   const list = Q[col];
   const doneMap = done;
-  const firstOpen = (c) => {
-    const L = Q[c];
-    for (let k = 0; k < L.length; k++) if (!doneMap[L[k].t]) return k;
-    return -1;
-  };
 
   let ci = cur[col];
-  if (ci === undefined) ci = firstOpen(col);
-  if (col === "green" || col === "blue") ci = ci < 0 ? 0 : ci;
+  if (ci === undefined || ci === null || ci < 0) ci = -1;
   const actionable = col === "red" || col === "yellow";
   const openCount = (c) => Q[c].filter((x) => !doneMap[x.t]).length;
 
@@ -271,15 +281,19 @@ export default function HomeScreen() {
     glow: `rgba(${RGB[k]},.55)`,
     on: col === k,
     off: col !== k,
-    pick: () => setCol(k),
+    pick: () => {
+      setHoverIdx(-1);
+      setCol(k);
+    },
   }));
 
   const stream = list.map((x, k) => {
     const st = doneMap[x.t];
-    const isCur = k === ci;
+    const isCur = ci >= 0 && k === ci;
     const fill = st === "shipped" ? COLORS.green : st === "skipped" ? "transparent" : COLORS[col];
     return {
       pick: () => setCur({ ...cur, [col]: k }),
+      hover: () => setHoverIdx(k),
       label: x.t + (st ? " — " + st : ""),
       fill: fill,
       edge: st === "skipped" ? "#5B616B" : fill,
@@ -290,7 +304,8 @@ export default function HomeScreen() {
     };
   });
 
-  const hasMove = actionable && ci >= 0;
+  const hasMove = actionable && ci >= 0 && !!list[ci] && !doneMap[list[ci].t];
+  const waitingPick = list.length > 0 && !(ci >= 0 && list[ci]);
   const segs = (str) =>
     str
       .split("*")
@@ -324,7 +339,7 @@ export default function HomeScreen() {
     const it = list[ci];
     const count = Math.max(it.after.length, 1);
     const v = (variant[it.t] || 0) % count;
-    const pair = it.after[v] || { title: "", description: "" };
+    const pair = it.after[v] || { title: "", description: "", ctrFit: 0, seoScore: 0 };
     m = {
       tag: TAG[col] + " · " + (ci + 1) + " OF " + list.length,
       kind: it.kind,
@@ -343,6 +358,8 @@ export default function HomeScreen() {
       proof: it.proof,
       opt: String(v + 1),
       optCount: count,
+      ctrFit: pair.ctrFit || 0,
+      seoScore: pair.seoScore || 0,
       afterAll: it.after,
       color: COLORS[col],
       changeId: it.changeId ?? null,
@@ -494,25 +511,22 @@ export default function HomeScreen() {
     }
   }
 
-  const upcoming = [];
-  if (actionable) {
-    for (let k = 0; k < list.length && upcoming.length < 3; k++) {
-      const x = list[(ci + 1 + k) % list.length];
-      if (!doneMap[x.t] && x !== list[ci]) upcoming.push(x.t);
-    }
-  }
-
   const streamLabel = hasMove
     ? "Working on " + (ci + 1) + " of " + list.length + " " + NOUN[col] + " · " + list[ci].t.split(" · ")[1]
+    : waitingPick
+    ? "Click a dot to open it"
     : actionable
     ? "All " + list.length + " " + NOUN[col] + " handled"
     : list.length + " " + NOUN[col] + " · nothing to ship";
 
-  const nextLabel = upcoming.length
-    ? "Up next: " + upcoming.join("  →  ")
-    : actionable
-    ? "Shipped dots turn green. Hollow dots were skipped."
-    : "Tap a dot to see which page it is.";
+  const hoveredMove = hoverIdx >= 0 && hoverIdx < list.length ? list[hoverIdx] : null;
+  const nextLabel = hoveredMove
+    ? hoveredMove.t
+    : ci >= 0 && list[ci]
+      ? list[ci].t
+      : list.length
+        ? "Hover a dot to read it. Click it to open the suggestion."
+        : "No dots on this colour yet.";
 
   const pending = gains.reduce((a, b) => a + b, 0);
   const shippedN = gains.length;
@@ -572,7 +586,6 @@ export default function HomeScreen() {
 
   return (
     <div className="v8-home" style={{ flex: "999 1 560px", minWidth: 0, width: "100%", minHeight: "min(100%, 720px)", background: "#0A0B0D", color: "#F2F4F5", fontFamily: "Geist, 'Helvetica Neue', sans-serif", boxSizing: "border-box", padding: "22px clamp(16px, 4vw, 56px) 40px", display: "flex", flexDirection: "column", gap: 32 }}>
-      {loading ? <SkeletonCards count={3} lines={4} /> : null}
       {!loading && (bootNote || queueEmpty) && (
         <div
           style={{
@@ -743,15 +756,30 @@ export default function HomeScreen() {
       <section aria-label="Captured so far" style={{ maxWidth: "1180px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "14px" }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: "12px", flexWrap: "wrap" }}>
-            <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "clamp(48px, 6vw, 80px)", lineHeight: 0.9, letterSpacing: "-2.5px", fontWeight: 800 }}>
-              {capturedNow.toLocaleString("en-US")}
-            </span>
-            <span style={{ fontSize: "17px", color: "#9AA1AB" }}>
-              of {untapped.toLocaleString("en-US")} untapped clicks / month captured
-            </span>
+            {loading ? (
+              <Skel w={180} h={64} radius={16} />
+            ) : (
+              <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "clamp(48px, 6vw, 80px)", lineHeight: 0.9, letterSpacing: "-2.5px", fontWeight: 800 }}>
+                {capturedNow.toLocaleString("en-US")}
+              </span>
+            )}
+            {loading ? (
+              <Skel w={260} h={16} />
+            ) : (
+              <span style={{ fontSize: "17px", color: "#9AA1AB" }}>
+                of {untapped.toLocaleString("en-US")} untapped clicks / month captured
+              </span>
+            )}
           </div>
-          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "13px", color: accent }}>{pendingLabel}</span>
+          {loading ? (
+            <Skel w={180} h={14} />
+          ) : (
+            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "13px", color: accent }}>{pendingLabel}</span>
+          )}
         </div>
+        {loading ? (
+          <Skel w="100%" h={12} radius={7} />
+        ) : (
         <div
           role="progressbar"
           aria-label="Captured so far"
@@ -794,6 +822,7 @@ export default function HomeScreen() {
             }}
           />
         </div>
+        )}
       </section>
 
       <main style={{ maxWidth: "1180px", width: "100%", margin: "0 auto", display: "flex", flexWrap: "wrap", gap: "32px", alignItems: "flex-start" }}>
@@ -824,7 +853,8 @@ export default function HomeScreen() {
                     }}
                   >
                     <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: ch.color, boxShadow: `0 0 10px ${ch.color}`, animation: "sfy-flicker 1.4s ease-in-out infinite" }}></span>
-                    {ch.label} <span style={{ fontFamily: "'Geist Mono', monospace" }}>{ch.count}</span>
+                    {ch.label}{" "}
+                    {loading ? <Skel w={18} h={12} radius={6} /> : <span style={{ fontFamily: "'Geist Mono', monospace" }}>{ch.count}</span>}
                   </button>
                 ) : (
                   <button
@@ -846,7 +876,8 @@ export default function HomeScreen() {
                     }}
                   >
                     <span style={{ width: "9px", height: "9px", borderRadius: "50%", background: ch.color }}></span>
-                    {ch.label} <span style={{ fontFamily: "'Geist Mono', monospace", color: "#9AA1AB" }}>{ch.count}</span>
+                    {ch.label}{" "}
+                    {loading ? <Skel w={18} h={12} radius={6} /> : <span style={{ fontFamily: "'Geist Mono', monospace", color: "#9AA1AB" }}>{ch.count}</span>}
                   </button>
                 )
               )}
@@ -854,15 +885,20 @@ export default function HomeScreen() {
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: "10px", flexWrap: "wrap" }}>
                 <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", letterSpacing: ".6px", color: "#7D848E" }}>INCOMING</span>
-                <span style={{ fontSize: "13px", color: "#D7DADE" }}>{streamLabel}</span>
+                {loading ? <Skel w={160} h={12} /> : <span style={{ fontSize: "13px", color: "#D7DADE" }}>{streamLabel}</span>}
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "9px", alignItems: "center" }}>
-                {stream.map((d, idx) => (
+                {loading
+                  ? Array.from({ length: 10 }).map((_, idx) => <Skel key={idx} w={22} h={22} radius={999} />)
+                  : stream.map((d, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={d.pick}
+                    onMouseEnter={d.hover}
+                    onMouseLeave={() => setHoverIdx(-1)}
                     aria-label={d.label}
+                    aria-pressed={d.ring !== "none"}
                     title={d.label}
                     style={{
                       width: "22px",
@@ -881,9 +917,60 @@ export default function HomeScreen() {
                   ></button>
                 ))}
               </div>
-              <span style={{ fontSize: "12px", color: "#7D848E", lineHeight: 1.5 }}>{nextLabel}</span>
+              {loading ? <Skel w="52%" h={12} /> : <span style={{ fontSize: "12px", color: "#7D848E", lineHeight: 1.5 }}>{nextLabel}</span>}
             </div>
           </div>
+
+          {loading ? (
+            <article
+              aria-busy="true"
+              style={{
+                background: "#131519",
+                border: "1px solid #262A31",
+                borderRadius: "24px",
+                padding: "clamp(22px, 3vw, 36px)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "18px",
+              }}
+            >
+              <Skel w="28%" h={12} />
+              <Skel w="74%" h={36} radius={14} />
+              <Skel w="90%" h={14} />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
+                <div style={{ borderRadius: "16px", background: "#0E1013", border: "1px solid #1A1D22", padding: "18px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <Skel w="24%" h={12} />
+                  <Skel w="100%" h={16} />
+                  <Skel w="78%" h={12} />
+                </div>
+                <div style={{ borderRadius: "16px", background: "rgba(77,163,255,.07)", border: "1.5px solid #4DA3FF", padding: "18px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <Skel w="24%" h={12} />
+                  <Skel w="100%" h={16} />
+                  <Skel w="82%" h={12} />
+                </div>
+              </div>
+            </article>
+          ) : null}
+
+          {!loading && waitingPick ? (
+            <div
+              style={{
+                borderRadius: "24px",
+                border: "1px solid #262A31",
+                background: "#101215",
+                padding: "32px 28px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <span style={{ fontSize: "13px", fontWeight: 600, color: "#9AA1AB" }}>No dot selected</span>
+              <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 600 }}>Click a dot to open its suggestion</h2>
+              <p style={{ margin: 0, fontSize: "14px", lineHeight: 1.5, color: "#9AA1AB" }}>
+                Hover a dot to read which page it is. The suggestion stays here until you click.
+              </p>
+            </div>
+          ) : null}
 
           {hasMove ? (
             <div style={{ display: "flex", flexDirection: "column" }}>
@@ -996,7 +1083,10 @@ export default function HomeScreen() {
                               <path d="M15 6l-6 6 6 6"></path>
                             </svg>
                           </button>
-                          <span style={{ color: "#9AA1AB", minWidth: "42px", textAlign: "center" }}>{m.opt} of {m.optCount}</span>
+                          <span style={{ color: "#9AA1AB", whiteSpace: "nowrap", textAlign: "center" }}>
+                            {m.opt} of {m.optCount}
+                            {scoreLabel(m.ctrFit, m.seoScore) ? ` · ${scoreLabel(m.ctrFit, m.seoScore)}` : ""}
+                          </span>
                           <button
                             type="button"
                             aria-label="Next option"
@@ -1022,6 +1112,8 @@ export default function HomeScreen() {
                             </svg>
                           </button>
                         </span>
+                      ) : scoreLabel(m.ctrFit, m.seoScore) ? (
+                        <span style={{ color: "#9AA1AB", whiteSpace: "nowrap" }}>{scoreLabel(m.ctrFit, m.seoScore)}</span>
                       ) : null}
                     </span>
                     <span style={{ fontSize: "17px", lineHeight: 1.45 }}>
@@ -1169,7 +1261,7 @@ export default function HomeScreen() {
             </div>
           ) : null}
 
-          {hasInfo ? (
+          {hasInfo && !waitingPick ? (
             <div
               style={{
                 borderRadius: "24px",
@@ -1241,7 +1333,7 @@ export default function HomeScreen() {
                   <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: "#7D848E", width: "14px" }}>{c.n}</span>
                   <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "1px" }}>
                     <span style={{ fontSize: "14px", fontWeight: 500 }}>{c.name}</span>
-                    <span style={{ fontSize: "12px", color: "#9AA1AB" }}>{c.sub}</span>
+                    {loading ? <Skel w="62%" h={12} /> : <span style={{ fontSize: "12px", color: "#9AA1AB" }}>{c.sub}</span>}
                   </span>
                   {c.on ? (
                     <svg

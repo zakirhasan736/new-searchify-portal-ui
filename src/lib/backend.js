@@ -24,7 +24,7 @@ export async function forward(request, path) {
       upstream = await fetch(`${apiUrl}${target}`, init);
     } catch {
       await new Promise((resolve) => setTimeout(resolve, 400));
-      upstream = await fetch(`${apiUrl}${target}`, init);
+      upstream = await fetch(`${apiUrl}${path}`, init);
     }
     const text = await upstream.text();
     const outHeaders = { "Content-Type": "application/json" };

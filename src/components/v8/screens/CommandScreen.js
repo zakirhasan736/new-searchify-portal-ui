@@ -435,7 +435,7 @@ export default function CommandScreen() {
   ];
 
   const headline = loading
-    ? 'Your clients'
+    ? 'Loading your client queue…'
     : open.length
       ? `${open.length} moves waiting across your clients.`
       : 'Everything is approved. Nice work.';

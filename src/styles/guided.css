@@ -182,14 +182,16 @@ dialog.connect-dialog {
   max-height: min(92vh, calc(100dvh - 28px));
   overflow: auto;
   padding: 28px 26px 22px;
-  border: 1px solid #657e4e;
-  border-radius: 16px;
-  background: #171f14;
-  color: #e9f2e0;
-  box-shadow: 0 30px 80px #000a;
+  border: 1px solid #262A31;
+  border-radius: 22px;
+  background: #131519;
+  color: #F2F4F5;
+  color-scheme: dark;
+  font-family: Geist, "Helvetica Neue", sans-serif;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
 }
 dialog.connect-dialog::backdrop {
-  background: #030702d6;
+  background: rgba(10, 11, 13, 0.72);
   backdrop-filter: blur(5px);
 }
 dialog.connect-dialog * { box-sizing: border-box; }
@@ -201,31 +203,33 @@ dialog.connect-dialog .connect-dialog-close {
   height: 36px;
   border: 0;
   background: transparent;
-  color: #bfd4ab;
+  color: #9AA1AB;
   font-size: 26px;
   line-height: 1;
   cursor: pointer;
 }
 dialog.connect-dialog .connect-kicker {
   margin: 0 36px 8px 0;
-  color: #d5f879;
+  color: #7D848E;
+  font-family: "Geist Mono", monospace;
   font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1.4px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
   text-transform: uppercase;
 }
 dialog.connect-dialog h2 {
   margin: 0 28px 10px 0;
-  font-family: var(--font-barlow), "Barlow Condensed", Impact, sans-serif;
-  font-size: 40px;
-  font-weight: 700;
-  line-height: 0.95;
+  font-family: "Bricolage Grotesque", Geist, sans-serif;
+  font-size: 28px;
+  font-weight: 650;
+  line-height: 1.1;
   letter-spacing: -0.4px;
-  text-transform: uppercase;
+  color: #F2F4F5;
+  text-transform: none;
 }
 dialog.connect-dialog .connect-lead {
   margin: 0 0 18px;
-  color: #b9caaa;
+  color: #9AA1AB;
   font-size: 14px;
   line-height: 1.55;
 }
@@ -239,26 +243,31 @@ dialog.connect-dialog label {
   gap: 6px;
 }
 dialog.connect-dialog label span {
-  color: #d9e3cf;
+  color: #D7DADE;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 dialog.connect-dialog input {
   width: 100%;
   min-height: 46px;
   padding: 10px 12px;
-  border: 1px solid #48533f;
-  border-radius: 8px;
-  background: #121712;
-  color: #ebf0e6;
-  font: 15px/1.4 var(--font-manrope), Manrope, Arial, sans-serif;
+  border: 1px solid #262A31;
+  border-radius: 12px;
+  background: #0A0B0D;
+  color: #F2F4F5;
+  font: 15px/1.4 Geist, "Helvetica Neue", sans-serif;
 }
 dialog.connect-dialog input:focus {
-  outline: 2px solid #d5f87955;
-  border-color: #d5f879;
+  outline: 2px solid rgba(77, 163, 255, 0.35);
+  border-color: #4DA3FF;
+}
+dialog.connect-dialog input:-webkit-autofill {
+  -webkit-text-fill-color: #F2F4F5;
+  caret-color: #F2F4F5;
+  box-shadow: 0 0 0 1000px #0A0B0D inset;
 }
 dialog.connect-dialog small {
-  color: #8fa47e;
+  color: #7D848E;
   font-size: 12px;
   line-height: 1.45;
 }
@@ -271,18 +280,18 @@ dialog.connect-dialog .connect-secret {
 dialog.connect-dialog .connect-secret button {
   min-height: 46px;
   padding: 0 14px;
-  border: 1px solid #526442;
-  border-radius: 8px;
-  background: #20291c;
-  color: #deead2;
+  border: 1px solid #262A31;
+  border-radius: 12px;
+  background: #101215;
+  color: #F2F4F5;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 dialog.connect-dialog .connect-error {
   margin: 0;
   grid-column: 1 / -1;
-  color: #ffb4a8;
+  color: #FF5A4E;
   font-size: 13px;
   line-height: 1.45;
 }
@@ -293,20 +302,20 @@ dialog.connect-dialog .connect-dialog-actions {
 dialog.connect-dialog .connect-later,
 dialog.connect-dialog .connect-verify {
   min-height: 46px;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 dialog.connect-dialog .connect-later {
-  border: 1px solid #526442;
+  border: 1px solid #262A31;
   background: transparent;
-  color: #deead2;
+  color: #F2F4F5;
 }
 dialog.connect-dialog .connect-verify {
-  border: 1px solid #d5f879;
-  background: #d5f879;
-  color: #1c2813;
+  border: 0;
+  background: #4DA3FF;
+  color: #0A0B0D;
 }
 dialog.connect-dialog .connect-verify:disabled,
 dialog.connect-dialog .connect-later:disabled {

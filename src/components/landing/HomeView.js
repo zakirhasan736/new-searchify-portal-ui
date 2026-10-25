@@ -142,9 +142,6 @@ export default function HomeView() {
   const [undone, setUndone] = useState({});
   const [heroUrl, setHeroUrl] = useState("");
   const [footUrl, setFootUrl] = useState("");
-  const [scanning, setScanning] = useState(false);
-  const [scan, setScan] = useState(null);
-  const [scanError, setScanError] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => setFocus((value) => (value + 1) % 4), 2200);
@@ -172,6 +169,9 @@ export default function HomeView() {
     return { ...row, reverted };
   });
 
+  const goScan = (raw) => {
+    const site = normalizeSiteUrl(raw);
+    if (site) stashPendingSite(site);
   const runPreview = async (raw) => {
     const site = normalizeSiteUrl(raw);
     if (!site || !hostLabel(site).includes(".")) {
@@ -205,10 +205,10 @@ export default function HomeView() {
       return;
     }
     const q = new URLSearchParams({ next: "/app/start", site });
-    router.push(`/signup?${q}`);
-  };
-
   const previewHost = hostLabel(heroUrl || footUrl);
+
+  return (
+    <LandingShell current="home">
   const boardDots = scan
     ? Array.from({ length: 40 }, (_, index) => {
         const item = scan.dots?.[index];
@@ -223,9 +223,6 @@ export default function HomeView() {
         };
       })
     : dots;
-
-  return (
-    <LandingShell current="home">
       <header className="sf-hero">
         <div className="sf-hero-copy">
           <h1>Don&apos;t lose customers on Google. Cast a better net.</h1>
@@ -238,21 +235,24 @@ export default function HomeView() {
             className="sf-urlrow"
             onSubmit={(event) => {
               event.preventDefault();
-              runPreview(heroUrl);
+              goScan(heroUrl);
             }}
           >
-            <label className="sf-urlfield">
+              runPreview(heroUrl);
               <span className="sf-sr">Your website</span>
               <input
+                type="url"
+                inputMode="url"
+                autoComplete="url"
                 type="text"
                 inputMode="url"
                 autoComplete="url"
                 spellCheck={false}
-                placeholder="yourwebsite.com"
-                value={heroUrl}
-                onChange={(event) => setHeroUrl(event.target.value)}
               />
             </label>
+            <button className="sf-btn-blue lg" type="submit">
+              Scan it free
+            </button>
             <button className="sf-btn-blue lg" type="submit" disabled={scanning}>
               {scanning ? "Scanning…" : "Scan it free"}
             </button>
@@ -296,8 +296,8 @@ export default function HomeView() {
               </button>
             </div>
           ) : null}
-        </div>
-
+          <div className="sf-hero-board-top">
+            <span>{previewHost}</span>
         <div className="sf-hero-board" aria-hidden={scan ? undefined : true}>
           <div className="sf-hero-board-top">
             <span>{scan?.host || previewHost}</span>
@@ -312,9 +312,6 @@ export default function HomeView() {
           <div className="sf-dots">
             {boardDots.map((dot, index) => (
               <div className="sf-dot-cell" key={index} title={dot.title || undefined}>
-                <div
-                  className={`sf-dot${dot.anim ? " is-live" : ""}`}
-                  style={{
                     background: dot.color,
                     opacity: dot.op,
                     boxShadow: dot.shadow,
@@ -628,27 +625,27 @@ export default function HomeView() {
           className="sf-urlrow center"
           onSubmit={(event) => {
             event.preventDefault();
-            runPreview(footUrl || heroUrl);
+            goScan(footUrl || heroUrl);
           }}
         >
-          <label className="sf-urlfield">
+            runPreview(footUrl || heroUrl);
             <span className="sf-sr">Your website</span>
             <input
+              type="url"
+              inputMode="url"
+              autoComplete="url"
               type="text"
               inputMode="url"
               autoComplete="url"
               spellCheck={false}
-              placeholder="yourwebsite.com"
-              value={footUrl}
-              onChange={(event) => setFootUrl(event.target.value)}
             />
           </label>
+          <button className="sf-btn-blue lg" type="submit">
+            Scan it free
+          </button>
             <button className="sf-btn-blue lg" type="submit" disabled={scanning}>
               {scanning ? "Scanning…" : "Scan it free"}
             </button>
-        </form>
-        <p className="sf-note">
-          Prefer to explore first?{" "}
           <Link href="/signup">Create an account</Link> or <Link href="/login">sign in</Link>.
         </p>
       </section>
