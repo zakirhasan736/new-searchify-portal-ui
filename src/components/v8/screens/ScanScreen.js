@@ -26,6 +26,8 @@ import {
 } from "@/lib/v1Api";
 import { useConnectionStatus } from "@/components/board/ConnectDialog";
 import { loadJourney } from "@/lib/journey";
+import ProblemNotice from "@/components/v8/ProblemNotice";
+import { problemsFrom } from "@/lib/problems";
 import "@/styles/v8-screens.css";
 
 const COLORS = { red: "#FF5A4E", yellow: "#FFC53D", green: "#3DDC84", blue: "#4DA3FF" };
@@ -89,6 +91,7 @@ export default function ScanScreen() {
   const [regenBusy, setRegenBusy] = useState(false);
   const [pubBusy, setPubBusy] = useState(false);
   const [regenNote, setRegenNote] = useState("");
+  const [problems, setProblems] = useState([]);
   const timerRef = useRef(null);
 
   const reloadLive = useCallback(async () => {
@@ -108,10 +111,13 @@ export default function ScanScreen() {
         href ? researchAudit({ site: href, force: false }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
       ]);
       let scan = scanRes.data?.scan || scanRes.data;
+      let scanProblems = problemsFrom(scanRes, "site_scan");
       if (href && !scan?.pagesRead) {
-        const started = await runSiteScan({ force: false }).catch(() => null);
-        scan = started?.data?.scan || started?.data || scan;
+        const started = await runSiteScan({ force: false }).catch(() => ({ ok: false }));
+        scan = started?.data?.scan || (started?.ok ? started?.data : null) || scan;
+        scanProblems = problemsFrom(started, "site_scan");
       }
+      setProblems(href ? [...scanProblems, ...problemsFrom(auditRes, "site_audit")] : []);
       if (scan) setScanData(scan);
       const gsc = featurePayload(queries);
       const impr = Number(String(gsc.kpis?.[1]?.[1] || "").replace(/[^\d.]/g, ""));
@@ -203,12 +209,14 @@ export default function ScanScreen() {
     }, 70);
     try {
       const { href } = activeSiteContext(loadJourney());
-      await runSiteScan({ force: true });
-      if (href) await researchAudit({ site: href, force: true }).catch(() => null);
+      const scanRun = await runSiteScan({ force: true }).catch(() => ({ ok: false }));
+      const auditRun = href ? await researchAudit({ site: href, force: true }).catch(() => ({ ok: false })) : null;
       if (connectionStatus.gsc) {
         await proposeFromGsc({ breadth: "balanced", limit: 8, rescan: true });
       }
       await reloadLive();
+      const runProblems = [...problemsFrom(scanRun, "site_scan"), ...(auditRun ? problemsFrom(auditRun, "site_audit") : [])];
+      if (runProblems.some((p) => p.severity === "error")) setProblems(runProblems);
     } catch {
       /* keep animation; empty board if APIs fail */
     }
@@ -648,6 +656,8 @@ export default function ScanScreen() {
           Replay the scan
         </button>
       </div>
+
+      <ProblemNotice problems={problems} onRetry={() => reloadLive()} style={{ maxWidth: "1180px", width: "100%", margin: "0 auto" }} />
 
       <div
         style={{

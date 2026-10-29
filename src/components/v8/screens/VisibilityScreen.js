@@ -11,6 +11,8 @@ import {
   runAiVisibility,
 } from "@/lib/v1Api";
 import { SkeletonCards, SkeletonRows } from "@/components/v8/SkeletonWave";
+import ProblemNotice from "@/components/v8/ProblemNotice";
+import { problemsFrom } from "@/lib/problems";
 import "@/styles/v8-screens.css";
 
 const ALL = "All engines";
@@ -127,6 +129,7 @@ export default function VisibilityScreen() {
   const [engine, setEngine] = useState(ALL);
   const [open, setOpen] = useState(null);
   const [note, setNote] = useState("");
+  const [problems, setProblems] = useState([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -135,6 +138,7 @@ export default function VisibilityScreen() {
       const [bp, vis] = await Promise.all([getBusinessProfile(), getAiVisibility({ force: true })]);
       setProfile(bp.data?.profile || {});
       setReport(vis.data?.report || null);
+      setProblems(problemsFrom(vis, "ai_visibility"));
     } finally {
       setLoading(false);
     }
@@ -162,12 +166,11 @@ export default function VisibilityScreen() {
   const run = async () => {
     setBusy(true);
     setNote("");
-    const res = await runAiVisibility();
+    setProblems([]);
+    const res = await runAiVisibility().catch(() => ({ ok: false }));
     setBusy(false);
-    if (!res.ok) {
-      setNote(res.data?.detail || "Could not run the AI visibility report.");
-      return;
-    }
+    setProblems(problemsFrom(res, "ai_visibility"));
+    if (!res.ok) return;
     setReport(res.data.report);
     setNote("Visibility report ready.");
   };
@@ -177,7 +180,7 @@ export default function VisibilityScreen() {
     const res = await queueAiVisibilityFix({ checkId: check.id });
     setQueueBusy(false);
     if (!res.ok) {
-      setNote(res.data?.detail || "Could not add this to the work queue.");
+      setProblems(problemsFrom(res, "ai_visibility"));
       return;
     }
     setNote("Fix sent to the Today queue.");
@@ -289,6 +292,8 @@ export default function VisibilityScreen() {
           {busy ? "Running…" : report ? "Re-run report" : "Run visibility report"}
         </button>
       </div>
+
+      <ProblemNotice problems={problems} onRetry={() => run()} style={{ maxWidth: "1120px", width: "100%", margin: "0 auto" }} />
 
       {note ? (
         <p role="status" style={{ maxWidth: "1120px", width: "100%", margin: "0 auto", fontSize: "14px", color: "#4DA3FF" }}>

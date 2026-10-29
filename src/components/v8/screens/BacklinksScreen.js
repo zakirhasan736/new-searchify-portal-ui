@@ -11,6 +11,8 @@ import {
 import { activeSiteContext } from '@/lib/siteContext';
 import { loadJourney } from '@/lib/journey';
 import { SkeletonCards } from '@/components/v8/SkeletonWave';
+import ProblemNotice from '@/components/v8/ProblemNotice';
+import { problemsFrom } from '@/lib/problems';
 import '@/styles/v8-screens.css';
 
 function strengthScore(link) {
@@ -211,6 +213,8 @@ export default function BacklinksScreen() {
   const [orphans, setOrphans] = useState([]);
   const [senderEmail, setSenderEmail] = useState('');
   const [loading, setLoading] = useState(true);
+  const [problems, setProblems] = useState([]);
+  const [reloadKey, setReloadKey] = useState(0);
   const { hostname, href } = activeSiteContext(loadJourney());
 
   useEffect(() => {
@@ -226,6 +230,7 @@ export default function BacklinksScreen() {
     ])
       .then(([res, feat, pagesFeat, prof]) => {
         if (cancel) return;
+        setProblems(site ? problemsFrom(res, 'backlinks') : []);
         const fromResearch = res?.ok ? normalizeLinksPayload(res.data) : null;
         const fromFeat = normalizeLinksPayload(featurePayload(feat));
         const pick =
@@ -266,7 +271,7 @@ export default function BacklinksScreen() {
     return () => {
       cancel = true;
     };
-  }, [hostname, href]);
+  }, [hostname, href, reloadKey]);
 
   const MOVES = useMemo(() => {
     if (!liveLinks?.length) return [];
@@ -466,6 +471,8 @@ export default function BacklinksScreen() {
           </div>
           <span style={{ fontSize: '12px', color: '#7D848E' }}>{updatedLabel}</span>
         </header>
+
+        <ProblemNotice problems={problems} onRetry={() => setReloadKey((k) => k + 1)} style={{ maxWidth: '1120px', width: '100%', margin: '0 auto' }} />
 
         <section aria-label="Totals" style={{ maxWidth: '1120px', width: '100%', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px' }}>
           {[

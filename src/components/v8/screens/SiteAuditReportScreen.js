@@ -14,6 +14,8 @@ import {
   researchAudit,
 } from "@/lib/v1Api";
 import { SkeletonRows } from "@/components/v8/SkeletonWave";
+import ProblemNotice from "@/components/v8/ProblemNotice";
+import { problemsFrom } from "@/lib/problems";
 import "@/styles/v8-screens.css";
 
 const TOPICS = [
@@ -62,6 +64,8 @@ export default function SiteAuditReportScreen() {
   const [gsc, setGsc] = useState({});
   const [seoScore, setSeoScore] = useState(null);
   const [seoSource, setSeoSource] = useState("");
+  const [problems, setProblems] = useState([]);
+  const [auditProblems, setAuditProblems] = useState([]);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -76,6 +80,7 @@ export default function SiteAuditReportScreen() {
         listChanges({ force: false }).catch(() => ({ ok: false, data: [] })),
         getSiteScan().catch(() => ({ ok: false })),
       ]);
+      setProblems(problemsFrom(crawl, "site_scan"));
       const auditPayload = featurePayload(audit);
       const built = buildAuditFindings({
         audit,
@@ -106,7 +111,11 @@ export default function SiteAuditReportScreen() {
   const refreshAudit = async () => {
     setBusy(true);
     try {
-      await researchAudit({ force: true }).catch(() => null);
+      // The crawl needs the site address; without it the API answered "Add the website
+      // address in setup first" and the refresh silently did nothing.
+      const site = activeSiteContext(loadJourney()).href || "";
+      const res = await researchAudit({ site, force: true }).catch(() => ({ ok: false }));
+      setAuditProblems(problemsFrom(res, "site_audit"));
       await reload();
     } finally {
       setBusy(false);
@@ -204,6 +213,12 @@ export default function SiteAuditReportScreen() {
           </svg>
         </Link>
       </header>
+
+      <ProblemNotice
+        problems={[...auditProblems, ...problems]}
+        onRetry={() => refreshAudit()}
+        style={{ maxWidth: "1180px", width: "100%", margin: "0 auto" }}
+      />
 
       <div style={{ maxWidth: "1180px", width: "100%", margin: "0 auto", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", minWidth: 0 }}>
