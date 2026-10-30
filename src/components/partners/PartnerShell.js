@@ -6,6 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import SearchifyMarkSvg from "@/components/v8/SearchifyMarkSvg";
 import SearchifyLoader from "@/components/v8/SearchifyLoader";
 import { ShellBusyProvider } from "@/components/v8/ShellBusy";
+import { motion } from "framer-motion";
+import MotionStage from "@/components/motion/MotionStage";
 import { getPartnerMe, partnerInitials } from "@/lib/partnerApi";
 import { userLogout } from "@/utils/users/Helpers";
 import { PARTNER_KEY, clearSessionFlag, isPartnerAuthenticated } from "@/lib/authRoles";
@@ -324,18 +326,28 @@ export default function PartnerShell({
                 aria-current={on ? "page" : undefined}
                 style={{
                   ...navLinkBase,
-                  ...(on
-                    ? { background: "#1A1D22", color: "#F2F4F5", fontWeight: 600 }
-                    : { color: "#9AA1AB" }),
+                  position: "relative",
+                  ...(on ? { color: "#F2F4F5", fontWeight: 600 } : { color: "#9AA1AB" }),
                 }}
               >
-                {tab.label}
+                {on ? (
+                  <motion.span
+                    layoutId="partner-tab-pill"
+                    transition={{ type: "spring", stiffness: 420, damping: 36 }}
+                    style={{ position: "absolute", inset: 0, borderRadius: "inherit", background: "#1A1D22" }}
+                  />
+                ) : null}
+                <span style={{ position: "relative" }}>{tab.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        <ShellBusyProvider label="Opening your partner centre">{children}</ShellBusyProvider>
+        <ShellBusyProvider label="Opening your partner centre">
+          <MotionStage key={pathname} selector=":scope > *, :scope > * > *, :scope [data-reveal]" style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+            {children}
+          </MotionStage>
+        </ShellBusyProvider>
       </div>
     </PartnerCtx.Provider>
   );
