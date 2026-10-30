@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { SkeletonCards } from '@/components/v8/SkeletonWave';
+import ProblemNotice from '@/components/v8/ProblemNotice';
+import { problemsFrom } from '@/lib/problems';
 import { buildAuditFindings } from '@/lib/auditFindings';
 import { activeSiteContext } from '@/lib/siteContext';
 import { clickHalves, issueCounts, monthEmail, publishedRows } from '@/lib/monthReport';
@@ -99,6 +101,7 @@ export default function ReportScreen() {
   const [view, setView] = useState(EMPTY);
   const [loading, setLoading] = useState(true);
   const [gscLink, setGscLink] = useState('');
+  const [problems, setProblems] = useState([]);
   const accent = '#D5F879';
 
   useEffect(() => {
@@ -106,7 +109,10 @@ export default function ReportScreen() {
     let cancelled = false;
     getGoogleStatus()
       .then((res) => {
-        if (!cancelled) setGscLink(searchConsoleLink(res?.data?.connection));
+        if (cancelled) return;
+        setGscLink(searchConsoleLink(res?.data?.connection));
+        const saved = res?.data?.connection?.problem;
+        if (saved) setProblems((list) => [saved, ...list.filter((p) => p.code !== saved.code)]);
       })
       .catch(() => {});
     return () => {
@@ -140,6 +146,10 @@ export default function ReportScreen() {
     ])
       .then(([chRes, organic, traffic, pages, audit, landings, backlinks, auditRes, linkRes, workspace, biz, acct]) => {
         if (cancelled) return;
+        if (!clientView && href) {
+          const found = [...problemsFrom(auditRes, 'site_audit'), ...problemsFrom(linkRes, 'backlinks')];
+          setProblems((list) => [...list.filter((p) => p.area === 'search_console' || p.area === 'analytics' || p.area === 'google'), ...found]);
+        }
         const changes = Array.isArray(chRes.data) ? chRes.data : chRes.data?.changes || [];
         const gsc = featurePayload(organic);
         const ga = featurePayload(traffic);
@@ -353,6 +363,8 @@ export default function ReportScreen() {
             {view.headline}
           </h1>
         </header>
+
+        {!clientView ? <ProblemNotice problems={problems} /> : null}
 
         <section aria-label="Headline results" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
           <div style={{ borderRadius: '22px', background: '#101215', border: '1px solid #1A1D22', padding: '24px', display: 'flex', flexDirection: 'column', gap: '6px' }}>

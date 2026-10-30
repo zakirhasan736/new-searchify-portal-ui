@@ -15,6 +15,8 @@ import {
 import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
+import ProblemNotice from "@/components/v8/ProblemNotice";
+import { problemsFrom } from "@/lib/problems";
 import "@/styles/v8-screens.css";
 
 const TRACK_KEY = "sfy-tracked-keywords";
@@ -290,6 +292,7 @@ export default function WinScreen() {
   const [ideaTab, setIdeaTab] = useState("all");
   const [sitePages, setSitePages] = useState([]);
   const [pageNote, setPageNote] = useState("");
+  const [problems, setProblems] = useState([]);
   const { hostname, href } = activeSiteContext(loadJourney());
 
   const rebuild = useCallback(async () => {
@@ -306,6 +309,7 @@ export default function WinScreen() {
         listChanges({ force: true }).catch(() => ({ ok: false, data: [] })),
         site ? getSiteScan(site).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
       ]);
+      setProblems(site ? problemsFrom(kwRes, "keywords") : []);
       setSitePages(scanRes?.ok ? collectScanPages(scanRes.data) : []);
 
       const byTerm = new Map();
@@ -420,7 +424,13 @@ export default function WinScreen() {
     const site = href || "";
     if (site) {
       // A new term is not in the stored set, so the backend refreshes live without force (no wasted quota).
-      await researchKeywords({ site, terms: next, force: false }).catch(() => {});
+      const live = await researchKeywords({ site, terms: next, force: false }).catch(() => ({ ok: false }));
+      if (!live?.ok) {
+        await rebuild();
+        setProblems(problemsFrom(live, "keywords"));
+        setTracking(false);
+        return;
+      }
     }
     await rebuild();
     setTracking(false);
@@ -700,6 +710,8 @@ export default function WinScreen() {
           </label>
         )}
       </header>
+
+      <ProblemNotice problems={problems} onRetry={() => rebuild()} style={{ maxWidth: "1120px", width: "100%", margin: "0 auto" }} />
 
       {loading ? (
         <div style={{ maxWidth: "1120px", width: "100%", margin: "0 auto" }}>

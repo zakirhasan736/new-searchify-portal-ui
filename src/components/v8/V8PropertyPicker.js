@@ -9,6 +9,8 @@ import {
   selectGoogleProperties,
   syncGoogleLive,
 } from "@/lib/v1Api";
+import ProblemNotice from "@/components/v8/ProblemNotice";
+import { problemsFrom } from "@/lib/problems";
 
 function hostOf(url) {
   try {
@@ -34,6 +36,7 @@ export default function V8PropertyPicker({ google, siteLabel = "", onSaved }) {
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [match, setMatch] = useState(null);
+  const [problems, setProblems] = useState([]);
 
   const signedIn = google?.account?.status === "connected" || Boolean(google?.connected);
   const reauth = google?.account?.status === "reauth_required";
@@ -73,7 +76,12 @@ export default function V8PropertyPicker({ google, siteLabel = "", onSaved }) {
       setGa4Props(res.data?.ga4Properties || []);
       setMatch(res.data?.match || null);
       setError("");
-      if (!google?.gscSiteUrl && res.data?.match?.gsc?.status === "matched") {
+      const suggested = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("gsc") : "";
+      if (suggested && (res.data?.gscSites || []).some((site) => site.siteUrl === suggested)) {
+        // Came from a "Use https://…" help button: preselect the property the account can read.
+        setGsc(suggested);
+        setNote(`Selected ${suggested}. Click Save and sync to use it.`);
+      } else if (!google?.gscSiteUrl && res.data?.match?.gsc?.status === "matched") {
         setGsc(res.data.match.gsc.selected);
       }
       if (!google?.ga4PropertyId && res.data?.match?.ga4?.status === "matched") {
@@ -93,6 +101,7 @@ export default function V8PropertyPicker({ google, siteLabel = "", onSaved }) {
     setBusy(thenSync ? "Syncing Search Console and Analytics…" : "Saving…");
     setError("");
     setNote("");
+    setProblems([]);
     const ga4Name = ga4Props.find((item) => item.propertyId === ga4)?.displayName || google?.ga4PropertyName || "";
     const saved = await selectGoogleProperties({
       gsc_site_url: gsc,
@@ -101,7 +110,7 @@ export default function V8PropertyPicker({ google, siteLabel = "", onSaved }) {
     });
     if (!saved.ok) {
       setBusy("");
-      setError(errorText(saved, "Could not save those properties."));
+      setProblems(problemsFrom(saved, "search_console"));
       return;
     }
     if (siteLabel) {
@@ -116,10 +125,12 @@ export default function V8PropertyPicker({ google, siteLabel = "", onSaved }) {
     const sync = await syncGoogleLive();
     setBusy("");
     if (!sync.ok) {
-      setError(errorText(sync, "Properties saved, but the sync did not finish."));
+      setNote("Properties saved, but the sync did not finish.");
+      setProblems(problemsFrom(sync, "search_console"));
       onSaved?.(saved.data);
       return;
     }
+    setProblems(problemsFrom(sync, "search_console"));
     const flags = sync.data?.synced || {};
     const opened = sync.data?.queue?.created;
     setNote(
@@ -170,7 +181,7 @@ export default function V8PropertyPicker({ google, siteLabel = "", onSaved }) {
         <code style={{ color: "#D7DADE" }}>https://…</code> or <code style={{ color: "#D7DADE" }}>https://www.…</code>.
         Your client must add you on the exact property Searchify selects (often the Domain one).
       </p>
-      {google?.lastError ? <p style={warnStyle}>{google.lastError}</p> : null}
+      {google?.lastError && !problems.length && !google?.problem ? <p style={warnStyle}>Last sync failed: {google.lastError}</p> : null}
 
       {match?.gsc?.status === "matched" && match.gsc.selected === gsc ? (
         <p style={hintStyle}>Search Console matched: {gsc}</p>
@@ -217,6 +228,7 @@ export default function V8PropertyPicker({ google, siteLabel = "", onSaved }) {
       ) : null}
       {error ? <p style={warnStyle}>{error}</p> : null}
       {note ? <p style={hintStyle}>{note}</p> : null}
+      <ProblemNotice problems={problems.length ? problems : google?.problem ? [google.problem] : []} onRetry={() => save(true)} />
 
       <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
         <button type="button" disabled={Boolean(busy)} onClick={() => save(false)} style={ghostBtn}>
