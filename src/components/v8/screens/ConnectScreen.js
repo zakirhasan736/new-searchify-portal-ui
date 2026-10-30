@@ -75,31 +75,17 @@ export default function ConnectScreen() {
 
   useEffect(() => {
     const googleSignedIn = status.googleAccount === "connected" || Boolean(status.google?.connected);
-    // Property selected (auto-matched or saved) → show Unplug / LIVE, not "Choose property".
-    const gscSelected = Boolean(status.gsc || status.google?.gscSiteUrl);
-    const gaSelected = Boolean(status.ga || status.google?.ga4PropertyId);
+    // After Google OAuth, both GSC + GA cards are live with Unplug (no "Choose property").
     setState((prev) => ({
       ...prev,
-      gsc: gscSelected
-        ? "live"
-        : googleSignedIn
-          ? "pick"
-          : prev.gsc === "connecting"
-            ? "connecting"
-            : "off",
+      gsc: googleSignedIn ? "live" : prev.gsc === "connecting" ? "connecting" : "off",
       wp: status.wordpress ? "live" : prev.wp === "connecting" ? "connecting" : "off",
-      ga: gaSelected
-        ? "live"
-        : googleSignedIn
-          ? "pick"
-          : prev.ga === "connecting"
-            ? "connecting"
-            : "off",
+      ga: googleSignedIn ? "live" : prev.ga === "connecting" ? "connecting" : "off",
     }));
     setRows({
-      gsc: gscSelected ? Number(status.gscRows || status.gscCount || 0) : 0,
+      gsc: googleSignedIn ? Number(status.gscRows || status.gscCount || 0) : 0,
       wp: status.wordpress ? Number(status.wpPages || status.pageCount || 0) : 0,
-      ga: gaSelected ? Number(status.gaSessions || status.gaCount || 0) : 0,
+      ga: googleSignedIn ? Number(status.gaSessions || status.gaCount || 0) : 0,
     });
   }, [status]);
 
@@ -213,7 +199,6 @@ export default function ConnectScreen() {
   const plugs = defs.map((d) => {
     const s = state[d.id];
     const live = s === "live";
-    const pick = s === "pick";
     const conn = s === "connecting";
     const locked = s === "soon";
     const n = rows[d.id] || 0;
@@ -225,12 +210,11 @@ export default function ConnectScreen() {
         d.tag.indexOf("REQUIRED") === 0
           ? "0 0 14px rgba(61,220,132,.35), inset 0 0 8px rgba(61,220,132,.12)"
           : "none",
-      tagDot: live ? "#3DDC84" : pick ? "#FFC53D" : "#5B616B",
-      tagDotGlow: live ? "0 0 8px #3DDC84" : pick ? "0 0 8px #FFC53D" : "none",
+      tagDot: live ? "#3DDC84" : "#5B616B",
+      tagDotGlow: live ? "0 0 8px #3DDC84" : "none",
       canPlug: s === "off",
       isConnecting: conn,
       isLive: live,
-      needsProperty: pick,
       isLocked: locked,
       shift: live || conn ? "30px" : "0px",
       cable: live ? BLUE : locked ? "#1A1D22" : "#3A404A",
@@ -243,26 +227,18 @@ export default function ConnectScreen() {
       flowOp: live ? "0.9" : "0",
       srvOp: live ? "1" : "0",
       border: live ? "rgba(77,163,255,.45)" : "#1A1D22",
-      statusColor: live ? BLUE : pick ? "#FFC53D" : "#7D848E",
+      statusColor: live ? BLUE : "#7D848E",
       statusText: live
         ? n > 0
           ? `● LIVE · ${n.toLocaleString("en-US")} ${d.unit} synced`
           : "● LIVE · connected"
-        : pick
-        ? "● Signed in · choose property below"
         : conn
         ? "Handshaking…"
         : locked
         ? "Coming soon"
         : "Not connected yet",
-      aria: d.name + (live ? " connected, data flowing" : pick ? " signed in, choose property" : " not connected"),
-      plug: () => {
-        if (pick) {
-          document.getElementById("google-properties")?.scrollIntoView({ behavior: "smooth", block: "start" });
-          return;
-        }
-        handlePlug(d.id);
-      },
+      aria: d.name + (live ? " connected, data flowing" : " not connected"),
+      plug: () => handlePlug(d.id),
       unplug: () => handleUnplug(d.id),
     };
   });
@@ -775,25 +751,6 @@ export default function ConnectScreen() {
                   }}
                 >
                   Plug in
-                </button>
-              )}
-              {p.needsProperty && (
-                <button
-                  type="button"
-                  onClick={p.plug}
-                  style={{
-                    minHeight: "50px",
-                    width: "132px",
-                    borderRadius: "14px",
-                    border: 0,
-                    background: "#FFC53D",
-                    color: "#0A0B0D",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    boxShadow: "0 0 18px rgba(255,197,61,.35)",
-                  }}
-                >
-                  Choose property
                 </button>
               )}
               {p.isConnecting && (
