@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import gsap from "gsap";
 import {
   getSiteScan,
   researchAudit,
@@ -212,7 +214,25 @@ function buildPagesFromApi({ scan, audit, changes, topPages, hostname }) {
   return hasSignal ? pageList : [];
 }
 
+const listVariants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.08, delayChildren: 0.12 },
+  },
+};
+
+const rowVariants = {
+  hidden: { opacity: 0, y: 18 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
 export default function PathScreen() {
+  const reduce = useReducedMotion();
+  const railRef = useRef(null);
   const [pageId, setPageId] = useState("site");
   const [sel, setSel] = useState(null);
   const [pages, setPages] = useState([]);
@@ -308,6 +328,48 @@ export default function PathScreen() {
           DEFS[Math.min(5, Math.max(0, p.level - 1))].q.charAt(0) +
           DEFS[Math.min(5, Math.max(0, p.level - 1))].q.slice(1).toLowerCase()),
   }));
+
+  useEffect(() => {
+    if (reduce || loading || empty || !railRef.current) return undefined;
+    const nodes = railRef.current.querySelectorAll("[data-level-node]");
+    const lines = railRef.current.querySelectorAll("[data-level-line]");
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        nodes,
+        { scale: 0.72, opacity: 0.35 },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.55,
+          stagger: 0.09,
+          ease: "back.out(1.6)",
+          clearProps: "opacity",
+        },
+      );
+      gsap.fromTo(
+        lines,
+        { scaleY: 0, transformOrigin: "top center" },
+        {
+          scaleY: 1,
+          duration: 0.4,
+          stagger: 0.09,
+          delay: 0.12,
+          ease: "power2.out",
+        },
+      );
+      const current = railRef.current.querySelector("[data-level-current='1']");
+      if (current) {
+        gsap.to(current, {
+          boxShadow: "0 0 28px rgba(61,220,132,.85)",
+          duration: 1.2,
+          yoyo: true,
+          repeat: -1,
+          ease: "sine.inOut",
+        });
+      }
+    }, railRef);
+    return () => ctx.revert();
+  }, [reduce, loading, empty, pageId, pageLevel, complete]);
 
   return (
     <div
@@ -489,8 +551,12 @@ export default function PathScreen() {
           alignItems: "flex-start",
         }}
       >
-        <ol
+        <motion.ol
+          ref={railRef}
           aria-label="Levels"
+          variants={reduce ? undefined : listVariants}
+          initial={reduce ? false : "hidden"}
+          animate={reduce ? undefined : "show"}
           style={{
             flex: "1 1 380px",
             minWidth: 0,
@@ -502,7 +568,11 @@ export default function PathScreen() {
           }}
         >
           {levels.map((l) => (
-            <li key={l.n} style={{ display: "flex", gap: "20px", alignItems: "stretch" }}>
+            <motion.li
+              key={l.n}
+              variants={reduce ? undefined : rowVariants}
+              style={{ display: "flex", gap: "20px", alignItems: "stretch" }}
+            >
               <div
                 style={{
                   display: "flex",
@@ -514,6 +584,7 @@ export default function PathScreen() {
               >
                 {l.isDone && (
                   <div
+                    data-level-node="1"
                     style={{
                       width: "52px",
                       height: "52px",
@@ -542,6 +613,8 @@ export default function PathScreen() {
                 )}
                 {l.isCurrent && (
                   <div
+                    data-level-node="1"
+                    data-level-current="1"
                     style={{
                       width: "52px",
                       height: "52px",
@@ -555,7 +628,6 @@ export default function PathScreen() {
                       fontWeight: 800,
                       fontSize: "20px",
                       color: "#3DDC84",
-                      animation: "sfy-breathe 2.4s ease-in-out infinite",
                     }}
                   >
                     {l.n}
@@ -563,6 +635,7 @@ export default function PathScreen() {
                 )}
                 {l.isLocked && (
                   <div
+                    data-level-node="1"
                     style={{
                       width: "52px",
                       height: "52px",
@@ -593,6 +666,7 @@ export default function PathScreen() {
                 )}
                 {l.hasLine && (
                   <div
+                    data-level-line="1"
                     style={{
                       flex: 1,
                       width: "2px",
@@ -609,15 +683,17 @@ export default function PathScreen() {
                 style={{
                   flex: 1,
                   textAlign: "left",
-                  background: "transparent",
+                  background: l.selectedStr === "true" ? "rgba(77,163,255,.06)" : "transparent",
                   border: 0,
+                  borderRadius: "14px",
                   color: "#F2F4F5",
-                  padding: "4px 0 26px",
+                  padding: "8px 12px 26px 4px",
                   display: "flex",
                   flexDirection: "column",
                   gap: "3px",
                   minHeight: "52px",
-                  opacity: l.selectedStr === "true" ? 1 : 0.92,
+                  opacity: l.selectedStr === "true" ? 1 : 0.88,
+                  transition: "background .25s ease, opacity .25s ease",
                 }}
               >
                 <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: l.qualityColor }}>
@@ -635,24 +711,31 @@ export default function PathScreen() {
                 </span>
                 <span style={{ fontSize: "14px", color: "#9AA1AB", lineHeight: 1.45 }}>{l.line}</span>
               </button>
-            </li>
+            </motion.li>
           ))}
-        </ol>
+        </motion.ol>
 
-        <aside
-          aria-live="polite"
-          style={{
-            flex: "1 1 360px",
-            minWidth: 0,
-            background: "#131519",
-            border: "1px solid #262A31",
-            borderRadius: "24px",
-            padding: "clamp(22px, 3vw, 30px)",
-            display: "flex",
-            flexDirection: "column",
-            gap: "16px",
-          }}
-        >
+        <AnimatePresence mode="wait">
+          <motion.aside
+            key={`${pageId}-${selectedLevel.n}`}
+            aria-live="polite"
+            initial={reduce ? false : { opacity: 0, y: 16, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={reduce ? undefined : { opacity: 0, y: -10, scale: 0.98 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            style={{
+              flex: "1 1 360px",
+              minWidth: 0,
+              background: "#131519",
+              border: "1px solid #262A31",
+              borderRadius: "24px",
+              padding: "clamp(22px, 3vw, 30px)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+              boxShadow: selectedLevel.isCurrent ? "0 0 28px rgba(61,220,132,.12)" : "none",
+            }}
+          >
           <span
             style={{
               fontFamily: "'Geist Mono', monospace",
@@ -727,7 +810,8 @@ export default function PathScreen() {
               </Link>
             </>
           )}
-        </aside>
+          </motion.aside>
+        </AnimatePresence>
       </div>
     </div>
   );
