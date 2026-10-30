@@ -10,7 +10,39 @@
 .sf-land.is-home-v3 #platforms,
 .sf-land.is-home-v3 #how,
 .sf-land.is-home-v3 #testimonials {
-  scroll-margin-top: 24px;
+  scroll-margin-top: 88px;
+}
+
+.sf-land.is-home-v3 .sf-hero.sf-hero-v3 {
+  padding: 72px clamp(16px, 4vw, 40px) 96px;
+  max-width: 1240px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 56px;
+  align-items: center;
+}
+
+.sf-land.is-home-v3 .sf-hero-copy {
+  flex: 1 1 480px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.sf-land.is-home-v3 .sf-hero-copy > p {
+  margin: 0;
+  font-size: 19px;
+  color: #9aa1ab;
+  line-height: 1.5;
+  max-width: 520px;
+}
+
+.sf-land.is-home-v3 .sf-hero-board {
+  flex: 1 1 420px;
+  min-width: 0;
 }
 
 .sf-land.is-home-v3 .sf-brand-hero-links a:not(.sf-brand-cta) {
@@ -24,10 +56,6 @@
 
 .sf-land.is-home-v3 a.sf-btn-blue {
   text-decoration: none;
-}
-
-.sf-hero.sf-hero-v3 {
-  padding-top: 72px;
 }
 
 .sf-hero-v3 h1 {

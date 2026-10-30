@@ -301,7 +301,35 @@ export default function HomeBrandHero() {
       if (!L[key] || L[key].t === 0) light(c, k, rnd(0.85, 1), rnd(1100, 2200), 1.35);
     };
 
-    // No wheel / touch / key hijacking: the page scrolls natively (Lenis smooths it), up and down.
+    // First downward gesture in the hero glides to #rest (matches designed homepage).
+    // After that, Lenis handles normal up/down scrolling.
+    let touchY = null;
+    const inHero = () => (window.scrollY || 0) < heroEl.offsetHeight - 4;
+    const onWheel = (e) => {
+      if (e.deltaY > 0 && inHero()) {
+        e.preventDefault();
+        goRest();
+      }
+    };
+    const onTouchStart = (e) => {
+      touchY = e.touches[0]?.clientY ?? null;
+    };
+    const onTouchMove = (e) => {
+      if (touchY == null) return;
+      if (touchY - e.touches[0].clientY > 8 && inHero()) {
+        e.preventDefault();
+        goRest();
+        touchY = null;
+      }
+    };
+    const onKey = (e) => {
+      if (!inHero()) return;
+      if (!["ArrowDown", "PageDown", " ", "Spacebar"].includes(e.key)) return;
+      if (/input|textarea|select/i.test(e.target?.tagName || "")) return;
+      e.preventDefault();
+      goRest();
+    };
+
     const onResize = () => {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(start, 150);
@@ -311,6 +339,10 @@ export default function HomeBrandHero() {
     if (document.fonts?.ready) document.fonts.ready.then(start).catch(() => {});
 
     heroEl.addEventListener("mousemove", onMove, { passive: true });
+    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("keydown", onKey);
     window.addEventListener("resize", onResize);
 
     const io = typeof IntersectionObserver !== "undefined"
@@ -339,6 +371,10 @@ export default function HomeBrandHero() {
       timeouts.forEach(clearTimeout);
       clearTimeout(resizeTimer);
       heroEl.removeEventListener("mousemove", onMove);
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", onResize);
       document.removeEventListener("visibilitychange", onVis);
       io?.disconnect();
@@ -404,7 +440,7 @@ export default function HomeBrandHero() {
               {item.label}
             </Link>
           ))}
-          <Link className="sf-brand-cta" href="/#scan" onClick={closeMenu}>
+          <Link className="sf-brand-cta" href="/signup?next=%2Fapp%2Fstart" onClick={closeMenu}>
             Scan your site
           </Link>
         </div>

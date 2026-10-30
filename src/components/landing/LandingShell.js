@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SearchifyMark from "@/components/landing/SearchifyMark";
+import HomeStickyNav from "@/components/landing/HomeStickyNav";
 import SmoothScroll, { getLenis } from "@/components/motion/SmoothScroll";
 
 const LINKS = [
@@ -60,6 +61,7 @@ export default function LandingShell({
   return (
     <div className={`sf-land${isHome ? " is-home-v3" : ""}`}>
       <SmoothScroll />
+      {isHome ? <HomeStickyNav /> : null}
       {!isHome ? (
         <header className={`sf-top${scrolled ? " is-scrolled" : ""}`}>
           <nav className="sf-nav" aria-label="Main">
