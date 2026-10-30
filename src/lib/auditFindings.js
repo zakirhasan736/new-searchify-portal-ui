@@ -126,8 +126,16 @@ export function starterPackage(findings, report = {}) {
 
 const PSI_CRITICAL = /document title|title element|http status|is.?crawlable|robots\.txt|canonical|indexability|noindex|blocked/i;
 
-function crawlFindings(report, { impressions, sessions, open }) {
+const SOURCE_LABEL = {
+  crawl: "Searchify SEO site crawl",
+  scan: "Searchify site scan (page HTML)",
+  site: "Searchify site check",
+  gsc: "Google Search Console URL Inspection",
+};
+
+function crawlFindings(report, { impressions, sessions, open }, defaultSource = "crawl") {
   return (report?.issues || []).map((issue) => {
+    const source = issue.source || defaultSource;
     const pages = (issue.pages || []).map((page) => ({
       ...page,
       impressions: impressions.get(keyOf(page.url)) || 0,
@@ -137,7 +145,15 @@ function crawlFindings(report, { impressions, sessions, open }) {
     const visits = pages.reduce((sum, page) => sum + page.sessions, 0);
     let severity = issue.severity || "Notice";
     if ((seen || visits) && severity === "Notice") severity = "Warning";
-    const bits = [`Searchify SEO crawled ${report.pagesCrawled || "the"} pages and found this on ${issue.count}.`];
+    const bits = [
+      source === "crawl"
+        ? `Searchify SEO crawled ${report.pagesCrawled || "the"} pages and found this on ${issue.count}.`
+        : source === "gsc"
+          ? `Google Search Console reports this for ${issue.count} URL${issue.count === 1 ? "" : "s"}.`
+          : source === "site"
+            ? "Found while checking robots.txt, the sitemap and redirects."
+            : `Found on ${issue.count} page${issue.count === 1 ? "" : "s"} read by the site scan.`,
+    ];
     if (seen) bits.push(`Search Console: these pages had ${seen.toLocaleString("en-US")} impressions.`);
     if (visits) bits.push(`Analytics: ${visits.toLocaleString("en-US")} sessions landed on them.`);
     const lead = pages[0];
@@ -152,7 +168,11 @@ function crawlFindings(report, { impressions, sessions, open }) {
     });
     const pageNotes = pages.map((page) => (page.detail ? `${pathOf(page.url)}: ${page.detail}` : pathOf(page.url))).filter(Boolean);
     return {
-      id: `crawl-${issue.key}`,
+      id: `${source}-${issue.key}`,
+      helpUrl: issue.helpUrl || "",
+      sourceKey: source,
+      sourceLabel: SOURCE_LABEL[source] || source,
+      pageRows: pages.filter((page) => page.url || page.detail).slice(0, 50),
       severity,
       name: issue.name,
       area: issue.area || (issue.meta ? "Meta" : "Page"),
@@ -169,12 +189,12 @@ function crawlFindings(report, { impressions, sessions, open }) {
       changeId: queued?.id || null,
       suggestion: null,
       traffic: seen + visits,
-      source: "crawl",
+      source,
     };
   });
 }
 
-export function buildAuditFindings({ audit, pages, queries, landings, places, changes, crawl }) {
+export function buildAuditFindings({ audit, pages, queries, landings, places, changes, crawl, scanIssues = [], gscIssues = [] }) {
   const auditPayload = payloadOf(audit);
   const pageRows = payloadOf(pages).rows || [];
   const queryRows = payloadOf(queries).rows || [];
@@ -191,6 +211,8 @@ export function buildAuditFindings({ audit, pages, queries, landings, places, ch
   if (auditPayload.scores || (auditPayload.kpis || []).length) sources.push("PageSpeed");
   if (placeRows.length) sources.push("Places");
   if (crawlReport) sources.unshift("Searchify SEO site crawl");
+  if (scanIssues.length) sources.push("Site scan");
+  if (gscIssues.length) sources.push("Search Console URL Inspection");
 
   open.forEach((change) => {
     const proposed = change.proposed || {};
@@ -337,6 +359,13 @@ export function buildAuditFindings({ audit, pages, queries, landings, places, ch
     landingRows.forEach((row) => sessions.set(keyOf(row[0]), (sessions.get(keyOf(row[0])) || 0) + (Number(String(row[1] || "").replace(/,/g, "")) || 0)));
     findings.push(...crawlFindings(crawlReport, { impressions, sessions, open }));
   }
+  if (scanIssues.length || gscIssues.length) {
+    const impressions = new Map();
+    pageRows.forEach((row) => impressions.set(keyOf(row[0]), (impressions.get(keyOf(row[0])) || 0) + (Number(row[2]) || 0)));
+    const ctx = { impressions, sessions: new Map(), open };
+    if (scanIssues.length) findings.push(...crawlFindings({ issues: scanIssues, pagesCrawled: 0 }, ctx, "scan"));
+    if (gscIssues.length) findings.push(...crawlFindings({ issues: gscIssues, pagesCrawled: 0 }, ctx, "gsc"));
+  }
   findings.sort((a, b) => (SEVERITY_RANK[a.severity] ?? 3) - (SEVERITY_RANK[b.severity] ?? 3) || (b.traffic || 0) - (a.traffic || 0));
 
   const critical = findings.filter((item) => item.severity === "Critical").length;
@@ -351,6 +380,7 @@ export function buildAuditFindings({ audit, pages, queries, landings, places, ch
       health: crawlReport?.score ?? null,
       critical,
       crawled: crawlReport?.pagesCrawled || 0,
+      statusCounts: crawlReport?.statusCounts || null,
       pages: pageRows.length,
       queries: queryRows.length,
       places: placeRows.length,
