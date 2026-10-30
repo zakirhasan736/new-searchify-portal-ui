@@ -7,6 +7,9 @@ import SearchifyMark from "@/components/landing/SearchifyMark";
 
 const LINKS = [
   { href: "/#testimonials", label: "Testimonials", key: "testimonials", homeOnly: true },
+  { href: "/#ai", label: "AI search", key: "ai", homeOnly: true },
+  { href: "/#platforms", label: "Integrations", key: "platforms", homeOnly: true },
+  { href: "/#vs", label: "Why Searchify", key: "vs", homeOnly: true },
   { href: "/#how", label: "How it works", key: "how", homeOnly: true },
   { href: "/pricing", label: "Pricing", key: "pricing" },
   { href: "/partners/login", label: "Partners", key: "partners" },
@@ -20,17 +23,19 @@ export default function LandingShell({
   const pathname = usePathname() || "/";
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const isHome = current === "home";
 
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
   useEffect(() => {
+    if (isHome) return undefined;
     const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [isHome]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -47,56 +52,49 @@ export default function LandingShell({
   }, [open]);
 
   const close = () => setOpen(false);
-  const visibleLinks = LINKS.filter((item) => !item.homeOnly || current === "home");
+  const visibleLinks = LINKS.filter((item) => !item.homeOnly || isHome);
 
   return (
-    <div className="sf-land">
-      <header className={`sf-top${scrolled ? " is-scrolled" : ""}`}>
-        <nav className="sf-nav" aria-label="Main">
-          <Link
-            className="sf-brand"
-            href={current === "home" ? "#top" : "/"}
-            aria-label="Searchify home"
-            onClick={close}
-          >
-            <SearchifyMark />
-            <span>searchify</span>
-          </Link>
-
-          <button
-            className="sf-menubtn"
-            type="button"
-            aria-expanded={open}
-            aria-controls="sf-navlinks"
-            onClick={() => setOpen((value) => !value)}
-          >
-            {open ? "Close" : "Menu"}
-          </button>
-
-          <div className={`sf-navlinks${open ? " open" : ""}`} id="sf-navlinks">
-            {visibleLinks.map((item) => (
-              <Link
-                key={item.key}
-                href={item.href}
-                aria-current={current === item.key ? "page" : undefined}
-                onClick={close}
-              >
-                {item.label}
-              </Link>
-            ))}
-            <Link href="/login" onClick={close}>
-              Sign in
+    <div className={`sf-land${isHome ? " is-home-v3" : ""}`}>
+      {!isHome ? (
+        <header className={`sf-top${scrolled ? " is-scrolled" : ""}`}>
+          <nav className="sf-nav" aria-label="Main">
+            <Link className="sf-brand" href="/" aria-label="Searchify home" onClick={close}>
+              <SearchifyMark />
+              <span>searchify</span>
             </Link>
-            <Link
-              className="sf-cta"
-              href={current === "home" ? "/#scan" : "/signup?next=%2Fapp%2Fstart"}
-              onClick={close}
+
+            <button
+              className="sf-menubtn"
+              type="button"
+              aria-expanded={open}
+              aria-controls="sf-navlinks"
+              onClick={() => setOpen((value) => !value)}
             >
-              Scan your site
-            </Link>
-          </div>
-        </nav>
-      </header>
+              {open ? "Close" : "Menu"}
+            </button>
+
+            <div className={`sf-navlinks${open ? " open" : ""}`} id="sf-navlinks">
+              {visibleLinks.map((item) => (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  aria-current={current === item.key ? "page" : undefined}
+                  onClick={close}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              <Link href="/login" onClick={close}>
+                Sign in
+              </Link>
+              <Link className="sf-cta" href="/signup?next=%2Fapp%2Fstart" onClick={close}>
+                Scan your site
+              </Link>
+            </div>
+          </nav>
+        </header>
+      ) : null}
 
       <div id="top" className="sf-main">
         {children}

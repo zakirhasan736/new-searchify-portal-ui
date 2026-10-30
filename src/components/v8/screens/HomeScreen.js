@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import {
   listChanges,
   patchChange,
-  executeChange,
   dismissChange,
   generateMetaCopy,
   changePath,
@@ -19,7 +18,17 @@ import {
 import { useConnectionStatus } from "@/components/board/ConnectDialog";
 import { activeSiteContext } from "@/lib/siteContext";
 import { initials } from "@/lib/v8LiveData";
+import {
+  changeBoardColor,
+  DOT_COLORS,
+  DOT_LABEL,
+  DOT_RGB,
+  DOT_TAG,
+  OPEN_CHANGE_STATUSES,
+} from "@/lib/dotPriority";
+import { buildMoveProof, buildShipsLine, estimateClickGain } from "@/lib/moveEvidence";
 import { Skel } from "@/components/v8/SkeletonWave";
+import PriorityInfoButton from "@/components/v8/PriorityInfoButton";
 import "@/styles/v8-screens.css";
 
 const QUALITY = ["Poor", "Fair", "Good", "Strong", "Great", "Excellent"];
@@ -83,7 +92,7 @@ function scoreLabel(ctrFit, seoScore, judgeScore) {
 
 function suggestionPairs(p) {
   const pairs = [];
-  const push = (title, description, ctrFit, seoScore, judgeScore) => {
+  const push = (title, description, ctrFit, seoScore, judgeScore, reason) => {
     const t = String(title || "").trim();
     const d = String(description || "").trim();
     if (!t && !d) return;
@@ -95,23 +104,32 @@ function suggestionPairs(p) {
       ctrFit: choiceScore(ctrFit),
       seoScore: choiceScore(seoScore),
       judgeScore: choiceScore(judgeScore),
+      reason: String(reason || "").trim(),
     });
   };
-  push(p.title, p.metaDescription || p.description, p.ctrFit, p.seoScore, p.judgeScore);
+  push(p.title, p.metaDescription || p.description, p.ctrFit, p.seoScore, p.judgeScore, p.reason);
   (Array.isArray(p.aiAlternatives) ? p.aiAlternatives : []).forEach((alt) => {
-    push(alt?.title, alt?.description || alt?.metaDescription, alt?.ctrFit, alt?.seoScore, alt?.judgeScore);
+    push(
+      alt?.title,
+      alt?.description || alt?.metaDescription,
+      alt?.ctrFit,
+      alt?.seoScore,
+      alt?.judgeScore,
+      alt?.reason || alt?.judgeNote,
+    );
   });
   pairs.sort((a, b) => (b.judgeScore || 0) - (a.judgeScore || 0) || (b.ctrFit || 0) - (a.ctrFit || 0) || (b.seoScore || 0) - (a.seoScore || 0));
   if (!pairs.length) {
     pairs.push({
       title: "Updated title and description",
       description: "Regenerate to write a stronger listing from Search Console, Analytics, and Speed Index.",
+      reason: "",
     });
   }
   return pairs.slice(0, 3);
 }
 
-function changeToMove(c) {
+function changeToMove(c, connectionStatus = {}) {
   const path = changePath(c);
   const p = c.proposed || {};
   const kind = kindFromChange(c);
@@ -122,7 +140,9 @@ function changeToMove(c) {
     p.beforeDescription ||
     p.before ||
     "(Not set on the live page.)";
-  const gain = p.expectedGain || p.gain || "+10–30 clicks / mo";
+  const pairs = suggestionPairs(p);
+  const top = pairs[0] || {};
+  const gainInfo = estimateClickGain(p, top);
   return {
     t: `${kind} · ${path}`,
     kind,
@@ -134,7 +154,7 @@ function changeToMove(c) {
       p.before ||
       "(Not set on the live page.)",
     beforeDescription: p.liveMetaDescription || p.beforeMetaDescription || p.beforeDescription || "",
-    after: suggestionPairs(p),
+    after: pairs,
     ogTitle: p.openGraphTitle || p.title || "",
     ogDescription: p.openGraphDescription || p.metaDescription || "",
     schemaLabel: (() => {
@@ -143,13 +163,13 @@ function changeToMove(c) {
       const name = ld.name || ld.headline || "";
       return name ? `${kind} · ${name}` : String(kind);
     })(),
-    gain,
-    mid: parseMid(gain),
-    ships:
-      String(c.changeType || "").toLowerCase() === "meta"
-        ? "Ships to WordPress · checked live · one-click undo"
-        : "Ships to WordPress · checked live · one-click undo",
-    proof: p.reason || "Based on Search Console and live reads for this site.",
+    proposed: p,
+    changeType: c.changeType || "meta",
+    gain: gainInfo.label,
+    mid: gainInfo.mid || parseMid(gainInfo.label),
+    gainBasis: gainInfo.basis,
+    ships: buildShipsLine(connectionStatus, c.changeType),
+    proof: buildMoveProof(p, top),
     changeId: c.id,
   };
 }
@@ -234,25 +254,28 @@ export default function HomeScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectionStatus.gsc, connectionStatus.wordpress]);
 
-  // Constants
-  const COLORS = { red: "#FF5A4E", yellow: "#FFC53D", green: "#3DDC84", blue: "#4DA3FF" };
-  const RGB = { red: "255,90,78", yellow: "255,197,61", green: "61,220,132", blue: "77,163,255" };
-  const LABEL = { red: "Dire", yellow: "Medium", green: "Passes", blue: "Locked" };
-  const TAG = { red: "DIRE", yellow: "MEDIUM", green: "PASSES", blue: "LOCKED" };
+  // Shared with Site scan — colours mean change urgency, not title quality.
+  const COLORS = DOT_COLORS;
+  const RGB = DOT_RGB;
+  const LABEL = DOT_LABEL;
+  const TAG = DOT_TAG;
   const NOUN = { red: "reds", yellow: "yellows", green: "greens", blue: "blues" };
 
   // Live mode only — never inject Northline HTML sample into a signed-in workspace.
+  // Bucket by the same changeBoardColor() Site scan uses so a move stays Dire or Medium on both screens.
   const RED = useMemo(
     () =>
       realChanges
-        .filter((c) => c.status !== "needs_review" && c.status !== "failed")
-        .map(changeToMove),
-    [realChanges],
+        .filter((c) => OPEN_CHANGE_STATUSES.has(String(c.status || "").toLowerCase()) && changeBoardColor(c) === "red")
+        .map((c) => changeToMove(c, connectionStatus)),
+    [realChanges, connectionStatus],
   );
   const YELLOW = useMemo(
     () =>
-      realChanges.filter((c) => c.status === "needs_review" || c.status === "failed").map(changeToMove),
-    [realChanges],
+      realChanges
+        .filter((c) => OPEN_CHANGE_STATUSES.has(String(c.status || "").toLowerCase()) && changeBoardColor(c) === "yellow")
+        .map((c) => changeToMove(c, connectionStatus)),
+    [realChanges, connectionStatus],
   );
   const GREEN = useMemo(() => {
     const hist = historyItems(allChanges).slice(0, 28);
@@ -268,13 +291,51 @@ export default function HomeScreen() {
 
   const Q = { red: RED, yellow: YELLOW, green: GREEN, blue: BLUE };
 
+  // Prefer a colour that still has open moves (dire first), so the default selected dots match Site scan.
+  useEffect(() => {
+    if (loading) return;
+    const preferred =
+      (RED.some((row) => !done[row.t]) && "red") ||
+      (YELLOW.some((row) => !done[row.t]) && "yellow") ||
+      (GREEN.length && "green") ||
+      (BLUE.length && "blue") ||
+      "red";
+    setCol((prev) => {
+      const prevOpen = (Q[prev] || []).some((row) => !done[row.t]);
+      if (prevOpen) return prev;
+      return preferred;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, RED.length, YELLOW.length, GREEN.length, BLUE.length]);
+
   const list = Q[col];
   const doneMap = done;
 
   let ci = cur[col];
-  if (ci === undefined || ci === null || ci < 0) ci = -1;
+  if (ci === undefined || ci === null || ci < 0) {
+    const firstOpen = list.findIndex((x) => !doneMap[x.t]);
+    ci = firstOpen >= 0 ? firstOpen : list.length ? 0 : -1;
+  } else if (list[ci] && doneMap[list[ci].t]) {
+    const firstOpen = list.findIndex((x) => !doneMap[x.t]);
+    ci = firstOpen >= 0 ? firstOpen : -1;
+  }
   const actionable = col === "red" || col === "yellow";
   const openCount = (c) => Q[c].filter((x) => !doneMap[x.t]).length;
+
+  // Persist the default selection so rings / panels stay in sync after load and colour switches.
+  useEffect(() => {
+    if (loading) return;
+    if (!list.length) return;
+    const firstOpen = list.findIndex((x) => !done[x.t]);
+    const next = firstOpen >= 0 ? firstOpen : 0;
+    setCur((prev) => {
+      const existing = prev[col];
+      if (existing != null && existing >= 0 && list[existing] && !done[list[existing].t]) return prev;
+      if (prev[col] === next) return prev;
+      return { ...prev, [col]: next };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, col, list.map((x) => x.t).join("|"), done]);
 
   const chips = ["red", "yellow", "green", "blue"].map((k) => ({
     label: LABEL[k],
@@ -308,7 +369,7 @@ export default function HomeScreen() {
   });
 
   const hasMove = actionable && ci >= 0 && !!list[ci] && !doneMap[list[ci].t];
-  const waitingPick = list.length > 0 && !(ci >= 0 && list[ci]);
+  const waitingPick = false;
   const segs = (str) =>
     str
       .split("*")
@@ -331,6 +392,7 @@ export default function HomeScreen() {
     gain: "",
     ships: "",
     proof: "",
+    gainBasis: "",
     opt: "1",
     optCount: 1,
     afterAll: [],
@@ -342,7 +404,9 @@ export default function HomeScreen() {
     const it = list[ci];
     const count = Math.max(it.after.length, 1);
     const v = (variant[it.t] || 0) % count;
-    const pair = it.after[v] || { title: "", description: "", ctrFit: 0, seoScore: 0 };
+    const pair = it.after[v] || { title: "", description: "", ctrFit: 0, seoScore: 0, reason: "" };
+    const proposed = it.proposed || {};
+    const gainInfo = estimateClickGain(proposed, pair);
     m = {
       tag: TAG[col] + " · " + (ci + 1) + " OF " + list.length,
       kind: it.kind,
@@ -356,9 +420,10 @@ export default function HomeScreen() {
       ogTitle: v === 0 ? it.ogTitle || "" : pair.title,
       ogDescription: v === 0 ? it.ogDescription || "" : pair.description,
       schemaLabel: v === 0 ? it.schemaLabel || "" : "",
-      gain: it.gain,
-      ships: it.ships,
-      proof: it.proof,
+      gain: gainInfo.label,
+      gainBasis: gainInfo.basis,
+      ships: buildShipsLine(connectionStatus, it.changeType),
+      proof: buildMoveProof(proposed, pair),
       opt: String(v + 1),
       optCount: count,
       ctrFit: pair.ctrFit || 0,
@@ -381,21 +446,20 @@ export default function HomeScreen() {
   };
 
   const handleShip = async () => {
-    if (m.changeId) {
-      const picked = (m.afterAll || [])[Number(m.opt) - 1];
-      const primary = (m.afterAll || [])[0];
-      if (
-        picked &&
-        primary &&
-        (picked.title !== primary.title || picked.description !== primary.description)
-      ) {
-        await patchChange(m.changeId, { title: picked.title, metaDescription: picked.description });
-      }
-      await approveChange(m.changeId);
-      await executeChange(m.changeId, { includeOpenGraph: true, includeJsonLd: true });
-      await reloadChanges();
+    if (!m.changeId) {
+      advance("shipped");
+      return;
     }
-    advance("shipped");
+    const picked = (m.afterAll || [])[Number(m.opt) - 1];
+    const primary = (m.afterAll || [])[0];
+    if (
+      picked &&
+      primary &&
+      (picked.title !== primary.title || picked.description !== primary.description)
+    ) {
+      await patchChange(m.changeId, { title: picked.title, metaDescription: picked.description });
+    }
+    router.push(`/app/queue/${m.changeId}?from=app`);
   };
 
   const handleSkip = async () => {
@@ -451,7 +515,7 @@ export default function HomeScreen() {
 
   const handleEdit = () => {
     if (m.changeId) {
-      router.push(`/app/queue/${m.changeId}`);
+      router.push(`/app/queue/${m.changeId}?from=app`);
     }
   };
 
@@ -834,6 +898,7 @@ export default function HomeScreen() {
           <div style={{ display: "flex", flexDirection: "column", gap: "14px", padding: "18px 20px", borderRadius: "20px", background: "#101215", border: "1px solid #1A1D22" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
               <span style={{ fontSize: "13px", color: "#9AA1AB", marginRight: "4px" }}>Work on</span>
+              <PriorityInfoButton active={col} />
               {chips.map((ch, idx) =>
                 ch.on ? (
                   <button
@@ -1212,16 +1277,19 @@ export default function HomeScreen() {
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", paddingTop: "18px", borderTop: "1px solid #1A1D22" }}>
-                  <div style={{ flex: "1 1 280px", display: "flex", flexDirection: "column", minWidth: 0 }}>
+                  <div style={{ flex: "1 1 280px", display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
                     <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "28px", fontWeight: 700, letterSpacing: "-0.6px", color: accent }}>{m.gain}</span>
                     <span style={{ fontSize: "13px", color: "#9AA1AB" }}>{m.ships}</span>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", marginTop: "6px", fontSize: "13px", color: "#D7DADE" }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" aria-hidden="true" style={{ flex: "none" }}>
+                    {m.gainBasis ? (
+                      <span style={{ fontSize: "12px", color: "#7D848E", lineHeight: 1.45 }}>{m.gainBasis}</span>
+                    ) : null}
+                    <span style={{ display: "inline-flex", alignItems: "flex-start", gap: "6px", marginTop: "6px", fontSize: "13px", color: "#D7DADE", lineHeight: 1.45 }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" aria-hidden="true" style={{ flex: "none", marginTop: 3 }}>
                         <path d="M4 19V5"></path>
                         <path d="M4 19h16"></path>
                         <path d="M8 15l4-4 3 3 5-6"></path>
                       </svg>
-                      {m.proof}
+                      <span>{m.proof}</span>
                     </span>
                   </div>
                   <div className="v8-home-ship" style={{ flex: "none", display: "flex", gap: "10px", marginLeft: "auto" }}>
@@ -1255,7 +1323,7 @@ export default function HomeScreen() {
                         boxShadow: "0 0 24px rgba(77,163,255,.45)",
                       }}
                     >
-                      Ship it
+                      Make it yours
                     </button>
                   </div>
                 </div>

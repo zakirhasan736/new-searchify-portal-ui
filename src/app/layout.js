@@ -1,10 +1,12 @@
-import { Bricolage_Grotesque, Manrope, Barlow_Condensed } from "next/font/google";
+import { Bricolage_Grotesque, Caveat, Manrope, Barlow_Condensed } from "next/font/google";
 import ProductShell from "@/components/v3/ProductShell";
 import StoreProvider from "@/store/StoreProvider";
 import { absoluteUrl } from "@/lib/seo";
 import "../index.css";
 import "./tailwind.css";
 import "../styles/landing.css";
+import "../styles/home-hero.css";
+import "../styles/home-sections.css";
 import "../components/share/accordion/accordion.css";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -27,6 +29,13 @@ const barlow = Barlow_Condensed({
   display: "swap",
   variable: "--font-barlow",
   weight: ["600", "700", "800"],
+});
+
+const caveat = Caveat({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-caveat",
+  weight: ["600", "700"],
 });
 
 export const metadata = {
@@ -73,7 +82,7 @@ export default function RootLayout({ children }) {
   };
 
   return (
-    <html lang="en" className={`${manrope.variable} ${bricolage.variable} ${barlow.variable}`}>
+    <html lang="en" className={`${manrope.variable} ${bricolage.variable} ${barlow.variable} ${caveat.variable}`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

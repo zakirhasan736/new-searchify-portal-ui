@@ -1,0 +1,316 @@
+/* Searchify homepage brand hero v3 — fullscreen lockup + glowing nav */
+
+.sf-brand-hero {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+  min-height: 560px;
+  overflow: hidden;
+  border-bottom: 1px solid #1a1d22;
+  background-color: #0a0b0d;
+  background-image:
+    radial-gradient(ellipse 30% 13% at 50% 50%, rgba(10, 11, 13, 0.72), rgba(10, 11, 13, 0)),
+    radial-gradient(circle, #1a1d22 0, #1a1d22 0.62vw, rgba(26, 29, 34, 0) calc(0.62vw + 1px));
+  background-size: 100% 100%, calc(100% / 24) calc(100vw / 24);
+  background-position: 0 0, 0 50%;
+  background-repeat: no-repeat, repeat;
+}
+
+.sf-brand-hero-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  max-width: 1240px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 22px clamp(16px, 4vw, 40px);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.sf-brand-hero-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: auto;
+  color: #f2f4f5 !important;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: -0.3px;
+}
+
+.sf-brand-hero-brand:hover {
+  color: #f2f4f5 !important;
+}
+
+.sf-brand-hero-brand span {
+  transition: text-shadow 0.25s ease;
+}
+
+.sf-brand-hero-brand:hover span {
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.9), 0 0 18px rgba(255, 255, 255, 0.5);
+}
+
+.sf-brand-hero-brand svg circle {
+  transition: filter 0.25s ease;
+}
+
+.sf-brand-hero-brand:hover svg circle {
+  filter: drop-shadow(0 0 2px currentColor) brightness(1.25);
+}
+
+.sf-brand-hero-links {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.sf-brand-hero-links a {
+  color: #d7dade !important;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.25s ease, text-shadow 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+.sf-brand-hero-links a:not(.sf-brand-cta) {
+  position: relative;
+}
+
+.sf-brand-hero-links a:not(.sf-brand-cta)::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  width: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: 0 0 8px #fff, 0 0 18px rgba(255, 255, 255, 0.8);
+  transform: translateX(-50%);
+  transition: width 0.25s ease, opacity 0.25s ease;
+  opacity: 0;
+}
+
+.sf-brand-hero-links a:not(.sf-brand-cta):hover,
+.sf-brand-hero-links a:not(.sf-brand-cta):focus-visible {
+  color: #ffffff !important;
+  text-shadow:
+    0 0 4px #fff,
+    0 0 10px rgba(255, 255, 255, 1),
+    0 0 22px rgba(255, 255, 255, 0.85),
+    0 0 44px rgba(190, 215, 255, 0.6);
+  outline: none;
+}
+
+.sf-brand-hero-links a:not(.sf-brand-cta):hover::after,
+.sf-brand-hero-links a:not(.sf-brand-cta):focus-visible::after {
+  width: 70%;
+  opacity: 1;
+}
+
+.sf-brand-cta {
+  display: inline-flex !important;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: #4da3ff !important;
+  color: #0a0b0d !important;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 0 20px rgba(77, 163, 255, 0.4);
+}
+
+.sf-brand-cta:hover,
+.sf-brand-cta:focus-visible {
+  background: #7dbbff !important;
+  box-shadow:
+    0 0 14px rgba(125, 187, 255, 0.95),
+    0 0 40px rgba(77, 163, 255, 0.75),
+    0 0 80px rgba(77, 163, 255, 0.35) !important;
+  outline: none;
+}
+
+.sf-brand-menubtn {
+  display: none;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid #262a31;
+  background: rgba(19, 21, 25, 0.85);
+  color: #f2f4f5;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sf-brand-lockup {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  padding: 0 16px;
+  z-index: 2;
+}
+
+.sf-brand-lockup-inner {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 2.6vw, 38px);
+}
+
+.sf-brand-mark {
+  width: clamp(64px, 9vw, 132px);
+  height: clamp(64px, 9vw, 132px);
+  flex: none;
+  overflow: visible;
+}
+
+.sf-brand-word {
+  font-family: var(--font-bricolage), "Bricolage Grotesque", Geist, sans-serif;
+  font-weight: 800;
+  font-size: clamp(56px, 9.8vw, 148px);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: #f2f4f5;
+}
+
+@keyframes sf-brand-glint {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.sf-brand-mark circle {
+  animation: sf-brand-glint 3s ease-in-out infinite;
+}
+
+@keyframes sf-brand-nudge {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, 6px);
+  }
+}
+
+.sf-brand-cue {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: #7d848e !important;
+  background: transparent;
+  border: 0;
+  transform: translateX(-50%);
+  animation: sf-brand-nudge 2.4s ease-in-out infinite;
+  cursor: pointer;
+}
+
+.sf-brand-cue:hover {
+  color: #f2f4f5 !important;
+}
+
+.sf-land.is-home-v3 .sf-top {
+  display: none;
+}
+
+.sf-land.is-home-v3 .sf-main {
+  padding-top: 0;
+}
+
+html:has(.sf-land.is-home-v3) {
+  scroll-padding-top: 0;
+}
+
+@media (max-width: 900px) {
+  .sf-brand-menubtn {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .sf-brand-hero-links {
+    display: none;
+    position: absolute;
+    top: 72px;
+    left: 16px;
+    right: 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 14px;
+    border-radius: 16px;
+    background: rgba(10, 11, 13, 0.96);
+    border: 1px solid #1a1d22;
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+
+  .sf-brand-hero-links.is-open {
+    display: flex;
+  }
+
+  .sf-brand-hero-links a {
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #131519;
+    border: 1px solid #1a1d22;
+  }
+
+  .sf-brand-hero-links a.sf-brand-cta {
+    justify-content: center;
+    border: 0;
+  }
+
+  .sf-brand-hero-links a:not(.sf-brand-cta)::after {
+    display: none;
+  }
+
+  .sf-brand-word {
+    font-size: clamp(44px, 14vw, 72px);
+  }
+
+  .sf-brand-mark {
+    width: clamp(52px, 14vw, 72px);
+    height: clamp(52px, 14vw, 72px);
+  }
+}
+
+@media (max-width: 480px) {
+  .sf-brand-hero {
+    min-height: 520px;
+  }
+
+  .sf-brand-lockup-inner {
+    gap: 12px;
+  }
+
+  .sf-brand-word {
+    font-size: clamp(40px, 13vw, 56px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-brand-mark circle,
+  .sf-brand-cue {
+    animation: none !important;
+  }
+}

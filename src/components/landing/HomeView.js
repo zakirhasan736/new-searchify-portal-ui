@@ -4,12 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import LandingShell from "@/components/landing/LandingShell";
+import HomeBrandHero from "@/components/landing/HomeBrandHero";
 import TestimonialsSlider from "@/components/landing/TestimonialsSlider";
 import { normalizeSiteUrl, seedDraftSite, stashPendingSite } from "@/lib/journey";
 import { previewSiteScan } from "@/lib/v1Api";
 import { userIsAuthenticated } from "@/utils/users/Helpers";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
-
 
 const COLORS = { red: "#FF5A4E", yellow: "#FFC53D", green: "#3DDC84", blue: "#4DA3FF" };
 const RGB = { red: "255,90,78", yellow: "255,197,61", green: "61,220,132", blue: "77,163,255" };
@@ -24,15 +24,70 @@ const TILE = {
 const DOT_PATTERN = "gbgygrbgggybgygrbggybggrgbyggbgybgygb";
 const ACCENT = "#D5F879";
 
-const PLUGS = [
-  { id: "Claude", label: "Claude", short: "Cl", color: "#D97757" },
-  { id: "Google Search Console", label: "Google Search Console", short: "SC", color: "#4285F4" },
-  { id: "Google Analytics", label: "Google Analytics", short: "GA", color: "#F9AB00" },
-  { id: "Shopify", label: "Shopify", short: "Sh", color: "#95BF47" },
-  { id: "WordPress", label: "WordPress", short: "WP", color: "#3D8FD1" },
-  { id: "Webflow", label: "Webflow", short: "Wf", color: "#4353FF" },
+const LOOK_FOR = [
+  { id: "Google", label: "Google", short: "G", color: "#4285F4" },
   { id: "ChatGPT", label: "ChatGPT", short: "GPT", color: "#10A37F" },
+  { id: "AI Overviews", label: "Google AI Overviews", short: "AO", color: "#EA4335" },
+  { id: "Perplexity", label: "Perplexity", short: "Px", color: "#22B8CF" },
+  { id: "Gemini", label: "Gemini", short: "Ge", color: "#8E75B2" },
+  { id: "Copilot", label: "Microsoft Copilot", short: "Co", color: "#0078D4" },
+  { id: "Claude", label: "Claude", short: "Cl", color: "#D97757" },
+  { id: "Bing", label: "Bing", short: "Bi", color: "#00809D" },
 ];
+
+const AI_HELPS = [
+  { n: "01", tag: "Included", soon: false, title: "Let AI in the door", body: "Many sites accidentally block the bots ChatGPT and Perplexity use to read the web. We check, and fix it on WordPress." },
+  { n: "02", tag: "Included", soon: false, title: "Say it plainly", body: "AI quotes pages that answer clearly: what you do, where, and for whom. Searchify rewrites the pages that don't." },
+  { n: "03", tag: "Included", soon: false, title: "Get seen beyond Google", body: "Every change is pushed to Bing too, which feeds Copilot and is one of the sources ChatGPT draws on." },
+  { n: "04", tag: "Coming soon", soon: true, title: "See if AI mentions you", body: "Check whether ChatGPT, Perplexity and Google's AI bring up your business for the searches that matter." },
+];
+
+const VS_ROWS = [
+  { label: "Sees your real Google data", chat: "Only what you paste in", ours: "Connected to Search Console and Analytics, with months of history" },
+  { label: "Knows your competitors' rankings", chat: "Guesses", ours: "Real search data on who outranks you, and for what" },
+  { label: "Changes your website", chat: "No, you copy and paste", ours: "Ships the fix to WordPress once you approve it" },
+  { label: "Checks the change worked", chat: "No", ours: "Reads the page back to confirm it's live" },
+  { label: "Measures the result", chat: "No", ours: "Before and after, about a month later" },
+  { label: "Undo", chat: "No", ours: "One click, with a full change log" },
+  { label: "Keeps watching", chat: "Only when you ask", ours: "Every week, and alerts you if something slips" },
+];
+
+const PLATFORM_SHARE = [
+  { name: "WordPress · works today", pct: "43.3%", color: "#3DDC84", live: true, dash: "216.15 502.65", offset: "0" },
+  { name: "Shopify", pct: "4.4%", color: "#FFC53D", live: false, dash: "20.62 502.65", offset: "-217.65" },
+  { name: "Wix", pct: "2.7%", color: "#FF9F43", live: false, dash: "12.07 502.65", offset: "-239.77" },
+  { name: "Squarespace", pct: "2.1%", color: "#C9B8FF", live: false, dash: "9.06 502.65", offset: "-253.34" },
+  { name: "Joomla", pct: "1.7%", color: "#8A93A3", live: false, dash: "7.05 502.65", offset: "-263.89" },
+  { name: "Webflow", pct: "0.8%", color: "#4DA3FF", live: false, dash: "2.52 502.65", offset: "-272.44" },
+  { name: "Every other platform", pct: "14.0%", color: "#5B616B", live: false, dash: "68.87 502.65", offset: "-276.46" },
+  { name: "Custom-built, no platform", pct: "31.0%", color: "#2E333B", live: false, dash: "154.32 502.65", offset: "-346.83" },
+];
+
+const CONNECT_NOW = [
+  { title: "WordPress", body: "Where your fixes get made, safely, with one-click undo." },
+  { title: "Google Search Console", body: "Google's own data on the searches you show up for and the clicks you get." },
+  { title: "Google Analytics", body: "Visits, calls and leads, so you can see what each fix earned (Pro and Agency)." },
+  { title: "Bing", body: "Your changes are sent to Bing too, which feeds Copilot and AI answers." },
+];
+
+const COMING_SOON = [
+  { title: "Shopify", body: "For online stores." },
+  { title: "Webflow", body: "For design-led sites and agencies." },
+  { title: "Wix and Squarespace", body: "For small local businesses." },
+];
+
+const CheckIcon = ({ color = "#3DDC84" }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const SoonIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="8" fill="none" stroke="#FFC53D" strokeWidth="2" />
+    <path d="M12 8v4l3 2" fill="none" stroke="#FFC53D" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
 
 const QUOTES = [
   { text: "Add a real customer quote here: one or two sentences on the result they saw.", who: "Customer name", role: "Business · City", color: "#FF5A4E" },
@@ -226,12 +281,15 @@ export default function HomeView() {
 
   return (
     <LandingShell current="home">
-      <header className="sf-hero">
+      <HomeBrandHero />
+
+      <div className="sf-rest" id="rest">
+      <header className="sf-hero sf-hero-v3">
         <div className="sf-hero-copy">
-          <h1>Don&apos;t lose customers on Google. Cast a better net.</h1>
+          <h1>Get found on Google. And in the AI answers.</h1>
           <p>
-            Searchify scans your site, colour-codes every fix, and ships them one at a time — with your approval, and
-            proof of what each one earned.
+            Your customers search Google, then ask ChatGPT. Searchify finds what&apos;s keeping your site out of both,
+            fixes it one step at a time with your OK, and shows you what each fix earned.
           </p>
           <form
             id="scan"
@@ -256,7 +314,7 @@ export default function HomeView() {
               {scanning ? "Scanning…" : "Scan it free"}
             </button>
           </form>
-          <span className="sf-note">No account. Nothing on your site changes. A few live pages, colour-coded.</span>
+          <span className="sf-note">No account. About 60 seconds. Nothing on your site changes. Then try Solo free for your first month.</span>
           {scanError ? (
             <p role="alert" className="sf-note" style={{ color: "#FF5A4E" }}>
               {scanError}
@@ -325,15 +383,176 @@ export default function HomeView() {
         </div>
       </header>
 
-      <section className="sf-plugs" aria-label="Works with">
+      <section className="sf-plugs" aria-label="Where people look for you">
         <div className="sf-plugs-inner">
-          <span className="sf-plugs-label">PLUGS INTO</span>
+          <span className="sf-plugs-label">WHERE PEOPLE LOOK FOR YOU</span>
           <div className="sf-marquee">
             <div className="sf-track">
-              {[...PLUGS, ...PLUGS].map((item, index) => (
-                <PlugChip key={`${item.id}-${index}`} item={item} ariaHidden={index >= PLUGS.length} />
+              {[...LOOK_FOR, ...LOOK_FOR].map((item, index) => (
+                <PlugChip key={`${item.id}-${index}`} item={item} ariaHidden={index >= LOOK_FOR.length} />
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="ai" className="sf-ai-block" aria-labelledby="ai-h">
+        <div className="sf-split">
+          <div className="sf-split-copy">
+            <span className="sf-script">Search has changed.</span>
+            <h2 id="ai-h">Ranking on Google isn&apos;t enough anymore.</h2>
+            <p>
+              More and more people ask ChatGPT, Perplexity or Google&apos;s AI for a recommendation and never scroll the
+              results. Those answers mention only a handful of businesses, and they don&apos;t simply copy Google&apos;s
+              top ten. If AI can&apos;t read your site, or can&apos;t tell what you do and where, it recommends someone else.
+            </p>
+            <span className="sf-note">Ahrefs found only about 1 in 10 AI citations comes from a page in Google&apos;s top 10 (2026).</span>
+          </div>
+          <figure className="sf-ai-chat" aria-label="Example of an AI answer that recommends a local business">
+            <span className="sf-ai-q">Who&apos;s good for hail damage roof repair in Calgary?</span>
+            <div className="sf-ai-a">
+              <span className="sf-ai-badge" aria-hidden="true">AI</span>
+              <div className="sf-ai-a-body">
+                <span>
+                  A few well-reviewed options: <strong>Northline Roofing</strong> offers 24/7 emergency leak repair across
+                  Calgary and helps with insurance claims <span className="sf-ai-cite">northline.example</span>, and two
+                  other local companies also come up often.
+                </span>
+                <span style={{ fontSize: 13, color: "#9AA1AB" }}>
+                  The businesses that get named are the ones whose sites clearly say what they do, where, and why to trust them.
+                </span>
+              </div>
+            </div>
+            <figcaption className="sf-note">Illustration. Real AI answers vary.</figcaption>
+          </figure>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <h3 style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>How Searchify helps AI find and recommend you</h3>
+          <div className="sf-ai-help-grid">
+            {AI_HELPS.map((item) => (
+              <div className="sf-ai-help-card" key={item.n}>
+                <span className="sf-ai-help-top">
+                  <span className="sf-ai-help-num">{item.n}</span>
+                  <span className={`sf-tag ${item.soon ? "is-soon" : "is-in"}`}>{item.tag}</span>
+                </span>
+                <strong>{item.title}</strong>
+                <span>{item.body}</span>
+              </div>
+            ))}
+          </div>
+          <span className="sf-note">
+            Straight talk: nobody can promise an AI will mention you. What we can do is make sure nothing on your site is
+            standing in the way.
+          </span>
+        </div>
+      </section>
+
+      <section id="vs" className="sf-vs-block" aria-labelledby="vs-h">
+        <div className="sf-split-copy" style={{ maxWidth: 720 }}>
+          <span className="sf-script">&quot;Can&apos;t I just ask ChatGPT?&quot;</span>
+          <h2 id="vs-h">An AI chat gives advice. Searchify does the work.</h2>
+          <p>
+            ChatGPT, Claude and Gemini are brilliant at explaining SEO. We use AI too. But a chat window can&apos;t see
+            your private Google data, can&apos;t log in to your website, and isn&apos;t watching it next week. Searchify
+            connects to all of it, acts on it with your OK, and proves what changed.
+          </p>
+        </div>
+        <div className="sf-vs-table" role="table" aria-label="AI chat assistants versus Searchify">
+          <div className="sf-vs-head" role="row">
+            <span role="columnheader" />
+            <span role="columnheader">AI CHAT ASSISTANTS</span>
+            <span role="columnheader">SEARCHIFY</span>
+          </div>
+          {VS_ROWS.map((row) => (
+            <div className="sf-vs-row" role="row" key={row.label}>
+              <strong role="rowheader">{row.label}</strong>
+              <span className="muted" role="cell">{row.chat}</span>
+              <span className="sf-vs-ok" role="cell">
+                <CheckIcon />
+                <span>{row.ours}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+        <span className="sf-note">
+          Think of it this way: a chat assistant is a smart friend with good advice. Searchify is the crew that shows up
+          every week, does the job, and shows you the before and after.
+        </span>
+      </section>
+
+      <section id="platforms" className="sf-platforms-block" aria-labelledby="pl-h">
+        <div className="sf-split">
+          <div className="sf-split-copy">
+            <span className="sf-script">On WordPress? You&apos;re in.</span>
+            <h2 id="pl-h">Nearly half the internet runs on WordPress. Searchify works with it today.</h2>
+            <p>
+              About 43% of all websites are built on WordPress, more than every other platform combined. If yours is one
+              of them, Searchify can scan it, fix it and prove the results right now. Other platforms are on the way.
+            </p>
+          </div>
+          <figure className="sf-platforms-chart" aria-label="Website platform share">
+            <svg viewBox="0 0 220 220" role="img" aria-hidden="true">
+              <circle cx="110" cy="110" r="80" fill="none" stroke="#16181C" strokeWidth="40" />
+              {PLATFORM_SHARE.map((item) => (
+                <circle
+                  key={item.name}
+                  cx="110"
+                  cy="110"
+                  r="80"
+                  fill="none"
+                  stroke={item.color}
+                  strokeWidth={item.live ? 46 : 40}
+                  strokeDasharray={item.dash}
+                  strokeDashoffset={item.offset}
+                />
+              ))}
+            </svg>
+            <div className="sf-plat-legend">
+              {PLATFORM_SHARE.map((item) => (
+                <div className={`sf-plat-legend-row${item.live ? " is-live" : ""}`} key={item.name}>
+                  <span className="sf-plat-swatch" style={{ background: item.color }} />
+                  <span>{item.name}</span>
+                  <span className="sf-mono">{item.pct}</span>
+                </div>
+              ))}
+              <figcaption className="sf-note" style={{ paddingTop: 6 }}>
+                Share of all websites by platform. Source: W3Techs, 2025–2026.
+              </figcaption>
+            </div>
+          </figure>
+        </div>
+        <div className="sf-plat-cards">
+          <div className="sf-plat-card is-live">
+            <span className="sf-tag is-in">Works today</span>
+            <h3>What Searchify connects to right now</h3>
+            {CONNECT_NOW.map((item) => (
+              <div className="sf-plat-row" key={item.title}>
+                <CheckIcon />
+                <span>
+                  <strong>{item.title}</strong>
+                  <small>{item.body}</small>
+                </span>
+              </div>
+            ))}
+            <Link className="sf-btn-blue" href="/#scan">
+              Scan my WordPress site free
+            </Link>
+          </div>
+          <div className="sf-plat-card">
+            <span className="sf-tag is-soon">Coming soon</span>
+            <h3>On another platform? We&apos;re working on it.</h3>
+            {COMING_SOON.map((item) => (
+              <div className="sf-plat-row" key={item.title}>
+                <SoonIcon />
+                <span>
+                  <strong>{item.title}</strong>
+                  <small>{item.body}</small>
+                </span>
+              </div>
+            ))}
+            <span className="sf-note">
+              You can still run a free scan on any site today. We&apos;ll email you the day your platform is supported.
+            </span>
           </div>
         </div>
       </section>
@@ -650,6 +869,7 @@ export default function HomeView() {
           <Link href="/signup">Create an account</Link> or <Link href="/login">sign in</Link>.
         </p>
       </section>
+      </div>
     </LandingShell>
   );
 }

@@ -6,13 +6,12 @@ import { Skel } from "@/components/v8/SkeletonWave";
 import { buildAuditFindings } from "@/lib/auditFindings";
 import { activeSiteContext } from "@/lib/siteContext";
 import { findingsToScanTasks } from "@/lib/v8LiveData";
+import { changeBoardColor, DOT_COLORS, DOT_META, DOT_RGB, normalizeBoardPath } from "@/lib/dotPriority";
 import {
-  approveChange,
   createChange,
   errorText,
   patchChange,
   changePath,
-  executeChange,
   featurePayload,
   generateMetaCopy,
   getSiteScan,
@@ -27,44 +26,13 @@ import {
 import { useConnectionStatus } from "@/components/board/ConnectDialog";
 import { loadJourney } from "@/lib/journey";
 import ProblemNotice from "@/components/v8/ProblemNotice";
+import PriorityInfoButton from "@/components/v8/PriorityInfoButton";
 import { problemsFrom } from "@/lib/problems";
 import "@/styles/v8-screens.css";
 
-const COLORS = { red: "#FF5A4E", yellow: "#FFC53D", green: "#3DDC84", blue: "#4DA3FF" };
-const RGB = {
-  red: "255,90,78",
-  yellow: "255,197,61",
-  green: "61,220,132",
-  blue: "77,163,255",
-};
-
-const META = {
-  all: {
-    label: "All",
-    title: "Every task, colour-coded",
-    sub: "Pick a colour to make those tasks glow. Hover any dot to see the task.",
-  },
-  red: {
-    label: "Dire",
-    title: "Needs dire improvement",
-    sub: "Fix these first — they cost you the most visitors.",
-  },
-  yellow: {
-    label: "Medium",
-    title: "Medium priority",
-    sub: "Worth doing once the reds are done.",
-  },
-  green: {
-    label: "Passes",
-    title: "Passes the criteria",
-    sub: "Nothing to do. Searchify rechecks these weekly.",
-  },
-  blue: {
-    label: "Locked",
-    title: "Successful — do not change",
-    sub: "These are winning. Searchify will not touch them.",
-  },
-};
+const COLORS = DOT_COLORS;
+const RGB = DOT_RGB;
+const META = DOT_META;
 
 export default function ScanScreen() {
   const router = useRouter();
@@ -144,7 +112,7 @@ export default function ScanScreen() {
             return c.targetUrl || "/";
           }
         });
-      const bundle = findingsToScanTasks(built.findings, { lockedPaths: locked });
+      const bundle = findingsToScanTasks(built.findings, { lockedPaths: locked, changes });
       setLiveTasks(bundle);
       return bundle;
     } catch {
@@ -238,11 +206,25 @@ export default function ScanScreen() {
   const green = liveTasks?.green || [];
   const blue = liveTasks?.blue || [];
 
-  const all = [];
-  red.forEach((t) => all.push({ c: "red", t: t }));
-  yellow.forEach((t) => all.push({ c: "yellow", t: t }));
-  green.forEach((t) => all.push({ c: "green", t: t }));
-  blue.forEach((t) => all.push({ c: "blue", t: t }));
+  const all =
+    Array.isArray(liveTasks?.all) && liveTasks.all.length
+      ? liveTasks.all.map((task) =>
+          typeof task === "string"
+            ? { c: "green", t: task }
+            : {
+                c: task.c,
+                t: task.t,
+                path: task.path,
+                kind: task.kind,
+                changeId: task.changeId ?? null,
+              },
+        )
+      : [
+          ...red.map((t) => ({ c: "red", t })),
+          ...yellow.map((t) => ({ c: "yellow", t })),
+          ...green.map((t) => ({ c: "green", t })),
+          ...blue.map((t) => ({ c: "blue", t })),
+        ];
 
   const N = all.length;
   const rank = { red: 0, yellow: 1, green: 2, blue: 3 };
@@ -267,7 +249,30 @@ export default function ScanScreen() {
       .split(".")[0]
       .replace(/[-_]/g, " ")
       .replace(/\b\w/g, (c) => c.toUpperCase()) || "Your site";
-  const emptyTask = { c: "green", t: "No findings yet · /" };
+  const emptyTask = { c: "green", t: "No findings yet · /", changeId: null };
+  const taskKey = tasks.map((task) => `${task.c}:${task.t}`).join("|");
+
+  // Default: first matching-filter (or dire) dot is selected so the suggestion panel opens ready.
+  useEffect(() => {
+    if (stage !== "reveal" || scanLoading || !N) return;
+    const preferred =
+      tasks.find((task) => task.c === filter) ||
+      tasks.find((task) => task.c === "red") ||
+      tasks.find((task) => task.c === "yellow") ||
+      tasks[0] ||
+      null;
+    if (!preferred) return;
+    setSel((prev) => {
+      if (prev && tasks.some((task) => task.t === prev)) {
+        const current = tasks.find((task) => task.t === prev);
+        if (!current || current.c === filter) return prev;
+      }
+      return preferred.t;
+    });
+    // tasks captured from this render; taskKey tracks content changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage, scanLoading, N, filter, taskKey]);
+
   const dots = slice.map((task, i) => {
     const on = i < lit;
     const scanning = stage === "scanning";
@@ -327,15 +332,15 @@ export default function ScanScreen() {
 
   const clickedTask = sel ? tasks.find((x) => x.t === sel) || null : null;
   const selTask = clickedTask || emptyTask;
-  const waitingForClick = N > 0 && !scanLoading && !clickedTask;
+  const waitingForClick = false;
   const parts = String(selTask.t || "").split(" · ");
   const action = parts[0] || "No findings";
   const path = parts.slice(1).join(" · ") || "/";
-  const norm = (value) => {
-    const raw = String(value || "/").split("?")[0];
-    return raw.length > 1 ? raw.replace(/\/+$/, "") : raw || "/";
-  };
+  const norm = (value) => normalizeBoardPath(value);
   const matchedChange =
+    (selTask.changeId != null
+      ? liveChanges.find((c) => String(c.id) === String(selTask.changeId))
+      : null) ||
     liveChanges.find((c) => {
       if (norm(changePath(c)) !== norm(path)) return false;
       const opp = String(c.opportunity || "").toLowerCase();
@@ -377,12 +382,14 @@ export default function ScanScreen() {
   };
 
   const isPub = !!pub[selTask.t];
-  const actionable = N > 0 && (selTask.c === "red" || selTask.c === "yellow");
+  // When a live change backs this dot, force the shared colour so Site scan matches Today's moves.
+  const boardColor = matchedChange ? changeBoardColor(matchedChange) : selTask.c;
+  const actionable = N > 0 && (boardColor === "red" || boardColor === "yellow");
   const STATUS = {
-    red: "Needs dire improvement",
-    yellow: "Medium priority",
-    green: "Passes the criteria",
-    blue: "Winning · locked",
+    red: META.red.title,
+    yellow: META.yellow.title,
+    green: META.green.title,
+    blue: META.blue.title,
   };
   const p = matchedChange?.proposed || {};
   const choiceRows = [];
@@ -450,17 +457,17 @@ export default function ScanScreen() {
     seoScore: picked.seoScore || 0,
     judgeScore: picked.judgeScore || 0,
     liveScore: Math.round(Number(p.liveScore) || 0),
-    color: waitingForClick ? "#9AA1AB" : isPub ? COLORS.green : COLORS[selTask.c] || COLORS.green,
-    status: waitingForClick ? "No dot selected" : N === 0 ? (scanLoading ? "Loading" : "Empty") : isPub ? "Published" : STATUS[selTask.c],
+    color: waitingForClick ? "#9AA1AB" : isPub ? COLORS.green : COLORS[boardColor] || COLORS.green,
+    status: waitingForClick ? "No dot selected" : N === 0 ? (scanLoading ? "Loading" : "Empty") : isPub ? "Published" : STATUS[boardColor],
     border: waitingForClick
       ? "#262A31"
       : isPub
         ? "rgba(61,220,132,.5)"
-        : "rgba(" + (RGB[selTask.c] || RGB.green) + ",.5)",
+        : "rgba(" + (RGB[boardColor] || RGB.green) + ",.5)",
     glow: waitingForClick
       ? "none"
       : "0 0 26px rgba(" +
-        (isPub ? "61,220,132" : RGB[selTask.c] || RGB.green) +
+        (isPub ? "61,220,132" : RGB[boardColor] || RGB.green) +
         ",.15)",
     hasSug: actionable && !waitingForClick,
     canAct: actionable && !isPub && !waitingForClick,
@@ -472,23 +479,19 @@ export default function ScanScreen() {
         ? scanLoading
           ? "Pulling audit and Search Console signals for this site."
           : "Connect Search Console or run an audit to fill this colour map."
-        : selTask.c === "blue"
+        : boardColor === "blue"
         ? "This page is winning. Searchify has locked it and won't suggest changes."
         : "This passes. Nothing to change; Searchify rechecks it every week.",
     publish: async () => {
       if (pubBusy || regenBusy) return;
-      if (!connectionStatus.wordpress) {
-        setRegenNote("Connect WordPress first. Publish writes this title, description, Open Graph, and schema onto that site. The page name stays the same.");
-        return;
-      }
       const title = String(picked.title || "").trim();
       const description = String(picked.description || "").trim();
       if (!title || !description) {
-        setRegenNote("This dot needs a title and a description before it can go to WordPress.");
+        setRegenNote("This dot needs a title and a description before you can edit and ship it.");
         return;
       }
       setPubBusy(true);
-      setRegenNote("Publishing the title, description, Open Graph, and schema to WordPress…");
+      setRegenNote("Opening the draft so you can edit it, check the Google preview, then ship it…");
       try {
         let id = matchedChange?.id;
         if (!id) {
@@ -510,10 +513,11 @@ export default function ScanScreen() {
             meta_description: description,
           });
           if (!created.ok || !created.data?.id) {
-            setRegenNote(errorText(created, "Could not prepare this page for WordPress."));
+            setRegenNote(errorText(created, "Could not open this page for editing."));
             return;
           }
           id = created.data.id;
+          await reloadLive();
         } else {
           const storedTitle = String(p.title || "").trim();
           const storedDesc = String(p.metaDescription || "").trim();
@@ -525,21 +529,9 @@ export default function ScanScreen() {
             }
           }
         }
-        const approved = await approveChange(id);
-        if (!approved.ok) {
-          setRegenNote(errorText(approved, "This wording could not be approved."));
-          return;
-        }
-        const executed = await executeChange(id, { includeOpenGraph: true, includeJsonLd: true });
-        if (!executed.ok) {
-          setRegenNote(errorText(executed, "WordPress did not accept the update. Nothing on the live page was changed."));
-          return;
-        }
-        setPub({ ...pub, [selTask.t]: true });
-        setRegenNote("Published to WordPress. The page name was not changed. Undo puts the previous title and description back.");
-        await reloadLive();
+        router.push(`/app/queue/${id}?from=results`);
       } catch {
-        setRegenNote("Publish did not finish. The live page was not changed.");
+        setRegenNote("Could not open the edit screen. Try again in a moment.");
       } finally {
         setPubBusy(false);
       }
@@ -1142,7 +1134,7 @@ export default function ScanScreen() {
                         opacity: pubBusy ? 0.7 : 1,
                       }}
                     >
-                      {pubBusy ? "Publishing…" : "Publish change"}
+                      {pubBusy ? "Opening…" : "Make it yours"}
                     </button>
                     <button
                       type="button"
@@ -1319,8 +1311,9 @@ export default function ScanScreen() {
               className="v8-scan-chips"
               role="group"
               aria-label="Show tasks by colour"
-              style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}
+              style={{ display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center" }}
             >
+              <PriorityInfoButton active={f === "all" ? "red" : f} />
               {chips.map((ch) =>
                 ch.on ? (
                   <button

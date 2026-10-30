@@ -1,4 +1,7 @@
 import { changePath, featurePayload, historyItems, queueItems } from '@/lib/v1Api';
+import { buildColourBoard, changeBoardColor, severityToBoardColor } from '@/lib/dotPriority';
+
+export { severityToBoardColor, changeBoardColor, buildColourBoard };
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -146,7 +149,7 @@ export function buildResultsSeries(weekRows, trafficPayload, chartChanges) {
 
 export function mapQueueRow(c, clientLabel = '') {
   const proposed = c.proposed || {};
-  const sev = c.priority === 'high' || c.severity === 'critical' ? 'red' : 'yellow';
+  const sev = changeBoardColor(c);
   const gainBits = proposed.evidence
     ? `+${proposed.evidence.clicks ?? '—'} clicks/mo`
     : String(c.opportunity || '').includes('click')
@@ -189,34 +192,15 @@ export function mapWorkspaceSite(site, { queueCount = 0, red = 0, yellow = 0, bl
   };
 }
 
-export function severityToBoardColor(severity) {
-  if (severity === 'Critical') return 'red';
-  if (severity === 'Warning') return 'yellow';
-  return 'green';
-}
-
-export function findingsToScanTasks(findings, { lockedPaths = [] } = {}) {
-  const red = [];
-  const yellow = [];
-  const green = [];
-  const blue = lockedPaths.map((p) => `Winning — leave as is · ${p}`);
-  for (const f of findings || []) {
-    const path = f.pages?.[0] ? tryPath(f.pages[0]) : f.detail || '/';
-    const line = `${f.name} · ${path}`;
-    const color = severityToBoardColor(f.severity);
-    if (color === 'red') red.push(line);
-    else if (color === 'yellow') yellow.push(line);
-    else green.push(line);
-  }
-  return { red, yellow, green, blue };
-}
-
-function tryPath(url) {
-  try {
-    return new URL(url).pathname || '/';
-  } catch {
-    return String(url || '/');
-  }
+export function findingsToScanTasks(findings, { lockedPaths = [], changes = [] } = {}) {
+  const board = buildColourBoard({ findings, changes, lockedPaths });
+  return {
+    red: board.red,
+    yellow: board.yellow,
+    green: board.green,
+    blue: board.blue,
+    all: board.all,
+  };
 }
 
 export function queueItemsFromChanges(data) {

@@ -18,10 +18,11 @@ import {
 } from "@/lib/v1Api";
 import { userIsAuthenticated } from "@/utils/users/Helpers";
 import { breadthKey, loadGuardrails } from "@/lib/guardrails";
+import { changeBoardColor, DOT_COLORS, DOT_LABEL, DOT_TAG } from "@/lib/dotPriority";
 import "@/styles/v8-app.css";
 
-const COLORS = { red: "#FF5A4E", yellow: "#FFC53D", green: "#3DDC84", blue: "#4DA3FF" };
-const LABELS = { red: "Dire", yellow: "Medium", green: "Passes", blue: "Locked" };
+const COLORS = DOT_COLORS;
+const LABELS = DOT_LABEL;
 const OPEN = new Set(["awaiting_approval", "proposed", "approved", "failed", "needs_review"]);
 
 function pathOf(url) {
@@ -37,11 +38,12 @@ function toMove(row) {
   const before = p.liveTitle || p.currentTitle || "(No live title)";
   const after = p.title || "";
   const desc = p.metaDescription || "";
+  const color = changeBoardColor(row);
   return {
     id: row.id,
     status: row.status,
-    color: "red",
-    tag: "DIRE · TITLE REWRITE",
+    color,
+    tag: `${DOT_TAG[color]} · TITLE REWRITE`,
     kind: "Title rewrite",
     page: pathOf(row.targetUrl),
     head: after ? `Ship a clearer title for ${pathOf(row.targetUrl)}.` : "Review this page title and description.",
@@ -109,16 +111,19 @@ export default function TodayMoves() {
     };
   }, [router, brief.siteUrl, brief.hostname]);
 
-  const openMoves = useMemo(() => moves.filter((m) => !done[m.id]), [moves, done]);
+  const openMoves = useMemo(() => moves.filter((m) => !done[m.id] && m.color === col), [moves, done, col]);
   const move = openMoves[cur] || openMoves[0] || null;
 
-  const chips = ["red", "yellow", "green", "blue"].map((k) => ({
-    key: k,
-    label: LABELS[k],
-    count: k === "red" ? `${openMoves.length} left` : k === "yellow" ? "—" : k === "green" ? "—" : "—",
-    color: COLORS[k],
-    on: col === k,
-  }));
+  const chips = ["red", "yellow", "green", "blue"].map((k) => {
+    const left = moves.filter((m) => !done[m.id] && m.color === k).length;
+    return {
+      key: k,
+      label: LABELS[k],
+      count: k === "red" || k === "yellow" ? (left ? `${left} left` : "0") : "—",
+      color: COLORS[k],
+      on: col === k,
+    };
+  });
 
   const connections = [
     { n: "1", name: "Search Console", sub: status.gsc ? "Connected" : "Not connected", on: status.gsc },

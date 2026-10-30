@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   approveChange,
   errorText,
@@ -14,6 +14,7 @@ import {
 } from "@/lib/v1Api";
 import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
+import { buildMoveProof, estimateClickGain } from "@/lib/moveEvidence";
 import SkeletonPage from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
 
@@ -73,6 +74,9 @@ function jsonLdPreviewText(ld) {
 export default function ReviewScreen() {
   const { id } = useParams();
   const router = useRouter();
+  const search = useSearchParams();
+  const backHref = search?.get("from") === "results" ? "/app/results" : "/app";
+  const backLabel = search?.get("from") === "results" ? "Back to site scan" : "Back to the move";
   const [change, setChange] = useState(null);
   const [checked, setChecked] = useState(false);
   const [title, setTitle] = useState("");
@@ -278,7 +282,7 @@ export default function ReviewScreen() {
     return (
       <div style={CONTENT_COL}>
         <div style={{ color: "#9AA1AB", fontSize: 15 }}>
-          This move is not in the queue. <Link href="/app">Back to Today&apos;s moves</Link>
+          This move is not in the queue. <Link href={backHref}>{backLabel}</Link>
         </div>
       </div>
     );
@@ -290,7 +294,7 @@ export default function ReviewScreen() {
     <div style={CONTENT_COL}>
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <Link
-          href="/app"
+          href={backHref}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -307,7 +311,7 @@ export default function ReviewScreen() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
             <path d="M15 6l-6 6 6 6" />
           </svg>
-          Back to the move
+          {backLabel}
         </Link>
         <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 12, color: "#9AA1AB" }}>{kindHeader}</span>
       </header>
@@ -546,14 +550,27 @@ export default function ReviewScreen() {
             ))}
           </div>
           <div style={{ borderRadius: 24, background: "#101215", border: "1px solid #1A1D22", padding: 22, display: "flex", flexDirection: "column", gap: 8 }}>
-            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 12, color: "#9AA1AB" }}>EXPECTED</span>
-            <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 30, fontWeight: 700, color: ACCENT }}>
-              {change.proposed?.expectedGain || "+40–90 visitors / mo"}
-            </span>
-            <span style={{ fontSize: 13, color: "#9AA1AB", lineHeight: 1.5 }}>
-              {change.proposed?.reason ||
-                "Based on 412 similar title changes Searchify has measured on local-service sites (median +18% clicks). Holds as long as all checks pass."}
-            </span>
+            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 12, color: "#9AA1AB" }}>EXPECTED THIS MONTH</span>
+            {(() => {
+              const gain = estimateClickGain(change.proposed || {}, {
+                judgeScore: change.proposed?.judgeScore,
+                reason: change.proposed?.reason,
+              });
+              return (
+                <>
+                  <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 30, fontWeight: 700, color: ACCENT }}>
+                    {gain.label}
+                  </span>
+                  <span style={{ fontSize: 12, color: "#7D848E", lineHeight: 1.45 }}>{gain.basis}</span>
+                  <span style={{ fontSize: 13, color: "#9AA1AB", lineHeight: 1.5 }}>
+                    {buildMoveProof(change.proposed || {}, {
+                      judgeScore: change.proposed?.judgeScore,
+                      reason: change.proposed?.reason,
+                    })}
+                  </span>
+                </>
+              );
+            })()}
           </div>
         </aside>
       </div>
