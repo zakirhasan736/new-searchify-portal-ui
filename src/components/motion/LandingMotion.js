@@ -66,9 +66,15 @@ export default function LandingMotion({ root = "#rest" }) {
       const items = Array.from(
         new Set(gsap.utils.toArray(REVEAL).filter((el) => !el.closest(".sf-marquee"))),
       );
-      gsap.set(items, { autoAlpha: 0, y: 34 });
+      const narrow = window.matchMedia("(max-width: 900px)").matches;
+      const revealY = narrow ? 16 : 34;
+      gsap.set(items, { autoAlpha: 0, y: revealY });
+      // Avoid leftover parallax transforms creating empty gaps on mobile.
+      if (narrow) {
+        gsap.set(PARALLAX.map((sel) => gsap.utils.toArray(sel)).flat(), { clearProps: "transform" });
+      }
       ScrollTrigger.batch(items, {
-        start: "top 90%",
+        start: "top 92%",
         once: true,
         onEnter: (batch) => {
           batch.forEach((el) => {
@@ -96,15 +102,19 @@ export default function LandingMotion({ root = "#rest" }) {
       window.__sfRevealInView = syncInView;
       scope.__sfSyncInView = syncInView;
 
-      PARALLAX.forEach((selector) => {
-        gsap.utils.toArray(selector).forEach((el) => {
-          gsap.fromTo(
-            el,
-            { y: 40 },
-            { y: -40, ease: "none", force3D: true, scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: 0.8 } },
-          );
+      // Parallax creates empty visual gaps on narrow screens — keep it desktop-only.
+      const wide = window.matchMedia("(min-width: 901px)").matches;
+      if (wide) {
+        PARALLAX.forEach((selector) => {
+          gsap.utils.toArray(selector).forEach((el) => {
+            gsap.fromTo(
+              el,
+              { y: 40 },
+              { y: -40, ease: "none", force3D: true, scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: 0.8 } },
+            );
+          });
         });
-      });
+      }
 
       // The scan board's dots light up one after another when it comes into view.
       const dots = gsap.utils.toArray("#rest .sf-dot-cell");

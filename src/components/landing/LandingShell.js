@@ -109,19 +109,21 @@ export default function LandingShell({
       <footer className="sf-footer">
         <div className="sf-footer-inner">
           <span className="sf-footer-copy">{footerNote}</span>
-          <Link href="/pricing" aria-current={current === "pricing" ? "page" : undefined}>
-            Pricing
-          </Link>
-          <Link href="/partners/login">Affiliates</Link>
-          <Link href="/privacy" aria-current={current === "privacy" ? "page" : undefined}>
-            Privacy
-          </Link>
-          <Link href="/terms" aria-current={current === "terms" ? "page" : undefined}>
-            Terms
-          </Link>
-          <Link href="/contact" aria-current={current === "contact" ? "page" : undefined}>
-            Contact
-          </Link>
+          <nav className="sf-footer-nav" aria-label="Footer">
+            <Link href="/pricing" aria-current={current === "pricing" ? "page" : undefined}>
+              Pricing
+            </Link>
+            <Link href="/partners/login">Affiliates</Link>
+            <Link href="/privacy" aria-current={current === "privacy" ? "page" : undefined}>
+              Privacy
+            </Link>
+            <Link href="/terms" aria-current={current === "terms" ? "page" : undefined}>
+              Terms
+            </Link>
+            <Link href="/contact" aria-current={current === "contact" ? "page" : undefined}>
+              Contact
+            </Link>
+          </nav>
         </div>
       </footer>
     </div>

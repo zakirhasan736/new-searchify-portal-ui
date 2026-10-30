@@ -180,6 +180,7 @@
   border-radius: 18px 18px 4px 18px;
   background: #1a1d22;
   font-size: 15px;
+  line-height: 1.4;
 }
 
 .sf-ai-a {
@@ -205,9 +206,25 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.55;
   color: #d7dade;
+}
+
+.sf-ai-a-main,
+.sf-ai-a-tip {
+  margin: 0;
+}
+
+.sf-ai-a-tip {
+  font-size: 13px;
+  color: #9aa1ab;
+  line-height: 1.45;
+}
+
+.sf-ai-chat-cap {
+  margin: 0;
 }
 
 .sf-ai-cite {
@@ -217,6 +234,73 @@
   border-radius: 6px;
   background: rgba(77, 163, 255, 0.15);
   color: #4da3ff;
+  display: inline-block;
+  word-break: break-all;
+}
+
+@media (max-width: 900px) {
+  .sf-land.is-home-v3 .sf-ai-block .sf-split {
+    gap: 10px !important;
+  }
+
+  .sf-land.is-home-v3 .sf-ai-chat {
+    flex: none;
+    width: 100%;
+    padding: 14px;
+    gap: 10px;
+    border-radius: 18px;
+  }
+
+  .sf-land.is-home-v3 .sf-ai-q {
+    max-width: 92%;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.35;
+    border-radius: 14px 14px 4px 14px;
+  }
+
+  .sf-land.is-home-v3 .sf-ai-a {
+    gap: 8px;
+  }
+
+  .sf-land.is-home-v3 .sf-ai-badge {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    font-size: 10px;
+    margin-top: 1px;
+  }
+
+  .sf-land.is-home-v3 .sf-ai-a-body {
+    gap: 8px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .sf-land.is-home-v3 .sf-ai-a-tip {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .sf-land.is-home-v3 .sf-ai-cite {
+    font-size: 10px;
+    padding: 1px 5px;
+  }
+
+  .sf-land.is-home-v3 .sf-ai-chat-cap,
+  .sf-land.is-home-v3 .sf-ai-block .sf-note {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .sf-land.is-home-v3 .sf-ai-block .sf-split-copy {
+    gap: 8px;
+  }
+
+  .sf-land.is-home-v3 .sf-ai-block .sf-split-copy > p {
+    font-size: 15px;
+    line-height: 1.45;
+  }
 }
 
 .sf-ai-help-grid {

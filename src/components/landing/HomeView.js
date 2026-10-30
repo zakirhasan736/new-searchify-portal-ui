@@ -422,17 +422,17 @@ export default function HomeView() {
             <div className="sf-ai-a">
               <span className="sf-ai-badge" aria-hidden="true">AI</span>
               <div className="sf-ai-a-body">
-                <span>
+                <p className="sf-ai-a-main">
                   A few well-reviewed options: <strong>Northline Roofing</strong> offers 24/7 emergency leak repair across
                   Calgary and helps with insurance claims <span className="sf-ai-cite">northline.example</span>, and two
                   other local companies also come up often.
-                </span>
-                <span style={{ fontSize: 13, color: "#9AA1AB" }}>
+                </p>
+                <p className="sf-ai-a-tip">
                   The businesses that get named are the ones whose sites clearly say what they do, where, and why to trust them.
-                </span>
+                </p>
               </div>
             </div>
-            <figcaption className="sf-note">Illustration. Real AI answers vary.</figcaption>
+            <figcaption className="sf-note sf-ai-chat-cap">Illustration. Real AI answers vary.</figcaption>
           </figure>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
