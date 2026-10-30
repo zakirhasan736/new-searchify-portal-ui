@@ -22,6 +22,7 @@ import {
   getProductWorkspace,
   listChanges,
   loadFeature,
+  retryOps,
   runReportDefinition,
 } from '@/lib/v1Api';
 import { loadJourney, planById } from '@/lib/journey';
@@ -43,7 +44,12 @@ function sparkPath(clicks) {
     .join(' ');
 }
 
-function trendFromClicks(clicks) {
+function trendFromClicks(clicks, halves) {
+  if (halves && (halves.before || halves.after)) {
+    const pct = halves.before ? Math.round((halves.after / halves.before - 1) * 100) : 100;
+    return { pct, trend: `${pct >= 0 ? '+' : ''}${pct}%`, trendColor: pct >= 0 ? '#3DDC84' : '#FF5A4E' };
+  }
+  if (halves) return { trend: '—', trendColor: '#7D848E', pct: null };
   if (!clicks?.length || clicks.length < 2) return { trend: '—', trendColor: '#7D848E', pct: null };
   const first = clicks[0] || 0;
   const last = clicks[clicks.length - 1] || 0;
@@ -54,6 +60,25 @@ function trendFromClicks(clicks) {
     trend: `${pct >= 0 ? '+' : ''}${pct}%`,
     trendColor: pct >= 0 ? '#3DDC84' : '#FF5A4E',
   };
+}
+
+/** Clicks in the last 14 days vs the 14 before (complete days only), from the daily GSC rows. */
+function halfTrend(daily) {
+  if (!Array.isArray(daily) || daily.length < 8) return null;
+  const rows = [...daily].sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+  const half = Math.floor(rows.length / 2);
+  const sum = (list) => list.reduce((n, r) => n + (Number(r[1]) || 0), 0);
+  return { before: sum(rows.slice(0, half)), after: sum(rows.slice(rows.length - half)) };
+}
+
+function ago(iso) {
+  const t = new Date(iso || '').getTime();
+  if (Number.isNaN(t)) return '';
+  const mins = Math.max(1, Math.round((Date.now() - t) / 60000));
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 48) return `${hours} h ago`;
+  return `${Math.round(hours / 24)} days ago`;
 }
 
 function noticeHref(kind) {
@@ -108,6 +133,7 @@ export default function CommandScreen() {
   const [subline, setSubline] = useState('Workspace');
   const [brokenSites, setBrokenSites] = useState([]);
   const [gscOk, setGscOk] = useState(true);
+  const [retry, setRetry] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -136,7 +162,25 @@ export default function CommandScreen() {
         setQ(mappedQueue);
 
         const notices = (opsRes.ok ? opsRes.data?.notices : null) || ws.data?.notices || [];
-        const openNotices = notices.filter((n) => !n.status || n.status === 'open');
+        const googleNow = ws.data?.google || {};
+        const googleHealthy =
+          (opsRes.ok ? opsRes.data?.googleStatus : googleNow.status) === 'connected' &&
+          !(opsRes.ok ? opsRes.data?.googleError : googleNow.lastError);
+        const lastSync = new Date(googleNow.lastSyncAt || 0).getTime();
+        // One row per problem (older versions stacked the same "sync failed" every run), and a
+        // sync failure that a later successful sync already fixed is not shown.
+        const grouped = new Map();
+        for (const n of notices) {
+          if (n.status && n.status !== 'open') continue;
+          if ((n.kind === 'sync' || n.kind === 'retry') && googleHealthy && new Date(n.createdAt || 0).getTime() <= (lastSync || Date.now())) continue;
+          const key = `${n.kind}|${String(n.detail || n.title || '').slice(0, 200)}`;
+          const prev = grouped.get(key);
+          if (prev) {
+            prev.count += 1;
+            prev.ids.push(n.id);
+          } else grouped.set(key, { ...n, count: 1, ids: [n.id] });
+        }
+        const openNotices = [...grouped.values()];
         setA(
           openNotices.slice(0, 8).map((n, i) => {
             const kind = n.kind || '';
@@ -145,8 +189,9 @@ export default function CommandScreen() {
               id: String(n.id || `n${i}`),
               noticeId: n.id,
               kind,
-              client: n.title?.split('·')[0]?.trim() || sites[0]?.label || 'Workspace',
-              text: n.detail || n.title || 'Needs attention',
+              noticeIds: n.ids,
+              client: `${n.title?.split('·')[0]?.trim() || sites[0]?.label || 'Workspace'}${n.count > 1 ? ` ×${n.count}` : ''}`,
+              text: `${n.detail || n.title || 'Needs attention'}${n.createdAt ? ` · last seen ${ago(n.createdAt)}` : ''}`,
               cta: noticeCta(kind, n.title),
               doneLabel: kind === 'publish' || kind === 'sync' ? 'Reconnected' : 'Reviewed',
               color: blocking ? '#FF5A4E' : kind === 'scan' ? '#4DA3FF' : '#FFC53D',
@@ -156,8 +201,20 @@ export default function CommandScreen() {
           }),
         );
 
-        const weeks = weeklyBuckets(featurePayload(organic));
-        const clickSeries = weeks.slice(-8).map((w) => Number(w[1]) || 0);
+        const organicPayload = featurePayload(organic);
+        const halves = halfTrend(organicPayload.daily);
+        const weeks = weeklyBuckets(organicPayload);
+        // Weeks counted back from the last complete day, so a half-finished week doesn't look like a drop.
+        const dailyRows = Array.isArray(organicPayload.daily)
+          ? [...organicPayload.daily].sort((a, b) => String(a[0]).localeCompare(String(b[0])))
+          : [];
+        const clickSeries = dailyRows.length >= 14
+          ? Array.from({ length: Math.floor(dailyRows.length / 7) }, (_, i) =>
+              dailyRows
+                .slice(dailyRows.length - (Math.floor(dailyRows.length / 7) - i) * 7, dailyRows.length - (Math.floor(dailyRows.length / 7) - i - 1) * 7)
+                .reduce((n, r) => n + (Number(r[1]) || 0), 0),
+            ).slice(-8)
+          : weeks.slice(-8).map((w) => Number(w[1]) || 0);
         const bl = featurePayload(backlinks);
         const linkRows = Array.isArray(bl.rows) ? bl.rows : Array.isArray(bl.domains) ? bl.domains : [];
         const linkCount = linkRows.length || Number(bl.kpis?.[0]?.[1]) || 0;
@@ -196,6 +253,7 @@ export default function CommandScreen() {
                   level: Math.min(6, Math.max(1, 2 + (mappedQueue.length > 0 ? 1 : 0))),
                   red,
                   clicks: isActive && clickSeries.length >= 2 ? clickSeries : [],
+                  halves: isActive ? halves : null,
                   broken: siteBroken,
                   links: isActive ? linkCount : 0,
                   ld: 0,
@@ -213,6 +271,7 @@ export default function CommandScreen() {
                   level: Math.min(6, Math.max(1, 2 + (isActive && clickSeries.length ? 1 : 0))),
                   red: redByClient[name] || (sites.length === 1 ? totalRed : 0),
                   clicks: isActive && clickSeries.length >= 2 ? clickSeries : [],
+                  halves: isActive ? halves : null,
                   broken: site.status === 'error' || site.status === 'disconnected',
                   links: isActive ? linkCount : 0,
                   ld: 0,
@@ -229,6 +288,7 @@ export default function CommandScreen() {
               level: 2,
               red: totalRed,
               clicks: clickSeries.length >= 2 ? clickSeries : [],
+              halves,
               broken: googleBroken,
               links: linkCount,
               ld: 0,
@@ -330,17 +390,43 @@ export default function CommandScreen() {
   const alerts = A.map((a) => ({
     id: a.id,
     client: a.client,
-    text: a.text,
-    cta: a.cta,
-    doneLabel: a.doneLabel,
+    text: retry[a.id]?.error ? `Retry failed: ${retry[a.id].error}` : a.text,
+    cta: retry[a.id]?.busy ? 'Retrying…' : retry[a.id]?.error ? 'Fix in Connections' : a.cta,
+    doneLabel: a.kind === 'sync' ? 'Synced' : a.doneLabel,
     color: fixed[a.id] ? '#3DDC84' : a.color,
     border: fixed[a.id] ? 'rgba(61,220,132,.35)' : a.blocking ? 'rgba(255,90,78,.45)' : '#1A1D22',
     anim: a.blocking && !fixed[a.id] ? 'sfy-flicker 1.2s ease-in-out infinite' : 'none',
     open: !fixed[a.id],
     done: !!fixed[a.id],
-    act: () => {
+    act: async () => {
+      if (a.kind === 'sync') {
+        // Actually re-run the Google sync instead of only hiding the notice.
+        if (retry[a.id]?.busy) return;
+        if (retry[a.id]?.error) {
+          router.push('/app/connections/google');
+          return;
+        }
+        setRetry((prev) => ({ ...prev, [a.id]: { busy: true } }));
+        const res = await retryOps().catch(() => ({ ok: false }));
+        if (res.ok) {
+          setRetry((prev) => ({ ...prev, [a.id]: {} }));
+          setGscOk(true);
+          setFixed((prev) => {
+            const next = { ...prev };
+            A.filter((x) => x.kind === 'sync').forEach((x) => {
+              next[x.id] = true;
+            });
+            return next;
+          });
+        } else {
+          const detail = res.data?.detail;
+          const message = typeof detail === 'string' ? detail : detail?.message || res.data?.problem?.message || 'Google sync still fails.';
+          setRetry((prev) => ({ ...prev, [a.id]: { error: message.slice(0, 260) } }));
+        }
+        return;
+      }
       setFixed((prev) => ({ ...prev, [a.id]: true }));
-      if (a.noticeId) ackOpsNotice(a.noticeId, 'acked').catch(() => {});
+      (a.noticeIds || [a.noticeId]).filter(Boolean).forEach((id) => ackOpsNotice(id, 'acked').catch(() => {}));
       if (a.href) router.push(a.href);
     },
   }));
@@ -358,7 +444,7 @@ export default function CommandScreen() {
   }));
 
   const clients = C.map((c) => {
-    const { trend, trendColor } = trendFromClicks(c.clicks);
+    const { trend, trendColor } = trendFromClicks(c.clicks, c.halves);
     const aliases = new Set([c.name, ...(c.aliases || [])]);
     const waiting = Q.filter((q) => aliases.has(q.client) && !status[q.id]).length;
     const resolved =

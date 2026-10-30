@@ -90,6 +90,7 @@ export default function StatesScreen() {
   const [textReady, setTextReady] = useState(true);
   const [checkingPlugin, setCheckingPlugin] = useState(false);
   const [pageReady, setPageReady] = useState(false);
+  const [wpConnected, setWpConnected] = useState(false);
 
   const { hostname, href } = useMemo(() => activeSiteContext(loadJourney()), []);
   const siteKey = useMemo(
@@ -120,6 +121,7 @@ export default function StatesScreen() {
     const wp = sites.find((item) => item.provider === "wordpress" && item.status === "connected");
     const wpAny = sites.find((item) => item.provider === "wordpress");
     const scanData = scanRes.data?.scan || null;
+    setWpConnected(Boolean(wp));
     setScan(scanData);
     setWpMeta({
       lastError: wp?.lastError || wpAny?.lastError || "",
@@ -131,18 +133,22 @@ export default function StatesScreen() {
     setPendingShip(queueItems(changes).length);
 
     const notices = opsRes.ok ? opsRes.data?.notices || [] : [];
+    // Only WordPress problems break the WordPress cable. Google "sync" notices used to count here,
+    // so a Search Console error made a connected WordPress site show as unplugged.
     const openBroken = notices.some((n) => {
       if (n.status && n.status !== "open") return false;
       const kind = String(n.kind || "");
-      const title = String(n.title || n.detail || "").toLowerCase();
-      return kind === "publish" || kind === "sync" || /wordpress|unplug|connection/.test(title);
+      const title = String(n.title || "").toLowerCase();
+      return kind === "publish" || /wordpress|unplug/.test(title);
     });
     setOpsBroken(openBroken);
 
     const gsc = featurePayload(organic);
     const weeks = gsc.weekly || gsc.panels?.weeklyClicks || [];
     const clicks = (weeks || []).reduce((s, w) => s + (Number(Array.isArray(w) ? w[1] : w?.clicks) || 0), 0);
-    const hasSeries = Array.isArray(weeks) && weeks.length >= 2 && clicks > 0;
+    const daily = Array.isArray(gsc.daily) ? gsc.daily : [];
+    // Data is flowing as soon as a sync stored days or weeks — a quiet site can have 0 clicks.
+    const hasSeries = (Array.isArray(weeks) && weeks.length >= 1) || daily.length > 0 || clicks > 0;
     setGscReady(hasSeries);
 
     const local = loadLocal();
@@ -153,8 +159,15 @@ export default function StatesScreen() {
     reload().finally(() => setPageReady(true));
   }, [reload]);
 
-  const wpLive = Boolean(status.wordpress) && !wpMeta.lastError;
-  const wpMissing = !status.wordpress;
+  // Connected = a connected WordPress row exists (the active-site match can miss www / old journey hosts).
+  const wpOn = Boolean(status.wordpress) || wpConnected;
+  // Only a login / permission error means the cable is unplugged. Other last errors (for example
+  // "Nothing was published … missing credentials" from a dry run) keep it connected with a note.
+  const wpAuthError =
+    !/nothing was published|dry-run/i.test(wpMeta.lastError || "") &&
+    /401|403|incorrect password|invalid password|login|unauthori|forbidden|expired|revoked|invalid credential|could not be verified/i.test(wpMeta.lastError || "");
+  const wpLive = wpOn && !wpAuthError;
+  const wpMissing = !wpOn;
   // Cable broken when WP missing, errored, or ops says publish/sync broken.
   const fixed = wpLive && !opsBroken;
   const s1broken = !fixed;
@@ -173,7 +186,9 @@ export default function StatesScreen() {
   const s1shadow = fixed ? "0 0 26px rgba(77,163,255,.15)" : "0 0 26px rgba(255,90,78,.15)";
   const s1aria = fixed ? "WordPress cable connected" : "WordPress cable unplugged";
   const s1title = fixed
-    ? "WordPress is back. Shipping resumed."
+    ? wpMeta.lastError
+      ? "WordPress is connected — last publish needs a look"
+      : "WordPress is connected. Shipping is on."
     : wpMissing
       ? "WordPress is not connected yet"
       : wpMeta.lastError
@@ -182,17 +197,23 @@ export default function StatesScreen() {
   const s1body = fixed
     ? pendingShip
       ? `The ${pendingShip} change${pendingShip === 1 ? "" : "s"} that ${pendingShip === 1 ? "was" : "were"} waiting can ship now.`
-      : "Scanning and measuring continue. Approve a move when you are ready to ship."
+      : wpMeta.lastError
+        ? "The connection is live. The last publish didn't go through — the reason is below."
+        : "Scanning and measuring continue. Approve a move when you are ready to ship."
     : wpMissing
       ? "Connect WordPress so approved titles and descriptions can publish. Scanning and measuring still work, and nothing was lost."
       : "Your site's login changed, so Searchify can't ship changes. Scanning and measuring continue, and nothing was lost.";
 
-  const s2done = Boolean(status.wordpress) && !wpMeta.lastError;
+  const s2done = wpLive;
   const s2waiting = !s2done;
   const pagesMapped = wpMeta.pages || scan?.pagesRead || 0;
   const seoHint = scan?.business ? "SEO fields readable" : "pages mapped";
 
   const brandNew = Boolean(status.gsc) && !gscReady;
+  // Google account linked but the Search Console property isn't readable / verified.
+  const googleLinked = status.googleAccount === "connected";
+  const gscIssue = googleLinked && !status.gsc && (status.gscStatus === "unverified" || Boolean(status.google?.lastError));
+  const googleError = status.google?.problem?.message || status.google?.lastError || "";
   const scanBlocked = isBlockedScan(scan);
 
   const copyKey = async () => {
@@ -615,13 +636,24 @@ export default function StatesScreen() {
                 ? "Search data is flowing"
                 : status.gsc
                   ? "Your board fills in over the next 3 days"
-                  : "Connect Search Console to fill the board"}
+                  : gscIssue
+                    ? "Google is connected — Search Console needs a re-check"
+                    : googleLinked && status.gscStatus === "not_selected"
+                      ? "Google is connected — pick your Search Console property"
+                      : "Connect Search Console to fill the board"}
             </h2>
             <p style={{ margin: 0, fontSize: "15px", color: "#9AA1AB", lineHeight: 1.5 }}>
               {gscReady && status.gsc
                 ? `${hostname || "Your site"} already has click and impression history in Searchify.`
-                : "Google takes a few days to start sending data for a newly connected site. Searchify has already read your pages — the colours appear as soon as the search data arrives."}
+                : gscIssue
+                  ? `Signed in as ${status.google?.googleEmail || status.google?.account?.email || "your Google account"}${status.google?.gscSiteUrl ? ` · property ${status.google.gscSiteUrl}` : ""}. Open Connections, choose the property again and press Save and sync.`
+                  : googleLinked && status.gscStatus === "not_selected"
+                    ? "Choose which Search Console property belongs to this site so the board can fill in."
+                    : "Google takes a few days to start sending data for a newly connected site. Searchify has already read your pages — the colours appear as soon as the search data arrives."}
             </p>
+            {gscIssue && googleError ? (
+              <p style={{ margin: 0, fontSize: "13px", color: "#FFC53D", lineHeight: 1.5 }}>{googleError}</p>
+            ) : null}
             {gscReady && status.gsc ? (
               <Link
                 href="/app/outcomes"
@@ -643,7 +675,7 @@ export default function StatesScreen() {
               </Link>
             ) : !status.gsc ? (
               <Link
-                href="/app/connections"
+                href={googleLinked ? "/app/connections/google" : "/app/connections"}
                 style={{
                   alignSelf: "flex-start",
                   display: "inline-flex",
@@ -658,7 +690,7 @@ export default function StatesScreen() {
                   textDecoration: "none",
                 }}
               >
-                Connect Google
+                {gscIssue ? "Fix Search Console" : googleLinked ? "Choose property" : "Connect Google"}
               </Link>
             ) : (
               <label style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "14px" }}>
