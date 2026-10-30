@@ -149,24 +149,27 @@ export function useConnectionStatus() {
   const [status, setStatus] = useState({ wordpress: false, gsc: false, ga: false, wordpressId: null, wordpressUrl: "", google: null });
   const [ready, setReady] = useState(false);
   const refresh = useCallback(() => {
-    Promise.all([listCmsConnections({ force: true }), getGoogleStatus({ force: true })]).then(([cms, google]) => {
-      const sites = cms.data?.connections || [];
-      const active = hostOf(activeSiteContext().href);
-      const wordpress = sites.filter((item) => item.provider === "wordpress" && item.status === "connected");
-      const wp = (active && wordpress.find((item) => hostOf(item.siteUrl) === active)) || (!active ? wordpress[0] : null);
-      const g = google.data?.connection || {};
-      setStatus({
-        wordpress: Boolean(wp),
-        wordpressId: wp?.id || null,
-        wordpressUrl: wp?.siteUrl || "",
-        gsc: g.gsc?.status === "connected",
-        ga: g.ga4?.status === "connected",
-        gscStatus: g.gsc?.status || (g.gscSiteUrl ? "unverified" : "not_selected"),
-        gaStatus: g.ga4?.status || (g.ga4PropertyId ? "unverified" : "not_selected"),
-        googleAccount: g.account?.status || (g.connected ? "connected" : "disconnected"),
-        google: g,
-      });
-    }).catch(() => {}).finally(() => setReady(true));
+    return Promise.all([listCmsConnections({ force: true }), getGoogleStatus({ force: true })])
+      .then(([cms, google]) => {
+        const sites = cms.data?.connections || [];
+        const active = hostOf(activeSiteContext().href);
+        const wordpress = sites.filter((item) => item.provider === "wordpress" && item.status === "connected");
+        const wp = (active && wordpress.find((item) => hostOf(item.siteUrl) === active)) || (!active ? wordpress[0] : null);
+        const g = google.data?.connection || {};
+        setStatus({
+          wordpress: Boolean(wp),
+          wordpressId: wp?.id || null,
+          wordpressUrl: wp?.siteUrl || "",
+          gsc: g.gsc?.status === "connected",
+          ga: g.ga4?.status === "connected",
+          gscStatus: g.gsc?.status || (g.gscSiteUrl ? "unverified" : "not_selected"),
+          gaStatus: g.ga4?.status || (g.ga4PropertyId ? "unverified" : "not_selected"),
+          googleAccount: g.account?.status || (g.connected ? "connected" : "disconnected"),
+          google: g,
+        });
+      })
+      .catch(() => {})
+      .finally(() => setReady(true));
   }, []);
   useEffect(() => { refresh(); }, [refresh]);
   return [status, refresh, ready];

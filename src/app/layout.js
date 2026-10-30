@@ -54,6 +54,7 @@ export const metadata = {
       { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/searchify-mark.svg", type: "image/svg+xml" },
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     shortcut: "/favicon.ico",
@@ -63,6 +64,26 @@ export const metadata = {
     type: "website",
     siteName: "Searchify",
     locale: "en_US",
+    title: "Searchify",
+    description:
+      "Searchify helps agencies complete recurring SEO work across WordPress client sites — evidence-backed priorities, approved updates, verified change records.",
+    url: absoluteUrl("/"),
+    images: [
+      {
+        url: absoluteUrl("/og-image.png"),
+        width: 1080,
+        height: 1080,
+        alt: "Searchify",
+        type: "image/png",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Searchify",
+    description:
+      "Searchify helps agencies complete recurring SEO work across WordPress client sites — evidence-backed priorities, approved updates, verified change records.",
+    images: [absoluteUrl("/og-image.png")],
   },
 };
 
@@ -85,6 +106,8 @@ export default function RootLayout({ children }) {
     url: absoluteUrl("/"),
     description:
       "SEO operator for WordPress agencies: connect GSC/GA4, review title and description updates, approve, publish, verify, and undo.",
+    image: absoluteUrl("/og-image.png"),
+    logo: absoluteUrl("/searchify-mark-512.png"),
   };
 
   return (

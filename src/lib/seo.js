@@ -5,8 +5,20 @@ export function absoluteUrl(path = "/") {
   return `${siteUrl}${path}`;
 }
 
-export function pageMeta({ title, description, path = "/", index = true }) {
+const OG_IMAGE = {
+  url: "/og-image.png",
+  width: 1080,
+  height: 1080,
+  alt: "Searchify",
+  type: "image/png",
+};
+
+export function pageMeta({ title, description, path = "/", index = true, image = "/og-image.png" }) {
   const url = absoluteUrl(path);
+  const ogImage = {
+    ...OG_IMAGE,
+    url: image.startsWith("http") ? image : absoluteUrl(image),
+  };
   return {
     title: { absolute: `${title} | Searchify` },
     description,
@@ -21,11 +33,13 @@ export function pageMeta({ title, description, path = "/", index = true }) {
       siteName: "Searchify",
       type: "website",
       locale: "en_US",
+      images: [ogImage],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [ogImage.url],
     },
   };
 }

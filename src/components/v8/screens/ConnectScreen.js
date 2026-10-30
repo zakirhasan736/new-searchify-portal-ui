@@ -59,18 +59,25 @@ export default function ConnectScreen() {
 
   // After Google OAuth redirect (?google=connected), refresh and scroll to property picker.
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") return undefined;
     const params = new URLSearchParams(window.location.search);
-    if (!params.get("google")) return;
-    refreshStatus().then(() => {
-      window.requestAnimationFrame(() => {
-        document.getElementById("google-properties")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-      const url = new URL(window.location.href);
-      url.searchParams.delete("google");
-      url.searchParams.delete("email");
-      window.history.replaceState({}, "", `${url.pathname}${url.search}`);
-    });
+    if (!params.get("google")) return undefined;
+    let cancelled = false;
+    Promise.resolve(refreshStatus())
+      .then(() => {
+        if (cancelled) return;
+        window.requestAnimationFrame(() => {
+          document.getElementById("google-properties")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        const url = new URL(window.location.href);
+        url.searchParams.delete("google");
+        url.searchParams.delete("email");
+        window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, [refreshStatus]);
 
   useEffect(() => {
