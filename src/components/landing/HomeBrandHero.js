@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import SearchifyMark from "@/components/landing/SearchifyMark";
 import { useGsap } from "@/components/motion/gsapClient";
-import { scrollToTarget } from "@/components/motion/SmoothScroll";
+import { scrollToHash, scrollToTarget } from "@/components/motion/SmoothScroll";
 
 const NAV = [
   { href: "/#testimonials", label: "Testimonials" },
@@ -425,10 +425,18 @@ export default function HomeBrandHero() {
     };
   }, [menuOpen]);
 
+  const onNavClick = (event, href) => {
+    const wasOpen = menuOpen;
+    closeMenu();
+    if (!href.includes("#")) return;
+    event.preventDefault();
+    window.setTimeout(() => scrollToHash(href), wasOpen ? 40 : 0);
+  };
+
   const navLinks = (
     <>
       {NAV.map((item) => (
-        <Link key={item.href} href={item.href} onClick={closeMenu}>
+        <Link key={item.href} href={item.href} onClick={(event) => onNavClick(event, item.href)}>
           {item.label}
         </Link>
       ))}

@@ -477,14 +477,17 @@ html:has(.sf-land.is-home-v3) {
   display: none;
 }
 
+/* Tablet + mobile (≤900): logo left, Menu right — never wrap desktop nav */
 @media (max-width: 900px) {
-  /* Screenshot mobile chrome: logo left + Menu right only */
   .sf-brand-hero-nav,
   .sf-home-sticky-nav {
     position: relative;
     z-index: 70;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     flex-wrap: nowrap;
-    padding: 16px;
+    padding: 14px 16px;
     gap: 12px;
   }
 
@@ -511,27 +514,34 @@ html:has(.sf-land.is-home-v3) {
     font-weight: 600;
   }
 
-  /* Inline desktop links stay hidden on mobile — sheet is portaled */
   .sf-brand-hero-links-inline,
   .sf-home-sticky-links-inline {
     display: none !important;
   }
 
+  .sf-brand-hero {
+    min-height: 100svh;
+  }
+
   .sf-brand-word {
-    font-size: clamp(44px, 14vw, 72px);
+    font-size: clamp(48px, 10vw, 88px);
   }
 
   .sf-brand-mark {
-    width: clamp(52px, 14vw, 72px);
-    height: clamp(52px, 14vw, 72px);
+    width: clamp(56px, 10vw, 96px);
+    height: clamp(56px, 10vw, 96px);
   }
 
-  /* Rest of page — single-column mobile like the screenshot */
+  /* Content: single column, tighter section rhythm (match mobile full design) */
   .sf-land.is-home-v3 .sf-hero.sf-hero-v3 {
-    padding: 48px 16px 64px;
-    gap: 28px;
+    padding: 40px 20px 48px;
+    gap: 24px;
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .sf-land.is-home-v3 .sf-hero-copy {
+    gap: 18px;
   }
 
   .sf-land.is-home-v3 .sf-hero-copy,
@@ -540,10 +550,16 @@ html:has(.sf-land.is-home-v3) {
     width: 100%;
   }
 
+  .sf-land.is-home-v3 .sf-hero-copy > p {
+    font-size: 16px;
+    max-width: none;
+  }
+
   .sf-land.is-home-v3 .sf-urlrow {
     flex-direction: column;
     max-width: none;
     width: 100%;
+    gap: 10px;
   }
 
   .sf-land.is-home-v3 .sf-urlfield,
@@ -567,11 +583,15 @@ html:has(.sf-land.is-home-v3) {
     margin-top: 10px;
   }
 
+  .sf-land.is-home-v3 .sf-plugs {
+    margin-top: 8px;
+  }
+
   .sf-land.is-home-v3 .sf-plugs-inner {
     flex-direction: column;
     align-items: flex-start;
-    gap: 14px;
-    padding: 18px 16px;
+    gap: 12px;
+    padding: 16px 20px;
   }
 
   .sf-land.is-home-v3 .sf-plugs-label {
@@ -585,26 +605,58 @@ html:has(.sf-land.is-home-v3) {
   .sf-land.is-home-v3 .sf-plat-cards {
     flex-direction: column;
     align-items: stretch;
+    gap: 22px;
   }
 
   .sf-land.is-home-v3 .sf-tiles {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
+  /* Section-to-section gaps: tighter than desktop, still readable */
   .sf-land.is-home-v3 .sf-ai-block,
   .sf-land.is-home-v3 .sf-vs-block,
-  .sf-land.is-home-v3 .sf-platforms-block,
+  .sf-land.is-home-v3 .sf-platforms-block {
+    padding: 52px 20px 16px;
+    gap: 22px;
+  }
+
+  .sf-land.is-home-v3 .sf-ai-block {
+    padding-top: 56px;
+  }
+
   .sf-land.is-home-v3 .sf-section,
   .sf-land.is-home-v3 .sf-trust,
   .sf-land.is-home-v3 .sf-testimonials,
   .sf-land.is-home-v3 .sf-agencies,
-  .sf-land.is-home-v3 .sf-closing {
-    padding-left: 16px;
-    padding-right: 16px;
+  .sf-land.is-home-v3 .sf-closing,
+  .sf-land.is-home-v3 .sf-band .sf-band-inner {
+    padding: 52px 20px;
+    gap: 22px;
+  }
+
+  .sf-land.is-home-v3 .sf-how-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .sf-land.is-home-v3 .sf-ai-help-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
   }
 
   .sf-land.is-home-v3 .sf-quote-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .sf-land.is-home-v3 .sf-vs-copy {
+    max-width: none;
+    gap: 12px;
+  }
+
+  .sf-land.is-home-v3 .sf-vs-copy .sf-script {
+    font-size: clamp(28px, 5vw, 34px);
   }
 
   .sf-land.is-home-v3 .sf-closing .sf-urlrow {
@@ -612,31 +664,83 @@ html:has(.sf-land.is-home-v3) {
   }
 
   .sf-land.is-home-v3 .sf-footer-inner {
-    padding: 24px 16px;
-    gap: 12px 20px;
+    padding: 22px 20px;
+    gap: 10px 16px;
   }
 }
 
-@media (max-width: 480px) {
-  .sf-brand-hero {
-    min-height: 520px;
+/* Phone (≤600): stack everything, tighter gaps */
+@media (max-width: 600px) {
+  .sf-brand-hero-nav,
+  .sf-home-sticky-nav {
+    padding: 12px 16px;
+  }
+
+  .sf-brand-word {
+    font-size: clamp(40px, 12vw, 56px);
+  }
+
+  .sf-brand-mark {
+    width: clamp(48px, 13vw, 64px);
+    height: clamp(48px, 13vw, 64px);
   }
 
   .sf-brand-lockup-inner {
     gap: 12px;
   }
 
-  .sf-brand-word {
-    font-size: clamp(40px, 13vw, 56px);
+  .sf-land.is-home-v3 .sf-hero.sf-hero-v3 {
+    padding: 36px 16px 44px;
+    gap: 20px;
   }
 
   .sf-land.is-home-v3 .sf-hero-v3 h1 {
-    font-size: clamp(36px, 11vw, 48px);
+    font-size: clamp(34px, 10vw, 44px);
     letter-spacing: -1.6px;
   }
 
   .sf-land.is-home-v3 .sf-dots {
     gap: 8px;
+  }
+
+  .sf-land.is-home-v3 .sf-ai-block,
+  .sf-land.is-home-v3 .sf-vs-block,
+  .sf-land.is-home-v3 .sf-platforms-block {
+    padding: 44px 16px 12px;
+    gap: 18px;
+  }
+
+  .sf-land.is-home-v3 .sf-ai-block {
+    padding-top: 48px;
+  }
+
+  .sf-land.is-home-v3 .sf-section,
+  .sf-land.is-home-v3 .sf-trust,
+  .sf-land.is-home-v3 .sf-testimonials,
+  .sf-land.is-home-v3 .sf-agencies,
+  .sf-land.is-home-v3 .sf-closing,
+  .sf-land.is-home-v3 .sf-band .sf-band-inner {
+    padding: 44px 16px;
+    gap: 18px;
+  }
+
+  .sf-land.is-home-v3 .sf-plugs-inner {
+    padding: 14px 16px;
+  }
+
+  .sf-land.is-home-v3 .sf-how-grid,
+  .sf-land.is-home-v3 .sf-ai-help-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .sf-land.is-home-v3 .sf-ai-help-card,
+  .sf-land.is-home-v3 .sf-card {
+    padding: 18px;
+  }
+
+  .sf-land.is-home-v3 .sf-footer-inner {
+    padding: 20px 16px;
   }
 }
 

@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import SearchifyMark from "@/components/landing/SearchifyMark";
-import { getLenis } from "@/components/motion/SmoothScroll";
+import { getLenis, scrollToHash } from "@/components/motion/SmoothScroll";
 
 const LINKS = [
   { href: "/#testimonials", label: "Testimonials" },
@@ -93,10 +93,19 @@ export default function HomeStickyNav() {
   const close = () => setOpen(false);
   const show = pastHero && !hidden;
 
+  const onNavClick = (event, href) => {
+    close();
+    // Let Lenis restart after menu unlock, then scroll to the section top.
+    window.setTimeout(() => {
+      scrollToHash(href);
+    }, 40);
+    if (href.includes("#")) event.preventDefault();
+  };
+
   const navLinks = (
     <>
       {LINKS.map((item) => (
-        <Link key={item.href} href={item.href} onClick={close}>
+        <Link key={item.href} href={item.href} onClick={(event) => onNavClick(event, item.href)}>
           {item.label}
         </Link>
       ))}

@@ -16,6 +16,7 @@ const REVEAL = [
   "#rest h2",
   "#rest h3",
   "#rest .sf-split-copy > p",
+  "#rest .sf-vs-copy > *",
   "#rest .sf-card",
   "#rest .sf-ai-help-card",
   "#rest .sf-ai-help-note",
@@ -34,6 +35,19 @@ const REVEAL = [
   "#rest [data-reveal]",
 ].join(",");
 
+function revealNow(gsap, els) {
+  if (!els?.length) return;
+  gsap.to(els, {
+    autoAlpha: 1,
+    y: 0,
+    duration: 0.55,
+    ease: "power3.out",
+    stagger: 0.05,
+    overwrite: true,
+    clearProps: "transform,opacity,visibility",
+  });
+}
+
 const PARALLAX = [
   "#rest .sf-hero-board",
   "#rest .sf-hero-hand",
@@ -49,14 +63,38 @@ export default function LandingMotion({ root = "#rest" }) {
     const scope = document.querySelector(root);
     if (!scope) return undefined;
     const ctx = gsap.context(() => {
-      const items = gsap.utils.toArray(REVEAL).filter((el) => !el.closest(".sf-marquee"));
+      const items = Array.from(
+        new Set(gsap.utils.toArray(REVEAL).filter((el) => !el.closest(".sf-marquee"))),
+      );
       gsap.set(items, { autoAlpha: 0, y: 34 });
       ScrollTrigger.batch(items, {
         start: "top 90%",
         once: true,
-        onEnter: (batch) =>
-          gsap.to(batch, { autoAlpha: 1, y: 0, duration: 0.8, ease: "power3.out", stagger: 0.07, overwrite: true, clearProps: "transform,opacity,visibility" }),
+        onEnter: (batch) => {
+          batch.forEach((el) => {
+            el.dataset.sfRevealed = "1";
+          });
+          revealNow(gsap, batch);
+        },
       });
+
+      // Hash / Lenis jumps can leave batch items stuck hidden — reveal anything already in view.
+      const syncInView = () => {
+        const pending = items.filter((el) => {
+          if (el.dataset.sfRevealed === "1") return false;
+          const top = el.getBoundingClientRect().top;
+          return top < window.innerHeight * 0.92 && top > -Math.max(el.offsetHeight, 40);
+        });
+        if (!pending.length) return;
+        pending.forEach((el) => {
+          el.dataset.sfRevealed = "1";
+        });
+        revealNow(gsap, pending);
+      };
+      requestAnimationFrame(syncInView);
+      ScrollTrigger.addEventListener("refresh", syncInView);
+      window.__sfRevealInView = syncInView;
+      scope.__sfSyncInView = syncInView;
 
       PARALLAX.forEach((selector) => {
         gsap.utils.toArray(selector).forEach((el) => {
@@ -88,6 +126,9 @@ export default function LandingMotion({ root = "#rest" }) {
     document.fonts?.ready?.then(refresh).catch(() => {});
     return () => {
       window.removeEventListener("load", refresh);
+      const sync = scope.__sfSyncInView;
+      if (sync) ScrollTrigger.removeEventListener("refresh", sync);
+      if (window.__sfRevealInView === sync) delete window.__sfRevealInView;
       ctx.revert();
     };
   }, [gsap, ScrollTrigger, root]);

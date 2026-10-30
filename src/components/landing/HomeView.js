@@ -456,7 +456,7 @@ export default function HomeView() {
       </section>
 
       <section id="vs" className="sf-vs-block" aria-labelledby="vs-h">
-        <div className="sf-split-copy" style={{ maxWidth: 720 }}>
+        <div className="sf-vs-copy">
           <span className="sf-script">&quot;Can&apos;t I just ask ChatGPT?&quot;</span>
           <h2 id="vs-h">An AI chat gives advice. Searchify does the work.</h2>
           <p>
@@ -470,16 +470,23 @@ export default function HomeView() {
             <div className="sf-vs-head" role="row">
               <span role="columnheader" />
               <span role="columnheader">AI CHAT ASSISTANTS</span>
-              <span role="columnheader" style={{ color: "#D5F879" }}>
-                SEARCHIFY
-              </span>
+              <span role="columnheader">SEARCHIFY</span>
             </div>
             {VS_ROWS.map((row) => (
               <div className="sf-vs-row" role="row" key={row.label}>
                 <strong role="rowheader">{row.label}</strong>
                 <span className="muted" role="cell">{row.chat}</span>
                 <span className="sf-vs-ok" role="cell">
-                  <CheckIcon />
+                  <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M5 12.5l4.5 4.5L19 7.5"
+                      fill="none"
+                      stroke="#3DDC84"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                   <span>{row.ours}</span>
                 </span>
               </div>

@@ -95,6 +95,39 @@
   padding-top: 110px;
 }
 
+/* Why Searchify — match full-page-preview HTML */
+.sf-vs-block {
+  gap: 28px;
+}
+
+.sf-vs-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 820px;
+}
+
+.sf-vs-copy .sf-script {
+  font-size: 36px;
+}
+
+.sf-vs-copy h2 {
+  margin: 0;
+  font-family: var(--font-bricolage), "Bricolage Grotesque", Geist, sans-serif;
+  font-size: clamp(34px, 4.4vw, 56px);
+  line-height: 1;
+  letter-spacing: -1.6px;
+  font-weight: 700;
+}
+
+.sf-vs-copy > p {
+  margin: 0;
+  font-size: 17px;
+  color: #9aa1ab;
+  line-height: 1.55;
+  max-width: none;
+}
+
 .sf-split {
   display: flex;
   flex-wrap: wrap;
@@ -249,19 +282,20 @@
   background: #101215;
   border: 1px solid #1a1d22;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .sf-vs-table-inner {
-  min-width: 640px;
+  min-width: 0;
 }
 
 .sf-vs-head,
 .sf-vs-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.9fr) minmax(0, 1.15fr);
+  gap: 10px;
   align-items: center;
-  padding: 14px 22px;
+  padding: 10px 18px;
   border-bottom: 1px solid #16181c;
   font-size: 15px;
 }
@@ -274,7 +308,7 @@
   color: #9aa1ab;
   background: transparent;
   border-bottom: 1px solid #1a1d22;
-  padding: 16px 22px;
+  padding: 12px 18px;
 }
 
 .sf-vs-head span:last-child {
@@ -287,10 +321,11 @@
 
 .sf-vs-row strong {
   font-weight: 600;
+  color: #f2f4f5;
 }
 
 .sf-vs-row .muted {
-  color: #7d848e;
+  color: #9aa1ab;
 }
 
 .sf-vs-ok {
@@ -302,7 +337,9 @@
 
 .sf-vs-ok svg {
   flex: none;
-  margin-top: 2px;
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
 }
 
 .sf-platforms-chart {
@@ -429,20 +466,37 @@
   margin-top: 4px;
 }
 
+@media (max-width: 900px) {
+  .sf-split-copy > p {
+    max-width: none;
+  }
+
+  .sf-vs-head,
+  .sf-vs-row {
+    gap: 8px;
+    padding: 10px 16px;
+  }
+}
+
 @media (max-width: 720px) {
+  .sf-vs-copy .sf-script {
+    font-size: clamp(28px, 8vw, 36px);
+  }
+
   .sf-vs-head,
   .sf-vs-row {
     grid-template-columns: 1fr;
-    gap: 6px;
+    gap: 4px;
+    padding: 10px 14px;
+  }
+
+  .sf-vs-table-inner {
+    min-width: 0;
   }
 
   .sf-vs-head span:first-child,
   .sf-vs-row strong:first-child {
     font-size: 13px;
     color: #f2f4f5;
-  }
-
-  .sf-hero.sf-hero-v3 {
-    padding-top: 48px;
   }
 }
