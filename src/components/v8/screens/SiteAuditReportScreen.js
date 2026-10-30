@@ -9,9 +9,11 @@ import {
   featureKpi,
   featurePayload,
   getSiteScan,
+  inspectGoogleIndex,
   listChanges,
   loadFeature,
   researchAudit,
+  runSiteScan,
 } from "@/lib/v1Api";
 import { SkeletonRows } from "@/components/v8/SkeletonWave";
 import ProblemNotice from "@/components/v8/ProblemNotice";
@@ -19,23 +21,56 @@ import { problemsFrom } from "@/lib/problems";
 import "@/styles/v8-screens.css";
 
 const TOPICS = [
-  { id: "indexing", label: "Page indexing", area: ["Index", "Indexing", "Crawl"] },
-  { id: "canonicals", label: "Canonicals", area: ["Canonical", "Meta"] },
-  { id: "sitemap", label: "Sitemap & robots", area: ["Sitemap", "Robots"] },
-  { id: "speed", label: "Speed · LCP · CLS", area: ["Speed", "Performance", "Page"] },
-  { id: "assets", label: "CSS · scripts · weight", area: ["Assets", "Performance"] },
-  { id: "titles", label: "Titles", area: ["Meta", "Title"] },
-  { id: "descriptions", label: "Descriptions", area: ["Meta", "Description"] },
-  { id: "content", label: "Content length", area: ["Content", "Page"] },
+  { id: "status", label: "404 · 5xx errors", area: ["Status codes"], keys: ["status_", "scan_broken_", "gsc_search_console_page_not_found", "gsc_search_console_server"] },
+  { id: "gsc", label: "Search Console", area: ["Search Console"], sources: ["gsc"] },
+  { id: "indexing", label: "Indexing", area: ["Index", "Indexing", "Crawl"] },
+  { id: "redirects", label: "Redirects", area: ["Redirects"] },
+  { id: "links", label: "Broken links", area: ["Links"] },
+  { id: "canonicals", label: "Canonicals", area: ["Canonical"] },
+  { id: "robots", label: "Robots.txt & sitemap", area: ["Robots", "Sitemap"] },
+  { id: "schema", label: "Schema", area: ["Schema"] },
+  { id: "headings", label: "Headings H1–H6", area: ["Headings"], keys: ["heading_order", "no_h1_tag"] },
+  { id: "spelling", label: "Typos", area: ["Spelling"] },
+  { id: "titles", label: "Titles", area: ["Title"], keys: ["no_title", "title_too_long", "title_too_short", "duplicate_title", "irrelevant_title", "duplicate_title_tag"] },
+  { id: "descriptions", label: "Descriptions", area: ["Description"], keys: ["no_description", "description_too_long", "description_too_short", "duplicate_description", "irrelevant_description"] },
+  { id: "content", label: "Low content", area: ["Content", "Paragraphs"], keys: ["low_content_rate", "paragraph_content", "duplicate_content", "lorem_ipsum", "low_readability_rate"] },
   { id: "images", label: "Images", area: ["Images", "Image"] },
-  { id: "videos", label: "Videos", area: ["Video", "Videos"] },
-  { id: "faq", label: "FAQ & reviews", area: ["FAQ", "Reviews", "Schema"] },
-  { id: "llm", label: "LLM / AI crawl gaps", area: ["AI", "LLM", "Schema"] },
+  { id: "faq", label: "FAQ · reviews · prices", area: ["FAQ"], keys: ["schema_faq", "schema_review", "schema_price", "faq_without_schema", "accordion_without_faq"] },
+  { id: "assets", label: "CSS · scripts · speed", area: ["Assets", "Performance", "Speed", "Render"] },
+  { id: "social", label: "Social & video", area: ["Social", "Video"] },
 ];
 
+const SEVERITIES = [
+  { id: "all", label: "All" },
+  { id: "Critical", label: "Errors" },
+  { id: "Warning", label: "Warnings" },
+  { id: "Notice", label: "Notices" },
+];
+
+function findingKey(finding) {
+  return String(finding.id || "").replace(/^(crawl|scan|site|gsc)-/, "");
+}
+
 function matchTopic(finding, topic) {
-  const blob = `${finding.area || ""} ${finding.name || ""} ${finding.fix || ""}`.toLowerCase();
-  return topic.area.some((token) => blob.includes(String(token).toLowerCase()));
+  const key = findingKey(finding);
+  if (topic.keys && topic.keys.some((prefix) => key.startsWith(prefix))) return true;
+  if (topic.sources && topic.sources.includes(finding.sourceKey)) return true;
+  const area = String(finding.area || "").toLowerCase();
+  return topic.area.some((token) => area === String(token).toLowerCase() || area.includes(String(token).toLowerCase()));
+}
+
+function richResultsTestUrl(page) {
+  return `https://search.google.com/test/rich-results?url=${encodeURIComponent(page)}`;
+}
+
+function developerBrief(item) {
+  const lines = [`${item.name} (${item.severity})`, "", item.fix || "", ""];
+  (item.steps || []).forEach((step, index) => lines.push(`${index + 1}. ${step}`));
+  lines.push("", "Pages:");
+  (item.pageRows || []).slice(0, 40).forEach((page) => lines.push(`- ${page.url || "(site-wide)"}${page.status ? ` [HTTP ${page.status}]` : ""}${page.detail ? ` — ${page.detail}` : ""}`));
+  if (item.helpUrl) lines.push("", `Guide: ${item.helpUrl}`);
+  lines.push(`Source: ${item.sourceLabel || "Searchify audit"}`);
+  return lines.join("\n");
 }
 
 function severityTone(severity) {
@@ -66,21 +101,38 @@ export default function SiteAuditReportScreen() {
   const [seoSource, setSeoSource] = useState("");
   const [problems, setProblems] = useState([]);
   const [auditProblems, setAuditProblems] = useState([]);
+  const [severity, setSeverity] = useState("all");
+  const [report, setReport] = useState({});
+  const [crawlState, setCrawlState] = useState(null);
+  const [inspection, setInspection] = useState(null);
+  const [inspectBusy, setInspectBusy] = useState(false);
+  const [scanBusy, setScanBusy] = useState(false);
+  const [copied, setCopied] = useState("");
 
   const reload = useCallback(async () => {
     setLoading(true);
     try {
       setHostname(activeSiteContext(loadJourney()).hostname || "Your site");
-      const [audit, organic, pages, landings, places, changes, crawl] = await Promise.all([
+      const site = activeSiteContext(loadJourney()).href || "";
+      const [audit, organic, pages, landings, places, changes, scan, crawlRes, inspect] = await Promise.all([
         loadFeature("site-audit").catch(() => ({ ok: false })),
         loadFeature("organic-search").catch(() => ({ ok: false })),
         loadFeature("top-pages").catch(() => ({ ok: false })),
         loadFeature("ga4-landing-pages").catch(() => ({ ok: false })),
         loadFeature("places").catch(() => ({ ok: false })),
         listChanges({ force: false }).catch(() => ({ ok: false, data: [] })),
-        getSiteScan().catch(() => ({ ok: false })),
+        getSiteScan(site).catch(() => ({ ok: false })),
+        // The Searchify SEO crawl report (status codes, redirects, canonicals, titles, typos …).
+        // This page used to read the site scan here, which has no crawl report, so those
+        // findings never showed up.
+        site ? researchAudit({ site, force: false }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
+        loadFeature("gsc-index-inspection", { force: true }).catch(() => ({ ok: false })),
       ]);
-      setProblems(problemsFrom(crawl, "site_scan"));
+      setProblems([...problemsFrom(scan, "site_scan"), ...(site ? problemsFrom(crawlRes, "site_audit") : [])]);
+      const crawl = crawlRes?.ok ? crawlRes.data : null;
+      setCrawlState(crawl ? { state: crawl.state, crawled: crawl.crawled, queued: crawl.queued, fetchedAt: crawl.fetchedAt, maxPages: crawl.maxPages } : null);
+      const inspectPayload = featurePayload(inspect);
+      setInspection(inspectPayload?.inspected ? inspectPayload : null);
       const auditPayload = featurePayload(audit);
       const built = buildAuditFindings({
         audit,
@@ -89,13 +141,16 @@ export default function SiteAuditReportScreen() {
         landings,
         places,
         changes: Array.isArray(changes.data) ? changes.data : changes.data?.changes || [],
-        crawl: crawl?.ok ? crawl.data : null,
+        crawl,
+        scanIssues: scan?.ok ? scan.data?.scan?.auditIssues || [] : [],
+        gscIssues: inspectPayload?.issues || [],
       });
       const list = Array.isArray(built?.findings) ? built.findings : Array.isArray(built) ? built : [];
       setFindings(list);
+      setReport(built?.report || {});
       setSpeed(auditPayload);
       setGsc(featurePayload(organic));
-      const scored = resolveSeoScore(auditPayload, crawl?.data?.report || null);
+      const scored = resolveSeoScore(auditPayload, crawl?.report || null);
       setSeoScore(scored.seoScore);
       setSeoSource(scored.seoSource);
       setOpen((prev) => (list.some((item) => item.id === prev) ? prev : list[0]?.id || null));
@@ -122,17 +177,64 @@ export default function SiteAuditReportScreen() {
     }
   };
 
+  const checkIndexing = async () => {
+    setInspectBusy(true);
+    try {
+      const res = await inspectGoogleIndex({ limit: 20 }).catch(() => ({ ok: false }));
+      setAuditProblems(problemsFrom(res, "search_console"));
+      if (res.ok) setTopic("gsc");
+      await reload();
+    } finally {
+      setInspectBusy(false);
+    }
+  };
+
+  const rescanSite = async () => {
+    setScanBusy(true);
+    try {
+      const res = await runSiteScan({ force: true }).catch(() => ({ ok: false }));
+      setAuditProblems(problemsFrom(res, "site_scan"));
+      await reload();
+    } finally {
+      setScanBusy(false);
+    }
+  };
+
+  const copyBrief = async (item) => {
+    try {
+      await navigator.clipboard.writeText(developerBrief(item));
+      setCopied(item.id);
+      setTimeout(() => setCopied(""), 1800);
+    } catch {
+      setCopied("");
+    }
+  };
+
+  const bySeverity = useMemo(
+    () => (severity === "all" ? findings : findings.filter((finding) => (finding.severity || "Notice") === severity)),
+    [findings, severity],
+  );
+
   const rows = useMemo(() => {
-    if (topic === "all") return findings;
+    if (topic === "all") return bySeverity;
     const meta = TOPICS.find((item) => item.id === topic);
-    if (!meta) return findings;
-    return findings.filter((finding) => matchTopic(finding, meta));
-  }, [findings, topic]);
+    if (!meta) return bySeverity;
+    return bySeverity.filter((finding) => matchTopic(finding, meta));
+  }, [bySeverity, topic]);
 
   const topicCounts = useMemo(() => {
-    const counts = { all: findings.length };
+    const counts = { all: bySeverity.length };
     TOPICS.forEach((item) => {
-      counts[item.id] = findings.filter((finding) => matchTopic(finding, item)).length;
+      counts[item.id] = bySeverity.filter((finding) => matchTopic(finding, item)).length;
+    });
+    return counts;
+  }, [bySeverity]);
+
+  const severityCounts = useMemo(() => {
+    const counts = { all: findings.length, Critical: 0, Warning: 0, Notice: 0 };
+    findings.forEach((finding) => {
+      const key = finding.severity || "Notice";
+      counts[key] = (counts[key] || 0) + 1;
     });
     return counts;
   }, [findings]);
@@ -147,6 +249,17 @@ export default function SiteAuditReportScreen() {
     ["Performance", kpiPick(speed, ["performance", "perf"])],
     ["Errors", String(findings.filter((f) => /critical|error/i.test(f.severity || "")).length)],
   ];
+
+  const counts = report?.statusCounts || {};
+  const statusCards = Object.keys(counts).length
+    ? [
+        ["2xx", counts["2xx"] || 0, "#3DDC84", "Pages that load"],
+        ["3xx", counts["3xx"] || 0, "#4DA3FF", "Redirects"],
+        ["404", (counts["404"] || 0) + (counts["410"] || 0), "#FF9F43", "Not found / gone"],
+        ["4xx", counts["4xx"] || 0, "#FF9F43", "Blocked, 401, 403 …"],
+        ["5xx", (counts["5xx"] || 0) + (counts["500"] || 0) + (counts["502"] || 0) + (counts["503"] || 0), "#FF5A4E", "500, 502, 503 …"],
+      ]
+    : [];
 
   const gscCards = [
     ["Clicks", featureKpi(gsc, "click")],
@@ -261,6 +374,12 @@ export default function SiteAuditReportScreen() {
           >
             Open site scan
           </Link>
+          <button type="button" onClick={rescanSite} disabled={scanBusy} style={secondaryBtn}>
+            {scanBusy ? "Scanning pages…" : "Rescan pages"}
+          </button>
+          <button type="button" onClick={checkIndexing} disabled={inspectBusy} style={secondaryBtn}>
+            {inspectBusy ? "Asking Google…" : "Check indexing in Search Console"}
+          </button>
           <button
             type="button"
             onClick={refreshAudit}
@@ -283,6 +402,30 @@ export default function SiteAuditReportScreen() {
         </div>
       </div>
 
+      {crawlState?.state === "crawling" ? (
+        <p role="status" style={{ maxWidth: "1180px", width: "100%", margin: "0 auto", fontSize: "14px", color: "#4DA3FF" }}>
+          Site crawl in progress: {crawlState.crawled || 0} pages read{crawlState.queued ? `, ${crawlState.queued} queued` : ""}. Findings below are from the last finished crawl and the page scan; check back in a few minutes.
+        </p>
+      ) : null}
+
+      {statusCards.length ? (
+        <div aria-label="HTTP status codes" style={{ maxWidth: "1180px", width: "100%", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: "10px" }}>
+          {statusCards.map(([label, value, color, hint]) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => setTopic(label === "2xx" || label === "3xx" ? (label === "3xx" ? "redirects" : "all") : "status")}
+              title={hint}
+              style={{ textAlign: "left", borderRadius: "16px", background: "#101215", border: "1px solid #1A1D22", padding: "12px 14px", display: "flex", flexDirection: "column", gap: "4px", color: "#F2F4F5", cursor: "pointer" }}
+            >
+              <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>HTTP {label}</span>
+              <strong style={{ fontSize: "20px", color }}>{value}</strong>
+              <span style={{ fontSize: "11px", color: "#7D848E" }}>{hint}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       <div style={{ maxWidth: "1180px", width: "100%", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "10px" }}>
         {speedCards.map(([label, value]) => (
           <div key={label} style={{ borderRadius: "16px", background: "#101215", border: "1px solid #1A1D22", padding: "14px 16px", display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -290,6 +433,26 @@ export default function SiteAuditReportScreen() {
             <strong style={{ fontSize: "20px" }}>{value}</strong>
           </div>
         ))}
+      </div>
+
+      <div role="group" aria-label="Severity" style={{ maxWidth: "1180px", width: "100%", margin: "0 auto", display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E", width: "56px" }}>SHOW</span>
+        {SEVERITIES.map((item) => {
+          const active = severity === item.id;
+          const dot = item.id === "Critical" ? "#FF5A4E" : item.id === "Warning" ? "#FFC53D" : item.id === "Notice" ? "#4DA3FF" : "#9AA1AB";
+          return (
+            <button
+              key={item.id}
+              type="button"
+              aria-pressed={active}
+              onClick={() => setSeverity(item.id)}
+              style={{ ...chipBtn, border: active ? `1px solid ${dot}` : "1px solid #262A31", background: active ? "rgba(255,255,255,.04)" : "transparent", fontWeight: active ? 600 : 400 }}
+            >
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: dot }} />
+              {item.label} <span style={{ fontFamily: "'Geist Mono', monospace", color: "#9AA1AB" }}>{severityCounts[item.id] || 0}</span>
+            </button>
+          );
+        })}
       </div>
 
       <div style={{ maxWidth: "1180px", width: "100%", margin: "0 auto", display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
@@ -420,32 +583,94 @@ export default function SiteAuditReportScreen() {
                     {isOpen ? (
                       <div style={{ padding: "0 22px 20px 48px", display: "flex", flexDirection: "column", gap: "12px", animation: "sfy-rise .2s ease both" }}>
                         <p style={{ margin: 0, fontSize: "14px", color: "#9AA1AB", lineHeight: 1.55 }}>{item.evidence || item.detail}</p>
-                        {item.fix ? (
-                          <div style={{ borderRadius: "12px", background: "#0A0B0D", border: "1px solid #1A1D22", padding: "12px 14px" }}>
-                            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#4DA3FF" }}>AI HELPED SOLUTION</span>
-                            <p style={{ margin: "6px 0 0", fontSize: "14px", lineHeight: 1.5 }}>{item.fix}</p>
+                        {item.sourceLabel ? (
+                          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>SOURCE · {item.sourceLabel}</span>
+                        ) : null}
+
+                        {Array.isArray(item.pageRows) && item.pageRows.length ? (
+                          <div style={{ borderRadius: "12px", border: "1px solid #1A1D22", overflow: "hidden" }}>
+                            <div style={{ padding: "8px 12px", background: "#0A0B0D", fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>
+                              {item.pageRows.some((p) => p.url) ? `AFFECTED PAGES · ${item.count || item.pageRows.length}` : "DETAILS"}
+                            </div>
+                            {item.pageRows.slice(0, 25).map((page, index) => (
+                              <div key={`${page.url}-${index}`} style={{ padding: "10px 12px", borderTop: "1px solid #1A1D22", display: "flex", flexDirection: "column", gap: "4px" }}>
+                                {page.url ? (
+                                  <span style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                                    {page.status ? (
+                                      <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", padding: "2px 6px", borderRadius: "6px", background: page.status >= 500 ? "rgba(255,90,78,.15)" : page.status >= 400 ? "rgba(255,159,67,.15)" : "rgba(77,163,255,.12)", color: page.status >= 400 ? "#FF8A80" : "#9CC8FF" }}>
+                                        {page.status}
+                                      </span>
+                                    ) : null}
+                                    <a href={page.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: "#D7DADE", overflowWrap: "anywhere" }}>
+                                      {page.url}
+                                    </a>
+                                  </span>
+                                ) : null}
+                                {page.detail ? <span style={{ fontSize: "13px", color: "#B6BCC5", lineHeight: 1.5 }}>{page.detail}</span> : null}
+                              </div>
+                            ))}
+                            {item.pageRows.length > 25 || (item.count || 0) > item.pageRows.length ? (
+                              <div style={{ padding: "8px 12px", borderTop: "1px solid #1A1D22", fontSize: "12px", color: "#7D848E" }}>
+                                Showing {Math.min(25, item.pageRows.length)} of {Math.max(item.count || 0, item.pageRows.length)}. Copy the fix for the full list.
+                              </div>
+                            ) : null}
                           </div>
                         ) : null}
-                        {Array.isArray(item.steps) && item.steps.length ? (
-                          <ol style={{ margin: 0, paddingLeft: "18px", color: "#D7DADE", fontSize: "13px", lineHeight: 1.5, display: "flex", flexDirection: "column", gap: "6px" }}>
-                            {item.steps.map((step, index) => (
-                              <li key={index}>{step}</li>
-                            ))}
-                          </ol>
+
+                        {item.fix ? (
+                          <div style={{ borderRadius: "12px", background: "#0A0B0D", border: "1px solid #1A1D22", padding: "12px 14px" }}>
+                            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#4DA3FF" }}>HOW TO FIX</span>
+                            <p style={{ margin: "6px 0 0", fontSize: "14px", lineHeight: 1.5 }}>{item.fix}</p>
+                            {Array.isArray(item.steps) && item.steps.length ? (
+                              <ol style={{ margin: "10px 0 0", padding: 0, listStyle: "none", color: "#D7DADE", fontSize: "13px", lineHeight: 1.5, display: "flex", flexDirection: "column", gap: "6px" }}>
+                                {item.steps.map((step, index) => (
+                                  <li key={index} style={{ display: "flex", gap: "8px" }}>
+                                    <span style={{ flex: "none", width: "18px", fontFamily: "'Geist Mono', monospace", color: "#4DA3FF" }}>{index + 1}.</span>
+                                    <span>{step}</span>
+                                  </li>
+                                ))}
+                              </ol>
+                            ) : null}
+                          </div>
                         ) : null}
+
                         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                           {item.changeId ? (
-                            <Link href={`/app/queue/${item.changeId}`} style={{ minHeight: "40px", padding: "0 14px", borderRadius: "10px", background: "#4DA3FF", color: "#0A0B0D", textDecoration: "none", display: "inline-flex", alignItems: "center", fontSize: "13px", fontWeight: 600 }}>
+                            <Link href={`/app/queue/${item.changeId}`} style={primaryLink}>
                               Review in queue
                             </Link>
-                          ) : (
-                            <Link href="/app/queue" style={{ minHeight: "40px", padding: "0 14px", borderRadius: "10px", border: "1px solid #262A31", color: "#D7DADE", textDecoration: "none", display: "inline-flex", alignItems: "center", fontSize: "13px" }}>
-                              Open Today queue
-                            </Link>
-                          )}
-                          <Link href="/app/results" style={{ minHeight: "40px", padding: "0 14px", borderRadius: "10px", border: "1px solid #262A31", color: "#D7DADE", textDecoration: "none", display: "inline-flex", alignItems: "center", fontSize: "13px" }}>
-                            Site scan board
-                          </Link>
+                          ) : null}
+                          {item.helpUrl ? (
+                            <a href={item.helpUrl} target="_blank" rel="noopener noreferrer" style={ghostLink}>
+                              Google guide ↗
+                            </a>
+                          ) : null}
+                          {/^Schema$/i.test(item.area || "") && item.pageRows?.find((p) => p.url) ? (
+                            <a href={richResultsTestUrl(item.pageRows.find((p) => p.url).url)} target="_blank" rel="noopener noreferrer" style={ghostLink}>
+                              Test in Rich Results Test ↗
+                            </a>
+                          ) : null}
+                          {item.sourceKey === "gsc" ? (
+                            <a href="https://search.google.com/search-console" target="_blank" rel="noopener noreferrer" style={ghostLink}>
+                              Open Search Console ↗
+                            </a>
+                          ) : null}
+                          <button type="button" onClick={() => copyBrief(item)} style={ghostLink}>
+                            {copied === item.id ? "Copied" : "Copy fix for developer"}
+                          </button>
+                          <a
+                            href={`mailto:support@searchify.io?subject=${encodeURIComponent(`Audit help: ${item.name}`)}&body=${encodeURIComponent(developerBrief(item))}`}
+                            style={ghostLink}
+                          >
+                            Ask support
+                          </a>
+                          <button
+                            type="button"
+                            onClick={item.sourceKey === "gsc" ? checkIndexing : item.sourceKey === "scan" || item.sourceKey === "site" ? rescanSite : refreshAudit}
+                            style={ghostLink}
+                          >
+                            Re-check
+                          </button>
                         </div>
                       </div>
                     ) : null}
@@ -481,8 +706,18 @@ export default function SiteAuditReportScreen() {
                 </div>
               ))}
             </div>
+            {inspection ? (
+              <button type="button" onClick={() => setTopic("gsc")} style={{ ...ghostLink, justifyContent: "space-between", width: "100%" }}>
+                <span>Indexed by Google</span>
+                <strong>
+                  {inspection.indexed} / {inspection.inspected}
+                </strong>
+              </button>
+            ) : null}
             <p style={{ margin: 0, fontSize: "13px", color: "#9AA1AB", lineHeight: 1.45 }}>
-              Indexing, queries and page evidence feed title, description, FAQ, video and image findings on the left.
+              {inspection
+                ? `URL Inspection checked ${inspection.inspected} important pages on ${String(inspection.checkedAt || "").slice(0, 10)}. Coverage, canonical and schema errors from Google are in the Search Console topic.`
+                : "Click “Check indexing in Search Console” to ask Google which important pages are indexed, and why others aren't."}
             </p>
           </div>
 
@@ -505,7 +740,20 @@ export default function SiteAuditReportScreen() {
 
           <div style={{ borderRadius: "24px", background: "#101215", border: "1px solid #1A1D22", padding: "22px", display: "flex", flexDirection: "column", gap: "10px" }}>
             <span style={{ fontSize: "16px", fontWeight: 600 }}>Also covered</span>
-            {["Page indexing errors", "Canonicals", "Sitemap / robots", "LCP · CLS · scripts · CSS", "Titles & descriptions", "Content length", "Images & videos", "FAQ / reviews", "LLM crawl gaps"].map((label) => (
+            {[
+              "404, 410, 403, 500, 502, 503 status codes with linking pages",
+              "Search Console coverage, canonical and rich-result errors",
+              "Redirect chains, loops, http → https, www",
+              "Broken links, missing images / CSS / scripts",
+              "Canonicals and noindex / robots.txt blocks",
+              "robots.txt rules and XML sitemap URLs",
+              "Schema: FAQ, accordion, product price (low / high), reviews, breadcrumbs, business, article, video, image",
+              "Heading order H1–H6 by section, duplicate H1",
+              "Typos in titles, headings and text",
+              "Title and description length, missing, duplicate",
+              "Low content and paragraphs",
+              "Images: alt, size, file names",
+            ].map((label) => (
               <span key={label} style={{ fontSize: "13px", color: "#9AA1AB", padding: "8px 0", borderTop: "1px solid #1A1D22" }}>
                 {label}
               </span>
@@ -516,3 +764,55 @@ export default function SiteAuditReportScreen() {
     </div>
   );
 }
+
+const secondaryBtn = {
+  minHeight: "44px",
+  padding: "0 16px",
+  borderRadius: "12px",
+  border: "1px solid #262A31",
+  background: "transparent",
+  color: "#F2F4F5",
+  fontSize: "14px",
+  cursor: "pointer",
+};
+
+const chipBtn = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "7px",
+  minHeight: "36px",
+  padding: "0 12px",
+  borderRadius: "999px",
+  background: "transparent",
+  color: "#D7DADE",
+  fontSize: "13px",
+  cursor: "pointer",
+};
+
+const primaryLink = {
+  minHeight: "40px",
+  padding: "0 14px",
+  borderRadius: "10px",
+  background: "#4DA3FF",
+  color: "#0A0B0D",
+  textDecoration: "none",
+  display: "inline-flex",
+  alignItems: "center",
+  fontSize: "13px",
+  fontWeight: 600,
+};
+
+const ghostLink = {
+  minHeight: "40px",
+  padding: "0 14px",
+  borderRadius: "10px",
+  border: "1px solid #262A31",
+  background: "transparent",
+  color: "#D7DADE",
+  textDecoration: "none",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "8px",
+  fontSize: "13px",
+  cursor: "pointer",
+};

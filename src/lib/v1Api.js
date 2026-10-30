@@ -239,6 +239,21 @@ export async function syncGoogleLive(cmsConnectionId = null) {
   };
 }
 
+/** Google's own view of important URLs (URL Inspection): indexed or not and why, canonical, schema errors. */
+export async function inspectGoogleIndex({ urls = [], limit = 20, cmsConnectionId = null } = {}) {
+  const body = { urls, limit };
+  if (cmsConnectionId) body.cms_connection_id = cmsConnectionId;
+  const res = await json(
+    await fetch("/api/v1/oauth/google/inspect", {
+      method: "POST",
+      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+  );
+  if (res.ok) invalidateV3Cache(["gsc-index-inspection"]);
+  return res;
+}
+
 export async function runPageSpeed(url = "") {
   const res = await json(
     await fetch("/api/v1/oauth/google/pagespeed", {
