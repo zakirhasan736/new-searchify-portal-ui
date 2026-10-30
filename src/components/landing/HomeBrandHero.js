@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import SearchifyMark from "@/components/landing/SearchifyMark";
 import { useGsap } from "@/components/motion/gsapClient";
@@ -39,6 +40,7 @@ export default function HomeBrandHero() {
   const navRef = useRef(null);
   const goRestRef = useRef(() => {});
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const heroEl = heroRef.current;
@@ -395,7 +397,8 @@ export default function HomeBrandHero() {
       tl.to(lockupRef.current, { yPercent: -60, scale: 0.9, autoAlpha: 0, force3D: true }, 0)
         .to(canvasRef.current, { autoAlpha: 0.25, scale: 1.06, force3D: true }, 0)
         .to(cueRef.current, { autoAlpha: 0 }, 0)
-        .to(navRef.current, { autoAlpha: 0, y: -16 }, 0.1);
+        // Opacity only — transform on nav would break the fixed full-screen mobile menu.
+        .to(navRef.current, { autoAlpha: 0 }, 0.1);
       gsap.from(lockupRef.current, { autoAlpha: 0, y: 24, scale: 0.97, duration: 1.1, ease: "power3.out", delay: 0.1 });
       gsap.from(cueRef.current, { autoAlpha: 0, duration: 0.8, ease: "power2.out", delay: 0.8 });
     }, heroEl);
@@ -406,11 +409,39 @@ export default function HomeBrandHero() {
   }, [gsap, ScrollTrigger]);
 
   const closeMenu = () => setMenuOpen(false);
+  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (event) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
+  const navLinks = (
+    <>
+      {NAV.map((item) => (
+        <Link key={item.href} href={item.href} onClick={closeMenu}>
+          {item.label}
+        </Link>
+      ))}
+      <Link className="sf-brand-cta" href="/signup?next=%2Fapp%2Fstart" onClick={closeMenu}>
+        Scan your site
+      </Link>
+    </>
+  );
 
   return (
     <section
       ref={heroRef}
-      className="sf-brand-hero"
+      className={`sf-brand-hero${menuOpen ? " is-menu-open" : ""}`}
       id="sfy-hero"
       aria-label="Searchify"
     >
@@ -431,20 +462,28 @@ export default function HomeBrandHero() {
           {menuOpen ? "Close" : "Menu"}
         </button>
 
-        <div
-          id="sf-brand-links"
-          className={`sf-brand-hero-links${menuOpen ? " is-open" : ""}`}
-        >
-          {NAV.map((item) => (
-            <Link key={item.href} href={item.href} onClick={closeMenu}>
-              {item.label}
-            </Link>
-          ))}
-          <Link className="sf-brand-cta" href="/signup?next=%2Fapp%2Fstart" onClick={closeMenu}>
-            Scan your site
-          </Link>
+        <div id="sf-brand-links" className="sf-brand-hero-links sf-brand-hero-links-inline">
+          {navLinks}
         </div>
       </nav>
+
+      {mounted && menuOpen
+        ? createPortal(
+            <div className="sf-mobile-nav-sheet is-open" id="sf-brand-links-mobile" role="dialog" aria-modal="true" aria-label="Menu">
+              <div className="sf-mobile-nav-bar">
+                <Link className="sf-brand-hero-brand" href="#top" aria-label="Searchify home" onClick={closeMenu}>
+                  <SearchifyMark />
+                  <span>searchify</span>
+                </Link>
+                <button className="sf-brand-menubtn" type="button" onClick={closeMenu}>
+                  Close
+                </button>
+              </div>
+              <div className="sf-mobile-nav-links">{navLinks}</div>
+            </div>,
+            document.body,
+          )
+        : null}
 
       <div className="sf-brand-lockup">
         <div className="sf-brand-lockup-inner" id="lockup" ref={lockupRef}>

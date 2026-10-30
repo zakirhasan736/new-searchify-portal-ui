@@ -11,20 +11,35 @@ import { reducedMotion, useGsap } from "@/components/motion/gsapClient";
  */
 const REVEAL = [
   "#rest .sf-hero-copy > *",
+  "#rest .sf-hero-hand",
   "#rest .sf-script",
   "#rest h2",
+  "#rest h3",
   "#rest .sf-split-copy > p",
   "#rest .sf-card",
   "#rest .sf-ai-help-card",
+  "#rest .sf-ai-help-note",
   "#rest .sf-vs-head",
   "#rest .sf-vs-row",
   "#rest .sf-plat-legend > *",
+  "#rest .sf-plat-card",
   "#rest .sf-plugs-label",
+  "#rest .sf-tile",
+  "#rest .sf-scene",
+  "#rest .sf-changelog",
+  "#rest .sf-trust-grid > div",
+  "#rest .sf-quote",
+  "#rest .sf-agency",
   "#rest .sf-closing > *",
   "#rest [data-reveal]",
 ].join(",");
 
-const PARALLAX = ["#rest .sf-hero-board", "#rest .sf-ai-chat", "#rest .sf-platforms-chart"];
+const PARALLAX = [
+  "#rest .sf-hero-board",
+  "#rest .sf-hero-hand",
+  "#rest .sf-ai-chat",
+  "#rest .sf-platforms-chart",
+];
 
 export default function LandingMotion({ root = "#rest" }) {
   const { gsap, ScrollTrigger } = useGsap();

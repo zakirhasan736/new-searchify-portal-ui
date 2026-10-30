@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import LandingShell from "@/components/landing/LandingShell";
 import HomeBrandHero from "@/components/landing/HomeBrandHero";
 import LandingMotion from "@/components/motion/LandingMotion";
-import TestimonialsSlider from "@/components/landing/TestimonialsSlider";
 import { normalizeSiteUrl, seedDraftSite, stashPendingSite } from "@/lib/journey";
 import { previewSiteScan } from "@/lib/v1Api";
 import { userIsAuthenticated } from "@/utils/users/Helpers";
@@ -26,14 +25,14 @@ const DOT_PATTERN = "gbgygrbgggybgygrbggybggrgbyggbgybgygb";
 const ACCENT = "#D5F879";
 
 const LOOK_FOR = [
-  { id: "Google", label: "Google", short: "G", color: "#4285F4" },
-  { id: "ChatGPT", label: "ChatGPT", short: "GPT", color: "#10A37F" },
-  { id: "AI Overviews", label: "Google AI Overviews", short: "AO", color: "#EA4335" },
-  { id: "Perplexity", label: "Perplexity", short: "Px", color: "#22B8CF" },
-  { id: "Gemini", label: "Gemini", short: "Ge", color: "#8E75B2" },
-  { id: "Copilot", label: "Microsoft Copilot", short: "Co", color: "#0078D4" },
-  { id: "Claude", label: "Claude", short: "Cl", color: "#D97757" },
-  { id: "Bing", label: "Bing", short: "Bi", color: "#00809D" },
+  "Google",
+  "ChatGPT",
+  "Google AI Overviews",
+  "Perplexity",
+  "Gemini",
+  "Microsoft Copilot",
+  "Claude",
+  "Bing",
 ];
 
 const AI_HELPS = [
@@ -94,9 +93,6 @@ const QUOTES = [
   { text: "Add a real customer quote here: one or two sentences on the result they saw.", who: "Customer name", role: "Business · City", color: "#FF5A4E" },
   { text: "Add a real customer quote here: ideally an agency talking about client reports.", who: "Customer name", role: "Agency · City", color: "#FFC53D" },
   { text: "Add a real customer quote here: a specific number beats a general compliment.", who: "Customer name", role: "Business · City", color: "#4DA3FF" },
-  { text: "Add a real customer quote here: what changed after they approved the first title rewrite.", who: "Customer name", role: "Business · City", color: "#3DDC84" },
-  { text: "Add a real customer quote here: how the change log helped a client conversation.", who: "Customer name", role: "Agency · City", color: "#FF9F43" },
-  { text: "Add a real customer quote here: a locked winning page they did not want automation to touch.", who: "Customer name", role: "Business · City", color: "#2CC7C0" },
 ];
 
 const LOG_SEED = [
@@ -179,13 +175,11 @@ function hostLabel(raw) {
   }
 }
 
-function PlugChip({ item, ariaHidden = false }) {
+function PlugChip({ label, ariaHidden = false }) {
   return (
     <span className="sf-plug" aria-hidden={ariaHidden || undefined}>
-      <span className="sf-plug-mark" data-logo={item.id} style={{ color: item.color }}>
-        {item.short}
-      </span>
-      {item.label}
+      <span className="sf-plug-dot" aria-hidden="true" />
+      {label}
     </span>
   );
 }
@@ -357,30 +351,42 @@ export default function HomeView() {
           ) : null}
         </div>
 
-        <div className="sf-hero-board" aria-hidden={scan ? undefined : true}>
-          <div className="sf-hero-board-top">
-            <span>{scan?.host || previewHost}</span>
-            <span style={{ color: scan ? COLORS.red : COLORS[focusKey] }}>
-              {scanning
-                ? "READING"
-                : scan
-                  ? `${scan.counts?.red || 0} DIRE`
-                  : LABELS[focusKey]}
-            </span>
+        <div className="sf-hero-visual">
+          <div className="sf-hero-board" aria-hidden={scan ? undefined : true}>
+            <div className="sf-hero-board-top">
+              <span>{scan?.host || previewHost}</span>
+              <span style={{ color: scan ? COLORS.red : COLORS[focusKey] }}>
+                {scanning
+                  ? "READING"
+                  : scan
+                    ? `${scan.counts?.red || 0} DIRE`
+                    : LABELS[focusKey]}
+              </span>
+            </div>
+            <div className="sf-dots">
+              {boardDots.map((dot, index) => (
+                <div className="sf-dot-cell" key={index} title={dot.title || undefined}>
+                  <div
+                    className={`sf-dot${dot.anim ? " is-live" : ""}`}
+                    style={{
+                      background: dot.color,
+                      opacity: dot.op,
+                      boxShadow: dot.shadow,
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="sf-dots">
-            {boardDots.map((dot, index) => (
-              <div className="sf-dot-cell" key={index} title={dot.title || undefined}>
-                <div
-                  className={`sf-dot${dot.anim ? " is-live" : ""}`}
-                  style={{
-                    background: dot.color,
-                    opacity: dot.op,
-                    boxShadow: dot.shadow,
-                  }}
-                />
-              </div>
-            ))}
+          <div className="sf-hero-hand" aria-hidden="true">
+            <svg width="70" height="64" viewBox="0 0 70 64" role="presentation">
+              <path d="M60 58 C 30 58, 14 44, 16 8" fill="none" stroke="#4DA3FF" strokeWidth="3" strokeLinecap="round" />
+              <path d="M7 18 L16 6 L25 18" fill="none" stroke="#4DA3FF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <p>
+              Getting every light green is only the beginning. The real goal is a board full of{" "}
+              <span>blue</span>: pages that are winning, and locked in.
+            </p>
           </div>
         </div>
       </header>
@@ -390,8 +396,8 @@ export default function HomeView() {
           <span className="sf-plugs-label">WHERE PEOPLE LOOK FOR YOU</span>
           <div className="sf-marquee">
             <div className="sf-track">
-              {[...LOOK_FOR, ...LOOK_FOR].map((item, index) => (
-                <PlugChip key={`${item.id}-${index}`} item={item} ariaHidden={index >= LOOK_FOR.length} />
+              {[...LOOK_FOR, ...LOOK_FOR].map((label, index) => (
+                <PlugChip key={`${label}-${index}`} label={label} ariaHidden={index >= LOOK_FOR.length} />
               ))}
             </div>
           </div>
@@ -442,7 +448,7 @@ export default function HomeView() {
               </div>
             ))}
           </div>
-          <span className="sf-note">
+          <span className="sf-ai-help-note">
             Straight talk: nobody can promise an AI will mention you. What we can do is make sure nothing on your site is
             standing in the way.
           </span>
@@ -460,23 +466,27 @@ export default function HomeView() {
           </p>
         </div>
         <div className="sf-vs-table" role="table" aria-label="AI chat assistants versus Searchify">
-          <div className="sf-vs-head" role="row">
-            <span role="columnheader" />
-            <span role="columnheader">AI CHAT ASSISTANTS</span>
-            <span role="columnheader">SEARCHIFY</span>
-          </div>
-          {VS_ROWS.map((row) => (
-            <div className="sf-vs-row" role="row" key={row.label}>
-              <strong role="rowheader">{row.label}</strong>
-              <span className="muted" role="cell">{row.chat}</span>
-              <span className="sf-vs-ok" role="cell">
-                <CheckIcon />
-                <span>{row.ours}</span>
+          <div className="sf-vs-table-inner">
+            <div className="sf-vs-head" role="row">
+              <span role="columnheader" />
+              <span role="columnheader">AI CHAT ASSISTANTS</span>
+              <span role="columnheader" style={{ color: "#D5F879" }}>
+                SEARCHIFY
               </span>
             </div>
-          ))}
+            {VS_ROWS.map((row) => (
+              <div className="sf-vs-row" role="row" key={row.label}>
+                <strong role="rowheader">{row.label}</strong>
+                <span className="muted" role="cell">{row.chat}</span>
+                <span className="sf-vs-ok" role="cell">
+                  <CheckIcon />
+                  <span>{row.ours}</span>
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
-        <span className="sf-note">
+        <span className="sf-ai-help-note">
           Think of it this way: a chat assistant is a smart friend with good advice. Searchify is the crew that shows up
           every week, does the job, and shows you the before and after.
         </span>
@@ -604,7 +614,10 @@ export default function HomeView() {
               <small>visitors / month</small>
             </div>
             <h3>Get proof, not promises</h3>
-            <p>Four weeks after each change, Searchify shows what it did — visitors, calls, ranking — and adds it to your total.</p>
+            <p>
+              Good SEO takes at least a month to show. About four weeks after each change, Searchify shows what it did
+              (visitors, calls, rankings) and adds it to your total.
+            </p>
           </article>
         </div>
       </section>
@@ -806,13 +819,29 @@ export default function HomeView() {
         </div>
       </section>
 
-      <section id="testimonials" className="sf-section">
+      <section id="testimonials" className="sf-section sf-testimonials">
         <h2>What customers say</h2>
-        <TestimonialsSlider items={QUOTES} />
+        <div className="sf-quote-grid">
+          {QUOTES.map((quote) => (
+            <figure className="sf-quote" key={quote.color + quote.role}>
+              <span aria-hidden="true" style={{ color: quote.color }}>
+                “
+              </span>
+              <blockquote>{quote.text}</blockquote>
+              <figcaption>
+                <i />
+                <span>
+                  <strong>{quote.who}</strong>
+                  <small>{quote.role}</small>
+                </span>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
         <span className="sf-mono tiny muted">PLACEHOLDER · REPLACE WITH REAL CUSTOMER QUOTES BEFORE LAUNCH</span>
       </section>
 
-      <section id="agencies" className="sf-section">
+      <section id="agencies" className="sf-section sf-agencies">
         <div className="sf-agency">
           <div>
             <span className="sf-kicker">FOR AGENCIES</span>
@@ -843,7 +872,7 @@ export default function HomeView() {
       </section>
 
       <section className="sf-closing">
-        <h2>Find out what your site is leaving on the table.</h2>
+        <h2>Find out if Google, and AI, can find you.</h2>
         <form
           className="sf-urlrow center"
           onSubmit={(event) => {
@@ -866,10 +895,6 @@ export default function HomeView() {
             {scanning ? "Scanning…" : "Scan it free"}
           </button>
         </form>
-        <p className="sf-note">
-          Prefer to explore first?{" "}
-          <Link href="/signup">Create an account</Link> or <Link href="/login">sign in</Link>.
-        </p>
       </section>
       </div>
     </LandingShell>

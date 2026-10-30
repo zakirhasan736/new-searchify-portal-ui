@@ -1,7 +1,7 @@
 import Link from "next/link";
 import LegalLayout from "@/components/landing/LegalLayout";
 
-const MAIL = "start@sovereignstandard.ca";
+const MAIL = "searchify@sovereignstandard.ca";
 
 export default function TermsView() {
   return (

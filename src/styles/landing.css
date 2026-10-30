@@ -299,9 +299,14 @@ html:has(.sf-land) {
   font-size: 13px;
   color: var(--muted-2);
 }
-.sf-hero-board {
+.sf-hero-visual {
   flex: 1 1 420px;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sf-hero-board {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 28px;
@@ -309,6 +314,28 @@ html:has(.sf-land) {
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+.sf-hero-hand {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 0 8px 0 18px;
+}
+.sf-hero-hand svg {
+  flex: none;
+  overflow: visible;
+  filter: drop-shadow(0 0 6px rgba(77, 163, 255, 0.7));
+}
+.sf-hero-hand p {
+  margin: 18px 0 0;
+  font-family: var(--font-caveat), Caveat, cursive;
+  font-size: 30px;
+  line-height: 1.15;
+  color: #f2f4f5;
+}
+.sf-hero-hand span {
+  color: #4da3ff;
+  text-shadow: 0 0 12px rgba(77, 163, 255, 0.6);
 }
 .sf-hero-board-top {
   display: flex;
@@ -406,25 +433,20 @@ html:has(.sf-land) {
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 30px;
+  gap: 10px;
+  padding: 0 28px;
   font-size: 16px;
   font-weight: 500;
   color: #d7dade;
   white-space: nowrap;
 }
-.sf-plug-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: var(--surface-2);
-  border: 1px solid var(--line-2);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+.sf-plug-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4da3ff;
+  box-shadow: 0 0 8px #4da3ff;
+  flex: none;
 }
 
 /* —— Sections —— */
@@ -740,6 +762,10 @@ html:has(.sf-land) {
 /* —— Trust / changelog —— */
 .sf-trust {
   gap: 36px;
+  padding: 100px clamp(16px, 4vw, 40px);
+}
+.sf-trust > h2 {
+  max-width: 720px;
 }
 .sf-changelog {
   border-radius: 28px;
@@ -944,6 +970,16 @@ html:has(.sf-land) {
 }
 .sf-quote-slider.is-mobile .sf-quote-arrow {
   display: inline-flex;
+}
+.sf-testimonials,
+.sf-agencies {
+  padding: 0 clamp(16px, 4vw, 40px) 100px;
+  gap: 28px;
+}
+.sf-quote-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
 }
 .sf-quote {
   margin: 0;

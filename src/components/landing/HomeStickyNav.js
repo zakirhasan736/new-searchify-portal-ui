@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import SearchifyMark from "@/components/landing/SearchifyMark";
@@ -25,8 +26,11 @@ export default function HomeStickyNav() {
   const [open, setOpen] = useState(false);
   const [pastHero, setPastHero] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const openRef = useRef(false);
   openRef.current = open;
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     let lastY = typeof window !== "undefined" ? window.scrollY : 0;
@@ -89,46 +93,78 @@ export default function HomeStickyNav() {
   const close = () => setOpen(false);
   const show = pastHero && !hidden;
 
+  const navLinks = (
+    <>
+      {LINKS.map((item) => (
+        <Link key={item.href} href={item.href} onClick={close}>
+          {item.label}
+        </Link>
+      ))}
+      <Link className="sf-home-sticky-cta" href="/signup?next=%2Fapp%2Fstart" onClick={close}>
+        Scan your site
+      </Link>
+    </>
+  );
+
   return (
-    <AnimatePresence>
-      {show ? (
-        <motion.header
-          key="sf-home-sticky"
-          className={`sf-home-sticky${open ? " is-open" : ""}`}
-          initial={reduce ? false : { y: -88, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={reduce ? undefined : { y: -88, opacity: 0 }}
-          transition={{ duration: reduce ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <nav className="sf-home-sticky-nav" aria-label="Main">
-            <Link className="sf-home-sticky-brand" href="/" aria-label="Searchify home" onClick={close}>
-              <SearchifyMark />
-              <span>searchify</span>
-            </Link>
-
-            <button
-              className="sf-home-sticky-menubtn"
-              type="button"
-              aria-expanded={open}
-              aria-controls="sf-home-sticky-links"
-              onClick={() => setOpen((value) => !value)}
-            >
-              {open ? "Close" : "Menu"}
-            </button>
-
-            <div id="sf-home-sticky-links" className={`sf-home-sticky-links${open ? " is-open" : ""}`}>
-              {LINKS.map((item) => (
-                <Link key={item.href} href={item.href} onClick={close}>
-                  {item.label}
-                </Link>
-              ))}
-              <Link className="sf-home-sticky-cta" href="/signup?next=%2Fapp%2Fstart" onClick={close}>
-                Scan your site
+    <>
+      <AnimatePresence>
+        {show ? (
+          <motion.header
+            key="sf-home-sticky"
+            className={`sf-home-sticky${open ? " is-open is-menu-open" : ""}`}
+            initial={reduce ? false : { y: -88, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={reduce ? undefined : { y: -88, opacity: 0 }}
+            transition={{ duration: reduce ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <nav className="sf-home-sticky-nav" aria-label="Main">
+              <Link className="sf-home-sticky-brand" href="/" aria-label="Searchify home" onClick={close}>
+                <SearchifyMark />
+                <span>searchify</span>
               </Link>
-            </div>
-          </nav>
-        </motion.header>
-      ) : null}
-    </AnimatePresence>
+
+              <button
+                className="sf-home-sticky-menubtn"
+                type="button"
+                aria-expanded={open}
+                aria-controls="sf-home-sticky-links"
+                onClick={() => setOpen((value) => !value)}
+              >
+                {open ? "Close" : "Menu"}
+              </button>
+
+              <div id="sf-home-sticky-links" className="sf-home-sticky-links sf-home-sticky-links-inline">
+                {navLinks}
+              </div>
+            </nav>
+          </motion.header>
+        ) : null}
+      </AnimatePresence>
+
+      {mounted && open
+        ? createPortal(
+            <div
+              className="sf-mobile-nav-sheet is-open"
+              id="sf-home-sticky-links-mobile"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Menu"
+            >
+              <div className="sf-mobile-nav-bar">
+                <Link className="sf-home-sticky-brand" href="/" aria-label="Searchify home" onClick={close}>
+                  <SearchifyMark />
+                  <span>searchify</span>
+                </Link>
+                <button className="sf-home-sticky-menubtn" type="button" onClick={close}>
+                  Close
+                </button>
+              </div>
+              <div className="sf-mobile-nav-links">{navLinks}</div>
+            </div>,
+            document.body,
+          )
+        : null}
+    </>
   );
 }
