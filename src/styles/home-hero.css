@@ -314,3 +314,29 @@ html:has(.sf-land.is-home-v3) {
     animation: none !important;
   }
 }
+
+/* Dots canvas (replaces the per-frame CSS gradient repaint that made scrolling stutter). */
+.sf-brand-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+}
+
+/* Lenis smooth scrolling (landing): Lenis drives the scroll, so turn off CSS smooth scroll. */
+html.sf-lenis,
+html.sf-lenis body {
+  height: auto;
+}
+html.sf-lenis,
+html.sf-lenis body,
+html.sf-lenis:has(.sf-land) {
+  scroll-behavior: auto !important;
+}
+html.lenis.lenis-stopped {
+  overflow: hidden;
+}
+html.sf-lenis [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}

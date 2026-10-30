@@ -2,14 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
 import {
   getAiVisibility,
   getBusinessProfile,
   queueAiVisibilityFix,
+  recheckAiReadiness,
   runAiVisibility,
 } from "@/lib/v1Api";
+import AiReasons, { reasonsForEngine } from "@/components/v8/AiReasons";
+import { HowToFix } from "@/components/v8/FixGuide";
+import CountUp from "@/components/motion/CountUp";
 import { SkeletonCards, SkeletonRows } from "@/components/v8/SkeletonWave";
 import ProblemNotice from "@/components/v8/ProblemNotice";
 import { problemsFrom } from "@/lib/problems";
@@ -25,11 +30,19 @@ function scorePct(value) {
 }
 
 function SolutionDrawer({ check, busy, onClose, onQueue }) {
-  if (!check) return null;
+  return <AnimatePresence>{check ? <DrawerBody key={check.id} check={check} busy={busy} onClose={onClose} onQueue={onQueue} /> : null}</AnimatePresence>;
+}
+
+function DrawerBody({ check, busy, onClose, onQueue }) {
+  const reduce = useReducedMotion();
   const solution = check.solution || {};
   const steps = Array.isArray(solution.steps) ? solution.steps : [];
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="sf-vis-sol-title"
@@ -43,7 +56,11 @@ function SolutionDrawer({ check, busy, onClose, onQueue }) {
       }}
     >
       <button type="button" aria-label="Close" onClick={onClose} style={{ position: "absolute", inset: 0, border: 0, background: "transparent" }} />
-      <aside
+      <motion.aside
+        initial={reduce ? { opacity: 0 } : { x: "100%" }}
+        animate={reduce ? { opacity: 1 } : { x: 0 }}
+        exit={reduce ? { opacity: 0 } : { x: "100%" }}
+        transition={{ type: "spring", stiffness: 320, damping: 34 }}
         style={{
           position: "relative",
           width: "min(440px, 100%)",
@@ -73,13 +90,7 @@ function SolutionDrawer({ check, busy, onClose, onQueue }) {
         ) : null}
         <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>PROMPT</div>
         <p style={{ margin: 0, fontSize: "15px", lineHeight: 1.45 }}>{check.prompt}</p>
-        {steps.length ? (
-          <ol style={{ margin: 0, paddingLeft: "18px", display: "flex", flexDirection: "column", gap: "8px", color: "#D7DADE", fontSize: "14px", lineHeight: 1.5 }}>
-            {steps.map((step, i) => (
-              <li key={i}>{step}</li>
-            ))}
-          </ol>
-        ) : null}
+        {steps.length ? <HowToFix steps={steps} title={`drawer-${check.id}`} /> : null}
         {solution.titleDraft ? (
           <div style={{ borderRadius: "14px", border: "1px solid #262A31", background: "#0A0B0D", padding: "14px", display: "flex", flexDirection: "column", gap: "6px" }}>
             <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>Suggested title</span>
@@ -114,8 +125,8 @@ function SolutionDrawer({ check, busy, onClose, onQueue }) {
             Close
           </button>
         </div>
-      </aside>
-    </div>
+      </motion.aside>
+    </motion.div>
   );
 }
 
@@ -130,6 +141,9 @@ export default function VisibilityScreen() {
   const [open, setOpen] = useState(null);
   const [note, setNote] = useState("");
   const [problems, setProblems] = useState([]);
+  const [readiness, setReadiness] = useState(null);
+  const [checking, setChecking] = useState(false);
+  const reduce = useReducedMotion();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -138,6 +152,7 @@ export default function VisibilityScreen() {
       const [bp, vis] = await Promise.all([getBusinessProfile(), getAiVisibility({ force: true })]);
       setProfile(bp.data?.profile || {});
       setReport(vis.data?.report || null);
+      setReadiness(vis.data?.readiness || null);
       setProblems(problemsFrom(vis, "ai_visibility"));
     } finally {
       setLoading(false);
@@ -172,7 +187,20 @@ export default function VisibilityScreen() {
     setProblems(problemsFrom(res, "ai_visibility"));
     if (!res.ok) return;
     setReport(res.data.report);
+    if (res.data.readiness) setReadiness(res.data.readiness);
     setNote("Visibility report ready.");
+  };
+
+  const recheck = async () => {
+    setChecking(true);
+    const res = await recheckAiReadiness().catch(() => ({ ok: false }));
+    setChecking(false);
+    if (!res.ok) {
+      setProblems(problemsFrom(res, "ai_visibility"));
+      return;
+    }
+    setReadiness(res.data.readiness || null);
+    setNote("AI crawler, llms.txt and indexing checks updated.");
   };
 
   const queueFix = async (check) => {
@@ -270,6 +298,9 @@ export default function VisibilityScreen() {
             <span>
               Gaps <strong style={{ color: "#F2F4F5" }}>{issues.length}</strong>
             </span>
+            <span>
+              Reasons <strong style={{ color: (readiness?.reasons || []).some((r) => r.severity === "Critical") ? "#FF8A80" : "#F2F4F5" }}>{(readiness?.reasons || []).length}</strong>
+            </span>
           </div>
         </div>
         <button
@@ -313,6 +344,12 @@ export default function VisibilityScreen() {
         </div>
       ) : null}
 
+      {!loading && !ready && readiness ? (
+        <div style={{ maxWidth: "1120px", width: "100%", margin: "0 auto" }}>
+          <AiReasons readiness={readiness} engine={ALL} busy={checking} onRecheck={recheck} onRun={run} />
+        </div>
+      ) : null}
+
       {loading ? (
         <div style={{ maxWidth: "1120px", width: "100%", margin: "0 auto" }}>
           <SkeletonCards count={4} />
@@ -323,21 +360,49 @@ export default function VisibilityScreen() {
       {!loading && ready ? (
         <div style={{ maxWidth: "1120px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "16px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "12px" }}>
-            {(engines.length ? engines : [{ name: "ChatGPT" }, { name: "Gemini" }, { name: "Claude" }, { name: "Perplexity" }]).map((row) => {
+            {(engines.length ? engines : [{ name: "ChatGPT" }, { name: "Gemini" }, { name: "Claude" }, { name: "Perplexity" }]).map((row, i) => {
               const pct = scorePct(row.score);
+              const why = reasonsForEngine(readiness?.reasons || [], row.name).filter((r) => r.severity !== "Notice" && (r.engines || []).length);
+              const blocked = why.some((r) => r.severity === "Critical");
+              const on = engine === row.name;
               return (
-                <div key={row.id || row.name} style={{ borderRadius: "18px", background: "#101215", border: "1px solid #1A1D22", padding: "16px 18px", display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <span style={{ fontSize: "13px", color: "#9AA1AB" }}>{row.name}</span>
+                <motion.button
+                  type="button"
+                  key={row.id || row.name}
+                  onClick={() => setEngine(on ? ALL : row.name)}
+                  aria-pressed={on}
+                  initial={reduce ? false : { opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: reduce ? 0 : i * 0.05, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  whileHover={reduce ? undefined : { y: -3, borderColor: "#2E333B" }}
+                  style={{ textAlign: "left", color: "#F2F4F5", cursor: "pointer", borderRadius: "18px", background: "#101215", border: `1px solid ${on ? "#4DA3FF" : "#1A1D22"}`, padding: "16px 18px", display: "flex", flexDirection: "column", gap: "10px" }}
+                >
+                  <span style={{ display: "flex", justifyContent: "space-between", gap: "8px", fontSize: "13px", color: "#9AA1AB" }}>
+                    {row.name}
+                    {why.length ? (
+                      <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "10.5px", padding: "2px 6px", borderRadius: "6px", background: blocked ? "rgba(255,90,78,.14)" : "rgba(255,197,61,.12)", color: blocked ? "#FF8A80" : "#FFD27A" }}>
+                        {why.length} reason{why.length === 1 ? "" : "s"}
+                      </span>
+                    ) : null}
+                  </span>
                   <strong style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "32px", letterSpacing: "-1px" }}>
-                    {pct == null ? "—" : `${pct}%`}
+                    {pct == null ? "—" : <CountUp value={pct} suffix="%" />}
                   </strong>
                   <div style={{ height: "6px", borderRadius: "999px", background: "#1A1D22", overflow: "hidden" }}>
-                    <div style={{ width: `${pct == null ? 0 : Math.max(4, pct)}%`, height: "100%", background: pct == null ? "#262A31" : pct >= 70 ? "#3DDC84" : pct >= 40 ? "#FFC53D" : "#FF5A4E" }} />
+                    <motion.div
+                      initial={reduce ? false : { width: 0 }}
+                      animate={{ width: `${pct == null ? 0 : Math.max(4, pct)}%` }}
+                      transition={{ duration: 0.9, delay: reduce ? 0 : 0.15 + i * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                      style={{ height: "100%", background: pct == null ? "#262A31" : pct >= 70 ? "#3DDC84" : pct >= 40 ? "#FFC53D" : "#FF5A4E" }}
+                    />
                   </div>
-                </div>
+                  <span style={{ fontSize: "11.5px", color: "#7D848E" }}>{on ? "Showing only this engine · click to clear" : "Click to see why"}</span>
+                </motion.button>
               );
             })}
           </div>
+
+          <AiReasons readiness={readiness} engine={engine} busy={checking} onRecheck={recheck} onRun={run} />
 
           <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
             <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 600 }}>AI report issues</h2>
