@@ -6,7 +6,6 @@ const nextConfig = {
   output: "standalone",
   async redirects() {
     return [
-      { source: "/favicon.ico", destination: "/icon.png", permanent: false },
       { source: "/signin", destination: "/login", permanent: false },
       { source: "/forgotpassword", destination: "/forgot", permanent: false },
       { source: "/resetpassword", destination: "/reset-password", permanent: false },
