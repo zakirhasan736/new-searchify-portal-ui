@@ -605,7 +605,56 @@ html:has(.sf-land.is-home-v3) {
   .sf-land.is-home-v3 .sf-plat-cards {
     flex-direction: column;
     align-items: stretch;
-    gap: 22px;
+    gap: 18px;
+  }
+
+  .sf-land.is-home-v3 .sf-agency {
+    padding: 20px 16px;
+    gap: 16px;
+    border-radius: 22px;
+  }
+
+  .sf-land.is-home-v3 .sf-agency-copy,
+  .sf-land.is-home-v3 .sf-agency > div:first-child {
+    flex: 1 1 auto;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .sf-land.is-home-v3 .sf-agency h2 {
+    font-size: clamp(26px, 6vw, 34px);
+    letter-spacing: -1px;
+    line-height: 1.08;
+  }
+
+  .sf-land.is-home-v3 .sf-agency p {
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .sf-land.is-home-v3 .sf-agency-list {
+    flex: 1 1 auto;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .sf-land.is-home-v3 .sf-agency-list > div {
+    padding: 12px 14px;
+  }
+
+  .sf-land.is-home-v3 .sf-testimonials,
+  .sf-land.is-home-v3 .sf-agencies {
+    padding: 40px 20px 36px !important;
+    gap: 16px !important;
+  }
+
+  .sf-land.is-home-v3 .sf-quote-slider {
+    gap: 14px;
+  }
+
+  .sf-land.is-home-v3 .sf-quote {
+    padding: 20px;
+    gap: 12px;
   }
 
   .sf-land.is-home-v3 .sf-tiles {
@@ -625,14 +674,12 @@ html:has(.sf-land.is-home-v3) {
     padding-top: 56px;
   }
 
-  .sf-land.is-home-v3 .sf-section,
+  .sf-land.is-home-v3 .sf-section:not(.sf-testimonials):not(.sf-agencies),
   .sf-land.is-home-v3 .sf-trust,
-  .sf-land.is-home-v3 .sf-testimonials,
-  .sf-land.is-home-v3 .sf-agencies,
   .sf-land.is-home-v3 .sf-closing,
   .sf-land.is-home-v3 .sf-band .sf-band-inner {
-    padding: 52px 20px;
-    gap: 22px;
+    padding: 48px 20px;
+    gap: 18px;
   }
 
   .sf-land.is-home-v3 .sf-how-grid {
@@ -716,12 +763,30 @@ html:has(.sf-land.is-home-v3) {
 
   .sf-land.is-home-v3 .sf-section,
   .sf-land.is-home-v3 .sf-trust,
-  .sf-land.is-home-v3 .sf-testimonials,
-  .sf-land.is-home-v3 .sf-agencies,
   .sf-land.is-home-v3 .sf-closing,
   .sf-land.is-home-v3 .sf-band .sf-band-inner {
-    padding: 44px 16px;
-    gap: 18px;
+    padding: 40px 16px;
+    gap: 16px;
+  }
+
+  .sf-land.is-home-v3 .sf-testimonials,
+  .sf-land.is-home-v3 .sf-agencies {
+    padding: 36px 16px 28px !important;
+    gap: 14px !important;
+  }
+
+  .sf-land.is-home-v3 .sf-agency {
+    padding: 16px 14px;
+    gap: 14px;
+  }
+
+  .sf-land.is-home-v3 .sf-agency-copy,
+  .sf-land.is-home-v3 .sf-agency > div:first-child {
+    gap: 6px;
+  }
+
+  .sf-land.is-home-v3 .sf-agency h2 {
+    font-size: clamp(24px, 7vw, 30px);
   }
 
   .sf-land.is-home-v3 .sf-plugs-inner {
@@ -737,6 +802,10 @@ html:has(.sf-land.is-home-v3) {
   .sf-land.is-home-v3 .sf-ai-help-card,
   .sf-land.is-home-v3 .sf-card {
     padding: 18px;
+  }
+
+  .sf-land.is-home-v3 .sf-quote-slider.is-mobile .sf-quote-slide {
+    flex-basis: 78%;
   }
 
   .sf-land.is-home-v3 .sf-footer-inner {

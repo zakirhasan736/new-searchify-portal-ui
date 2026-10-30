@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import LandingShell from "@/components/landing/LandingShell";
 import HomeBrandHero from "@/components/landing/HomeBrandHero";
+import TestimonialsSlider from "@/components/landing/TestimonialsSlider";
 import LandingMotion from "@/components/motion/LandingMotion";
 import { normalizeSiteUrl, seedDraftSite, stashPendingSite } from "@/lib/journey";
 import { previewSiteScan } from "@/lib/v1Api";
@@ -828,29 +829,13 @@ export default function HomeView() {
 
       <section id="testimonials" className="sf-section sf-testimonials">
         <h2>What customers say</h2>
-        <div className="sf-quote-grid">
-          {QUOTES.map((quote) => (
-            <figure className="sf-quote" key={quote.color + quote.role}>
-              <span aria-hidden="true" style={{ color: quote.color }}>
-                “
-              </span>
-              <blockquote>{quote.text}</blockquote>
-              <figcaption>
-                <i />
-                <span>
-                  <strong>{quote.who}</strong>
-                  <small>{quote.role}</small>
-                </span>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
+        <TestimonialsSlider items={QUOTES} />
         <span className="sf-mono tiny muted">PLACEHOLDER · REPLACE WITH REAL CUSTOMER QUOTES BEFORE LAUNCH</span>
       </section>
 
       <section id="agencies" className="sf-section sf-agencies">
         <div className="sf-agency">
-          <div>
+          <div className="sf-agency-copy">
             <span className="sf-kicker">FOR AGENCIES</span>
             <h2>Every client on one screen. Reports that write themselves.</h2>
             <p>

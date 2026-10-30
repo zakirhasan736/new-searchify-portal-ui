@@ -904,11 +904,19 @@ html:has(.sf-land) {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 .sf-quote-viewport {
   overflow: hidden;
   width: 100%;
+  position: relative;
+  touch-action: pan-y;
+  cursor: grab;
+  mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%);
+}
+.sf-quote-viewport:active {
+  cursor: grabbing;
 }
 .sf-quote-track {
   display: flex;
@@ -920,13 +928,21 @@ html:has(.sf-land) {
   flex: 0 0 calc((100% - 32px) / 3);
   min-width: 0;
 }
+.sf-quote-slider.is-desktop .sf-quote-viewport {
+  mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 48px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 48px), transparent 100%);
+}
 .sf-quote-slider.is-mobile .sf-quote-track {
   gap: 12px;
 }
 .sf-quote-slider.is-mobile .sf-quote-slide {
-  /* One card + ~30% of the next visible */
-  flex: 0 0 70%;
+  /* One full card + ~half of the next */
+  flex: 0 0 78%;
   min-width: 0;
+}
+.sf-quote-slider.is-mobile .sf-quote-viewport {
+  mask-image: none;
+  -webkit-mask-image: none;
 }
 .sf-quote-controls {
   display: flex;
@@ -948,6 +964,7 @@ html:has(.sf-land) {
   border: 0;
   background: #3a404a;
   cursor: pointer;
+  transition: width 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
 }
 .sf-quote-dot.is-on {
   background: var(--blue);
@@ -956,9 +973,9 @@ html:has(.sf-land) {
   border-radius: 999px;
 }
 .sf-quote-arrow {
-  display: none;
-  width: 40px;
-  height: 40px;
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
   border-radius: 12px;
   border: 1px solid var(--line-2);
   background: var(--surface);
@@ -967,14 +984,22 @@ html:has(.sf-land) {
   line-height: 1;
   align-items: center;
   justify-content: center;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
-.sf-quote-slider.is-mobile .sf-quote-arrow {
-  display: inline-flex;
+.sf-quote-arrow:hover,
+.sf-quote-arrow:focus-visible {
+  background: #16181c;
+  border-color: #2e333b;
+  outline: none;
+}
+.sf-quote-arrow:active {
+  transform: scale(0.96);
 }
 .sf-testimonials,
 .sf-agencies {
-  padding: 0 clamp(16px, 4vw, 40px) 100px;
-  gap: 28px;
+  /* Keep in sync with .sf-section rhythm — do not zero out top padding */
+  padding: 72px clamp(16px, 4vw, 40px) 56px;
+  gap: 22px;
 }
 .sf-quote-grid {
   display: grid;
@@ -985,12 +1010,13 @@ html:has(.sf-land) {
   margin: 0;
   border-radius: 22px;
   background: var(--surface);
-  border: 1px dashed #3a404a;
+  border: 1px solid var(--line);
   padding: 26px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   box-sizing: border-box;
+  min-height: 100%;
 }
 .sf-quote > span {
   font-family: var(--font-display);
@@ -1015,7 +1041,7 @@ html:has(.sf-land) {
   height: 38px;
   border-radius: 50%;
   background: var(--line);
-  border: 1px dashed #3a404a;
+  border: 1px solid #2e333b;
   display: block;
 }
 .sf-quote figcaption strong {
@@ -1033,21 +1059,23 @@ html:has(.sf-land) {
   border-radius: 28px;
   background: var(--surface);
   border: 1px solid var(--line);
-  padding: clamp(28px, 4vw, 56px);
+  padding: clamp(24px, 3.2vw, 48px);
   display: flex;
   flex-wrap: wrap;
-  gap: 40px;
+  gap: 28px;
   align-items: center;
 }
+.sf-agency-copy,
 .sf-agency > div:first-child {
   flex: 1 1 380px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+  min-width: 0;
 }
 .sf-agency h2 {
-  font-size: clamp(30px, 3.6vw, 46px);
-  line-height: 1.02;
+  font-size: clamp(28px, 3.6vw, 46px);
+  line-height: 1.05;
   letter-spacing: -1.2px;
 }
 .sf-agency p {
@@ -1341,13 +1369,25 @@ html:has(.sf-land) {
 }
 
 @media (max-width: 900px) {
-  .sf-land.is-home-v3 .sf-section {
-    padding: 52px 20px;
-    gap: 22px;
+  .sf-land.is-home-v3 .sf-section:not(.sf-testimonials):not(.sf-agencies) {
+    padding: 48px 20px;
+    gap: 18px;
   }
   .sf-land.is-home-v3 .sf-band-inner {
-    padding: 52px 20px;
-    gap: 22px;
+    padding: 48px 20px;
+    gap: 18px;
+  }
+  .sf-land.is-home-v3 .sf-testimonials,
+  .sf-land.is-home-v3 .sf-agencies {
+    padding: 40px 20px 32px;
+    gap: 14px;
+  }
+  .sf-land.is-home-v3 .sf-agency {
+    padding: 18px 16px;
+    gap: 14px;
+  }
+  .sf-land.is-home-v3 .sf-agency-copy {
+    gap: 8px;
   }
 }
 

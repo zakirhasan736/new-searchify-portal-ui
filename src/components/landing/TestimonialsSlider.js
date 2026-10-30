@@ -3,33 +3,38 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Desktop: 3 cards visible, auto-advance by page, dots only (no arrows).
- * Mobile: one card + ~30% peek of next; arrows + dots.
+ * Desktop: modern multi-card slider with arrows + dots, soft edge fade.
+ * Mobile / tablet: one full card + half of the next/prev peeking.
  */
-export default function TestimonialsSlider({ items = [], intervalMs = 5000 }) {
+export default function TestimonialsSlider({ items = [], intervalMs = 5500 }) {
   const trackRef = useRef(null);
+  const viewportRef = useRef(null);
   const [index, setIndex] = useState(0);
   const [mobile, setMobile] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [dragX, setDragX] = useState(0);
+  const dragRef = useRef(null);
   const count = items.length;
 
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 860px)");
+    const mq = window.matchMedia("(max-width: 900px)");
     const apply = () => setMobile(mq.matches);
     apply();
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
   }, []);
 
-  const pageCount = mobile ? count : Math.max(1, Math.ceil(count / 3));
-  const safeIndex = ((index % pageCount) + pageCount) % pageCount;
+  // Mobile: one card. Desktop: advance by one while showing ~3 cards.
+  const maxIndex = mobile ? Math.max(0, count - 1) : Math.max(0, count - 3);
+  const pageCount = maxIndex + 1;
+  const safeIndex = Math.min(((index % pageCount) + pageCount) % pageCount, maxIndex);
 
   useEffect(() => {
     setIndex(0);
   }, [mobile, count]);
 
   useEffect(() => {
-    if (paused || pageCount <= 1) return undefined;
+    if (paused || pageCount <= 1 || dragRef.current) return undefined;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) return undefined;
     const timer = setInterval(() => {
@@ -40,17 +45,48 @@ export default function TestimonialsSlider({ items = [], intervalMs = 5000 }) {
 
   useEffect(() => {
     const el = trackRef.current;
-    if (!el) return;
+    if (!el) return undefined;
     const card = el.querySelector(".sf-quote-slide");
-    if (!card) return;
-    const gap = mobile ? 12 : 16;
-    const step = mobile
-      ? card.offsetWidth + gap
-      : (card.offsetWidth + gap) * 3;
-    el.style.transform = `translateX(-${safeIndex * step}px)`;
-  }, [safeIndex, mobile, count]);
+    if (!card) return undefined;
+
+    const layout = () => {
+      const styles = getComputedStyle(el);
+      const gap = Number.parseFloat(styles.columnGap || styles.gap) || (mobile ? 12 : 16);
+      const step = card.offsetWidth + gap;
+      el.style.transition = dragX ? "none" : "transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)";
+      el.style.transform = `translate3d(${-safeIndex * step + dragX}px, 0, 0)`;
+    };
+
+    layout();
+    window.addEventListener("resize", layout);
+    return () => window.removeEventListener("resize", layout);
+  }, [safeIndex, mobile, count, dragX]);
 
   const go = (next) => setIndex(((next % pageCount) + pageCount) % pageCount);
+
+  const onPointerDown = (event) => {
+    if (!mobile) return;
+    const point = event.touches ? event.touches[0] : event;
+    dragRef.current = { x: point.clientX, y: point.clientY, active: true };
+    setPaused(true);
+  };
+
+  const onPointerMove = (event) => {
+    if (!dragRef.current?.active) return;
+    const point = event.touches ? event.touches[0] : event;
+    const dx = point.clientX - dragRef.current.x;
+    setDragX(dx);
+  };
+
+  const onPointerUp = (event) => {
+    if (!dragRef.current?.active) return;
+    const point = event.changedTouches ? event.changedTouches[0] : event;
+    const dx = point.clientX - dragRef.current.x;
+    dragRef.current = null;
+    setDragX(0);
+    if (Math.abs(dx) > 48) go(safeIndex + (dx < 0 ? 1 : -1));
+    setPaused(false);
+  };
 
   return (
     <div
@@ -62,7 +98,17 @@ export default function TestimonialsSlider({ items = [], intervalMs = 5000 }) {
         if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false);
       }}
     >
-      <div className="sf-quote-viewport">
+      <div
+        className="sf-quote-viewport"
+        ref={viewportRef}
+        onMouseDown={onPointerDown}
+        onMouseMove={onPointerMove}
+        onMouseUp={onPointerUp}
+        onMouseLeave={onPointerUp}
+        onTouchStart={onPointerDown}
+        onTouchMove={onPointerMove}
+        onTouchEnd={onPointerUp}
+      >
         <div className="sf-quote-track" ref={trackRef}>
           {items.map((quote) => (
             <figure key={quote.who + quote.color} className="sf-quote sf-quote-slide">
@@ -83,16 +129,14 @@ export default function TestimonialsSlider({ items = [], intervalMs = 5000 }) {
       </div>
 
       <div className="sf-quote-controls">
-        {mobile ? (
-          <button
-            type="button"
-            className="sf-quote-arrow"
-            aria-label="Previous testimonial"
-            onClick={() => go(safeIndex - 1)}
-          >
-            ‹
-          </button>
-        ) : null}
+        <button
+          type="button"
+          className="sf-quote-arrow"
+          aria-label="Previous testimonial"
+          onClick={() => go(safeIndex - 1)}
+        >
+          ‹
+        </button>
 
         <div className="sf-quote-dots" role="tablist" aria-label="Testimonials">
           {Array.from({ length: pageCount }, (_, i) => (
@@ -108,16 +152,14 @@ export default function TestimonialsSlider({ items = [], intervalMs = 5000 }) {
           ))}
         </div>
 
-        {mobile ? (
-          <button
-            type="button"
-            className="sf-quote-arrow"
-            aria-label="Next testimonial"
-            onClick={() => go(safeIndex + 1)}
-          >
-            ›
-          </button>
-        ) : null}
+        <button
+          type="button"
+          className="sf-quote-arrow"
+          aria-label="Next testimonial"
+          onClick={() => go(safeIndex + 1)}
+        >
+          ›
+        </button>
       </div>
     </div>
   );
