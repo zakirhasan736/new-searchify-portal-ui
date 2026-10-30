@@ -75,17 +75,31 @@ export default function ConnectScreen() {
 
   useEffect(() => {
     const googleSignedIn = status.googleAccount === "connected" || Boolean(status.google?.connected);
-    // Sync state from actual connection status — no fake counters.
+    // Property selected (auto-matched or saved) → show Unplug / LIVE, not "Choose property".
+    const gscSelected = Boolean(status.gsc || status.google?.gscSiteUrl);
+    const gaSelected = Boolean(status.ga || status.google?.ga4PropertyId);
     setState((prev) => ({
       ...prev,
-      gsc: status.gsc ? "live" : googleSignedIn && !status.gsc ? "pick" : prev.gsc === "connecting" ? "connecting" : "off",
+      gsc: gscSelected
+        ? "live"
+        : googleSignedIn
+          ? "pick"
+          : prev.gsc === "connecting"
+            ? "connecting"
+            : "off",
       wp: status.wordpress ? "live" : prev.wp === "connecting" ? "connecting" : "off",
-      ga: status.ga ? "live" : googleSignedIn && !status.ga ? "pick" : prev.ga === "connecting" ? "connecting" : "off",
+      ga: gaSelected
+        ? "live"
+        : googleSignedIn
+          ? "pick"
+          : prev.ga === "connecting"
+            ? "connecting"
+            : "off",
     }));
     setRows({
-      gsc: status.gsc ? Number(status.gscRows || status.gscCount || 0) : 0,
+      gsc: gscSelected ? Number(status.gscRows || status.gscCount || 0) : 0,
       wp: status.wordpress ? Number(status.wpPages || status.pageCount || 0) : 0,
-      ga: status.ga ? Number(status.gaSessions || status.gaCount || 0) : 0,
+      ga: gaSelected ? Number(status.gaSessions || status.gaCount || 0) : 0,
     });
   }, [status]);
 
@@ -906,7 +920,7 @@ export default function ConnectScreen() {
       {status.googleAccount === "connected" || status.google?.connected ? (
         <V8PropertyPicker
           google={status.google}
-          siteLabel={status.wordpressUrl || siteHref || ""}
+          siteLabel={siteHref || status.wordpressUrl || ""}
           onSaved={async () => {
             await refreshStatus();
           }}
