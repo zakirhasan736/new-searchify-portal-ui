@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SearchifyMark from "@/components/landing/SearchifyMark";
+import SmoothScroll, { getLenis } from "@/components/motion/SmoothScroll";
 
 const LINKS = [
   { href: "/#testimonials", label: "Testimonials", key: "testimonials", homeOnly: true },
@@ -41,12 +42,14 @@ export default function LandingShell({
     if (!open) return undefined;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    getLenis()?.stop();
     const onKey = (event) => {
       if (event.key === "Escape") setOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = previous;
+      getLenis()?.start();
       window.removeEventListener("keydown", onKey);
     };
   }, [open]);
@@ -56,6 +59,7 @@ export default function LandingShell({
 
   return (
     <div className={`sf-land${isHome ? " is-home-v3" : ""}`}>
+      <SmoothScroll />
       {!isHome ? (
         <header className={`sf-top${scrolled ? " is-scrolled" : ""}`}>
           <nav className="sf-nav" aria-label="Main">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import LandingShell from "@/components/landing/LandingShell";
 import HomeBrandHero from "@/components/landing/HomeBrandHero";
+import LandingMotion from "@/components/motion/LandingMotion";
 import TestimonialsSlider from "@/components/landing/TestimonialsSlider";
 import { normalizeSiteUrl, seedDraftSite, stashPendingSite } from "@/lib/journey";
 import { previewSiteScan } from "@/lib/v1Api";
@@ -281,6 +282,7 @@ export default function HomeView() {
 
   return (
     <LandingShell current="home">
+      <LandingMotion />
       <HomeBrandHero />
 
       <div className="sf-rest" id="rest">

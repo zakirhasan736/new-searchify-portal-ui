@@ -8,19 +8,23 @@ import { buildAuditFindings, resolveSeoScore } from "@/lib/auditFindings";
 import {
   featureKpi,
   featurePayload,
+  getAiVisibility,
   getSiteScan,
   inspectGoogleIndex,
   listChanges,
   loadFeature,
+  recheckAiReadiness,
   researchAudit,
   runSiteScan,
 } from "@/lib/v1Api";
+import { HowToFix } from "@/components/v8/FixGuide";
 import { SkeletonRows } from "@/components/v8/SkeletonWave";
 import ProblemNotice from "@/components/v8/ProblemNotice";
 import { problemsFrom } from "@/lib/problems";
 import "@/styles/v8-screens.css";
 
 const TOPICS = [
+  { id: "ai", label: "AI search · LLM", area: ["AI search"], keys: ["ai_"] },
   { id: "status", label: "404 · 5xx errors", area: ["Status codes"], keys: ["status_", "scan_broken_", "gsc_search_console_page_not_found", "gsc_search_console_server"] },
   { id: "gsc", label: "Search Console", area: ["Search Console"], sources: ["gsc"] },
   { id: "indexing", label: "Indexing", area: ["Index", "Indexing", "Crawl"] },
@@ -48,7 +52,7 @@ const SEVERITIES = [
 ];
 
 function findingKey(finding) {
-  return String(finding.id || "").replace(/^(crawl|scan|site|gsc)-/, "");
+  return String(finding.id || "").replace(/^(crawl|scan|site|gsc|ai|report)-/, "");
 }
 
 function matchTopic(finding, topic) {
@@ -71,6 +75,16 @@ function developerBrief(item) {
   if (item.helpUrl) lines.push("", `Guide: ${item.helpUrl}`);
   lines.push(`Source: ${item.sourceLabel || "Searchify audit"}`);
   return lines.join("\n");
+}
+
+// The site scan already reports noindex pages and thin content; skip the AI-page copies of those.
+const AI_DUPLICATES = new Set(["ai_pages_noindex", "ai_thin_pages"]);
+
+function mergeAiReasons(rawIssues, reasons) {
+  const have = new Set();
+  const scanIssues = rawIssues.filter((issue) => (have.has(issue.key) ? false : have.add(issue.key)));
+  const extra = reasons.filter((r) => r && !have.has(r.key) && !AI_DUPLICATES.has(r.key) && r.key !== "ai_no_report");
+  return [...scanIssues, ...extra.map((r) => ({ ...r, area: r.source === "gsc" ? "Search Console" : "AI search", pages: r.pages || [] }))];
 }
 
 function severityTone(severity) {
@@ -114,7 +128,7 @@ export default function SiteAuditReportScreen() {
     try {
       setHostname(activeSiteContext(loadJourney()).hostname || "Your site");
       const site = activeSiteContext(loadJourney()).href || "";
-      const [audit, organic, pages, landings, places, changes, scan, crawlRes, inspect] = await Promise.all([
+      const [audit, organic, pages, landings, places, changes, scan, crawlRes, inspect, vis] = await Promise.all([
         loadFeature("site-audit").catch(() => ({ ok: false })),
         loadFeature("organic-search").catch(() => ({ ok: false })),
         loadFeature("top-pages").catch(() => ({ ok: false })),
@@ -127,6 +141,8 @@ export default function SiteAuditReportScreen() {
         // findings never showed up.
         site ? researchAudit({ site, force: false }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
         loadFeature("gsc-index-inspection", { force: true }).catch(() => ({ ok: false })),
+        // AI search reasons: AI model errors, AI crawler blocks, llms.txt, AI indexing.
+        getAiVisibility({ force: true }).catch(() => ({ ok: false })),
       ]);
       setProblems([...problemsFrom(scan, "site_scan"), ...(site ? problemsFrom(crawlRes, "site_audit") : [])]);
       const crawl = crawlRes?.ok ? crawlRes.data : null;
@@ -142,7 +158,7 @@ export default function SiteAuditReportScreen() {
         places,
         changes: Array.isArray(changes.data) ? changes.data : changes.data?.changes || [],
         crawl,
-        scanIssues: scan?.ok ? scan.data?.scan?.auditIssues || [] : [],
+        scanIssues: mergeAiReasons(scan?.ok ? scan.data?.scan?.auditIssues || [] : [], vis?.ok ? vis.data?.readiness?.reasons || [] : []),
         gscIssues: inspectPayload?.issues || [],
       });
       const list = Array.isArray(built?.findings) ? built.findings : Array.isArray(built) ? built : [];
@@ -194,6 +210,17 @@ export default function SiteAuditReportScreen() {
     try {
       const res = await runSiteScan({ force: true }).catch(() => ({ ok: false }));
       setAuditProblems(problemsFrom(res, "site_scan"));
+      await reload();
+    } finally {
+      setScanBusy(false);
+    }
+  };
+
+  const recheckAi = async () => {
+    setScanBusy(true);
+    try {
+      const res = await recheckAiReadiness().catch(() => ({ ok: false }));
+      setAuditProblems(problemsFrom(res, "ai_visibility"));
       await reload();
     } finally {
       setScanBusy(false);
@@ -617,22 +644,7 @@ export default function SiteAuditReportScreen() {
                           </div>
                         ) : null}
 
-                        {item.fix ? (
-                          <div style={{ borderRadius: "12px", background: "#0A0B0D", border: "1px solid #1A1D22", padding: "12px 14px" }}>
-                            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#4DA3FF" }}>HOW TO FIX</span>
-                            <p style={{ margin: "6px 0 0", fontSize: "14px", lineHeight: 1.5 }}>{item.fix}</p>
-                            {Array.isArray(item.steps) && item.steps.length ? (
-                              <ol style={{ margin: "10px 0 0", padding: 0, listStyle: "none", color: "#D7DADE", fontSize: "13px", lineHeight: 1.5, display: "flex", flexDirection: "column", gap: "6px" }}>
-                                {item.steps.map((step, index) => (
-                                  <li key={index} style={{ display: "flex", gap: "8px" }}>
-                                    <span style={{ flex: "none", width: "18px", fontFamily: "'Geist Mono', monospace", color: "#4DA3FF" }}>{index + 1}.</span>
-                                    <span>{step}</span>
-                                  </li>
-                                ))}
-                              </ol>
-                            ) : null}
-                          </div>
-                        ) : null}
+                        <HowToFix fix={item.fix} steps={item.steps} title={item.id} />
 
                         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                           {item.changeId ? (
@@ -664,13 +676,27 @@ export default function SiteAuditReportScreen() {
                           >
                             Ask support
                           </a>
-                          <button
-                            type="button"
-                            onClick={item.sourceKey === "gsc" ? checkIndexing : item.sourceKey === "scan" || item.sourceKey === "site" ? rescanSite : refreshAudit}
-                            style={ghostLink}
-                          >
-                            Re-check
-                          </button>
+                          {item.sourceKey === "report" ? (
+                            <Link href="/app/visibility" style={ghostLink}>
+                              Open AI visibility
+                            </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={
+                                item.sourceKey === "gsc"
+                                  ? checkIndexing
+                                  : item.sourceKey === "ai"
+                                    ? recheckAi
+                                    : item.sourceKey === "scan" || item.sourceKey === "site"
+                                      ? rescanSite
+                                      : refreshAudit
+                              }
+                              style={ghostLink}
+                            >
+                              Re-check
+                            </button>
+                          )}
                         </div>
                       </div>
                     ) : null}
@@ -741,6 +767,7 @@ export default function SiteAuditReportScreen() {
           <div style={{ borderRadius: "24px", background: "#101215", border: "1px solid #1A1D22", padding: "22px", display: "flex", flexDirection: "column", gap: "10px" }}>
             <span style={{ fontSize: "16px", fontWeight: 600 }}>Also covered</span>
             {[
+              "AI search: AI crawlers blocked in robots.txt or by the firewall, llms.txt, nosnippet, AI model errors",
               "404, 410, 403, 500, 502, 503 status codes with linking pages",
               "Search Console coverage, canonical and rich-result errors",
               "Redirect chains, loops, http → https, www",

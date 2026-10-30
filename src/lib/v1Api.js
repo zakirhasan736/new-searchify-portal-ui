@@ -535,6 +535,13 @@ export async function runAiVisibility() {
   return res;
 }
 
+/** Re-run AI crawler (robots.txt per bot, firewall), llms.txt and indexing checks. */
+export async function recheckAiReadiness() {
+  const res = await json(await fetch("/api/v1/operator/ai-visibility/readiness", { method: "POST", headers: authHeaders() }));
+  if (res.ok) invalidateV3Cache(["ai-visibility-report"]);
+  return res;
+}
+
 export async function queueAiVisibilityFix(body) {
   const res = await json(
     await fetch("/api/v1/operator/ai-visibility/queue", {

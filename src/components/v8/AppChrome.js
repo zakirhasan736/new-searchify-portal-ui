@@ -13,6 +13,7 @@ import { activeSiteContext } from "@/lib/siteContext";
 import { activateGoogleSite, syncGoogle } from "@/lib/v1Api";
 import { invalidateV3Cache } from "@/lib/v3Store";
 import SkeletonPage from "@/components/v8/SkeletonWave";
+import MotionStage from "@/components/motion/MotionStage";
 import "@/styles/v8-screens.css";
 import "@/styles/v8-phone.css";
 
@@ -415,7 +416,13 @@ export default function AppChrome({ children, current }) {
       </aside>
 
       <main ref={mainRef} className="v8-app-main">
-        {switching ? <SkeletonPage /> : <div key={scopeKey}>{children}</div>}
+        {switching ? (
+          <SkeletonPage />
+        ) : (
+          <MotionStage key={`${scopeKey}:${pathname}`} selector=":scope > * > *, :scope main > *, :scope aside > *, :scope [data-reveal]">
+            {children}
+          </MotionStage>
+        )}
       </main>
 
       {/* Phone.dc.html bottom tabs — mobile layout reference applied app-wide */}

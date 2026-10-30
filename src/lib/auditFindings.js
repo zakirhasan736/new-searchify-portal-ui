@@ -131,6 +131,8 @@ const SOURCE_LABEL = {
   scan: "Searchify site scan (page HTML)",
   site: "Searchify site check",
   gsc: "Google Search Console URL Inspection",
+  ai: "Searchify AI crawler check (robots.txt per AI bot, firewall, llms.txt)",
+  report: "AI visibility report (AI model)",
 };
 
 function crawlFindings(report, { impressions, sessions, open }, defaultSource = "crawl") {
@@ -152,7 +154,11 @@ function crawlFindings(report, { impressions, sessions, open }, defaultSource = 
           ? `Google Search Console reports this for ${issue.count} URL${issue.count === 1 ? "" : "s"}.`
           : source === "site"
             ? "Found while checking robots.txt, the sitemap and redirects."
-            : `Found on ${issue.count} page${issue.count === 1 ? "" : "s"} read by the site scan.`,
+            : source === "ai"
+              ? "Found while checking what AI crawlers (ChatGPT, Claude, Perplexity, Gemini, Copilot) are allowed to read."
+              : source === "report"
+                ? "From the AI visibility report run."
+                : `Found on ${issue.count} page${issue.count === 1 ? "" : "s"} read by the site scan.`,
     ];
     if (seen) bits.push(`Search Console: these pages had ${seen.toLocaleString("en-US")} impressions.`);
     if (visits) bits.push(`Analytics: ${visits.toLocaleString("en-US")} sessions landed on them.`);
