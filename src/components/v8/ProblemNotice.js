@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { actionHref, problemReport, supportMailto } from "@/lib/problems";
+import { FixPlayer } from "@/components/v8/FixGuide";
 
 /**
  * One consistent error / warning / info notice for every report area
@@ -34,7 +36,10 @@ export default function ProblemNotice({ problems, onRetry, style }) {
 }
 
 function ProblemCard({ problem, onRetry }) {
-  const [open, setOpen] = useState(problem.severity === "error");
+  // Help stays folded until the user clicks "How to fix".
+  const [open, setOpen] = useState(false);
+  const [show, setShow] = useState(false);
+  const reduce = useReducedMotion();
   const [copied, setCopied] = useState(false);
   const tone = TONES[problem.severity] || TONES.error;
   const steps = Array.isArray(problem.steps) ? problem.steps : [];
@@ -118,15 +123,35 @@ function ProblemCard({ problem, onRetry }) {
         ) : null}
       </div>
 
+      <AnimatePresence initial={false}>
       {open && hasHelp ? (
+        <motion.div
+          key="help"
+          initial={reduce ? { opacity: 0 } : { opacity: 0, height: 0 }}
+          animate={reduce ? { opacity: 1 } : { opacity: 1, height: "auto" }}
+          exit={reduce ? { opacity: 0 } : { opacity: 0, height: 0 }}
+          transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+          style={{ overflow: "hidden" }}
+        >
         <div style={{ paddingLeft: "28px", display: "flex", flexDirection: "column", gap: "10px" }}>
           {steps.length ? (
-            <ol style={{ margin: 0, paddingLeft: "18px", color: "#D7DADE", fontSize: "14px", lineHeight: 1.55 }}>
+            <ol style={{ margin: 0, padding: 0, listStyle: "none", color: "#D7DADE", fontSize: "14px", lineHeight: 1.55, display: "flex", flexDirection: "column", gap: "4px" }}>
               {steps.map((step, i) => (
-                <li key={i}>{step}</li>
+                <li key={i} style={{ display: "flex", gap: "8px" }}>
+                  <span style={{ flex: "none", width: "18px", fontFamily: "'Geist Mono', monospace", color: tone.color }}>{i + 1}.</span>
+                  <span>{step}</span>
+                </li>
               ))}
             </ol>
           ) : null}
+          {steps.length ? (
+            <div>
+              <button type="button" onClick={() => setShow((v) => !v)} aria-expanded={show} style={{ ...linkBtn, background: "transparent", cursor: "pointer" }}>
+                {show ? "Hide walkthrough" : "▶ Show me how (animated)"}
+              </button>
+            </div>
+          ) : null}
+          {show && steps.length ? <FixPlayer steps={steps} accent={tone.color} /> : null}
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
             {showAction ? (
@@ -173,7 +198,9 @@ function ProblemCard({ problem, onRetry }) {
             </details>
           ) : null}
         </div>
+        </motion.div>
       ) : null}
+      </AnimatePresence>
     </section>
   );
 }

@@ -8,6 +8,8 @@ import { getUser, userLogout } from "@/utils/users/Helpers";
 import SearchifyMarkSvg from "@/components/v8/SearchifyMarkSvg";
 import RequireAdmin from "@/components/admin/RequireAdmin";
 import SearchifyLoader from "@/components/v8/SearchifyLoader";
+import { motion } from "framer-motion";
+import MotionStage from "@/components/motion/MotionStage";
 import "@/styles/v8-screens.css";
 
 const TABS = [
@@ -193,16 +195,24 @@ export default function HqPanel({
                 aria-current={on ? "page" : undefined}
                 style={{
                   ...tabBase,
+                  position: "relative",
                   gap: tab.badge ? 8 : undefined,
-                  background: on ? "#1A1D22" : undefined,
                   color: on ? "#F2F4F5" : "#9AA1AB",
                   fontWeight: on ? 600 : undefined,
                 }}
               >
-                {tab.label}
+                {on ? (
+                  <motion.span
+                    layoutId="hq-tab-pill"
+                    transition={{ type: "spring", stiffness: 420, damping: 36 }}
+                    style={{ position: "absolute", inset: 0, borderRadius: 10, background: "#1A1D22", zIndex: 0 }}
+                  />
+                ) : null}
+                <span style={{ position: "relative" }}>{tab.label}</span>
                 {tab.badge && badgeCount ? (
                   <span
                     style={{
+                      position: "relative",
                       fontFamily: "'Geist Mono', monospace",
                       fontSize: 11,
                       padding: "2px 7px",
@@ -219,7 +229,9 @@ export default function HqPanel({
           })}
         </nav>
 
-        {children}
+        <MotionStage key={pathname} deps={[loading]} style={{ display: "flex", flexDirection: "column", gap: shellGap }}>
+          {children}
+        </MotionStage>
       </div>
     </RequireAdmin>
   );

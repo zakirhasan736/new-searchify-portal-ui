@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import SearchifyMark from "@/components/landing/SearchifyMark";
+import { useGsap } from "@/components/motion/gsapClient";
+import { scrollToTarget } from "@/components/motion/SmoothScroll";
 
 const NAV = [
   { href: "/#testimonials", label: "Testimonials" },
@@ -30,7 +32,10 @@ function prefersReducedMotion() {
 
 export default function HomeBrandHero() {
   const heroRef = useRef(null);
+  const canvasRef = useRef(null);
   const lockupRef = useRef(null);
+  const cueRef = useRef(null);
+  const { gsap, ScrollTrigger } = useGsap();
   const navRef = useRef(null);
   const goRestRef = useRef(() => {});
   const [menuOpen, setMenuOpen] = useState(false);
@@ -46,7 +51,6 @@ export default function HomeBrandHero() {
     let last = 0;
     let waving = false;
     let busy = false;
-    let ty = null;
     let resizeTimer = null;
     const intervals = [];
     const timeouts = [];
@@ -65,8 +69,10 @@ export default function HomeBrandHero() {
       );
     };
 
+    // Only animate while the hero is on screen and the tab is visible.
+    let visible = true;
     const kick = () => {
-      if (!raf) raf = requestAnimationFrame(frame);
+      if (!raf && visible && !document.hidden) raf = requestAnimationFrame(frame);
     };
 
     const light = (c, k, level, hold, flash) => {
@@ -81,10 +87,57 @@ export default function HomeBrandHero() {
       return d;
     };
 
+    // Dots are drawn on a <canvas> (one cheap GPU-friendly layer) instead of rebuilding a
+    // CSS background-image with dozens of gradients every frame — that forced a full repaint
+    // of the hero on each frame and made scrolling stutter.
+    const canvas = canvasRef.current;
+    const ctx = canvas ? canvas.getContext("2d") : null;
+    let base = null;
+    let dpr = 1;
+
+    const drawBase = () => {
+      if (!ctx) return;
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = Math.round(g.W * dpr);
+      canvas.height = Math.round(g.H * dpr);
+      canvas.style.width = `${g.W}px`;
+      canvas.style.height = `${g.H}px`;
+      heroEl.style.backgroundImage = "none";
+      base = document.createElement("canvas");
+      base.width = canvas.width;
+      base.height = canvas.height;
+      const b = base.getContext("2d");
+      b.scale(dpr, dpr);
+      b.fillStyle = "#1A1D22";
+      for (let k = -g.K - 1; k <= g.K + 1; k += 1) {
+        for (let c = 0; c < 24; c += 1) {
+          const p = pos(c, k);
+          b.beginPath();
+          b.arc(p[0], p[1], g.R, 0, Math.PI * 2);
+          b.fill();
+        }
+      }
+      // soft dark ellipse behind the lockup (was the CSS vignette layer)
+      b.save();
+      b.translate(g.W / 2, g.H / 2);
+      b.scale(g.W * 0.3, g.H * 0.13);
+      const v = b.createRadialGradient(0, 0, 0, 0, 0, 1);
+      v.addColorStop(0, "rgba(10,11,13,.72)");
+      v.addColorStop(1, "rgba(10,11,13,0)");
+      b.fillStyle = v;
+      b.beginPath();
+      b.arc(0, 0, 1, 0, Math.PI * 2);
+      b.fill();
+      b.restore();
+    };
+
     const paint = () => {
+      if (!ctx || !base) return;
       const R = g.R;
-      const layers = [];
-      let n = 0;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(base, 0, 0);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       for (const key in L) {
         const d = L[key];
         const b = d.b;
@@ -96,31 +149,18 @@ export default function HomeBrandHero() {
         const gl = d.wave ? 3.6 : 2.9;
         const ga = (0.3 + 0.25 * Math.min(1, b)) * a;
         const hot = Math.max(0, b - 1) / 0.35;
-        const x = `${p[0].toFixed(1)}px ${p[1].toFixed(1)}px`;
         const m = 0.75 * Math.min(1, hot);
         const core = `${Math.round(col[0] + (255 - col[0]) * m)},${Math.round(col[1] + (255 - col[1]) * m)},${Math.round(col[2] + (255 - col[2]) * m)}`;
-        layers.push(
-          `radial-gradient(circle at ${x}, rgba(${core},${a.toFixed(2)}) 0, rgba(${core},${a.toFixed(2)}) ${(R * 0.55).toFixed(1)}px, rgba(${rgb},${a.toFixed(2)}) ${R.toFixed(1)}px, rgba(${rgb},${ga.toFixed(2)}) ${(R + 1).toFixed(1)}px, rgba(${rgb},0) ${(R * gl * (0.8 + 0.4 * Math.min(1.3, b))).toFixed(1)}px)`
-        );
-        n += 1;
+        const outer = R * gl * (0.8 + 0.4 * Math.min(1.3, b));
+        const grad = ctx.createRadialGradient(p[0], p[1], 0, p[0], p[1], outer);
+        grad.addColorStop(0, `rgba(${core},${a.toFixed(2)})`);
+        grad.addColorStop(Math.min(0.99, (R * 0.55) / outer), `rgba(${core},${a.toFixed(2)})`);
+        grad.addColorStop(Math.min(0.995, R / outer), `rgba(${rgb},${a.toFixed(2)})`);
+        grad.addColorStop(Math.min(0.999, (R + 1) / outer), `rgba(${rgb},${ga.toFixed(2)})`);
+        grad.addColorStop(1, `rgba(${rgb},0)`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(p[0] - outer, p[1] - outer, outer * 2, outer * 2);
       }
-      layers.push("radial-gradient(ellipse 30% 13% at 50% 50%, rgba(10,11,13,.72), rgba(10,11,13,0))");
-      layers.push(`radial-gradient(circle, #1A1D22 0, #1A1D22 ${R.toFixed(1)}px, rgba(26,29,34,0) ${(R + 1).toFixed(1)}px)`);
-      const sz = [];
-      const ps = [];
-      const rp = [];
-      for (let i = 0; i < n + 1; i += 1) {
-        sz.push("100% 100%");
-        ps.push("0 0");
-        rp.push("no-repeat");
-      }
-      sz.push(`${g.cell.toFixed(2)}px ${g.cell.toFixed(2)}px`);
-      ps.push(`0 ${((g.H / 2 - g.cell / 2) % g.cell).toFixed(2)}px`);
-      rp.push("repeat");
-      heroEl.style.backgroundImage = layers.join(",");
-      heroEl.style.backgroundSize = sz.join(",");
-      heroEl.style.backgroundPosition = ps.join(",");
-      heroEl.style.backgroundRepeat = rp.join(",");
     };
 
     function frame(now) {
@@ -192,6 +232,7 @@ export default function HomeBrandHero() {
 
     const start = () => {
       geo();
+      drawBase();
       seed();
     };
 
@@ -242,16 +283,15 @@ export default function HomeBrandHero() {
       }
     };
 
-    const inHero = () => window.scrollY < heroEl.offsetHeight - 4;
     const goRest = () => {
       if (busy) return;
       busy = true;
-      const rest = document.getElementById("rest");
-      rest?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+      scrollToTarget("#rest");
       timeouts.push(setTimeout(() => { busy = false; }, 900));
     };
 
     const onMove = (e) => {
+      if (!visible) return;
       const r = heroEl.getBoundingClientRect();
       const x = e.clientX - r.left;
       const y = e.clientY - r.top;
@@ -261,32 +301,7 @@ export default function HomeBrandHero() {
       if (!L[key] || L[key].t === 0) light(c, k, rnd(0.85, 1), rnd(1100, 2200), 1.35);
     };
 
-    const onWheel = (e) => {
-      if (e.deltaY > 0 && inHero()) {
-        e.preventDefault();
-        goRest();
-      }
-    };
-    const onTouchStart = (e) => {
-      ty = e.touches[0].clientY;
-    };
-    const onTouchMove = (e) => {
-      if (ty !== null && ty - e.touches[0].clientY > 8 && inHero()) {
-        e.preventDefault();
-        goRest();
-        ty = null;
-      }
-    };
-    const onKey = (e) => {
-      if (
-        inHero() &&
-        ["ArrowDown", "PageDown", " ", "Spacebar"].includes(e.key) &&
-        !/input|textarea/i.test(e.target?.tagName || "")
-      ) {
-        e.preventDefault();
-        goRest();
-      }
-    };
+    // No wheel / touch / key hijacking: the page scrolls natively (Lenis smooths it), up and down.
     const onResize = () => {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(start, 150);
@@ -295,17 +310,25 @@ export default function HomeBrandHero() {
     start();
     if (document.fonts?.ready) document.fonts.ready.then(start).catch(() => {});
 
-    heroEl.addEventListener("mousemove", onMove);
-    window.addEventListener("wheel", onWheel, { passive: false });
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
-    window.addEventListener("keydown", onKey);
+    heroEl.addEventListener("mousemove", onMove, { passive: true });
     window.addEventListener("resize", onResize);
 
+    const io = typeof IntersectionObserver !== "undefined"
+      ? new IntersectionObserver(([entry]) => {
+          visible = entry.isIntersecting;
+          if (visible) kick();
+        })
+      : null;
+    io?.observe(heroEl);
+    const onVis = () => {
+      if (!document.hidden) kick();
+    };
+    document.addEventListener("visibilitychange", onVis);
+
     if (!reduce) {
-      intervals.push(setInterval(tick, 140));
+      intervals.push(setInterval(() => visible && !document.hidden && tick(), 140));
       timeouts.push(setTimeout(runWave, 1400));
-      intervals.push(setInterval(runWave, 9000));
+      intervals.push(setInterval(() => visible && !document.hidden && runWave(), 9000));
     }
 
     goRestRef.current = goRest;
@@ -316,14 +339,35 @@ export default function HomeBrandHero() {
       timeouts.forEach(clearTimeout);
       clearTimeout(resizeTimer);
       heroEl.removeEventListener("mousemove", onMove);
-      window.removeEventListener("wheel", onWheel);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", onResize);
+      document.removeEventListener("visibilitychange", onVis);
+      io?.disconnect();
       goRestRef.current = () => {};
     };
   }, []);
+
+  // Scroll-linked exit: the lockup drifts up and fades, the dots dim, the cue disappears.
+  // Scrubbed by scroll position (both directions), so it never fights the user's wheel.
+  useEffect(() => {
+    const heroEl = heroRef.current;
+    if (!heroEl || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return undefined;
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({
+        defaults: { ease: "none" },
+        scrollTrigger: { trigger: heroEl, start: "top top", end: "bottom top", scrub: 0.6 },
+      });
+      tl.to(lockupRef.current, { yPercent: -60, scale: 0.9, autoAlpha: 0, force3D: true }, 0)
+        .to(canvasRef.current, { autoAlpha: 0.25, scale: 1.06, force3D: true }, 0)
+        .to(cueRef.current, { autoAlpha: 0 }, 0)
+        .to(navRef.current, { autoAlpha: 0, y: -16 }, 0.1);
+      gsap.from(lockupRef.current, { autoAlpha: 0, y: 24, scale: 0.97, duration: 1.1, ease: "power3.out", delay: 0.1 });
+      gsap.from(cueRef.current, { autoAlpha: 0, duration: 0.8, ease: "power2.out", delay: 0.8 });
+    }, heroEl);
+    return () => {
+      ctx.revert();
+      ScrollTrigger.refresh();
+    };
+  }, [gsap, ScrollTrigger]);
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -334,6 +378,7 @@ export default function HomeBrandHero() {
       id="sfy-hero"
       aria-label="Searchify"
     >
+      <canvas ref={canvasRef} className="sf-brand-canvas" aria-hidden="true" />
       <nav ref={navRef} className="sf-brand-hero-nav" aria-label="Main">
         <Link className="sf-brand-hero-brand" href="#top" aria-label="Searchify home" onClick={closeMenu}>
           <SearchifyMark />
@@ -382,6 +427,7 @@ export default function HomeBrandHero() {
 
       <button
         type="button"
+        ref={cueRef}
         className="sf-brand-cue"
         aria-label="Scroll to the next section"
         onClick={() => goRestRef.current()}
