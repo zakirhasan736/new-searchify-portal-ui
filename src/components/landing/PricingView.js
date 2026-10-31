@@ -15,9 +15,15 @@ import "@/styles/v8-pricing.css";
 
 const FALLBACK_EARLY = {
   total: 100,
-  claimed: 63,
-  claimedThisWeek: 12,
-  lastClaimed: "2 hrs",
+  claimed: 0,
+  left: 100,
+  claimedThisWeek: 0,
+  lastClaimed: "No claims yet",
+  offersReceived: 0,
+  offerOpen: true,
+  spotsHeadline: "100 of 100 spots left",
+  claimedLabel: "0 CLAIMED",
+  totalLabel: "100 SPOTS TOTAL",
   proListMo: 99,
   proLaunchMo: 79,
 };
@@ -195,20 +201,24 @@ export default function PricingView({ embedded = false, onboarding = false }) {
 
   const applyEarly = (raw) => {
     if (!raw || typeof raw !== "object") return;
+    const total = Number(raw.total) || FALLBACK_EARLY.total;
+    const claimed = Math.max(0, Math.min(total, Number(raw.claimed) || 0));
+    const left = raw.left != null ? Math.max(0, Number(raw.left)) : Math.max(0, total - claimed);
     setEarly({
       ...FALLBACK_EARLY,
       ...raw,
-      total: Number(raw.total) || FALLBACK_EARLY.total,
-      claimed: Number(raw.claimed) || 0,
+      total,
+      claimed,
+      left,
       claimedThisWeek: Number(raw.claimedThisWeek) || 0,
-      lastClaimed: raw.lastClaimed || FALLBACK_EARLY.lastClaimed,
+      lastClaimed: raw.lastClaimed || (claimed ? FALLBACK_EARLY.lastClaimed : "No claims yet"),
       proListMo: Number(raw.proListMo) || FALLBACK_EARLY.proListMo,
       proLaunchMo: Number(raw.proLaunchMo) || FALLBACK_EARLY.proLaunchMo,
-      left: raw.left != null ? Number(raw.left) : undefined,
-      offersReceived: raw.offersReceived != null ? Number(raw.offersReceived) : undefined,
-      spotsHeadline: raw.spotsHeadline || "",
-      claimedLabel: raw.claimedLabel || "",
-      totalLabel: raw.totalLabel || "",
+      offersReceived: raw.offersReceived != null ? Number(raw.offersReceived) : claimed,
+      offerOpen: raw.offerOpen != null ? Boolean(raw.offerOpen) : left > 0,
+      spotsHeadline: raw.spotsHeadline || `${left} of ${total} spots left`,
+      claimedLabel: raw.claimedLabel || `${claimed} CLAIMED`,
+      totalLabel: raw.totalLabel || `${total} SPOTS TOTAL`,
       live: raw.live !== false,
     });
   };
@@ -450,13 +460,23 @@ export default function PricingView({ embedded = false, onboarding = false }) {
             <div className="v8-pricing-early-copy">
               <p className="v8-pricing-early-live">
                 <span className="v8-pricing-pulse" aria-hidden="true" />
-                EARLY LAUNCH PRICING · LIVE
+                {early.offerOpen === false ? "EARLY LAUNCH PRICING · FULL" : "EARLY LAUNCH PRICING · LIVE"}
               </p>
               <h2 key={spotsHeadline}>{spotsHeadline}</h2>
               <p>
-                The first {totalSpots} customers lock in{" "}
-                <strong>Pro at {money(early.proLaunchMo)}</strong> instead of {money(early.proListMo)}, for as long as
-                they stay subscribed. And Solo is <strong>free for your first month</strong>.
+                {early.offerOpen === false ? (
+                  <>
+                    All {totalSpots} founding spots are taken. New Pro plans are{" "}
+                    <strong>{money(early.proListMo)}</strong> a month. Solo is still{" "}
+                    <strong>free for your first month</strong>.
+                  </>
+                ) : (
+                  <>
+                    The first {totalSpots} customers lock in{" "}
+                    <strong>Pro at {money(early.proLaunchMo)}</strong> instead of {money(early.proListMo)}, for as long
+                    as they stay subscribed. And Solo is <strong>free for your first month</strong>.
+                  </>
+                )}
               </p>
             </div>
             <div className="v8-pricing-early-stats">
@@ -472,7 +492,7 @@ export default function PricingView({ embedded = false, onboarding = false }) {
                   {early.lastClaimed}
                   <span className="v8-pricing-caret" aria-hidden="true" />
                 </p>
-                <span>since the last spot was claimed</span>
+                <span>{claimed ? "since the last spot was claimed" : "waiting for the first claim"}</span>
               </div>
             </div>
           </div>
