@@ -38,3 +38,32 @@ export async function requestEnterpriseQuote({ email, sites, note = "" }) {
     }),
   );
 }
+
+export async function cancelSubscription({ reason = "", detail = "", note = "" } = {}) {
+  return json(
+    await fetch("/api/v1/billing/cancel", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ reason, detail, note }),
+    }),
+  );
+}
+
+export async function reactivateSubscription() {
+  return json(
+    await fetch("/api/v1/billing/reactivate", {
+      method: "POST",
+      headers: authHeaders(),
+    }),
+  );
+}
+
+export async function takeRetentionOffer({ action, reason = "", detail = "", note = "" }) {
+  return json(
+    await fetch("/api/v1/billing/retention", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ action, reason, detail, note }),
+    }),
+  );
+}

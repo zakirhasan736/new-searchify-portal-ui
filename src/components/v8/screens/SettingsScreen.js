@@ -581,9 +581,9 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
                   .
                 </p>
               </div>
-              <a href="mailto:support@searchify.io?subject=Cancel%20subscription" style={{ alignSelf: 'flex-start', minHeight: '40px', padding: '0 12px', border: 0, background: 'transparent', color: '#9AA1AB', fontSize: '13px', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center' }}>
+              <Link href="/app/cancel" style={{ alignSelf: 'flex-start', minHeight: '40px', padding: '0 12px', border: 0, background: 'transparent', color: '#9AA1AB', fontSize: '13px', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center' }}>
                 Cancel subscription
-              </a>
+              </Link>
             </div>
           )}
         </section>
