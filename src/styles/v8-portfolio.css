@@ -1,3 +1,4 @@
+/* Exact Portfolio.dc.html / presentation/Portfolio.html helpers */
 @keyframes sfy-flicker {
   0%,
   100% {
@@ -7,30 +8,31 @@
     opacity: 0.5;
   }
 }
-.v8-pf-go:hover {
+.pf-go:hover {
   background: #7dbbff !important;
 }
-.v8-pf-pair {
+.pf-pair {
   display: flex;
   gap: 12px;
   align-items: stretch;
 }
-.v8-pf-arrow {
+.pf-arrow {
   flex: none;
   display: grid;
   place-items: center;
   color: #4da3ff;
 }
 @media (max-width: 760px) {
-  .v8-pf-pair {
+  .pf-pair {
     flex-direction: column !important;
   }
-  .v8-pf-arrow {
+  .pf-arrow {
     transform: rotate(90deg);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .v8-pf-dot {
+  * {
     animation: none !important;
+    transition: none !important;
   }
 }

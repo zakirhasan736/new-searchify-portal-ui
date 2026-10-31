@@ -50,6 +50,9 @@ function hostOf(site) {
 
 function isOn(pathname, item) {
   if (item.exact) return pathname === item.href;
+  // Cancel flow lives under Settings → Plan and billing.
+  if (item.id === "settings" && pathname === "/app/cancel") return true;
+  if (item.id === "billing" && pathname === "/app/cancel") return false;
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 

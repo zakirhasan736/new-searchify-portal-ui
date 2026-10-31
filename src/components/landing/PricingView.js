@@ -361,6 +361,23 @@ export default function PricingView({ embedded = false, onboarding = false }) {
                 {" · "}
                 {account.billing === "annual" ? "billed yearly" : "billed monthly"}
                 {account.status === "trial" ? ` · ${account.trialDays || 30}-day free month` : ""}
+                {account.status === "cancelled" ? ` · cancelled until ${account.paidThroughLabel || "period end"}` : ""}
+                {account.status === "paused" ? ` · paused` : ""}
+                {account.status !== "cancelled" ? (
+                  <>
+                    {" · "}
+                    <Link href="/app/cancel" style={{ color: "#9AA1AB", textDecoration: "underline" }}>
+                      Cancel
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    {" · "}
+                    <Link href="/app/cancel" style={{ color: "#4DA3FF", textDecoration: "underline" }}>
+                      Changed my mind
+                    </Link>
+                  </>
+                )}
               </>
             ) : (
               "Loading your plan…"
@@ -373,7 +390,7 @@ export default function PricingView({ embedded = false, onboarding = false }) {
           </Link>
         )}
         <Link
-          href={onboarding ? "/app/start" : embedded ? "/app/settings" : userIsAuthenticated() ? "/app" : "/login"}
+          href={onboarding ? "/app/start" : embedded ? "/app/settings?tab=billing" : userIsAuthenticated() ? "/app" : "/login"}
           className="v8-pricing-back"
         >
           {onboarding ? "Back" : embedded ? "Settings" : userIsAuthenticated() ? "Back to app" : "Sign in"}

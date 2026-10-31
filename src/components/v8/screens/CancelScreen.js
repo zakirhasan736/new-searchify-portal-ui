@@ -196,8 +196,34 @@ export default function CancelScreen() {
       return;
     }
     getBillingAccount().then((res) => {
-      if (res.ok) setAccount(res.data);
-      else setAccount({ name: "Pro", planId: "pro", priceMo: 79, founding: true, paidThroughLabel: "soon", joinedLabel: "recently", business: "Your workspace", movesShipped: 0, email: "", since: [] });
+      if (res.ok) {
+        setAccount(res.data);
+        if (res.data?.status === "cancelled") {
+          setStep("done");
+          if (res.data?.cancel?.reason) setReasonId(res.data.cancel.reason);
+          if (res.data?.cancel?.detail) setDetail(res.data.cancel.detail);
+          if (res.data?.cancel?.note) setNote(res.data.cancel.note);
+        } else if (res.data?.status === "paused") {
+          setSaved({
+            title: "Your plan is paused.",
+            body: `No charges from ${res.data.paidThroughLabel || "your next renewal"}. You can restart any time, or continue cancelling below.`,
+          });
+          setStep("saved");
+        }
+      } else {
+        setAccount({
+          name: "Pro",
+          planId: "pro",
+          priceMo: 79,
+          founding: true,
+          paidThroughLabel: "soon",
+          joinedLabel: "recently",
+          business: "Your workspace",
+          movesShipped: 0,
+          email: "",
+          since: [],
+        });
+      }
     });
   }, [router]);
 

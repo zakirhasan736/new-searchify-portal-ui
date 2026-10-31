@@ -16,6 +16,7 @@ import { initials, planDisplayName } from '@/lib/v8LiveData';
 import { loadJourney, planById } from '@/lib/journey';
 import { SkeletonCard } from '@/components/v8/SkeletonWave';
 import { authHeaders } from '@/utils/users/Helpers';
+import { getBillingAccount } from '@/lib/billingApi';
 import Modal from '@/components/account/Modal';
 import PasswordChangeForm from '@/components/account/PasswordChangeForm';
 import '@/styles/v8-screens.css';
@@ -61,7 +62,15 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
   const [winningCount, setWinningCount] = useState(0);
   const [addPageOpen, setAddPageOpen] = useState(false);
   const [newPage, setNewPage] = useState('');
-  const [billing, setBilling] = useState({ plan: 'Starter', planId: 'starter', sitesUsed: 0, siteLimit: 5, renewNote: 'renews monthly' });
+  const [billing, setBilling] = useState({
+    plan: 'Starter',
+    planId: 'starter',
+    sitesUsed: 0,
+    siteLimit: 5,
+    renewNote: 'renews monthly',
+    status: 'active',
+    paidThroughLabel: '',
+  });
   const [scanHours, setScanHours] = useState(6);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState('');
@@ -72,6 +81,18 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
       setTab(initialTab);
     }
   }, [initialTab]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const url = new URL(window.location.href);
+      if (tab && tab !== 'auto') url.searchParams.set('tab', tab);
+      else url.searchParams.delete('tab');
+      window.history.replaceState({}, '', `${url.pathname}${url.search}`);
+    } catch {
+      /* ignore */
+    }
+  }, [tab]);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,8 +109,9 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
       getProductWorkspace({ force: true }).catch(() => ({ ok: false })),
       getProductUsage().catch(() => ({ ok: false })),
       listChanges({ force: true }).catch(() => ({ ok: false })),
+      getBillingAccount().catch(() => ({ ok: false })),
     ])
-      .then(([acct, biz, ws, usage, chRes]) => {
+      .then(([acct, biz, ws, usage, chRes, bill]) => {
         if (cancelled) return;
         const journey = loadJourney();
         const bizProfile = biz?.ok ? biz.data?.profile || biz.data || {} : {};
@@ -126,15 +148,24 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
         setPeople(mappedPeople);
 
         const u = usage.ok ? usage.data : ws.data?.usage || {};
-        const planId = u.plan || journey.planId || 'starter';
+        const billOk = bill?.ok ? bill.data : null;
+        const planId = billOk?.planId || u.plan || journey.planId || 'starter';
         const planMeta = planById(planId);
-        const sitesUsed = u.sites ?? ws.data?.sites?.length ?? 0;
+        const sitesUsed = billOk?.sitesUsed ?? u.sites ?? ws.data?.sites?.length ?? 0;
+        const status = billOk?.status || 'active';
+        const paidLabel = billOk?.paidThroughLabel || '';
+        let renewNote = u.resetsOn ? `renews ${u.resetsOn}` : 'renews monthly';
+        if (status === 'cancelled' && paidLabel) renewNote = `cancelled · access until ${paidLabel}`;
+        else if (status === 'paused' && paidLabel) renewNote = `paused · resumes after ${paidLabel}`;
+        else if (paidLabel) renewNote = `paid through ${paidLabel}`;
         setBilling({
-          plan: planDisplayName(planId) || planMeta?.name || 'Starter',
+          plan: billOk?.name || planDisplayName(planId) || planMeta?.name || 'Starter',
           planId,
           sitesUsed,
-          siteLimit: u.limit || planMeta?.sites || 5,
-          renewNote: u.resetsOn ? `renews ${u.resetsOn}` : 'renews monthly',
+          siteLimit: billOk?.siteLimit || u.limit || planMeta?.sites || 5,
+          renewNote,
+          status,
+          paidThroughLabel: paidLabel,
         });
         if (u.scanHours) setScanHours(u.scanHours);
         if (u.scansPaused && !local.autonomy) setLevel('pause');
@@ -581,9 +612,59 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
                   .
                 </p>
               </div>
-              <Link href="/app/cancel" style={{ alignSelf: 'flex-start', minHeight: '40px', padding: '0 12px', border: 0, background: 'transparent', color: '#9AA1AB', fontSize: '13px', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center' }}>
-                Cancel subscription
-              </Link>
+              {billing.status === 'cancelled' ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 12,
+                    alignItems: 'center',
+                    padding: '14px 16px',
+                    borderRadius: 14,
+                    background: 'rgba(255,90,78,.08)',
+                    border: '1px solid rgba(255,90,78,.35)',
+                  }}
+                >
+                  <span style={{ flex: '1 1 220px', fontSize: 14, color: '#FF8A80' }}>
+                    Subscription cancelled{billing.paidThroughLabel ? ` · access until ${billing.paidThroughLabel}` : ''}.
+                  </span>
+                  <Link
+                    href="/app/cancel"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      minHeight: 40,
+                      padding: '0 14px',
+                      borderRadius: 11,
+                      background: '#4DA3FF',
+                      color: '#0A0B0D',
+                      textDecoration: 'none',
+                      fontSize: 13,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Changed my mind
+                  </Link>
+                </div>
+              ) : (
+                <Link
+                  href="/app/cancel"
+                  style={{
+                    alignSelf: 'flex-start',
+                    minHeight: 40,
+                    padding: '0 12px',
+                    border: 0,
+                    background: 'transparent',
+                    color: '#9AA1AB',
+                    fontSize: 13,
+                    textDecoration: 'underline',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  Cancel subscription
+                </Link>
+              )}
             </div>
           )}
         </section>
