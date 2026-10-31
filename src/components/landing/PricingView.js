@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import SearchifyMark from "@/components/landing/SearchifyMark";
 import { V8Button, V8Field, V8Segmented } from "@/components/v8/primitives";
-import { getBillingAccount, getBillingCatalog, startCheckout } from "@/lib/billingApi";
+import { getBillingAccount, getBillingCatalog } from "@/lib/billingApi";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
-import { PLAN_ALIAS, choosePlan, hydrateJourney, readySites, syncJourneyNow } from "@/lib/journey";
+import { PLAN_ALIAS, choosePlan, hydrateJourney, readySites } from "@/lib/journey";
+import PricingPreview from "@/components/landing/PricingPreview";
 import { getUser, userIsAuthenticated } from "@/utils/users/Helpers";
 import "@/styles/v8-kit.css";
 import "@/styles/v8-pricing.css";
@@ -187,58 +188,92 @@ export default function PricingView({ embedded = false, onboarding = false }) {
   const [live, setLive] = useState(false);
   const [account, setAccount] = useState(null);
   const [email, setEmail] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
   const [openFaq, setOpenFaq] = useState(0);
   const [tip, setTip] = useState(null);
   const yearly = period === "year";
 
+  const applyCatalog = (data) => {
+    if (Array.isArray(data?.plans) && data.plans.length) {
+      setDefs(
+        data.plans.map((p) => ({
+          id: p.id,
+          name: p.name,
+          tag: p.tag,
+          sites: p.sites,
+          mo: Number(p.mo) || 0,
+          listMo: p.listMo != null ? Number(p.listMo) : undefined,
+          freeMonth: Boolean(p.freeMonth),
+          founding: Boolean(p.founding),
+          popular: Boolean(p.popular),
+          features: Array.isArray(p.features) ? p.features : [],
+        })),
+      );
+    }
+    if (data?.earlyLaunch) {
+      setEarly({
+        ...FALLBACK_EARLY,
+        ...data.earlyLaunch,
+        total: Number(data.earlyLaunch.total) || FALLBACK_EARLY.total,
+        claimed: Number(data.earlyLaunch.claimed) || 0,
+        claimedThisWeek: Number(data.earlyLaunch.claimedThisWeek) || 0,
+        lastClaimed: data.earlyLaunch.lastClaimed || FALLBACK_EARLY.lastClaimed,
+        proListMo: Number(data.earlyLaunch.proListMo) || FALLBACK_EARLY.proListMo,
+        proLaunchMo: Number(data.earlyLaunch.proLaunchMo) || FALLBACK_EARLY.proLaunchMo,
+        left: data.earlyLaunch.left != null ? Number(data.earlyLaunch.left) : undefined,
+        spotsHeadline: data.earlyLaunch.spotsHeadline || "",
+        claimedLabel: data.earlyLaunch.claimedLabel || "",
+        totalLabel: data.earlyLaunch.totalLabel || "",
+      });
+    }
+    if (data?.managed) setManaged({ ...FALLBACK_MANAGED, ...data.managed });
+    setLive(Boolean(data?.live ?? true));
+  };
+
   useEffect(() => {
     const mail = userEmail();
     if (mail && mail.includes("@")) setEmail(mail);
-    getBillingCatalog()
-      .then((res) => {
-        if (res.ok && Array.isArray(res.data?.plans) && res.data.plans.length) {
-          setDefs(
-            res.data.plans.map((p) => ({
-              id: p.id,
-              name: p.name,
-              tag: p.tag,
-              sites: p.sites,
-              mo: Number(p.mo) || 0,
-              listMo: p.listMo != null ? Number(p.listMo) : undefined,
-              freeMonth: Boolean(p.freeMonth),
-              founding: Boolean(p.founding),
-              popular: Boolean(p.popular),
-              features: Array.isArray(p.features) ? p.features : [],
-            })),
-          );
-          if (res.data.earlyLaunch) setEarly({ ...FALLBACK_EARLY, ...res.data.earlyLaunch });
-          if (res.data.managed) setManaged({ ...FALLBACK_MANAGED, ...res.data.managed });
-          setLive(Boolean(res.data.live));
-        } else {
-          setLive(true);
-        }
-      })
-      .catch(() => setLive(true));
+    let cancelled = false;
+    const loadCatalog = () =>
+      getBillingCatalog()
+        .then((res) => {
+          if (cancelled) return;
+          if (res.ok && res.data) applyCatalog(res.data);
+          else setLive(true);
+        })
+        .catch(() => {
+          if (!cancelled) setLive(true);
+        });
+    loadCatalog();
+    // Keep early-launch counter live while the pricing page is open.
+    const timer = window.setInterval(loadCatalog, 30000);
     if (onboarding && userIsAuthenticated()) {
       hydrateJourney({ force: true }).then(() => {
         if (!readySites().length) router.replace("/app/start");
       });
     }
-    if (!userIsAuthenticated()) return;
-    getBillingAccount().then((res) => {
-      if (!res.ok || !res.data?.planId) return;
-      setAccount(res.data);
-      setPick(res.data.planId);
-      if (res.data.billing === "annual") setPeriod("year");
-      if (res.data.email && String(res.data.email).includes("@")) setEmail(res.data.email);
-    });
+    if (userIsAuthenticated()) {
+      getBillingAccount().then((res) => {
+        if (!res.ok || !res.data?.planId || cancelled) return;
+        setAccount(res.data);
+        setPick(res.data.planId);
+        if (res.data.billing === "annual") setPeriod("year");
+        if (res.data.email && String(res.data.email).includes("@")) setEmail(res.data.email);
+      });
+    }
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, [onboarding, router]);
 
-  const claimed = Math.max(0, Math.min(Number(early.total) || 100, Number(early.claimed) || 0));
-  const left = (Number(early.total) || 100) - claimed;
+  const totalSpots = Math.max(1, Number(early.total) || 100);
+  const claimed = Math.max(0, Math.min(totalSpots, Number(early.claimed) || 0));
+  const left = early.left != null ? Math.max(0, Number(early.left)) : totalSpots - claimed;
+  const claimedPct = Math.max(0, Math.min(100, Math.round((claimed / totalSpots) * 100)));
+  const spotsHeadline = early.spotsHeadline || `${left} of ${totalSpots} spots left`;
+  const claimedLabel = early.claimedLabel || `${claimed} CLAIMED`;
+  const totalLabel = early.totalLabel || `${totalSpots} SPOTS TOTAL`;
 
   const plans = useMemo(
     () =>
@@ -293,50 +328,31 @@ export default function PricingView({ embedded = false, onboarding = false }) {
     account?.planId === chosen?.id &&
     (yearly ? account.billing === "annual" : account.billing !== "annual");
 
-  const checkout = async () => {
+  const goCheckout = () => {
     setErr("");
-    setMsg("");
     const mail = email.trim();
-    if (!mail.includes("@")) {
+    // Pricing.html → Checkout.html. Email can be finished on the checkout page.
+    if (mail && !mail.includes("@")) {
       setErr("Enter a work email to continue.");
       return;
     }
-    // Public + onboarding go through the full Checkout.dc.html flow (Stripe stub).
-    if (!embedded) {
-      const q = new URLSearchParams({
-        plan: pick,
-        billing: yearly ? "annual" : "monthly",
-        email: mail,
-      });
-      router.push(`/checkout?${q}`);
-      return;
+    if (alreadyOn) return;
+    if (embedded) {
+      const canonical = PLAN_ALIAS[pick] || pick;
+      const path = choosePlan(canonical, yearly ? "annual" : "monthly");
+      if (!path) {
+        setErr("That plan cannot cover the websites already in this workspace. Remove a site or pick a larger plan.");
+        return;
+      }
     }
-    setBusy(true);
-    await hydrateJourney();
-    const canonical = PLAN_ALIAS[pick] || pick;
-    const path = choosePlan(canonical, yearly ? "annual" : "monthly");
-    if (!path) {
-      setBusy(false);
-      setErr("That plan cannot cover the websites already in this workspace. Remove a site or pick a larger plan.");
-      return;
-    }
-    const res = await startCheckout({
-      planId: pick,
+    const q = new URLSearchParams({
+      plan: pick === "premium" ? "agency" : pick,
       billing: yearly ? "annual" : "monthly",
-      email: mail,
     });
-    await syncJourneyNow();
-    setBusy(false);
-    if (!res.ok) {
-      setErr(res.data?.detail || "Could not start checkout. Try again.");
-      return;
-    }
-    setMsg(res.data?.detail || "Plan selected.");
-    const fresh = await getBillingAccount();
-    if (fresh.ok && fresh.data?.planId) {
-      setAccount(fresh.data);
-      setPick(fresh.data.planId);
-    }
+    if (mail.includes("@")) q.set("email", mail);
+    if (onboarding) q.set("from", "plans");
+    if (embedded) q.set("from", "billing");
+    router.push(`/checkout?${q}`);
   };
 
   return (
@@ -413,11 +429,9 @@ export default function PricingView({ embedded = false, onboarding = false }) {
                 <span className="v8-pricing-pulse" aria-hidden="true" />
                 EARLY LAUNCH PRICING · LIVE
               </p>
-              <h2>
-                {left} of {early.total} spots left
-              </h2>
+              <h2>{spotsHeadline}</h2>
               <p>
-                The first {early.total} customers lock in{" "}
+                The first {totalSpots} customers lock in{" "}
                 <strong>Pro at {money(early.proLaunchMo)}</strong> instead of {money(early.proListMo)}, for as long as
                 they stay subscribed. And Solo is <strong>free for your first month</strong>.
               </p>
@@ -444,14 +458,14 @@ export default function PricingView({ embedded = false, onboarding = false }) {
             role="progressbar"
             aria-label="Early launch spots claimed"
             aria-valuemin={0}
-            aria-valuemax={early.total}
+            aria-valuemax={totalSpots}
             aria-valuenow={claimed}
           >
-            <div className="v8-pricing-bar-fill" style={{ width: `${claimed}%` }} />
+            <div className="v8-pricing-bar-fill" style={{ width: `${claimedPct}%` }} />
           </div>
           <div className="v8-pricing-bar-labels">
-            <span>{claimed} CLAIMED</span>
-            <span>{early.total} SPOTS TOTAL</span>
+            <span>{claimedLabel}</span>
+            <span>{totalLabel}</span>
           </div>
         </div>
       </section>
@@ -522,7 +536,6 @@ export default function PricingView({ embedded = false, onboarding = false }) {
                 onClick={() => {
                   setPick(pl.id);
                   setErr("");
-                  setMsg("");
                 }}
               >
                 {pl.on && account?.planId === pl.id ? "Current plan" : pl.on ? "Selected" : `Choose ${pl.name}`}
@@ -563,6 +576,13 @@ export default function PricingView({ embedded = false, onboarding = false }) {
           Talk to Sovereign Standard
         </a>
       </article>
+
+      <PricingPreview
+        planId={pick === "premium" ? "agency" : pick}
+        planName={chosen?.name || "Pro"}
+        onPickPlan={(id) => setPick(id === "agency" ? "premium" : id)}
+        plans={defs.map((d) => ({ id: d.id === "premium" ? "agency" : d.id, name: d.name }))}
+      />
 
       <section className="v8-wrap v8-pricing-expect" aria-labelledby="exp-h">
         <p className="v8-pricing-expect-eyebrow">Honest expectations</p>
@@ -626,21 +646,8 @@ export default function PricingView({ embedded = false, onboarding = false }) {
             {err}
           </p>
         ) : null}
-        {msg ? (
-          <p role="status" style={{ margin: 0, color: "#3DDC84", fontSize: 14 }}>
-            {msg}
-          </p>
-        ) : null}
-        <V8Button type="button" variant="primary" className="v8-pricing-full" disabled={busy || alreadyOn} onClick={checkout}>
-          {busy
-            ? chosen?.freeMonth
-              ? "Starting free month…"
-              : "Starting…"
-            : alreadyOn
-              ? "You're on this plan"
-              : embedded
-                ? `Switch to ${chosen?.name}`
-                : "Continue to secure checkout"}
+        <V8Button type="button" variant="primary" className="v8-pricing-full" disabled={alreadyOn} onClick={goCheckout}>
+          {alreadyOn ? "You're on this plan" : "Continue to secure checkout"}
         </V8Button>
         <span className="v8-pricing-fine">{orderFoot}</span>
       </section>

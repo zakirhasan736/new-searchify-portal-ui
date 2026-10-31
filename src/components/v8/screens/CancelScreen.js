@@ -12,11 +12,27 @@ import {
 import { userIsAuthenticated } from "@/utils/users/Helpers";
 import "@/styles/v8-cancel.css";
 
-function buildReasons({ soloMo, paidThroughLabel, launchMo, listMo }) {
+/** Exact metric cards from Cancel.html when live since-data is empty. */
+const DESIGN_SINCE = [
+  { label: "Clicks from Google / month", from: "1,240", to: "2,035", change: "+64%" },
+  { label: "Average position", from: "18.4", to: "9.7", change: "Up 8.7 spots, onto page 1" },
+  { label: "Pages at Great or Excellent", from: "0", to: "6", change: "6 pages reached the goal" },
+  { label: "Pages Google has found", from: "71", to: "96", change: "+25 pages now showing" },
+];
+
+function buildReasons({ soloMo, paidThroughLabel, movesShipped }) {
   const solo = soloMo || 49;
-  const launch = launchMo || 79;
-  const list = listMo || 99;
   const when = paidThroughLabel || "your next renewal";
+  const measured = Math.max(0, Number(movesShipped) || 0);
+  const resultsTitle =
+    measured > 0
+      ? `${measured} of your changes are still being measured.`
+      : "Give the changes time to land.";
+  const resultsBody =
+    measured > 0
+      ? `Most changes take about 28 days to show up in Google. Staying through ${when} gives your first results window a fair shot.`
+      : `Most changes take about 28 days to show up in Google. Staying through ${when} gives your first results window a fair shot.`;
+
   return [
     {
       id: "price",
@@ -64,8 +80,8 @@ function buildReasons({ soloMo, paidThroughLabel, launchMo, listMo }) {
       id: "results",
       label: "I’m not seeing results",
       hint: "Rankings or traffic haven’t moved",
-      title: "Give the changes time to land.",
-      body: `Most changes take about 28 days to show up in Google. Staying through ${when} gives your first results window a fair shot.`,
+      title: resultsTitle,
+      body: resultsBody,
       offers: [
         {
           action: "free_month",
@@ -86,7 +102,7 @@ function buildReasons({ soloMo, paidThroughLabel, launchMo, listMo }) {
       label: "Reviewing moves takes too long",
       hint: "I don’t have time to approve everything",
       title: "Let Searchify handle the small stuff on its own.",
-      body: "Most approvals are titles, descriptions and internal links. Those can ship without you, still checked live and undoable.",
+      body: "Most of your approvals were titles, descriptions and internal links. Those can ship without you, still checked live and undoable.",
       offers: [
         {
           action: "autopilot",
@@ -162,8 +178,7 @@ function buildReasons({ soloMo, paidThroughLabel, launchMo, listMo }) {
       body: "If there’s anything we can do, we will.",
       offers: [],
     },
-    { id: "_meta", launch, list },
-  ].filter((r) => r.id !== "_meta");
+  ];
 }
 
 function FactIcon({ kind }) {
@@ -177,6 +192,11 @@ function FactIcon({ kind }) {
       </svg>
     </span>
   );
+}
+
+function joinedShort(label) {
+  if (!label) return "";
+  return String(label).replace(/, \d{4}$/, "");
 }
 
 export default function CancelScreen() {
@@ -206,7 +226,7 @@ export default function CancelScreen() {
         } else if (res.data?.status === "paused") {
           setSaved({
             title: "Your plan is paused.",
-            body: `No charges from ${res.data.paidThroughLabel || "your next renewal"}. You can restart any time, or continue cancelling below.`,
+            body: `No charges from ${res.data.paidThroughLabel || "your next renewal"}. We’ll email you a week before it restarts, and you can restart early any time.`,
           });
           setStep("saved");
         }
@@ -215,13 +235,14 @@ export default function CancelScreen() {
           name: "Pro",
           planId: "pro",
           priceMo: 79,
+          listMo: 99,
           founding: true,
-          paidThroughLabel: "soon",
-          joinedLabel: "recently",
-          business: "Your workspace",
-          movesShipped: 0,
+          paidThroughLabel: "Nov 14",
+          joinedLabel: "Jun 12, 2026",
+          business: "Rivera Digital",
+          movesShipped: 96,
           email: "",
-          since: [],
+          since: DESIGN_SINCE,
         });
       }
     });
@@ -232,8 +253,7 @@ export default function CancelScreen() {
       buildReasons({
         soloMo: 49,
         paidThroughLabel: account?.paidThroughLabel,
-        launchMo: account?.priceMo || 79,
-        listMo: account?.listMo || 99,
+        movesShipped: account?.movesShipped,
       }),
     [account],
   );
@@ -249,7 +269,8 @@ export default function CancelScreen() {
   const planSub = useMemo(() => {
     if (!account) return "";
     const moves = account.movesShipped || 0;
-    const moveBit = moves ? ` · ${moves} moves shipped since ${account.joinedLabel || "you joined"}` : ` · joined ${account.joinedLabel || "recently"}`;
+    const joined = joinedShort(account.joinedLabel) || "you joined";
+    const moveBit = moves ? ` · ${moves} moves shipped since ${joined}` : ` · joined ${joined}`;
     return `${account.business || "Your workspace"} · paid through ${account.paidThroughLabel || "—"}${moveBit}`;
   }, [account]);
 
@@ -259,21 +280,47 @@ export default function CancelScreen() {
     const list = account?.listMo || 99;
     const founding = account?.founding && account?.planId === "pro";
     return [
-      { kind: "ok", title: `You keep everything until ${when}`, body: "Scans, moves and results keep running until the end of the period you paid for. No more charges after that." },
-      { kind: "ok", title: "Every change already live stays on your site", body: "Nothing we shipped is undone. Your pages keep their titles, links and fixes." },
-      { kind: "info", title: `After ${when}, nothing new runs`, body: "No new moves, no ranking checks, and no automatic rollback if something drops." },
+      {
+        kind: "ok",
+        title: `You keep everything until ${when}`,
+        body: "Scans, moves and results keep running until the end of the period you paid for. No more charges after that.",
+      },
+      {
+        kind: "ok",
+        title: "Every change already live stays on your site",
+        body: "Nothing we shipped is undone. Your pages keep their titles, links and fixes.",
+      },
+      {
+        kind: "info",
+        title: `After ${when}, nothing new runs`,
+        body: "No new moves, no ranking checks, and no automatic rollback if something drops.",
+      },
       founding
-        ? { kind: "warn", title: `Your $${price} launch price ends`, body: `Launch pricing is only for the first 100 customers while they stay subscribed. If you come back later, Pro is $${list} a month.` }
-        : { kind: "info", title: "Coming back later", body: "If you resubscribe, you’ll pick up at the current plan price." },
-      { kind: "ok", title: "Your account and history are kept", body: "If you come back, you start where you left off. Want it all deleted instead? Ask us and we’ll do it." },
+        ? {
+            kind: "warn",
+            title: `Your $${price} launch price ends`,
+            body: `Launch pricing is only for the first 100 customers while they stay subscribed. If you come back later, Pro is $${list} a month.`,
+          }
+        : {
+            kind: "info",
+            title: "Coming back later",
+            body: "If you resubscribe, you’ll pick up at the current plan price.",
+          },
+      {
+        kind: "ok",
+        title: "Your account and history are kept",
+        body: "If you come back, you start where you left off. Want it all deleted instead? Ask us and we’ll do it.",
+      },
     ];
   }, [account]);
 
-  const since = Array.isArray(account?.since) ? account.since : [];
+  const liveSince = Array.isArray(account?.since) ? account.since.filter((s) => s?.label) : [];
+  const since = liveSince.length ? liveSince : DESIGN_SINCE;
   const showSteps = step === "why" || step === "offer" || step === "confirm";
   const showSince = step === "why" || step === "confirm";
   const stepOrder = ["why", "offer", "confirm"];
   const stepIdx = stepOrder.indexOf(step);
+  const joined = account?.joinedLabel || "day one";
 
   const goContinue = () => {
     if (!cur) return;
@@ -325,9 +372,13 @@ export default function CancelScreen() {
       return;
     }
     if (res.data) setAccount(res.data);
+    const priceBit =
+      res.data?.founding && res.data?.priceMo
+        ? ` and your $${res.data.priceMo} launch price`
+        : "";
     setSaved({
       title: "Welcome back. Nothing changed.",
-      body: `Your ${res.data?.name || "plan"} and pricing carry on. Next charge is ${res.data?.paidThroughLabel || "at renewal"}.`,
+      body: `Your ${res.data?.name || "plan"} plan${priceBit} carry on. Next charge is ${res.data?.paidThroughLabel || "at renewal"}.`,
     });
     setStep("saved");
   };
@@ -351,7 +402,7 @@ export default function CancelScreen() {
               const on = id === step;
               const past = stepIdx > i;
               return (
-                <li key={id} className={on ? "is-on" : past ? "is-past" : ""} aria-current={on ? "step" : undefined}>
+                <li key={id} className={on ? "is-on" : past ? "is-past" : ""} aria-current={on ? "step" : "false"}>
                   <span>{past ? "✓" : String(i + 1)}</span>
                   {label}
                 </li>
@@ -363,7 +414,7 @@ export default function CancelScreen() {
 
       <div className="v8-cancel-main">
         <div className="v8-cancel-plan">
-          <span style={{ flex: "1 1 260px", display: "flex", flexDirection: "column", gap: 2 }}>
+          <span className="v8-cancel-plan-inner">
             <span className="v8-cancel-plan-title">
               {planLine}
               {account?.founding && account?.planId === "pro" ? <span className="v8-cancel-badge">LAUNCH PRICE</span> : null}
@@ -375,63 +426,62 @@ export default function CancelScreen() {
         {showSince ? (
           <section className="v8-cancel-since" aria-labelledby="since-h">
             <div className="v8-cancel-since-top">
-              <h2 id="since-h">Since you joined{account?.joinedLabel ? ` on ${account.joinedLabel.replace(/, \d{4}$/, "")}` : ""}</h2>
-              <Link href="/app/outcomes">See the full before-and-after</Link>
+              <h2 id="since-h">Since you joined{joinedShort(account?.joinedLabel) ? ` on ${joinedShort(account.joinedLabel)}` : ""}</h2>
+              <Link href="/app/results">See the full before-and-after</Link>
             </div>
-            {since.length ? (
-              <div className="v8-cancel-since-grid">
-                {since.map((s) => (
-                  <div key={s.label} className="v8-cancel-since-card">
-                    <span>{s.label}</span>
-                    <span className="v8-cancel-since-row">
-                      <span className="v8-cancel-since-from">{s.from} →</span>
-                      <span className="v8-cancel-since-to">{s.to}</span>
+            <div className="v8-cancel-since-grid">
+              {since.map((s) => (
+                <div key={s.label} className="v8-cancel-since-card">
+                  <span className="v8-cancel-since-label">{s.label}</span>
+                  <span className="v8-cancel-since-row">
+                    <span className="v8-cancel-since-from">
+                      {s.from} →
                     </span>
-                    <span className="v8-cancel-since-change">{s.change}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="v8-cancel-since-note">
-                Before-and-after numbers appear here once we have a baseline and enough live traffic data for your sites.
-              </p>
-            )}
+                    <span className="v8-cancel-since-to">{s.to}</span>
+                  </span>
+                  <span className="v8-cancel-since-change">{s.change}</span>
+                </div>
+              ))}
+            </div>
             <span className="v8-cancel-since-note">
-              Compared with your starting point saved on {account?.joinedLabel || "day one"}, across your sites, and with the same months last year so seasons don&apos;t skew it.
+              Compared with your starting point saved on {joined}, across your sites, and with the same months last year so seasons don&apos;t skew it.
             </span>
           </section>
         ) : null}
 
         {step === "why" ? (
           <section className="v8-cancel-section" aria-labelledby="why-h">
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="v8-cancel-section-head">
               <h1 id="why-h">Before you go, what&apos;s the main reason?</h1>
               <span className="v8-cancel-lede">
                 Pick the closest one. It takes 20 seconds and it&apos;s the only way we get better. You can cancel on the next screen either way.
               </span>
             </div>
             <div className="v8-cancel-reasons" role="radiogroup" aria-label="Main reason for cancelling">
-              {reasons.map((r) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={reasonId === r.id}
-                  className={`v8-cancel-reason${reasonId === r.id ? " is-on" : ""}`}
-                  onClick={() => {
-                    setReasonId(r.id);
-                    setDetail("");
-                  }}
-                >
-                  <span className="v8-cancel-radio" aria-hidden="true">
-                    <i />
-                  </span>
-                  <span>
-                    <strong>{r.label}</strong>
-                    <span>{r.hint}</span>
-                  </span>
-                </button>
-              ))}
+              {reasons.map((r) => {
+                const on = reasonId === r.id;
+                return (
+                  <button
+                    key={r.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    className={`v8-cancel-reason${on ? " is-on" : ""}`}
+                    onClick={() => {
+                      setReasonId(r.id);
+                      setDetail("");
+                    }}
+                  >
+                    <span className="v8-cancel-radio" aria-hidden="true">
+                      <i />
+                    </span>
+                    <span className="v8-cancel-reason-copy">
+                      <span className="v8-cancel-reason-label">{r.label}</span>
+                      <span className="v8-cancel-reason-hint">{r.hint}</span>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
             {cur?.follow ? (
               <label className="v8-cancel-label">
@@ -440,7 +490,7 @@ export default function CancelScreen() {
               </label>
             ) : null}
             <label className="v8-cancel-label">
-              What would have made you stay? <span style={{ fontSize: 13, color: "#7D848E" }}>Optional. The founder reads every answer.</span>
+              What would have made you stay? <span className="v8-cancel-label-hint">Optional. The founder reads every answer.</span>
               <textarea rows={3} value={note} placeholder="Be blunt. It helps." onChange={(e) => setNote(e.target.value)} />
             </label>
             <div className="v8-cancel-actions">
@@ -448,12 +498,12 @@ export default function CancelScreen() {
                 Keep my plan
               </Link>
               {cur ? (
-                <button type="button" className="v8-cancel-btn" onClick={goContinue}>
+                <button type="button" className="v8-cancel-btn is-secondary" onClick={goContinue}>
                   Continue
                 </button>
               ) : (
                 <>
-                  <button type="button" className="v8-cancel-btn" disabled>
+                  <button type="button" className="v8-cancel-btn is-secondary" aria-disabled="true" disabled>
                     Continue
                   </button>
                   <span className="v8-cancel-hint">Pick a reason to continue</span>
@@ -465,19 +515,24 @@ export default function CancelScreen() {
 
         {step === "offer" && cur ? (
           <section className="v8-cancel-section" aria-labelledby="off-h">
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="v8-cancel-section-head">
               <span className="v8-cancel-said">YOU SAID: {cur.label.toUpperCase()}</span>
               <h1 id="off-h">{cur.title}</h1>
               <span className="v8-cancel-lede">{cur.body}</span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div className="v8-cancel-offers">
               {cur.offers.map((o) => (
                 <div key={o.action + o.label} className="v8-cancel-offer">
-                  <span>
-                    <strong>{o.label}</strong>
-                    <em>{o.desc}</em>
+                  <span className="v8-cancel-offer-copy">
+                    <span className="v8-cancel-offer-label">{o.label}</span>
+                    <span className="v8-cancel-offer-desc">{o.desc}</span>
                   </span>
-                  <button type="button" className="v8-cancel-btn is-primary" style={{ minHeight: 46, padding: "0 18px", fontSize: 14 }} disabled={busy} onClick={() => takeOffer(o)}>
+                  <button
+                    type="button"
+                    className="v8-cancel-btn is-primary is-offer"
+                    disabled={busy}
+                    onClick={() => takeOffer(o)}
+                  >
                     {busy ? "Working…" : o.btn}
                   </button>
                 </div>
@@ -489,7 +544,7 @@ export default function CancelScreen() {
               </p>
             ) : null}
             <div className="v8-cancel-actions">
-              <button type="button" className="v8-cancel-btn" style={{ minHeight: 46, fontSize: 14 }} onClick={() => setStep("why")}>
+              <button type="button" className="v8-cancel-btn is-sm" onClick={() => setStep("why")}>
                 Back
               </button>
               <button type="button" className="v8-cancel-linkbtn" onClick={() => setStep("confirm")}>
@@ -501,7 +556,7 @@ export default function CancelScreen() {
 
         {step === "confirm" ? (
           <section className="v8-cancel-section" aria-labelledby="cf-h">
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="v8-cancel-section-head">
               <h1 id="cf-h">Here&apos;s exactly what happens if you cancel.</h1>
               <span className="v8-cancel-lede">No surprises, no fine print.</span>
             </div>
@@ -509,9 +564,9 @@ export default function CancelScreen() {
               {facts.map((f) => (
                 <li key={f.title}>
                   <FactIcon kind={f.kind} />
-                  <span>
-                    <strong>{f.title}</strong>
-                    <p>{f.body}</p>
+                  <span className="v8-cancel-fact-copy">
+                    <span className="v8-cancel-fact-title">{f.title}</span>
+                    <p className="v8-cancel-fact-body">{f.body}</p>
                   </span>
                 </li>
               ))}
@@ -527,7 +582,7 @@ export default function CancelScreen() {
                 {err}
               </p>
             ) : null}
-            <div className="v8-cancel-actions" style={{ paddingTop: 6 }}>
+            <div className="v8-cancel-actions is-confirm">
               <button type="button" className="v8-cancel-btn is-danger" disabled={busy} onClick={doCancel}>
                 {busy ? "Cancelling…" : "Cancel my subscription"}
               </button>
@@ -536,7 +591,7 @@ export default function CancelScreen() {
               </Link>
               <button
                 type="button"
-                className="v8-cancel-linkbtn"
+                className="v8-cancel-ghost"
                 onClick={() => setStep(cur?.offers?.length ? "offer" : "why")}
               >
                 Back
@@ -547,7 +602,7 @@ export default function CancelScreen() {
 
         {step === "done" ? (
           <section className="v8-cancel-section" aria-labelledby="dn-h" role="status">
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="v8-cancel-section-head">
               <h1 id="dn-h">Your subscription is cancelled.</h1>
               <span className="v8-cancel-lede">
                 Everything keeps working until {account?.paidThroughLabel || "the end of your billing period"}. After that there are no more
@@ -555,11 +610,15 @@ export default function CancelScreen() {
               </span>
             </div>
             <div className="v8-cancel-echo">
-              <span>What you told us</span>
-              <strong>{cur?.label || reasonId || "—"}</strong>
-              {detail ? <p>{(cur?.follow || "").replace(" (optional)", "")} {detail}</p> : null}
-              {note ? <p>“{note}”</p> : null}
-              <span>Thank you. This goes straight to the founder, not a support queue.</span>
+              <span className="v8-cancel-echo-kicker">What you told us</span>
+              <span className="v8-cancel-echo-reason">{cur?.label || reasonId || "—"}</span>
+              {detail ? (
+                <p className="v8-cancel-echo-line">
+                  {(cur?.follow || "").replace(" (optional)", "")} {detail}
+                </p>
+              ) : null}
+              {note ? <p className="v8-cancel-echo-line">“{note}”</p> : null}
+              <span className="v8-cancel-echo-thanks">Thank you. This goes straight to the founder, not a support queue.</span>
             </div>
             {err ? (
               <p className="v8-cancel-err" role="alert">
@@ -570,7 +629,7 @@ export default function CancelScreen() {
               <button type="button" className="v8-cancel-btn is-primary" disabled={busy} onClick={reactivate}>
                 {busy ? "Restoring…" : "Changed my mind, keep my plan"}
               </button>
-              <Link href="/app" className="v8-cancel-btn">
+              <Link href="/app" className="v8-cancel-btn is-secondary">
                 Back to Home
               </Link>
             </div>
@@ -585,11 +644,9 @@ export default function CancelScreen() {
                   <path d="M5 12l5 5 9-10" />
                 </svg>
               </span>
-              <h1 id="sv-h" style={{ fontSize: "clamp(28px, 3.2vw, 38px)" }}>
-                {saved.title}
-              </h1>
+              <h1 id="sv-h">{saved.title}</h1>
             </div>
-            <span style={{ fontSize: 15, color: "#D7DADE", lineHeight: 1.55 }}>{saved.body}</span>
+            <span className="v8-cancel-saved-body">{saved.body}</span>
             <div className="v8-cancel-actions">
               <Link href="/app" className="v8-cancel-btn is-primary">
                 Back to Home

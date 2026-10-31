@@ -142,6 +142,11 @@ export default function CheckoutView() {
   const [survey, setSurvey] = useState("open");
 
   useEffect(() => {
+    setPlan(normalizePlan(params.get("plan")));
+    const b = String(params.get("billing") || "monthly").toLowerCase();
+    setYearly(b === "annual" || b === "year" || b === "yearly");
+    const mailParam = String(params.get("email") || "").trim();
+    if (mailParam.includes("@")) setEmail(mailParam);
     const mail = userEmail();
     if (mail && mail.includes("@")) setEmail(mail);
     const uname = userName();
@@ -157,6 +162,10 @@ export default function CheckoutView() {
       .then((d) => setGoogleOn(Boolean(d?.google)))
       .catch(() => setGoogleOn(false));
   }, [params]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const from = String(params.get("from") || "").toLowerCase();
+  const backHref = from === "billing" ? "/app/billing" : from === "plans" ? "/app/plans" : "/pricing";
+  const backLabel = from === "billing" || from === "plans" ? "Back to plans" : "Back to pricing";
 
   useEffect(() => {
     const regions = REGIONS[country] || REGIONS.OTHER;
@@ -490,7 +499,7 @@ export default function CheckoutView() {
   return (
     <div className="v8-checkout">
       <header className="v8-checkout-head">
-        <Link href="/" className="v8-brand">
+        <Link href={backHref} className="v8-brand">
           <SearchifyMark size={28} />
           <span>searchify</span>
         </Link>
@@ -506,6 +515,9 @@ export default function CheckoutView() {
       <div className="v8-checkout-shell">
         <form className="v8-checkout-form" aria-label="Checkout" onSubmit={submit}>
           <div className="v8-checkout-hero">
+            <Link href={backHref} className="v8-checkout-back">
+              ← {backLabel}
+            </Link>
             <span className="v8-checkout-eyebrow">Almost there.</span>
             <h1>{headline}</h1>
           </div>

@@ -76,6 +76,16 @@
   flex-direction: column;
   gap: 6px;
 }
+.v8-checkout-back {
+  align-self: flex-start;
+  margin-bottom: 8px;
+  color: #9aa1ab !important;
+  text-decoration: none;
+  font-size: 13px;
+}
+.v8-checkout-back:hover {
+  color: #d7dade !important;
+}
 .v8-checkout-card {
   margin: 0;
   padding: 22px;
