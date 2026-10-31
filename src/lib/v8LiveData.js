@@ -174,10 +174,28 @@ export function clientLabelForChange(sites, change) {
   return hit?.label || hit?.name || pathHost;
 }
 
-export function mapWorkspaceSite(site, { queueCount = 0, red = 0, yellow = 0, blue = 0, captured = 0, untapped = 0, broken = false } = {}) {
+export function mapWorkspaceSite(
+  site,
+  {
+    queueCount = 0,
+    red = 0,
+    yellow = 0,
+    green = 0,
+    blue = 0,
+    captured = 0,
+    untapped = 0,
+    broken = false,
+    problem = '',
+    fixes = 0,
+    goalLevel = 0,
+    goalLo = 0,
+    goalHi = 0,
+  } = {},
+) {
   const domain = hostFromUrl(site.siteUrl) || 'example.com';
   const name = site.label || domain;
-  const level = Math.min(6, Math.max(1, 2 + Math.floor((captured || 0) / 200)));
+  const level = Math.min(6, Math.max(1, 2 + Math.floor((captured || 0) / 200) - (red >= 5 ? 1 : 0) + (green >= 10 ? 1 : 0)));
+  const gCount = green || Math.max(0, 8 - red - yellow);
   return {
     name,
     domain,
@@ -186,9 +204,15 @@ export function mapWorkspaceSite(site, { queueCount = 0, red = 0, yellow = 0, bl
     untapped: untapped || Math.max(captured * 4, 500),
     red,
     yellow,
+    green: gCount,
     blue,
     moves: queueCount,
     broken: broken || site.status === 'error' || site.status === 'disconnected',
+    problem: problem || '',
+    fixes: fixes || Math.max(red + yellow, queueCount),
+    goalLevel: goalLevel || Math.min(6, level + 1 + (red > 0 ? 1 : 0)),
+    goalLo: goalLo || Math.max(captured, Math.round(captured * 1.4) || 80),
+    goalHi: goalHi || Math.max(Math.round((untapped || captured * 4) * 0.85), Math.round(captured * 2) || 200),
   };
 }
 
