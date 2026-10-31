@@ -762,11 +762,102 @@ export function featurePayload(res) {
   return res?.data?.payload || res?.data || {};
 }
 
+function rowMatch(row, needle) {
+  return String(row?.[0] || "").toLowerCase().includes(String(needle || "").toLowerCase());
+}
+
+function firstRowValue(rows, needle) {
+  const row = (rows || []).find((item) => rowMatch(item, needle));
+  if (!row) return null;
+  const value = row[1];
+  if (value == null || value === "") return null;
+  return String(value);
+}
+
+/** Read a KPI / vital from PageSpeed site-audit payloads (kpis, panels.audit, vitals, scores, tables). */
 export function featureKpi(payload, labelPart, fallback = "—") {
-  const kpis = payload?.kpis || payload?.panels?.kpis || [];
-  const row = kpis.find((k) => String(k[0] || "").toLowerCase().includes(String(labelPart).toLowerCase()));
-  if (row) return String(row[1]);
+  if (!payload || typeof payload !== "object") return fallback;
+  const needle = String(labelPart || "").toLowerCase();
+  if (!needle) return fallback;
+
+  const fromKpis = firstRowValue(payload.kpis, needle);
+  if (fromKpis != null && fromKpis !== "—") return fromKpis;
+
+  const fromPanelKpis = firstRowValue(payload.panels?.kpis, needle);
+  if (fromPanelKpis != null && fromPanelKpis !== "—") return fromPanelKpis;
+
+  const fromAudit = firstRowValue(payload.panels?.audit, needle);
+  if (fromAudit != null && fromAudit !== "—") return fromAudit;
+
+  const fromOverview = firstRowValue(payload.rows, needle);
+  if (fromOverview != null && fromOverview !== "—") return fromOverview;
+
+  const vitalKey = needle.includes("lcp")
+    ? "LCP"
+    : needle.includes("cls")
+      ? "CLS"
+      : needle.includes("inp") || needle.includes("fid") || needle.includes("interaction")
+        ? "INP"
+        : needle.includes("fcp")
+          ? "FCP"
+          : needle.includes("tbt") || needle.includes("blocking")
+            ? "TBT"
+            : needle.includes("speed index") || needle === "si"
+              ? "SI"
+              : needle.includes("tti") || needle.includes("interactive")
+                ? "TTI"
+                : needle.includes("ttfb")
+                  ? "TTFB"
+                  : "";
+
+  if (vitalKey) {
+    const mobile = payload.vitals?.mobile || payload.vitals || {};
+    const vital = mobile[vitalKey] ?? payload.vitals?.desktop?.[vitalKey];
+    if (vital != null && vital !== "" && vital !== "—") return String(vital);
+
+    for (const panel of payload.tablePanels || []) {
+      const title = String(panel?.title || "").toLowerCase();
+      if (!title.includes("vital") && !title.includes("chrome ux") && !title.includes("crux")) continue;
+      const hit = firstRowValue(panel.rows, vitalKey);
+      if (hit != null && hit !== "—") return hit;
+      // CrUX rows look like "LCP (field)"
+      const field = firstRowValue(panel.rows, `${vitalKey} (field)`);
+      if (field != null && field !== "—") return field;
+    }
+  }
+
+  if (needle.includes("performance") || needle === "perf") {
+    const score =
+      payload.scores?.mobile?.performance ??
+      payload.scores?.performance ??
+      firstRowValue(payload.kpis, "mobile perf") ??
+      firstRowValue(payload.panels?.kpis, "perf");
+    if (score != null && score !== "" && score !== "—") return String(score);
+  }
+
+  if (needle === "seo" || needle.includes("seo score")) {
+    const score =
+      payload.scores?.mobile?.seo ??
+      payload.scores?.seo ??
+      firstRowValue(payload.kpis, "seo") ??
+      firstRowValue(payload.panels?.kpis, "seo");
+    if (score != null && score !== "" && score !== "—") return String(score);
+  }
+
   return fallback;
+}
+
+/** Convenience: Core Web Vitals from a site-audit / PageSpeed payload. */
+export function featureVitals(payload = {}) {
+  return {
+    lcp: featureKpi(payload, "lcp"),
+    cls: featureKpi(payload, "cls"),
+    inp: featureKpi(payload, "inp"),
+    fcp: featureKpi(payload, "fcp"),
+    performance: featureKpi(payload, "performance"),
+    seo: featureKpi(payload, "seo"),
+    psiFails: Number(payload?.counts?.seoFails || 0) + Number(payload?.counts?.a11yFails || 0) + Number(payload?.counts?.bestPracticeFails || 0),
+  };
 }
 
 export function queueItems(changes = []) {

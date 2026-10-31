@@ -8,6 +8,7 @@ import { buildAuditFindings, resolveSeoScore } from "@/lib/auditFindings";
 import {
   featureKpi,
   featurePayload,
+  featureVitals,
   getAiVisibility,
   getSiteScan,
   inspectGoogleIndex,
@@ -15,6 +16,7 @@ import {
   loadFeature,
   recheckAiReadiness,
   researchAudit,
+  runPageSpeed,
   runSiteScan,
 } from "@/lib/v1Api";
 import { HowToFix } from "@/components/v8/FixGuide";
@@ -97,7 +99,7 @@ function severityTone(severity) {
 function kpiPick(payload, labels) {
   for (const label of labels) {
     const value = featureKpi(payload, label);
-    if (value != null && value !== "—") return value;
+    if (value != null && value !== "" && value !== "—") return value;
   }
   return "—";
 }
@@ -182,11 +184,16 @@ export default function SiteAuditReportScreen() {
   const refreshAudit = async () => {
     setBusy(true);
     try {
-      // The crawl needs the site address; without it the API answered "Add the website
-      // address in setup first" and the refresh silently did nothing.
+      // Crawl + PageSpeed: vitals (LCP/CLS/INP) come from PSI, crawl fills on-page findings.
       const site = activeSiteContext(loadJourney()).href || "";
-      const res = await researchAudit({ site, force: true }).catch(() => ({ ok: false }));
-      setAuditProblems(problemsFrom(res, "site_audit"));
+      const [crawlRes, speedRes] = await Promise.all([
+        researchAudit({ site, force: true }).catch(() => ({ ok: false })),
+        runPageSpeed(site).catch(() => ({ ok: false })),
+      ]);
+      setAuditProblems([
+        ...problemsFrom(crawlRes, "site_audit"),
+        ...problemsFrom(speedRes, "site_audit"),
+      ]);
       await reload();
     } finally {
       setBusy(false);
@@ -268,13 +275,18 @@ export default function SiteAuditReportScreen() {
 
   const selected = rows.find((item) => item.id === open) || rows[0] || null;
 
+  const vitals = featureVitals(speed);
+  const criticalFindings = findings.filter((f) => /critical|error/i.test(f.severity || "")).length;
   const speedCards = [
-    ["LCP", kpiPick(speed, ["lcp", "largest contentful paint"])],
-    ["CLS", kpiPick(speed, ["cls", "cumulative layout shift"])],
-    ["INP", kpiPick(speed, ["inp", "interaction to next paint", "fid"])],
-    ["SEO", seoScore || kpiPick(speed, ["seo"])],
-    ["Performance", kpiPick(speed, ["performance", "perf"])],
-    ["Errors", String(findings.filter((f) => /critical|error/i.test(f.severity || "")).length)],
+    ["LCP", vitals.lcp !== "—" ? vitals.lcp : kpiPick(speed, ["lcp", "largest contentful paint"])],
+    ["CLS", vitals.cls !== "—" ? vitals.cls : kpiPick(speed, ["cls", "cumulative layout shift"])],
+    ["INP", vitals.inp !== "—" ? vitals.inp : kpiPick(speed, ["inp", "interaction to next paint", "fid"])],
+    ["SEO", seoScore || vitals.seo],
+    ["Performance", vitals.performance !== "—" ? vitals.performance : kpiPick(speed, ["performance", "perf", "mobile perf"])],
+    [
+      "Errors",
+      String(criticalFindings || vitals.psiFails || 0),
+    ],
   ];
 
   const counts = report?.statusCounts || {};
