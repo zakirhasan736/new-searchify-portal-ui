@@ -83,11 +83,17 @@ export default function ConnectScreen() {
   useEffect(() => {
     const googleSignedIn = status.googleAccount === "connected" || Boolean(status.google?.connected);
     // After Google OAuth, both GSC + GA cards are live with Unplug (no "Choose property").
+    // Keep connecting/unplugging while an in-flight action is still running.
+    const hold = (prev, live) => {
+      if (live) return prev === "unplugging" ? "unplugging" : "live";
+      if (prev === "connecting" || prev === "unplugging") return prev;
+      return "off";
+    };
     setState((prev) => ({
       ...prev,
-      gsc: googleSignedIn ? "live" : prev.gsc === "connecting" ? "connecting" : "off",
-      wp: status.wordpress ? "live" : prev.wp === "connecting" ? "connecting" : "off",
-      ga: googleSignedIn ? "live" : prev.ga === "connecting" ? "connecting" : "off",
+      gsc: hold(prev.gsc, googleSignedIn),
+      wp: hold(prev.wp, status.wordpress),
+      ga: hold(prev.ga, googleSignedIn),
     }));
     setRows({
       gsc: googleSignedIn ? Number(status.gscRows || status.gscCount || 0) : 0,
@@ -144,20 +150,36 @@ export default function ConnectScreen() {
   const handleUnplug = useCallback(
     async (id) => {
       if (id === "wp") {
-        const host = hostOf(status.wordpressUrl) || hostOf(siteHref);
-        const match = readySites(loadJourney()).find((site) => hostOf(site.answers?.site) === host);
-        if (status.wordpressId) await deleteCmsConnection(status.wordpressId).catch(() => {});
-        if (host) await forgetWebsite(status.wordpressUrl || `https://${host}`).catch(() => {});
-        if (match) await dropReadyWebsite(match);
-        setSitesTick((n) => n + 1);
-        setSiteNote(host ? `${host} was removed.` : "WordPress was unplugged.");
-        setFreeScan(null);
-        await refreshStatus();
+        setStatus("wp", "unplugging");
+        try {
+          const host = hostOf(status.wordpressUrl) || hostOf(siteHref);
+          const match = readySites(loadJourney()).find((site) => hostOf(site.answers?.site) === host);
+          if (status.wordpressId) await deleteCmsConnection(status.wordpressId).catch(() => {});
+          if (host) await forgetWebsite(status.wordpressUrl || `https://${host}`).catch(() => {});
+          if (match) await dropReadyWebsite(match);
+          setSitesTick((n) => n + 1);
+          setSiteNote(host ? `${host} was removed.` : "WordPress was unplugged.");
+          setFreeScan(null);
+          await refreshStatus();
+          setStatus("wp", "off");
+        } catch {
+          setStatus("wp", "live");
+          setSiteNote("Could not unplug WordPress. Try again.");
+        }
         return;
       }
       if (id === "gsc" || id === "ga") {
-        await disconnectGoogle().catch(() => {});
-        await refreshStatus();
+        // One Google sign-in covers both — show Unplugging on both cards.
+        setState((prev) => ({ ...prev, gsc: "unplugging", ga: "unplugging" }));
+        try {
+          await disconnectGoogle().catch(() => {});
+          await refreshStatus();
+          setState((prev) => ({ ...prev, gsc: "off", ga: "off" }));
+          setSiteNote("Google Search Console and Analytics were unplugged.");
+        } catch {
+          setState((prev) => ({ ...prev, gsc: "live", ga: "live" }));
+          setSiteNote("Could not unplug Google. Try again.");
+        }
         return;
       }
       setStatus(id, "off");
@@ -203,10 +225,13 @@ export default function ConnectScreen() {
     },
   ];
 
+  const anyBusy = Object.values(state).some((v) => v === "connecting" || v === "unplugging");
+
   const plugs = defs.map((d) => {
     const s = state[d.id];
     const live = s === "live";
     const conn = s === "connecting";
+    const unplugging = s === "unplugging";
     const locked = s === "soon";
     const n = rows[d.id] || 0;
     return {
@@ -217,36 +242,54 @@ export default function ConnectScreen() {
         d.tag.indexOf("REQUIRED") === 0
           ? "0 0 14px rgba(61,220,132,.35), inset 0 0 8px rgba(61,220,132,.12)"
           : "none",
-      tagDot: live ? "#3DDC84" : "#5B616B",
-      tagDotGlow: live ? "0 0 8px #3DDC84" : "none",
-      canPlug: s === "off",
+      tagDot: live ? "#3DDC84" : unplugging || conn ? "#FFC53D" : "#5B616B",
+      tagDotGlow: live ? "0 0 8px #3DDC84" : unplugging || conn ? "0 0 8px #FFC53D" : "none",
+      canPlug: s === "off" && !anyBusy,
       isConnecting: conn,
+      isUnplugging: unplugging,
       isLive: live,
       isLocked: locked,
-      shift: live || conn ? "30px" : "0px",
-      cable: live ? BLUE : locked ? "#1A1D22" : "#3A404A",
-      body: live ? BLUE : locked ? "#1A1D22" : "#5B616B",
-      prong: live ? "#CFE6FF" : locked ? "#262A31" : "#8A9099",
-      socket: live ? BLUE : "#262A31",
-      led: live ? BLUE : conn ? "#FFC53D" : "#262A31",
-      ledGlow: live ? "drop-shadow(0 0 6px #4DA3FF)" : "none",
-      glow: live ? "drop-shadow(0 0 10px rgba(77,163,255,.75))" : "none",
-      flowOp: live ? "0.9" : "0",
-      srvOp: live ? "1" : "0",
-      border: live ? "rgba(77,163,255,.45)" : "#1A1D22",
-      statusColor: live ? BLUE : "#7D848E",
+      shift: live || conn || unplugging ? "30px" : "0px",
+      cable: live ? BLUE : unplugging || conn ? "#FFC53D" : locked ? "#1A1D22" : "#3A404A",
+      body: live ? BLUE : unplugging || conn ? "#FFC53D" : locked ? "#1A1D22" : "#5B616B",
+      prong: live ? "#CFE6FF" : unplugging || conn ? "#FFE7A8" : locked ? "#262A31" : "#8A9099",
+      socket: live ? BLUE : unplugging || conn ? "#FFC53D" : "#262A31",
+      led: live ? BLUE : unplugging || conn ? "#FFC53D" : "#262A31",
+      ledGlow: live
+        ? "drop-shadow(0 0 6px #4DA3FF)"
+        : unplugging || conn
+          ? "drop-shadow(0 0 6px #FFC53D)"
+          : "none",
+      glow: live
+        ? "drop-shadow(0 0 10px rgba(77,163,255,.75))"
+        : unplugging || conn
+          ? "drop-shadow(0 0 8px rgba(255,197,61,.45))"
+          : "none",
+      flowOp: live ? "0.9" : unplugging ? "0.35" : "0",
+      srvOp: live || unplugging || conn ? "1" : "0",
+      border: live
+        ? "rgba(77,163,255,.45)"
+        : unplugging || conn
+          ? "rgba(255,197,61,.35)"
+          : "#1A1D22",
+      statusColor: live ? BLUE : unplugging || conn ? "#FFC53D" : "#7D848E",
       statusText: live
         ? n > 0
           ? `● LIVE · ${n.toLocaleString("en-US")} ${d.unit} synced`
           : "● LIVE · connected"
+        : unplugging
+        ? "● Unplugging…"
         : conn
         ? "Handshaking…"
         : locked
         ? "Coming soon"
         : "Not connected yet",
-      aria: d.name + (live ? " connected, data flowing" : " not connected"),
+      aria: d.name + (live ? " connected, data flowing" : unplugging ? " unplugging" : " not connected"),
       plug: () => handlePlug(d.id),
-      unplug: () => handleUnplug(d.id),
+      unplug: () => {
+        if (anyBusy) return;
+        handleUnplug(d.id);
+      },
     };
   });
 
@@ -777,18 +820,54 @@ export default function ConnectScreen() {
                   Connecting…
                 </span>
               )}
+              {p.isUnplugging && (
+                <span
+                  role="status"
+                  aria-live="polite"
+                  style={{
+                    minHeight: "50px",
+                    width: "132px",
+                    borderRadius: "14px",
+                    border: "1px solid rgba(255,197,61,.45)",
+                    background: "rgba(255,197,61,.08)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    fontSize: "14px",
+                    color: "#FFC53D",
+                    animation: "sfy-breathe 1s ease-in-out infinite",
+                  }}
+                >
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      width: "12px",
+                      height: "12px",
+                      borderRadius: "50%",
+                      border: "2px solid rgba(255,197,61,.35)",
+                      borderTopColor: "#FFC53D",
+                      animation: "sfy-spin 0.7s linear infinite",
+                    }}
+                  />
+                  Unplugging…
+                </span>
+              )}
               {p.isLive && (
                 <button
                   type="button"
                   onClick={p.unplug}
+                  disabled={anyBusy}
                   style={{
                     minHeight: "50px",
                     width: "132px",
                     borderRadius: "14px",
                     border: "1px solid #262A31",
                     background: "transparent",
-                    color: "#9AA1AB",
+                    color: anyBusy ? "#5B616B" : "#9AA1AB",
                     fontSize: "14px",
+                    cursor: anyBusy ? "not-allowed" : "pointer",
+                    opacity: anyBusy ? 0.6 : 1,
                   }}
                 >
                   Unplug

@@ -55,6 +55,12 @@
   }
 }
 
+@keyframes sfy-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes sfy-fill {
   from {
     width: 0;
