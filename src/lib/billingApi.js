@@ -9,6 +9,11 @@ export async function getBillingCatalog() {
   return json(await fetch("/api/v1/billing/catalog", { cache: "no-store" }));
 }
 
+/** Live early-launch spots / offers received (Pricing.html counter). */
+export async function getEarlyLaunch() {
+  return json(await fetch("/api/v1/billing/early-launch", { cache: "no-store" }));
+}
+
 export async function getBillingAccount() {
   return json(
     await fetch("/api/v1/billing/account", {

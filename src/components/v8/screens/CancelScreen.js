@@ -12,26 +12,25 @@ import {
 import { userIsAuthenticated } from "@/utils/users/Helpers";
 import "@/styles/v8-cancel.css";
 
-/** Exact metric cards from Cancel.html when live since-data is empty. */
-const DESIGN_SINCE = [
-  { label: "Clicks from Google / month", from: "1,240", to: "2,035", change: "+64%" },
-  { label: "Average position", from: "18.4", to: "9.7", change: "Up 8.7 spots, onto page 1" },
-  { label: "Pages at Great or Excellent", from: "0", to: "6", change: "6 pages reached the goal" },
-  { label: "Pages Google has found", from: "71", to: "96", change: "+25 pages now showing" },
+const EMPTY_SINCE = [
+  { label: "Clicks from Google / month", from: "—", to: "—", change: "Connect Search Console to track this" },
+  { label: "Average position", from: "—", to: "—", change: "Waiting on ranking data" },
+  { label: "Pages at Great or Excellent", from: "0", to: "0", change: "Waiting on first scan" },
+  { label: "Pages Google has found", from: "—", to: "—", change: "Waiting on crawl data" },
 ];
 
-function buildReasons({ soloMo, paidThroughLabel, movesShipped }) {
-  const solo = soloMo || 49;
+function buildReasons({ soloMo, paidThroughLabel, measuredMoves, movesShipped }) {
+  const solo = Number(soloMo) > 0 ? Number(soloMo) : 49;
   const when = paidThroughLabel || "your next renewal";
-  const measured = Math.max(0, Number(movesShipped) || 0);
+  const measured = Math.max(0, Number(measuredMoves) || 0);
+  const shipped = Math.max(0, Number(movesShipped) || 0);
   const resultsTitle =
     measured > 0
       ? `${measured} of your changes are still being measured.`
-      : "Give the changes time to land.";
-  const resultsBody =
-    measured > 0
-      ? `Most changes take about 28 days to show up in Google. Staying through ${when} gives your first results window a fair shot.`
-      : `Most changes take about 28 days to show up in Google. Staying through ${when} gives your first results window a fair shot.`;
+      : shipped > 0
+        ? "Give the changes time to land."
+        : "Your first results window is still ahead.";
+  const resultsBody = `Most changes take about 28 days to show up in Google. Staying through ${when} gives your first results window a fair shot.`;
 
   return [
     {
@@ -202,6 +201,7 @@ function joinedShort(label) {
 export default function CancelScreen() {
   const router = useRouter();
   const [account, setAccount] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [step, setStep] = useState("why");
   const [reasonId, setReasonId] = useState(null);
   const [detail, setDetail] = useState("");
@@ -215,8 +215,16 @@ export default function CancelScreen() {
       router.replace("/login?next=/app/cancel");
       return;
     }
-    getBillingAccount().then((res) => {
-      if (res.ok) {
+    let cancelled = false;
+    setLoading(true);
+    getBillingAccount()
+      .then((res) => {
+        if (cancelled) return;
+        if (!res.ok || !res.data) {
+          setErr(res.data?.detail || "Could not load your plan. Refresh and try again.");
+          setAccount(null);
+          return;
+        }
         setAccount(res.data);
         if (res.data?.status === "cancelled") {
           setStep("done");
@@ -226,33 +234,30 @@ export default function CancelScreen() {
         } else if (res.data?.status === "paused") {
           setSaved({
             title: "Your plan is paused.",
-            body: `No charges from ${res.data.paidThroughLabel || "your next renewal"}. We’ll email you a week before it restarts, and you can restart early any time.`,
+            body:
+              res.data?.pause?.body ||
+              `No charges from ${res.data.paidThroughLabel || "your next renewal"}. We’ll email you a week before it restarts, and you can restart early any time.`,
           });
           setStep("saved");
         }
-      } else {
-        setAccount({
-          name: "Pro",
-          planId: "pro",
-          priceMo: 79,
-          listMo: 99,
-          founding: true,
-          paidThroughLabel: "Nov 14",
-          joinedLabel: "Jun 12, 2026",
-          business: "Rivera Digital",
-          movesShipped: 96,
-          email: "",
-          since: DESIGN_SINCE,
-        });
-      }
-    });
+      })
+      .catch(() => {
+        if (!cancelled) setErr("Could not load your plan. Refresh and try again.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   const reasons = useMemo(
     () =>
       buildReasons({
-        soloMo: 49,
+        soloMo: account?.soloMo,
         paidThroughLabel: account?.paidThroughLabel,
+        measuredMoves: account?.measuredMoves,
         movesShipped: account?.movesShipped,
       }),
     [account],
@@ -261,24 +266,32 @@ export default function CancelScreen() {
 
   const planLine = useMemo(() => {
     if (!account) return "Loading plan…";
-    const per = account.billing === "annual" ? "year" : "month";
-    const amount = account.billing === "annual" ? (account.priceMo || 0) * 10 : account.priceMo || 0;
-    return `${account.name} · $${amount} / ${per}`;
+    if (account.planLine) return account.planLine;
+    const per = account.billing === "annual" ? "year" : account.per || "month";
+    const amount =
+      account.amount != null
+        ? account.amount
+        : account.billing === "annual"
+          ? (account.priceMo || 0) * 10
+          : account.priceMo || 0;
+    return `${account.name || "Plan"} · $${amount} / ${per}`;
   }, [account]);
 
   const planSub = useMemo(() => {
     if (!account) return "";
+    if (account.planSub) return account.planSub;
     const moves = account.movesShipped || 0;
-    const joined = joinedShort(account.joinedLabel) || "you joined";
+    const joined = account.joinedShort || joinedShort(account.joinedLabel) || "you joined";
     const moveBit = moves ? ` · ${moves} moves shipped since ${joined}` : ` · joined ${joined}`;
     return `${account.business || "Your workspace"} · paid through ${account.paidThroughLabel || "—"}${moveBit}`;
   }, [account]);
 
   const facts = useMemo(() => {
     const when = account?.paidThroughLabel || "the end of your billing period";
-    const price = account?.priceMo || 79;
-    const list = account?.listMo || 99;
-    const founding = account?.founding && account?.planId === "pro";
+    const price = account?.priceMo;
+    const list = account?.listMo;
+    const launchTotal = account?.earlyLaunchTotal || 100;
+    const founding = Boolean(account?.founding && account?.planId === "pro" && price != null);
     return [
       {
         kind: "ok",
@@ -299,12 +312,15 @@ export default function CancelScreen() {
         ? {
             kind: "warn",
             title: `Your $${price} launch price ends`,
-            body: `Launch pricing is only for the first 100 customers while they stay subscribed. If you come back later, Pro is $${list} a month.`,
+            body: `Launch pricing is only for the first ${launchTotal} customers while they stay subscribed. If you come back later, Pro is $${list || 99} a month.`,
           }
         : {
             kind: "info",
             title: "Coming back later",
-            body: "If you resubscribe, you’ll pick up at the current plan price.",
+            body:
+              list != null
+                ? `If you resubscribe, you’ll pick up at the current plan price (from $${list}/mo for Pro).`
+                : "If you resubscribe, you’ll pick up at the current plan price.",
           },
       {
         kind: "ok",
@@ -314,13 +330,18 @@ export default function CancelScreen() {
     ];
   }, [account]);
 
-  const liveSince = Array.isArray(account?.since) ? account.since.filter((s) => s?.label) : [];
-  const since = liveSince.length ? liveSince : DESIGN_SINCE;
+  const since = useMemo(() => {
+    const live = Array.isArray(account?.since) ? account.since.filter((s) => s?.label) : [];
+    return live.length ? live : EMPTY_SINCE;
+  }, [account]);
   const showSteps = step === "why" || step === "offer" || step === "confirm";
   const showSince = step === "why" || step === "confirm";
   const stepOrder = ["why", "offer", "confirm"];
   const stepIdx = stepOrder.indexOf(step);
-  const joined = account?.joinedLabel || "day one";
+  const joined = account?.joinedLabel || account?.joinedShort || "day one";
+  const sinceNote =
+    account?.sinceNote ||
+    `Compared with your starting point saved on ${joined}, across your sites, and with the same months last year so seasons don't skew it.`;
 
   const goContinue = () => {
     if (!cur) return;
@@ -383,6 +404,49 @@ export default function CancelScreen() {
     setStep("saved");
   };
 
+  if (loading) {
+    return (
+      <div className="v8-cancel">
+        <header className="v8-cancel-head">
+          <Link href="/app/settings?tab=billing" className="v8-cancel-back">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M15 6l-6 6 6 6" />
+            </svg>
+            Plan and billing
+          </Link>
+        </header>
+        <div className="v8-cancel-main">
+          <p className="v8-cancel-lede">Loading your plan…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!account) {
+    return (
+      <div className="v8-cancel">
+        <header className="v8-cancel-head">
+          <Link href="/app/settings?tab=billing" className="v8-cancel-back">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M15 6l-6 6 6 6" />
+            </svg>
+            Plan and billing
+          </Link>
+        </header>
+        <div className="v8-cancel-main">
+          <p className="v8-cancel-err" role="alert">
+            {err || "Could not load your plan."}
+          </p>
+          <div className="v8-cancel-actions">
+            <button type="button" className="v8-cancel-btn is-primary" onClick={() => window.location.reload()}>
+              Try again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="v8-cancel">
       <header className="v8-cancel-head">
@@ -426,26 +490,27 @@ export default function CancelScreen() {
         {showSince ? (
           <section className="v8-cancel-since" aria-labelledby="since-h">
             <div className="v8-cancel-since-top">
-              <h2 id="since-h">Since you joined{joinedShort(account?.joinedLabel) ? ` on ${joinedShort(account.joinedLabel)}` : ""}</h2>
-              <Link href="/app/results">See the full before-and-after</Link>
+              <h2 id="since-h">
+                Since you joined
+                {account?.joinedShort || joinedShort(account?.joinedLabel)
+                  ? ` on ${account?.joinedShort || joinedShort(account.joinedLabel)}`
+                  : ""}
+              </h2>
+              <Link href="/app/outcomes">See the full before-and-after</Link>
             </div>
             <div className="v8-cancel-since-grid">
               {since.map((s) => (
                 <div key={s.label} className="v8-cancel-since-card">
                   <span className="v8-cancel-since-label">{s.label}</span>
                   <span className="v8-cancel-since-row">
-                    <span className="v8-cancel-since-from">
-                      {s.from} →
-                    </span>
+                    <span className="v8-cancel-since-from">{s.from} →</span>
                     <span className="v8-cancel-since-to">{s.to}</span>
                   </span>
                   <span className="v8-cancel-since-change">{s.change}</span>
                 </div>
               ))}
             </div>
-            <span className="v8-cancel-since-note">
-              Compared with your starting point saved on {joined}, across your sites, and with the same months last year so seasons don&apos;t skew it.
-            </span>
+            <span className="v8-cancel-since-note">{sinceNote}</span>
           </section>
         ) : null}
 

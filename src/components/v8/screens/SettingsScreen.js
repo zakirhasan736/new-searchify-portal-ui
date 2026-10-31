@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   errorText,
   getBusinessProfile,
@@ -51,6 +52,7 @@ function roleLabel(role, clientHint) {
 }
 
 export default function SettingsScreen({ initialTab = 'auto' }) {
+  const router = useRouter();
   const [tab, setTab] = useState(initialTab === 'auto' || initialTab === 'billing' ? initialTab : 'auto');
   const [level, setLevel] = useState('ask');
   const [notif, setNotif] = useState({ results: true, weekly: true, broken: true, summary: false });
@@ -589,9 +591,13 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
                     {billing.sitesUsed} of {billing.siteLimit} websites in use · {billing.renewNote}
                   </span>
                 </span>
-                <Link href="/app/billing" style={{ display: 'inline-flex', alignItems: 'center', minHeight: '44px', padding: '0 16px', borderRadius: '11px', border: '1px solid #262A31', color: '#F2F4F5', textDecoration: 'none', fontSize: '14px' }}>
+                <button
+                  type="button"
+                  onClick={() => router.push('/app/billing')}
+                  style={{ display: 'inline-flex', alignItems: 'center', minHeight: '44px', padding: '0 16px', borderRadius: '11px', border: '1px solid #262A31', color: '#F2F4F5', background: 'transparent', textDecoration: 'none', fontSize: '14px', cursor: 'pointer' }}
+                >
                   Change plan
-                </Link>
+                </button>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', fontSize: '15px' }}>
                 <span>Payment method</span>
@@ -628,27 +634,31 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
                   <span style={{ flex: '1 1 220px', fontSize: 14, color: '#FF8A80' }}>
                     Subscription cancelled{billing.paidThroughLabel ? ` · access until ${billing.paidThroughLabel}` : ''}.
                   </span>
-                  <Link
-                    href="/app/cancel"
+                  <button
+                    type="button"
+                    onClick={() => router.push('/app/cancel')}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
                       minHeight: 40,
                       padding: '0 14px',
                       borderRadius: 11,
+                      border: 0,
                       background: '#4DA3FF',
                       color: '#0A0B0D',
                       textDecoration: 'none',
                       fontSize: 13,
                       fontWeight: 600,
+                      cursor: 'pointer',
                     }}
                   >
                     Changed my mind
-                  </Link>
+                  </button>
                 </div>
               ) : (
-                <Link
-                  href="/app/cancel"
+                <button
+                  type="button"
+                  onClick={() => router.push('/app/cancel')}
                   style={{
                     alignSelf: 'flex-start',
                     minHeight: 40,
@@ -660,10 +670,11 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
                     textDecoration: 'underline',
                     display: 'inline-flex',
                     alignItems: 'center',
+                    cursor: 'pointer',
                   }}
                 >
                   Cancel subscription
-                </Link>
+                </button>
               )}
             </div>
           )}

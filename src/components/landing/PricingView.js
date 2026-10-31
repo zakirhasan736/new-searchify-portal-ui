@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import SearchifyMark from "@/components/landing/SearchifyMark";
 import { V8Button, V8Field, V8Segmented } from "@/components/v8/primitives";
-import { getBillingAccount, getBillingCatalog } from "@/lib/billingApi";
+import { getBillingAccount, getBillingCatalog, getEarlyLaunch } from "@/lib/billingApi";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
 import { PLAN_ALIAS, choosePlan, hydrateJourney, readySites } from "@/lib/journey";
 import PricingPreview from "@/components/landing/PricingPreview";
@@ -193,6 +193,26 @@ export default function PricingView({ embedded = false, onboarding = false }) {
   const [tip, setTip] = useState(null);
   const yearly = period === "year";
 
+  const applyEarly = (raw) => {
+    if (!raw || typeof raw !== "object") return;
+    setEarly({
+      ...FALLBACK_EARLY,
+      ...raw,
+      total: Number(raw.total) || FALLBACK_EARLY.total,
+      claimed: Number(raw.claimed) || 0,
+      claimedThisWeek: Number(raw.claimedThisWeek) || 0,
+      lastClaimed: raw.lastClaimed || FALLBACK_EARLY.lastClaimed,
+      proListMo: Number(raw.proListMo) || FALLBACK_EARLY.proListMo,
+      proLaunchMo: Number(raw.proLaunchMo) || FALLBACK_EARLY.proLaunchMo,
+      left: raw.left != null ? Number(raw.left) : undefined,
+      offersReceived: raw.offersReceived != null ? Number(raw.offersReceived) : undefined,
+      spotsHeadline: raw.spotsHeadline || "",
+      claimedLabel: raw.claimedLabel || "",
+      totalLabel: raw.totalLabel || "",
+      live: raw.live !== false,
+    });
+  };
+
   const applyCatalog = (data) => {
     if (Array.isArray(data?.plans) && data.plans.length) {
       setDefs(
@@ -210,22 +230,7 @@ export default function PricingView({ embedded = false, onboarding = false }) {
         })),
       );
     }
-    if (data?.earlyLaunch) {
-      setEarly({
-        ...FALLBACK_EARLY,
-        ...data.earlyLaunch,
-        total: Number(data.earlyLaunch.total) || FALLBACK_EARLY.total,
-        claimed: Number(data.earlyLaunch.claimed) || 0,
-        claimedThisWeek: Number(data.earlyLaunch.claimedThisWeek) || 0,
-        lastClaimed: data.earlyLaunch.lastClaimed || FALLBACK_EARLY.lastClaimed,
-        proListMo: Number(data.earlyLaunch.proListMo) || FALLBACK_EARLY.proListMo,
-        proLaunchMo: Number(data.earlyLaunch.proLaunchMo) || FALLBACK_EARLY.proLaunchMo,
-        left: data.earlyLaunch.left != null ? Number(data.earlyLaunch.left) : undefined,
-        spotsHeadline: data.earlyLaunch.spotsHeadline || "",
-        claimedLabel: data.earlyLaunch.claimedLabel || "",
-        totalLabel: data.earlyLaunch.totalLabel || "",
-      });
-    }
+    if (data?.earlyLaunch) applyEarly(data.earlyLaunch);
     if (data?.managed) setManaged({ ...FALLBACK_MANAGED, ...data.managed });
     setLive(Boolean(data?.live ?? true));
   };
@@ -244,9 +249,25 @@ export default function PricingView({ embedded = false, onboarding = false }) {
         .catch(() => {
           if (!cancelled) setLive(true);
         });
+    const loadEarly = () =>
+      getEarlyLaunch()
+        .then((res) => {
+          if (cancelled || !res.ok) return;
+          applyEarly(res.data);
+        })
+        .catch(() => {});
     loadCatalog();
-    // Keep early-launch counter live while the pricing page is open.
-    const timer = window.setInterval(loadCatalog, 30000);
+    loadEarly();
+    // Keep early-launch spots / offers-received live on pricing + billing.
+    const timer = window.setInterval(() => {
+      loadEarly();
+    }, 12000);
+    const onFocus = () => loadEarly();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") loadEarly();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
     if (onboarding && userIsAuthenticated()) {
       hydrateJourney({ force: true }).then(() => {
         if (!readySites().length) router.replace("/app/start");
@@ -264,6 +285,8 @@ export default function PricingView({ embedded = false, onboarding = false }) {
     return () => {
       cancelled = true;
       window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [onboarding, router]);
 
@@ -429,7 +452,7 @@ export default function PricingView({ embedded = false, onboarding = false }) {
                 <span className="v8-pricing-pulse" aria-hidden="true" />
                 EARLY LAUNCH PRICING · LIVE
               </p>
-              <h2>{spotsHeadline}</h2>
+              <h2 key={spotsHeadline}>{spotsHeadline}</h2>
               <p>
                 The first {totalSpots} customers lock in{" "}
                 <strong>Pro at {money(early.proLaunchMo)}</strong> instead of {money(early.proListMo)}, for as long as
@@ -460,8 +483,13 @@ export default function PricingView({ embedded = false, onboarding = false }) {
             aria-valuemin={0}
             aria-valuemax={totalSpots}
             aria-valuenow={claimed}
+            data-offers-received={early.offersReceived ?? claimed}
           >
-            <div className="v8-pricing-bar-fill" style={{ width: `${claimedPct}%` }} />
+            <div
+              key={`bar-${claimed}-${totalSpots}`}
+              className="v8-pricing-bar-fill"
+              style={{ width: `${claimedPct}%` }}
+            />
           </div>
           <div className="v8-pricing-bar-labels">
             <span>{claimedLabel}</span>
