@@ -125,7 +125,7 @@ export default function SetupPage({ step = 1 }) {
 
   const connectGsc = async () => {
     setBusy(true);
-    const res = await startGoogleOAuth("gsc,ga4,ads");
+    const res = await startGoogleOAuth("gsc,ga4");
     setBusy(false);
     if (res.data?.url) {
       persist({ gscOk: true });

@@ -166,17 +166,17 @@ export default function ConnectionsPage({ panel: panelProp = null }) {
     };
   };
 
-  const connectGoogle = async (services = "gsc,ga4,ads") => {
+  const connectGoogle = async (services = "gsc,ga4") => {
     const value =
       typeof services === "string" && services && !String(services).includes("[object")
         ? services
-        : "gsc,ga4,ads";
+        : "gsc,ga4";
     setBusy(true);
     const res = await startGoogleOAuth(value);
     setBusy(false);
     if (res.data?.alreadyConnected && !res.data?.url) {
-      toast("Google is already connected. Pick Search Console, GA4, or Ads below.");
-      router.push(value.includes("ads") ? "/app/connections/ads" : "/app/connections/google");
+      toast("Google is already connected. Pick Search Console or Analytics below.");
+      router.push("/app/connections/google");
       return;
     }
     if (res.data?.url) {
@@ -187,7 +187,7 @@ export default function ConnectionsPage({ panel: panelProp = null }) {
   };
 
   const disconnectAllGoogle = async () => {
-    if (!window.confirm("Disconnect Google? This removes Search Console, GA4, Ads access, cached reports, and the work queue. Reconnect and sync to start again.")) {
+    if (!window.confirm("Disconnect Google? This removes Search Console, Analytics access, cached reports, and the work queue. Reconnect and sync to start again.")) {
       return;
     }
     setBusy(true);
@@ -680,13 +680,13 @@ export default function ConnectionsPage({ panel: panelProp = null }) {
           ) : (
             <div className="sf-box sf-ai sf-gap">
               <div className="sf-row sf-between">
-                <h2>Connect Google Ads</h2>
-                <Pill neutral>Needs Google first</Pill>
+                <h2>Google Ads</h2>
+                <Pill neutral>Removed</Pill>
               </div>
-              <p>Sign in with Google once for Search Console, GA4, and Ads. After that, only pick the Ads customer.</p>
+              <p>Searchify no longer connects Google Ads. Use Search Console and Analytics only.</p>
               <div className="sf-row sf-gap">
                 <Btn href="/app/connections">Back</Btn>
-                <Btn primary onClick={() => connectGoogle("gsc,ga4,ads")} disabled={busy}>
+                <Btn primary onClick={() => connectGoogle("gsc,ga4")} disabled={busy}>
                   Connect Google
                 </Btn>
               </div>
@@ -853,43 +853,17 @@ export default function ConnectionsPage({ panel: panelProp = null }) {
         <div className="sf-row sf-between">
           <div>
             <h2>Google Ads</h2>
-            <p>
-              {google?.adsCustomerName || google?.adsCustomerId
-                ? `${google.adsCustomerName || "Account"} · ${google.adsCustomerId}`
-                : "Uses the Google account already connected. Pick the Ads customer — no second Google sign-in."}
-            </p>
-            {google?.adsScope ? <div className="sf-small">Ads permission granted</div> : null}
-            {!google?.adsConfigured ? (
-              <div className="sf-small">Server still needs GOOGLE_ADS_DEVELOPER_TOKEN from Ads → API Center.</div>
-            ) : null}
+            <p>Removed from Searchify. OAuth no longer requests the adwords scope.</p>
           </div>
-          <div className="sf-row" style={{ flexWrap: "wrap", justifyContent: "flex-end" }}>
-            {google?.adsCustomerId ? (
-              <>
-                <Btn href="/app/connections/ads">Change account</Btn>
-                <Btn onClick={() => syncAdsAccount()} disabled={busy}>
-                  Sync Ads
-                </Btn>
-                <Btn href="/app/ads">Open Ads</Btn>
-                <Btn onClick={() => disconnectAdsAccount()} disabled={busy}>
-                  Disconnect Ads
-                </Btn>
-              </>
-            ) : (
-              <Btn primary href="/app/connections/ads">
-                Connect Google Ads
-              </Btn>
-            )}
-          </div>
+          <Pill neutral>Not available</Pill>
         </div>
       </div>
 
       <div className="sf-box sf-gap">
         <h3>You control the permissions</h3>
         <p>
-          Analytics, Search Console, and Google Ads are read-only. Website edits require approval. OpenAI is used only
-          for drafts you review. Google Tag Manager is not a separate connector — tag events appear through GA4 when
-          configured.
+          Analytics and Search Console are read-only. Website edits require approval. OpenAI is used only for drafts you
+          review. Google Tag Manager is not a separate connector — tag events appear through GA4 when configured.
         </p>
       </div>
 

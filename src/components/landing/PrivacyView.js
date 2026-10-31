@@ -10,7 +10,7 @@ export default function PrivacyView() {
       kicker="PRIVACY"
       title="What we hold, and why."
       lede="This policy covers the Searchify website and the customer workspace. We keep what the product needs to run an account, a connected site, and a change you can review."
-      updated="October 26, 2026"
+      updated="November 1, 2026"
       actions={
         <>
           <Link className="sf-btn-blue" href="/terms">
@@ -67,6 +67,48 @@ export default function PrivacyView() {
           ),
         },
         {
+          id: "google-data",
+          label: "Google user data",
+          title: "How we protect your Google user data.",
+          body: (
+            <>
+              <p>
+                Data accessed through Google APIs (such as Google Analytics and Google Search Console) is encrypted in
+                transit using TLS and at rest using AES-256 on AWS infrastructure. OAuth tokens are stored encrypted and
+                are never shared with third parties. Access to user data is restricted to authorized personnel on a
+                least-privilege basis and is logged. We do not sell Google user data or use it for advertising. You can
+                revoke Searchify&apos;s access at any time from your{" "}
+                <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">
+                  Google Account permissions
+                </a>{" "}
+                page, and we delete the associated data within 30 days of disconnection or account deletion.
+              </p>
+              <p>
+                Searchify&apos;s use and transfer of information received from Google APIs will adhere to the{" "}
+                <a
+                  href="https://developers.google.com/terms/api-services-user-data-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Google API Services User Data Policy
+                </a>
+                , including the Limited Use requirements.
+              </p>
+              <ul>
+                <li>
+                  <strong>Scopes we request:</strong> read-only Search Console and Analytics access
+                  (<code>webmasters.readonly</code>, <code>analytics.readonly</code>) so Searchify can show traffic,
+                  queries, and indexing evidence. Searchify does not change settings inside your Google Analytics or
+                  Search Console accounts.
+                </li>
+                <li>
+                  Searchify does <strong>not</strong> request Google Ads (<code>adwords</code>) access.
+                </li>
+              </ul>
+            </>
+          ),
+        },
+        {
           id: "keep",
           label: "How long",
           title: "While the workspace is open.",
@@ -74,8 +116,9 @@ export default function PrivacyView() {
             <p>
               Account and site records stay while the workspace is open. If you ask us to close the account, we delete or
               de-identify the workspace data we still hold, except where a record has to be kept for security, billing, or
-              a legal duty. Clearing your browser removes the sign-in token on that device. The account stays in the database
-              until you ask us to close it.
+              a legal duty. Google API data tied to a connection is removed within 30 days after you disconnect Google or
+              close the account. Clearing your browser removes the sign-in token on that device. The account stays in the
+              database until you ask us to close it.
             </p>
           ),
         },

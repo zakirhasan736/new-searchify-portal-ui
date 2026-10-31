@@ -71,11 +71,18 @@ export async function getGoogleStatus({ force = false } = {}) {
   );
 }
 
-export async function startGoogleOAuth(services = "gsc,ga4,ads", options = {}) {
-  const value =
+export async function startGoogleOAuth(services = "gsc,ga4", options = {}) {
+  // Google Ads / adwords fully removed — strip any legacy "ads" tokens from callers.
+  const raw =
     typeof services === "string" && services && !services.includes("[object")
       ? services
-      : "gsc,ga4,ads";
+      : "gsc,ga4";
+  const value =
+    raw
+      .split(",")
+      .map((part) => part.trim())
+      .filter((part) => part && part !== "ads" && part !== "adwords")
+      .join(",") || "gsc,ga4";
   const qs = new URLSearchParams({ services: value });
   if (options.add) qs.set("add", "1");
   const res = await json(await fetch(`/api/v1/oauth/google/start?${qs}`, { headers: authHeaders() }));
