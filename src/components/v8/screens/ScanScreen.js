@@ -631,6 +631,11 @@ export default function ScanScreen() {
           type="button"
           onClick={() => {
             if (timerRef.current) clearInterval(timerRef.current);
+            const hasSite = !!(activeSiteContext(loadJourney()).hostname || String(urlInput || "").trim());
+            if (hasSite) {
+              runScan();
+              return;
+            }
             setStage("input");
             setPct(0);
             setPage(0);
@@ -651,6 +656,53 @@ export default function ScanScreen() {
 
       <ProblemNotice problems={problems} onRetry={() => reloadLive()} style={{ maxWidth: "1180px", width: "100%", margin: "0 auto" }} />
 
+      {stage === "reveal" ? (
+        <div
+          style={{
+            maxWidth: "1180px",
+            width: "100%",
+            margin: "-16px auto 0",
+            boxSizing: "border-box",
+            display: "flex",
+            alignItems: "center",
+            gap: "14px 28px",
+            flexWrap: "wrap",
+            padding: "16px 22px",
+            borderRadius: "20px",
+            background: "rgba(255,90,78,.06)",
+            border: "1px solid rgba(255,90,78,.35)",
+          }}
+        >
+          <span style={{ display: "flex", alignItems: "baseline", gap: "12px", flex: "none" }}>
+            <span
+              style={{
+                fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
+                fontSize: "52px",
+                lineHeight: 0.9,
+                letterSpacing: "-2px",
+                fontWeight: 800,
+                color: "#D5F879",
+              }}
+            >
+              {scanLoading ? "…" : untappedVisitors.toLocaleString("en-US")}
+            </span>
+            <span style={{ fontSize: "15px", lineHeight: 1.2 }}>
+              visitors a month
+              <br />
+              you&apos;re missing
+            </span>
+          </span>
+          <p style={{ flex: "1 1 360px", margin: 0, fontSize: "16px", lineHeight: 1.5, color: "#D7DADE" }}>
+            That&apos;s roughly{" "}
+            <strong style={{ color: "#D5F879" }}>
+              {callsEstimate || "—"} calls or quote requests a month
+            </strong>
+            . These people already see your site in Google, then pick someone else. Hover the board to read each
+            task, and click one to fix it on the left.
+          </p>
+        </div>
+      ) : null}
+
       <div
         style={{
           maxWidth: "1180px",
@@ -658,7 +710,7 @@ export default function ScanScreen() {
           margin: "0 auto",
           display: "flex",
           flexWrap: "wrap",
-          gap: "48px",
+          gap: "24px",
           alignItems: "flex-start",
         }}
       >
@@ -844,47 +896,6 @@ export default function ScanScreen() {
 
           {stage === "reveal" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "20px", animation: "sfy-rise .6s ease both" }}>
-              <div
-                style={{
-                  fontFamily: "'Caveat', cursive",
-                  fontSize: "40px",
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  color: "#FF5A4E",
-                  transform: "rotate(-2deg)",
-                  transformOrigin: "left center",
-                  textShadow: "0 0 22px rgba(255,90,78,.35)",
-                }}
-              >
-                You're missing this every month ↓
-              </div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: "14px", flexWrap: "wrap" }}>
-                <span
-                  style={{
-                    fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
-                    fontSize: "clamp(88px, 11vw, 150px)",
-                    lineHeight: 0.85,
-                    letterSpacing: "-5px",
-                    fontWeight: 800,
-                    color: "#D5F879",
-                  }}
-                >
-                  {untappedVisitors.toLocaleString("en-US")}
-                </span>
-                <span style={{ fontSize: "20px", color: "#F2F4F5", lineHeight: 1.2 }}>
-                  visitors
-                  <br />
-                  from Google
-                </span>
-              </div>
-              <p style={{ margin: 0, fontSize: "19px", lineHeight: 1.45, maxWidth: "520px" }}>
-                That&apos;s roughly{" "}
-                <strong style={{ color: "#D5F879" }}>
-                  {callsEstimate || "—"} calls or quote requests a month
-                </strong>{" "}
-                you&apos;re not getting. These people already see your site in Google — they pick someone else.
-              </p>
-
               <section
                 aria-live="polite"
                 aria-label="Selected task"
@@ -1134,7 +1145,7 @@ export default function ScanScreen() {
                         opacity: pubBusy ? 0.7 : 1,
                       }}
                     >
-                      {pubBusy ? "Opening…" : "Make it yours"}
+                      {pubBusy ? "Opening…" : "Publish change"}
                     </button>
                     <button
                       type="button"
@@ -1304,8 +1315,11 @@ export default function ScanScreen() {
               >
                 <path d="M5 3l14 7-6 2-2 6z"></path>
               </svg>
-              <span className="v8-scan-hint-hover">HOVER TO READ · CLICK TO OPEN</span>
+              <span className="v8-scan-hint-hover">HOVER OVER ANY DOT</span>
               <span className="v8-scan-hint-tap">TAP A DOT TO OPEN</span>
+              <span style={{ marginLeft: "auto", display: "inline-flex" }}>
+                <PriorityInfoButton active={f === "all" ? "red" : f} label="What is each colour?" size={22} />
+              </span>
             </div>
             <div
               className="v8-scan-chips"
@@ -1313,7 +1327,6 @@ export default function ScanScreen() {
               aria-label="Show tasks by colour"
               style={{ display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center" }}
             >
-              <PriorityInfoButton active={f === "all" ? "red" : f} />
               {chips.map((ch) =>
                 ch.on ? (
                   <button
@@ -1578,14 +1591,12 @@ export default function ScanScreen() {
               }}
             >
               <span style={{ fontSize: "14px", fontWeight: 600 }}>
-                {hovered ? hovered.t : clickedTask ? clickedTask.t : "Hover a dot to read it"}
+                {hovered ? hovered.t : META[f]?.title || "Every task Searchify found"}
               </span>
               <span style={{ fontSize: "13px", color: "#9AA1AB" }}>
                 {hovered
-                  ? META[hovered.c]?.title || META[f].sub
-                  : clickedTask
-                    ? META[clickedTask.c]?.title || META[f].sub
-                    : "Click a dot to open its suggestion"}
+                  ? META[hovered.c]?.title || "Click to open this task on the left"
+                  : META[f]?.sub || "Hover a dot to read it. Click one to load the fix."}
               </span>
             </div>
           </div>
