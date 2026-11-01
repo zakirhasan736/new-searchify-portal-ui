@@ -247,7 +247,23 @@ export default function HqShareholders() {
                   type={type}
                   value={d[key] ?? ""}
                   onChange={(e) => setDraftRow(i, { [key]: e.target.value })}
-                  style={{ minHeight: 40, padding: "0 10px", borderRadius: 10, border: "1px solid #262A31", background: "#0A0B0D", color: "#F2F4F5", font: "inherit", fontSize: 14, minWidth: 0 }}
+                  style={{
+                    boxSizing: "border-box",
+                    width: "100%",
+                    minHeight: 40,
+                    padding: "0 10px",
+                    borderRadius: 10,
+                    border: "1px solid #3A404A",
+                    background: "#0A0B0D",
+                    color: "#F2F4F5",
+                    caretColor: "#F2F4F5",
+                    WebkitTextFillColor: "#F2F4F5",
+                    fontFamily: "inherit",
+                    fontSize: 14,
+                    minWidth: 0,
+                    outline: "none",
+                    pointerEvents: "auto",
+                  }}
                 />
               </label>
             ))}
@@ -280,27 +296,60 @@ export default function HqShareholders() {
             ["Full name", "displayName", "text"],
             ["First name (greeting)", "firstName", "text"],
             ["Email", "email", "email"],
-            ["Ownership %", "pctPercent", "number"],
+            ["Ownership %", "pctPercent", "text"],
             ["Shares label", "shares", "text"],
             ["Country", "where", "text"],
           ].map(([label, key, type]) => (
-            <label key={key} style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "#9AA1AB" }}>
+            <label key={key} style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "#9AA1AB", minWidth: 0 }}>
               {label}
               <input
                 type={type}
+                inputMode={key === "pctPercent" ? "decimal" : undefined}
+                autoComplete="off"
                 value={inviteForm[key]}
-                onChange={(e) => setInviteForm({ ...inviteForm, [key]: e.target.value })}
-                style={{ minHeight: 40, padding: "0 10px", borderRadius: 10, border: "1px solid #262A31", background: "#0A0B0D", color: "#F2F4F5", font: "inherit", fontSize: 14 }}
+                onChange={(e) => setInviteForm((prev) => ({ ...prev, [key]: e.target.value }))}
+                style={{
+                  boxSizing: "border-box",
+                  width: "100%",
+                  minHeight: 44,
+                  padding: "0 12px",
+                  borderRadius: 10,
+                  border: "1px solid #3A404A",
+                  background: "#0A0B0D",
+                  color: "#F2F4F5",
+                  caretColor: "#F2F4F5",
+                  WebkitTextFillColor: "#F2F4F5",
+                  fontFamily: "inherit",
+                  fontSize: 14,
+                  outline: "none",
+                  pointerEvents: "auto",
+                }}
               />
             </label>
           ))}
-          <label style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "#9AA1AB" }}>
+          <label style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "#9AA1AB", minWidth: 0 }}>
             Tax note (optional)
             <input
               type="text"
+              autoComplete="off"
               value={inviteForm.taxNote}
-              onChange={(e) => setInviteForm({ ...inviteForm, taxNote: e.target.value })}
-              style={{ minHeight: 38, padding: "0 10px", borderRadius: 10, border: "1px solid #262A31", background: "#0A0B0D", color: "#F2F4F5", font: "inherit", fontSize: 13 }}
+              onChange={(e) => setInviteForm((prev) => ({ ...prev, taxNote: e.target.value }))}
+              style={{
+                boxSizing: "border-box",
+                width: "100%",
+                minHeight: 44,
+                padding: "0 12px",
+                borderRadius: 10,
+                border: "1px solid #3A404A",
+                background: "#0A0B0D",
+                color: "#F2F4F5",
+                caretColor: "#F2F4F5",
+                WebkitTextFillColor: "#F2F4F5",
+                fontFamily: "inherit",
+                fontSize: 13,
+                outline: "none",
+                pointerEvents: "auto",
+              }}
             />
           </label>
         </div>

@@ -38,7 +38,10 @@ export default function MotionStage({ children, selector = DEFAULT, deps = [], w
     const root = ref.current;
     if (!root || reducedMotion()) return;
     const items = Array.from(root.querySelectorAll(selector)).filter(
-      (el) => !el.dataset.revealed && el.offsetParent !== null && !el.matches("[data-no-reveal], [role=dialog], [aria-modal=true], script, style, link")
+      (el) =>
+        !el.dataset.revealed &&
+        el.offsetParent !== null &&
+        !el.matches("[data-no-reveal], [data-no-reveal] *, [role=dialog], [role=dialog] *, [aria-modal=true], [aria-modal=true] *, script, style, link")
     );
     if (!items.length) return;
     items.forEach((el) => {

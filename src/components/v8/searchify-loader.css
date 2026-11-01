@@ -25,14 +25,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0;
 }
 
 .sf-mark-loader-mark {
-  width: clamp(56px, 14vw, 72px);
+  width: clamp(64px, 16vw, 88px);
   height: auto;
   display: block;
   overflow: visible;
+  animation: sf-mark-float 2.4s ease-in-out infinite;
 }
 
 .sf-mark-dot {
@@ -61,7 +63,19 @@
   }
   45% {
     opacity: 1;
-    transform: scale(1.15);
+    transform: scale(1.18);
+  }
+}
+
+@keyframes sf-mark-float {
+  0%,
+  100% {
+    transform: translateY(0);
+    filter: drop-shadow(0 0 0 rgba(77, 163, 255, 0));
+  }
+  50% {
+    transform: translateY(-5px);
+    filter: drop-shadow(0 0 18px rgba(77, 163, 255, 0.22));
   }
 }
 
@@ -72,9 +86,18 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sf-mark-dot {
+  .sf-mark-dot,
+  .sf-mark-loader-mark {
     animation: none;
+  }
+
+  .sf-mark-dot {
     opacity: 1;
+    transform: none;
+  }
+
+  .sf-mark-loader-mark {
+    filter: none;
     transform: none;
   }
 }
