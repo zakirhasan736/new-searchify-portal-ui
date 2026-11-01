@@ -94,7 +94,7 @@ export default function LandingShell({
               <Link href="/login" onClick={close}>
                 Sign in
               </Link>
-              <Link className="sf-cta" href="/signup?next=%2Fapp%2Fstart" onClick={close}>
+              <Link className="sf-cta" href="/free-analysis" onClick={close}>
                 Scan your site
               </Link>
             </div>

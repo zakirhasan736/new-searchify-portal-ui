@@ -445,12 +445,14 @@ export async function proposeFromGsc({ breadth = "balanced", site = null, limit 
   return res;
 }
 
-export async function previewSiteScan(site) {
+export async function previewSiteScan(site, { email = "" } = {}) {
+  const body = { site };
+  if (email) body.email = email;
   return json(
     await fetch("/api/v1/public/site-scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ site }),
+      body: JSON.stringify(body),
     }),
   );
 }

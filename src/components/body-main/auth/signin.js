@@ -386,7 +386,7 @@ export default function Signin({ initialView = "signin" } = {}) {
             </button>
             <div className="v8-signin-foot">
               <span>
-                New to Searchify? <Link href="/signup?next=%2Fapp%2Fstart">Scan your site free</Link> or{" "}
+                New to Searchify? <Link href="/free-analysis">Scan your site free</Link> or{" "}
                 <Link href="/pricing">start your free month</Link>.
               </span>
               <span className="is-affiliate">

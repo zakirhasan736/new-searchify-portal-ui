@@ -268,6 +268,7 @@ export function requiredJourneyPath(pathname) {
     pathname === "/app/settings" ||
     pathname === "/app/cancel" ||
     pathname === "/app/billing" ||
+    pathname === "/app/trial-report" ||
     pathname.startsWith("/app/settings/")
   ) {
     return null;

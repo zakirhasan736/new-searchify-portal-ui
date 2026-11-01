@@ -109,7 +109,7 @@ export default function HomeStickyNav() {
           {item.label}
         </Link>
       ))}
-      <Link className="sf-home-sticky-cta" href="/signup?next=%2Fapp%2Fstart" onClick={close}>
+      <Link className="sf-home-sticky-cta" href="/free-analysis" onClick={close}>
         Scan your site
       </Link>
     </>

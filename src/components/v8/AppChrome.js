@@ -35,6 +35,7 @@ const ACCOUNT = [
   { id: "command", label: "Agency command centre", href: "/app/command" },
   { id: "sites", label: "All client sites", href: "/app/workspace" },
   { id: "clientreport", label: "Client report", href: "/app/month" },
+  { id: "trialreport", label: "Free-month report", href: "/app/trial-report" },
   { id: "settings", label: "Settings", href: "/app/settings" },
   { id: "billing", label: "Plan and billing", href: "/app/billing" },
 ];

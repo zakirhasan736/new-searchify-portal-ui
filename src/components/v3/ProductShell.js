@@ -9,7 +9,7 @@ import SkinWallPill from "@/components/v8/SkinWallPill";
 import { userIsAuthenticated } from "@/utils/users/Helpers";
 import { captureReferral } from "@/lib/referral";
 
-const MARKETING = new Set(["/", "/about", "/pricing", "/checkout", "/contact", "/terms", "/privacy", "/skins"]);
+const MARKETING = new Set(["/", "/about", "/pricing", "/checkout", "/contact", "/terms", "/privacy", "/skins", "/free-analysis"]);
 
 const AUTH = new Set([
   "/login",

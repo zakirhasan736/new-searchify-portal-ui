@@ -8,7 +8,6 @@ import HomeBrandHero from "@/components/landing/HomeBrandHero";
 import TestimonialsSlider from "@/components/landing/TestimonialsSlider";
 import LandingMotion from "@/components/motion/LandingMotion";
 import { normalizeSiteUrl, seedDraftSite, stashPendingSite } from "@/lib/journey";
-import { previewSiteScan } from "@/lib/v1Api";
 import { userIsAuthenticated } from "@/utils/users/Helpers";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
 
@@ -229,21 +228,10 @@ export default function HomeView() {
       setScanError("Enter a website address, like example.com.");
       return;
     }
-    setScanError("");
-    setScan(null);
-    setScanning(true);
-    const res = await previewSiteScan(site);
-    setScanning(false);
-    if (!res.ok) {
-      const detail = res.data?.detail;
-      setScanError(typeof detail === "string" ? detail : "Could not read that site. Check the address and try again.");
-      return;
-    }
-    const next = res.data?.scan || null;
-    setScan(next);
-    if (next?.home) stashPendingSite(next.home);
-    const board = document.getElementById("scan");
-    board?.scrollIntoView({ behavior: "smooth", block: "center" });
+    // FreeAnalysis.dc.html — full public report before sign-up.
+    stashPendingSite(site);
+    const q = new URLSearchParams({ site, run: "1" });
+    router.push(`/free-analysis?${q}`);
   };
 
   const openFullScan = () => {
@@ -255,8 +243,8 @@ export default function HomeView() {
       router.push("/app/start");
       return;
     }
-    const q = new URLSearchParams({ next: "/app/start", site });
-    router.push(`/signup?${q}`);
+    const q = new URLSearchParams({ site, run: "1" });
+    router.push(`/free-analysis?${q}`);
   };
 
   const previewHost = hostLabel(heroUrl || footUrl);

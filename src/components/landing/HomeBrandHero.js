@@ -440,7 +440,7 @@ export default function HomeBrandHero() {
           {item.label}
         </Link>
       ))}
-      <Link className="sf-brand-cta" href="/signup?next=%2Fapp%2Fstart" onClick={closeMenu}>
+      <Link className="sf-brand-cta" href="/free-analysis" onClick={closeMenu}>
         Scan your site
       </Link>
     </>
