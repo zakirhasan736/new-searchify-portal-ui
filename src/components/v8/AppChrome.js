@@ -12,6 +12,8 @@ import { activeJourneySite, hydrateJourney, loadJourney, planById, requiredJourn
 import { activeSiteContext } from "@/lib/siteContext";
 import { activateGoogleSite, syncGoogle } from "@/lib/v1Api";
 import { invalidateV3Cache } from "@/lib/v3Store";
+import { getBillingAccount } from "@/lib/billingApi";
+import { accountNeedsPaidPlan, isTrialLockAllowedPath, trialLockRedirect } from "@/lib/trialGate";
 import SkeletonPage from "@/components/v8/SkeletonWave";
 import MotionStage from "@/components/motion/MotionStage";
 import "@/styles/v8-screens.css";
@@ -35,10 +37,12 @@ const ACCOUNT = [
   { id: "command", label: "Agency command centre", href: "/app/command" },
   { id: "sites", label: "All client sites", href: "/app/workspace" },
   { id: "clientreport", label: "Client report", href: "/app/month" },
-  { id: "trialreport", label: "Free-month report", href: "/app/trial-report" },
   { id: "settings", label: "Settings", href: "/app/settings" },
   { id: "billing", label: "Plan and billing", href: "/app/billing" },
 ];
+
+/** After trial: only Today's moves + billing/settings stay open. */
+const LOCK_OPEN_IDS = new Set(["home", "billing", "settings"]);
 
 function hostOf(site) {
   const raw = site?.answers?.site || "";
@@ -77,6 +81,7 @@ export default function AppChrome({ children, current }) {
   const [switching, setSwitching] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [who, setWho] = useState({ name: "You", sub: "Workspace", initials: "YO" });
+  const [trialLocked, setTrialLocked] = useState(false);
   const mainRef = useRef(null);
   const bootedScope = useRef(false);
   const scopeGen = useRef(0);
@@ -98,10 +103,21 @@ export default function AppChrome({ children, current }) {
       fetch("/api/v1/profile", { headers: authHeaders(), cache: "no-store" })
         .then((r) => (r.ok ? r.json() : null))
         .catch(() => null),
-    ]).then(([_, acct]) => {
+      getBillingAccount().catch(() => ({ ok: false })),
+    ]).then(([_, acct, bill]) => {
       if (!live) return;
+      const account = bill?.ok ? bill.data || bill : null;
+      const locked = accountNeedsPaidPlan(account);
+      setTrialLocked(locked);
+      if (locked) {
+        const bounce = trialLockRedirect(pathname);
+        if (bounce) {
+          router.replace(bounce);
+          return;
+        }
+      }
       const gate = requiredJourneyPath(pathname);
-      if (gate) {
+      if (gate && !locked) {
         router.replace(gate);
         return;
       }
@@ -121,7 +137,9 @@ export default function AppChrome({ children, current }) {
         acct?.email ||
         user?.result?.email ||
         "You";
-      const plan = planById(state.planId)?.name || "";
+      const plan = locked
+        ? "Free month ended · start a plan"
+        : planById(state.planId)?.name || account?.name || "";
       setWho({ name, sub: plan, initials: initials(name) });
       setReady(true);
     });
@@ -262,46 +280,52 @@ export default function AppChrome({ children, current }) {
         </div>
 
         <nav className={`v8-app-nav${menuOpen ? " is-open" : ""}`} aria-label="Main">
+          {trialLocked ? (
+            <div
+              role="status"
+              style={{
+                margin: "0 4px 10px",
+                padding: "10px 12px",
+                borderRadius: 12,
+                border: "1px solid rgba(255,197,61,.4)",
+                background: "rgba(255,197,61,.08)",
+                fontSize: 12,
+                color: "#D7DADE",
+                lineHeight: 1.45,
+              }}
+            >
+              Free month ended. Today’s moves shows your report. Start a plan to unlock the other tabs.
+            </div>
+          ) : null}
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <span style={{ padding: "0 10px 6px", fontSize: 12, fontWeight: 600, color: "#7D848E" }}>Core features</span>
             {CORE.map((it) => {
               const on = current ? current === it.id : isOn(pathname, it);
-              return (
-                <Link
-                  key={it.href}
-                  href={it.href}
-                  aria-current={on ? "page" : undefined}
-                  style={
-                    on
-                      ? {
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                          minHeight: 44,
-                          padding: "0 10px",
-                          borderRadius: 11,
-                          background: "#131519",
-                          boxShadow: "inset 3px 0 0 #4DA3FF",
-                          color: "#F2F4F5",
-                          textDecoration: "none",
-                          fontSize: 14,
-                          fontWeight: 600,
-                          minWidth: 0,
-                        }
-                      : {
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                          minWidth: 0,
-                          minHeight: 44,
-                          padding: "0 10px",
-                          borderRadius: 11,
-                          color: "#B4BAC3",
-                          textDecoration: "none",
-                          fontSize: 14,
-                        }
+              const locked = trialLocked && !LOCK_OPEN_IDS.has(it.id);
+              const base = {
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                minHeight: 44,
+                padding: "0 10px",
+                borderRadius: 11,
+                fontSize: 14,
+                minWidth: 0,
+                textDecoration: locked ? "none" : "none",
+                cursor: locked ? "not-allowed" : "pointer",
+                opacity: locked ? 0.45 : 1,
+              };
+              const style = on
+                ? {
+                    ...base,
+                    background: "#131519",
+                    boxShadow: "inset 3px 0 0 #4DA3FF",
+                    color: "#F2F4F5",
+                    fontWeight: 600,
                   }
-                >
+                : { ...base, color: "#B4BAC3", fontWeight: 400 };
+              const inner = (
+                <>
                   <span
                     style={
                       on
@@ -334,9 +358,24 @@ export default function AppChrome({ children, current }) {
                           }
                     }
                   >
-                    {it.n}
+                    {locked ? "–" : it.n}
                   </span>
-                  <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.label}</span>
+                  <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {it.label}
+                    {locked ? " · start plan" : ""}
+                  </span>
+                </>
+              );
+              if (locked) {
+                return (
+                  <span key={it.href} aria-disabled="true" title="Start a paid plan to unlock" style={style}>
+                    {inner}
+                  </span>
+                );
+              }
+              return (
+                <Link key={it.href} href={it.href} aria-current={on ? "page" : undefined} style={style}>
+                  {inner}
                 </Link>
               );
             })}
@@ -346,42 +385,49 @@ export default function AppChrome({ children, current }) {
             <span style={{ padding: "0 10px 6px", fontSize: 12, fontWeight: 600, color: "#7D848E" }}>Profile and sites</span>
             {ACCOUNT.map((it) => {
               const on = current ? current === it.id : isOn(pathname, it);
-              return (
-                <Link
-                  key={it.href}
-                  href={it.href}
-                  aria-current={on ? "page" : undefined}
-                  style={
-                    on
-                      ? {
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                          minHeight: 42,
-                          padding: "0 12px",
-                          borderRadius: 11,
-                          background: "#131519",
-                          boxShadow: "inset 3px 0 0 #4DA3FF",
-                          color: "#F2F4F5",
-                          textDecoration: "none",
-                          fontSize: 14,
-                          fontWeight: 600,
-                          minWidth: 0,
-                        }
-                      : {
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                          minWidth: 0,
-                          minHeight: 42,
-                          padding: "0 12px",
-                          borderRadius: 11,
-                          color: "#B4BAC3",
-                          textDecoration: "none",
-                          fontSize: 14,
-                        }
+              const locked = trialLocked && !LOCK_OPEN_IDS.has(it.id) && !isTrialLockAllowedPath(it.href);
+              const style = on
+                ? {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    minHeight: 42,
+                    padding: "0 12px",
+                    borderRadius: 11,
+                    background: "#131519",
+                    boxShadow: "inset 3px 0 0 #4DA3FF",
+                    color: "#F2F4F5",
+                    textDecoration: "none",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    minWidth: 0,
+                    opacity: locked ? 0.45 : 1,
                   }
-                >
+                : {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    minWidth: 0,
+                    minHeight: 42,
+                    padding: "0 12px",
+                    borderRadius: 11,
+                    color: "#B4BAC3",
+                    textDecoration: "none",
+                    fontSize: 14,
+                    opacity: locked ? 0.45 : 1,
+                    cursor: locked ? "not-allowed" : "pointer",
+                  };
+              if (locked) {
+                return (
+                  <span key={it.href} aria-disabled="true" title="Start a paid plan to unlock" style={style}>
+                    <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {it.label} · locked
+                    </span>
+                  </span>
+                );
+              }
+              return (
+                <Link key={it.href} href={it.href} aria-current={on ? "page" : undefined} style={style}>
                   <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.label}</span>
                 </Link>
               );
@@ -432,7 +478,7 @@ export default function AppChrome({ children, current }) {
       </main>
 
       {/* Phone.dc.html bottom tabs — mobile layout reference applied app-wide */}
-      <PhoneTabBar className="v8-app-phone-tabs" />
+      <PhoneTabBar className="v8-app-phone-tabs" trialLocked={trialLocked} />
     </div>
   );
 }

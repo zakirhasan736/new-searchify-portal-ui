@@ -32,20 +32,34 @@ const TOPIC_LABEL = {
   speed: "Speed",
 };
 
-function improveDots(beforeKeys) {
-  let reds = 0;
-  let yell = 0;
-  return beforeKeys.map((k) => {
-    let n = k;
-    if (k === "r") {
-      reds += 1;
-      n = reds <= 1 ? "r" : reds <= 3 ? "y" : "g";
-    } else if (k === "y") {
-      yell += 1;
-      n = yell <= 4 ? "y" : "g";
-    }
-    return { c: COL[n][0], g: COL[n][1], key: n };
-  });
+/** Build a 10×N dot grid from real urgent / need-work / healthy counts (no fabricated improve). */
+function dotsFromCounts(counts, maxDots = 40) {
+  const red = Math.max(0, Number(counts?.red) || 0);
+  const yellow = Math.max(0, Number(counts?.yellow) || 0);
+  const green = Math.max(0, Number(counts?.green) || 0);
+  const total = red + yellow + green;
+  if (!total) return [];
+  let r = red;
+  let y = yellow;
+  let g = green;
+  if (total > maxDots) {
+    const scale = maxDots / total;
+    r = Math.max(red ? 1 : 0, Math.round(red * scale));
+    y = Math.max(yellow ? 1 : 0, Math.round(yellow * scale));
+    g = Math.max(0, maxDots - r - y);
+  }
+  return [
+    ...Array(r).fill("r"),
+    ...Array(y).fill("y"),
+    ...Array(g).fill("g"),
+  ].map((k) => ({ c: COL[k][0], g: COL[k][1], key: k }));
+}
+
+function healthLabel(counts) {
+  const red = Math.max(0, Number(counts?.red) || 0);
+  const yellow = Math.max(0, Number(counts?.yellow) || 0);
+  const green = Math.max(0, Number(counts?.green) || 0);
+  return `${red} urgent · ${yellow} need work · ${green} healthy`;
 }
 
 function firstName(user, business) {
@@ -75,6 +89,7 @@ function statusForChange(change) {
     };
   }
   if (/waiting|connect|no pages|too early/i.test(c)) return { status: "Too early to call", color: "#9AA1AB" };
+  if (/catching up|still/i.test(c)) return { status: "Still catching up", color: "#FFC53D" };
   if (/^early sign$/i.test(c)) return { status: "Early sign", color: "#FFC53D" };
   return { status: c || "Too early to call", color: "#9AA1AB" };
 }
@@ -170,7 +185,7 @@ export default function TrialReportScreen() {
   const [loading, setLoading] = useState(true);
   const [account, setAccount] = useState(null);
   const [changes, setChanges] = useState([]);
-  const [auditCounts, setAuditCounts] = useState({ red: 0, yellow: 0, green: 21 });
+  const [auditCounts, setAuditCounts] = useState({ red: 0, yellow: 0, green: 0 });
   const [auditPayload, setAuditPayload] = useState(null);
   const [onPagePayload, setOnPagePayload] = useState(null);
   const [scanSnapshot, setScanSnapshot] = useState(null);
@@ -230,12 +245,12 @@ export default function TrialReportScreen() {
             yellow = Math.max(yellow, Number(scan.counts.yellow) || 0);
             green = Math.max(green, Number(scan.counts.green) || 0);
           }
-          setAuditCounts({ red, yellow, green: Math.max(green, 1) });
+          setAuditCounts({ red, yellow, green });
         } else if (scan?.counts) {
           setAuditCounts({
             red: Number(scan.counts.red) || 0,
             yellow: Number(scan.counts.yellow) || 0,
-            green: Math.max(Number(scan.counts.green) || 0, 1),
+            green: Number(scan.counts.green) || 0,
           });
         }
       })
@@ -269,20 +284,30 @@ export default function TrialReportScreen() {
   const name = firstName(user, account?.business);
   const moves = Number(account?.movesShipped || account?.measuredMoves || 0);
 
-  const beforeKeys = useMemo(() => {
-    const total = 38;
-    const r = Math.min(12, Math.max(2, auditCounts.red || 6));
-    const y = Math.min(14, Math.max(4, auditCounts.yellow || 11));
-    return [...Array(r).fill("r"), ...Array(y).fill("y"), ...Array(total - r - y).fill("g")].slice(0, total);
-  }, [auditCounts]);
+  const healthPack = useMemo(() => {
+    const api = account?.trialHealth || {};
+    const afterLive = {
+      red: Number(api?.after?.red ?? auditCounts.red) || 0,
+      yellow: Number(api?.after?.yellow ?? auditCounts.yellow) || 0,
+      green: Number(api?.after?.green ?? auditCounts.green) || 0,
+    };
+    const beforeApi = api?.before || {};
+    const hasBefore =
+      Number(beforeApi.red) > 0 || Number(beforeApi.yellow) > 0 || Number(beforeApi.green) > 0;
+    const before = hasBefore
+      ? {
+          red: Number(beforeApi.red) || 0,
+          yellow: Number(beforeApi.yellow) || 0,
+          green: Number(beforeApi.green) || 0,
+        }
+      : { ...afterLive };
+    return { before, after: afterLive };
+  }, [account?.trialHealth, auditCounts]);
 
-  const beforeDots = beforeKeys.map((k) => ({ c: COL[k][0], g: COL[k][1] }));
-  const afterDots = improveDots(beforeKeys);
-  const beforeLabel = `${beforeKeys.filter((k) => k === "r").length} urgent · ${beforeKeys.filter((k) => k === "y").length} need work · ${beforeKeys.filter((k) => k === "g").length} healthy`;
-  const afterR = afterDots.filter((d) => d.key === "r").length;
-  const afterY = afterDots.filter((d) => d.key === "y").length;
-  const afterG = afterDots.filter((d) => d.key === "g").length;
-  const afterLabel = `${afterR} urgent · ${afterY} need work · ${afterG} healthy`;
+  const beforeDots = useMemo(() => dotsFromCounts(healthPack.before), [healthPack.before]);
+  const afterDots = useMemo(() => dotsFromCounts(healthPack.after), [healthPack.after]);
+  const beforeLabel = healthLabel(healthPack.before);
+  const afterLabel = healthLabel(healthPack.after);
 
   const topicReports = useMemo(() => {
     const fromAudit = extractAuditTopics(auditPayload || {}, onPagePayload || {});
@@ -347,14 +372,15 @@ export default function TrialReportScreen() {
         /conversion|key event|lead|call|form|contact/i.test(String(row[0] || "")),
     );
     return {
-      healthy: afterG || asCount(scanSnapshot?.counts?.green) || asCount(auditCounts.green),
+      healthyNow: asCount(healthPack.after.green) || asCount(scanSnapshot?.counts?.green) || asCount(auditCounts.green),
+      healthyFrom: asCount(healthPack.before.green),
       searches,
       impressions: pick("impression", "show"),
       pageOne,
       clicks: pick("click"),
       leads: asCount(leadHit?.[1] || ga4?.conversions || ga4?.keyEvents || ga4?.leads),
     };
-  }, [organic, ga4, scanSnapshot, afterG, auditCounts.green]);
+  }, [organic, ga4, scanSnapshot, healthPack, auditCounts.green]);
 
   const metrics = useMemo(() => {
     const apiRows = Array.isArray(account?.trialMetrics) ? account.trialMetrics : [];
@@ -364,12 +390,13 @@ export default function TrialReportScreen() {
       let to = asCount(row?.to);
       let change = row?.change || "";
 
-      // Live fallbacks when billing pack has zeros but features already have numbers.
-      if (!apiRows.length || (from === 0 && to === 0)) {
-        if (label === "Healthy pages") {
-          to = liveFallback.healthy;
-          from = apiRows.length ? from : to;
-        } else if (label === "Searches you show up for") {
+      if (label === "Healthy pages") {
+        // Always prefer live heatmap for Now; Day 1 from stored baseline when present.
+        to = liveFallback.healthyNow || to;
+        if (liveFallback.healthyFrom > 0) from = liveFallback.healthyFrom;
+        else if (!apiRows.length) from = to;
+      } else if (!apiRows.length || (from === 0 && to === 0)) {
+        if (label === "Searches you show up for") {
           to = liveFallback.searches;
           from = apiRows.length ? from : to;
         } else if (label === "Times Google showed your site") {
@@ -386,8 +413,6 @@ export default function TrialReportScreen() {
           from = apiRows.length ? from : to;
         }
       } else {
-        // Prefer live "now" when feature data is richer than the billing snapshot.
-        if (label === "Healthy pages" && liveFallback.healthy > to) to = liveFallback.healthy;
         if (label === "Searches you show up for" && liveFallback.searches > to) to = liveFallback.searches;
         if (label === "Times Google showed your site" && liveFallback.impressions > to) to = liveFallback.impressions;
         if (label === "Searches on page one" && liveFallback.pageOne > to) to = liveFallback.pageOne;
@@ -402,6 +427,7 @@ export default function TrialReportScreen() {
           const pct = Math.round(((to - from) / from) * 100);
           change = pct >= 10 ? `Early sign, +${pct}%` : "Early sign, rising";
         } else if (to > from) change = "Early sign";
+        else if (to < from) change = "Still catching up";
         else change = "Too early to call";
       }
 
@@ -456,9 +482,15 @@ export default function TrialReportScreen() {
     <div className="v8-tr">
       <div className="v8-tr-inner">
         <span className="v8-tr-pills">
-          <span className="v8-tr-pill">Day {dayNum} of your free month</span>
+          <span className="v8-tr-pill">
+            {account?.needsPaidPlan || account?.trialEnded
+              ? "Free month ended"
+              : `Day ${dayNum} of your free month`}
+          </span>
           <span className="v8-tr-badge">
-            {daysLeft} day{daysLeft === 1 ? "" : "s"} left · {trialDays}-day trial
+            {account?.needsPaidPlan || account?.trialEnded
+              ? "Start a plan to unlock Searchify"
+              : `${daysLeft} day${daysLeft === 1 ? "" : "s"} left · ${trialDays}-day trial`}
           </span>
           {account?.sinceLive || auditPayload?.source === "google_pagespeed" ? (
             <span className="v8-tr-badge">LIVE DATA</span>
@@ -479,11 +511,15 @@ export default function TrialReportScreen() {
       <section className="v8-tr-ba" aria-label="Before and after">
         <div className="v8-tr-card">
           <span className="v8-tr-card-label">DAY 1 · BEFORE</span>
-          <div className="v8-tr-dots" aria-hidden="true">
-            {beforeDots.map((d, i) => (
-              <span key={i} style={{ background: d.c, boxShadow: `0 0 6px ${d.g}` }} />
-            ))}
-          </div>
+          {beforeDots.length ? (
+            <div className="v8-tr-dots" aria-hidden="true">
+              {beforeDots.map((d, i) => (
+                <span key={`b-${i}`} style={{ background: d.c, boxShadow: `0 0 6px ${d.g}` }} />
+              ))}
+            </div>
+          ) : (
+            <p style={{ margin: 0, fontSize: 13, color: "#9AA1AB" }}>Run a site scan to capture your day-1 health.</p>
+          )}
           <span style={{ fontSize: 14, color: "#D7DADE" }}>{beforeLabel}</span>
         </div>
         <div className="v8-tr-arrow" aria-hidden="true">
@@ -491,11 +527,15 @@ export default function TrialReportScreen() {
         </div>
         <div className="v8-tr-card is-now">
           <span className="v8-tr-card-label">DAY {dayNum} · NOW</span>
-          <div className="v8-tr-dots" aria-hidden="true">
-            {afterDots.map((d, i) => (
-              <span key={i} style={{ background: d.c, boxShadow: `0 0 6px ${d.g}` }} />
-            ))}
-          </div>
+          {afterDots.length ? (
+            <div className="v8-tr-dots" aria-hidden="true">
+              {afterDots.map((d, i) => (
+                <span key={`a-${i}`} style={{ background: d.c, boxShadow: `0 0 6px ${d.g}` }} />
+              ))}
+            </div>
+          ) : (
+            <p style={{ margin: 0, fontSize: 13, color: "#9AA1AB" }}>No live health counts yet — refresh the audit or site scan.</p>
+          )}
           <span style={{ fontSize: 14, color: "#D7DADE" }}>{afterLabel}</span>
         </div>
       </section>
@@ -650,18 +690,28 @@ export default function TrialReportScreen() {
 
       <section className="v8-tr-decide" aria-labelledby="dec-h">
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <h2 id="dec-h">Your free month ends on {endLabel}.</h2>
+          <h2 id="dec-h">
+            {account?.needsPaidPlan || account?.trialEnded
+              ? "Your free month ended. Start a plan to unlock the rest of Searchify."
+              : `Your free month ends on ${endLabel}.`}
+          </h2>
           <span style={{ fontSize: 15, color: "#D7DADE" }}>
-            Nothing to do if you&apos;d like to keep going. Or choose what&apos;s next:
+            {account?.needsPaidPlan || account?.trialEnded
+              ? "Today’s moves stays on this report until you start Solo or Pro. Other tabs stay locked."
+              : "Nothing to do if you’d like to keep going. Or choose what’s next:"}
           </span>
         </div>
         <div className="v8-tr-choices">
           <div className="v8-tr-choice is-primary">
-            <span style={{ fontSize: 17, fontWeight: 600 }}>Keep going on Solo</span>
-            <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5, flex: 1 }}>
-              Continue after {endLabel}. Results from your newest fixes land over the next two months.
+            <span style={{ fontSize: 17, fontWeight: 600 }}>
+              {account?.needsPaidPlan || account?.trialEnded ? "Start Solo" : "Keep going on Solo"}
             </span>
-            <Link href="/app/billing">Keep Solo</Link>
+            <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5, flex: 1 }}>
+              {account?.needsPaidPlan || account?.trialEnded
+                ? "Unlock Today’s moves, scans, keywords, and the rest of your workspace."
+                : `Continue after ${endLabel}. Results from your newest fixes land over the next two months.`}
+            </span>
+            <Link href="/app/billing">{account?.needsPaidPlan || account?.trialEnded ? "Start paid plan" : "Keep Solo"}</Link>
           </div>
           <div className="v8-tr-choice">
             <span style={{ fontSize: 17, fontWeight: 600 }}>Upgrade to Pro</span>
@@ -670,13 +720,15 @@ export default function TrialReportScreen() {
             </span>
             <Link href="/app/billing">See Pro</Link>
           </div>
-          <div className="v8-tr-choice is-muted">
-            <span style={{ fontSize: 17, fontWeight: 600 }}>Not right now</span>
-            <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5, flex: 1 }}>
-              Cancel before {endLabel} and you pay nothing. Every fix we made stays on your site.
-            </span>
-            <Link href="/app/cancel">Cancel my free month</Link>
-          </div>
+          {account?.needsPaidPlan || account?.trialEnded ? null : (
+            <div className="v8-tr-choice is-muted">
+              <span style={{ fontSize: 17, fontWeight: 600 }}>Not right now</span>
+              <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5, flex: 1 }}>
+                Cancel before {endLabel} and you pay nothing. Every fix we made stays on your site.
+              </span>
+              <Link href="/app/cancel">Cancel my free month</Link>
+            </div>
+          )}
         </div>
       </section>
 

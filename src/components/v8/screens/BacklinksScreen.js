@@ -95,9 +95,10 @@ function guessEmail(domain) {
   return `editor@${d}`;
 }
 
-function buildOutreachMoves(links, concepts, hostname) {
+function buildOutreachMoves(links, concepts, hostname, orphans = []) {
   const moves = [];
-  const lost = links.filter((l) => String(l.state) === 'Lost');
+  const list = Array.isArray(links) ? links : [];
+  const lost = list.filter((l) => String(l.state) === 'Lost');
   if (lost[0]) {
     const link = lost[0];
     const score = strengthScore(link);
@@ -118,7 +119,7 @@ function buildOutreachMoves(links, concepts, hostname) {
     });
   }
   const mention = (concepts || []).find((row) => {
-    const blob = `${row.concept || ''} ${row.title || ''} ${row.why || ''}`.toLowerCase();
+    const blob = `${row.concept || ''} ${row.title || ''} ${row.why || ''} ${row.type || ''}`.toLowerCase();
     return blob.includes('mention') || blob.includes('unlinked') || blob.includes('without a link');
   });
   if (mention && moves.length < 3) {
@@ -126,7 +127,7 @@ function buildOutreachMoves(links, concepts, hostname) {
       tag: 'TURN A MENTION INTO A LINK',
       title: `${mention.title || mention.domain || 'A site'} mentioned you without a link.`,
       why: mention.why || mention.detail || 'Asking to add a link to a mention that’s already there is the easiest link to get.',
-      cta: 'Draft the email',
+      cta: mention.cta || 'Draft the email',
       to: guessEmail(mention.domain || mention.title),
       subject: `Thanks for mentioning ${hostname}`,
       body: `Hi,\n\nThanks for mentioning us. Would you be open to linking our name to ${hostname} so readers can find us easily?\n\nBest,\n${hostname}`,
@@ -135,7 +136,7 @@ function buildOutreachMoves(links, concepts, hostname) {
     });
   }
   const gapConcept = (concepts || []).find((row) => {
-    const blob = `${row.concept || ''} ${row.title || ''} ${row.why || ''}`.toLowerCase();
+    const blob = `${row.concept || ''} ${row.title || ''} ${row.why || ''} ${row.type || ''}`.toLowerCase();
     return blob.includes('gap') || blob.includes('directory') || blob.includes('competitor') || blob.includes('listed');
   });
   if (gapConcept && moves.length < 3) {
@@ -151,12 +152,12 @@ function buildOutreachMoves(links, concepts, hostname) {
       sourceUrl: gapConcept.url || '',
     });
   }
-  const active = links.filter((l) => String(l.state) === 'Active' || String(l.state) === 'New');
+  const active = list.filter((l) => String(l.state) === 'Active' || String(l.state) === 'New');
   const strong = active.filter((l) => strengthScore(l) >= 40);
   if (strong[0] && moves.length < 3) {
     const link = strong[0];
     moves.push({
-      tag: 'GET LISTED',
+      tag: 'KEEP A STRONG LINK',
       title: `${link.domain} is a strong link to ${pageFromTarget(link.target)}.`,
       why: `Strength ${strengthScore(link)}. Keep this relationship — ask for another mention when you publish an update.`,
       cta: 'Open the source page',
@@ -165,6 +166,34 @@ function buildOutreachMoves(links, concepts, hostname) {
       body: '',
       done: 'Source page opened. Searchify will recheck this domain on the next weekly scan.',
       sourceUrl: link.source || link.url || link.sourceUrl || '',
+    });
+  }
+  if (!strong[0] && active[0] && moves.length < 3) {
+    const link = active[0];
+    moves.push({
+      tag: 'REVIEW A REFERRING SITE',
+      title: `${link.domain} links to ${pageFromTarget(link.target)}.`,
+      why: link.seen || `Open the source page, confirm the anchor looks right, and note whether a second page could earn a link.`,
+      cta: 'Open the source page',
+      to: '',
+      subject: '',
+      body: '',
+      done: 'Source page opened. We’ll recheck this domain on the next refresh.',
+      sourceUrl: link.source || link.url || link.sourceUrl || '',
+    });
+  }
+  if (orphans[0] && moves.length < 3) {
+    const orphan = orphans[0];
+    moves.push({
+      tag: 'EARN A FIRST LINK',
+      title: `${orphan.path} has no outside links yet.`,
+      why: orphan.why || 'Local directories, partners and community pages are a good fit for a first referring domain.',
+      cta: 'Open the page',
+      to: '',
+      subject: '',
+      body: '',
+      done: 'Page opened. Pitch this URL when you apply to directories or partner sites.',
+      sourceUrl: orphan.path?.startsWith('http') ? orphan.path : `https://${hostname}${orphan.path || '/'}`,
     });
   }
   return moves.slice(0, 3);
@@ -268,6 +297,7 @@ export default function BacklinksScreen() {
   const [problems, setProblems] = useState([]);
   const [reloadKey, setReloadKey] = useState(0);
   const forceRef = useRef(false);
+  const autoForced = useRef(false);
   const { hostname, href } = activeSiteContext(loadJourney());
 
   useEffect(() => {
@@ -277,8 +307,8 @@ export default function BacklinksScreen() {
     const force = forceRef.current;
     forceRef.current = false;
     Promise.all([
-      // Stored backlink data is reused for 24h unless the user clicks Refresh.
-      site ? researchBacklinks({ site, force }).catch((err) => ({ ok: false, data: err?.data || {} })) : Promise.resolve({ ok: false }),
+      // Live DataForSEO pull (cached 24h server-side unless force).
+      site ? researchBacklinks({ site, force }).catch((err) => ({ ok: false, data: err?.data || err || {} })) : Promise.resolve({ ok: false }),
       loadFeature('backlinks').catch(() => ({ ok: false })),
       loadFeature('top-pages').catch(() => ({ ok: false })),
       getBusinessProfile().catch(() => ({ ok: false })),
@@ -287,22 +317,24 @@ export default function BacklinksScreen() {
         if (cancel) return;
         const fromResearch = res?.ok ? normalizeLinksPayload(res.data) : null;
         const fromFeat = normalizeLinksPayload(featurePayload(feat));
-        const pick =
-          fromResearch?.links?.length >= (fromFeat.links?.length || 0) ? fromResearch : fromFeat.links?.length ? fromFeat : fromResearch || fromFeat;
+        // Prefer research payload even when links are empty so summary/concepts still show.
+        const pick = fromResearch || (fromFeat.links?.length ? fromFeat : fromFeat);
         setProblems(site ? problemsFrom(res, 'backlinks') : []);
-        setLiveLinks(pick.links || []);
-        setLiveSummary(pick.summary || null);
-        setLiveConcepts(pick.concepts || []);
-        setOverview(pick.overview || null);
-        setFetchedAt(pick.fetchedAt || '');
+        const links = pick?.links || [];
+        const concepts = pick?.concepts || [];
+        setLiveLinks(links);
+        setLiveSummary(pick?.summary || null);
+        setLiveConcepts(concepts);
+        setOverview(pick?.overview || null);
+        setFetchedAt(pick?.fetchedAt || '');
 
         if (prof?.ok && prof.data) {
           setSenderEmail(prof.data.email || prof.data.workEmail || '');
         }
 
         const linked = new Set([
-          ...(pick.links || []).map((l) => pageFromTarget(l.target)),
-          ...((pick.overview?.topLinkedPages || []).map((p) => p.page || pageFromTarget(p.url))),
+          ...links.map((l) => pageFromTarget(l.target)),
+          ...((pick?.overview?.topLinkedPages || []).map((p) => p.page || pageFromTarget(p.url))),
         ]);
         const tp = featurePayload(pagesFeat);
         const pageRows = tp.rows || tp.pages || [];
@@ -323,6 +355,21 @@ export default function BacklinksScreen() {
           if (orphanRows.length >= 3) break;
         }
         setOrphans(orphanRows);
+
+        // First visit with an empty cache: force one live pull so the page is not stuck on "wait for weekly crawl".
+        if (
+          site &&
+          res?.ok &&
+          !force &&
+          !autoForced.current &&
+          !links.length &&
+          !(pick?.summary?.referringDomains > 0) &&
+          !(pick?.overview?.externalReferringDomains > 0)
+        ) {
+          autoForced.current = true;
+          forceRef.current = true;
+          setReloadKey((k) => k + 1);
+        }
       })
       .finally(() => {
         if (!cancel) {
@@ -341,10 +388,10 @@ export default function BacklinksScreen() {
     setReloadKey((k) => k + 1);
   };
 
-  const MOVES = useMemo(() => {
-    if (!liveLinks?.length) return [];
-    return buildOutreachMoves(liveLinks, liveConcepts, hostname);
-  }, [liveLinks, liveConcepts, hostname]);
+  const MOVES = useMemo(
+    () => buildOutreachMoves(liveLinks || [], liveConcepts, hostname, orphans),
+    [liveLinks, liveConcepts, hostname, orphans],
+  );
 
   const idx = move;
   const has = MOVES.length > 0 && idx < MOVES.length;
@@ -718,20 +765,39 @@ export default function BacklinksScreen() {
               {loading ? <SkeletonCards count={2} lines={3} /> : null}
               {!loading ? (
                 <h2>
-                  {liveLinks?.length ? "That's every link move for this week." : 'No link moves yet.'}
+                  {MOVES.length
+                    ? "That's every link move for this week."
+                    : liveLinks?.length
+                      ? "That's every link move for this week."
+                      : 'No link moves yet.'}
                 </h2>
               ) : null}
               {!loading ? (
                 <p>
                   {liveLinks?.length
                     ? `${nd ? `You sent or started ${nd}.` : "You skipped them all; they'll come back next week."} We'll check those pages weekly and tell you when a link appears.`
-                    : 'Run a backlink refresh or wait for the weekly crawl to draft outreach here.'}
+                    : problems?.length
+                      ? 'The live link index could not load. Fix the issue above, then refresh.'
+                      : href
+                        ? 'No referring domains in the live index yet. Refresh to pull DataForSEO, or use directory / partner outreach from your site reading.'
+                        : 'Pick a website in workspace, then refresh backlinks.'}
                 </p>
               ) : null}
               {!loading && !liveLinks?.length ? (
-                <Link href="/app/connections" className="v8-bl-btn">
-                  Plug in
-                </Link>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {href ? (
+                    <button type="button" className="v8-bl-btn" disabled={refreshing} onClick={refreshNow}>
+                      {refreshing ? 'Refreshing…' : 'Refresh backlinks'}
+                    </button>
+                  ) : (
+                    <Link href="/app/workspace" className="v8-bl-btn">
+                      Choose a site
+                    </Link>
+                  )}
+                  <Link href="/app/connections" className="v8-bl-btn is-plain" style={{ textDecoration: 'none' }}>
+                    Plug in
+                  </Link>
+                </div>
               ) : null}
             </div>
           )}
