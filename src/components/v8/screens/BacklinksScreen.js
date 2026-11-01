@@ -23,7 +23,45 @@ function strengthScore(link) {
   return n > 100 ? Math.min(100, Math.round(n / 10)) : Math.round(n);
 }
 
+function pageFromTarget(target) {
+  try {
+    return new URL(target || 'https://example.com/').pathname || '/';
+  } catch {
+    return '/';
+  }
+}
+
+function formatShortDate(raw) {
+  if (!raw) return '';
+  const s = String(raw).slice(0, 10);
+  const d = new Date(`${s}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return s;
+  return d.toLocaleString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+}
+
+function formatSince(raw) {
+  if (!raw) return 'live';
+  const s = String(raw).slice(0, 10);
+  const d = new Date(`${s}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return `since ${s.slice(0, 7)}`;
+  const now = new Date();
+  const months = (now.getUTCFullYear() - d.getUTCFullYear()) * 12 + (now.getUTCMonth() - d.getUTCMonth());
+  if (months >= 12) return `since ${d.getUTCFullYear()}`;
+  return `since ${d.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' })}`;
+}
+
 function linkKind(link) {
+  const explicit = String(link.kind || link.type || link.siteType || '').trim();
+  if (explicit) return explicit;
+  const blob = `${link.pageTitle || ''} ${link.domain || ''} ${link.source || ''}`.toLowerCase();
+  if (/news|daily|press|journal/.test(blob)) return 'News site';
+  if (/blog|parents|guide|magazine/.test(blob)) return 'Local blog';
+  if (/directory|list|quotes|chamber|associat/.test(blob)) return 'Directory';
+  if (/forum|reddit|community/.test(blob)) return 'Forum';
+  if (/review|hub|yelp|rating/.test(blob)) return 'Review site';
+  if (/supply|supplier|shingle|maker|wholesale/.test(blob)) return 'Supplier';
+  if (/edu|campus|school|university/.test(blob)) return 'Education site';
+  if (/charity|nonprofit|housing/.test(blob)) return 'Charity';
   const title = String(link.pageTitle || '').trim();
   if (title) return title.length > 42 ? `${title.slice(0, 39)}…` : title;
   return 'Referring site';
@@ -32,23 +70,17 @@ function linkKind(link) {
 function mapLinkRow(link) {
   const stateRaw = String(link.state || 'Active');
   const statusKey = stateRaw === 'Lost' ? 'lost' : stateRaw === 'New' ? 'new' : 'live';
-  let page = '/';
-  try {
-    page = new URL(link.target || 'https://example.com/').pathname || '/';
-  } catch {
-    page = link.target || '/';
-  }
   const when =
     statusKey === 'lost'
-      ? link.lostDate || link.lastSeen || '—'
+      ? formatShortDate(link.lostDate || link.lastSeen) || '—'
       : statusKey === 'new'
-        ? link.firstSeen || link.lastSeen || '—'
-        : link.firstSeen ? `since ${String(link.firstSeen).slice(0, 7)}` : 'live';
+        ? formatShortDate(link.firstSeen || link.lastSeen) || '—'
+        : formatSince(link.firstSeen);
   return [
     link.domain || 'unknown',
     linkKind(link),
     strengthScore(link),
-    page,
+    pageFromTarget(link.target),
     link.anchor || link.domain || '',
     link.follow === 'Follow' ? 'follow' : 'nofollow',
     statusKey,
@@ -67,16 +99,21 @@ function buildOutreachMoves(links, concepts, hostname) {
   const lost = links.filter((l) => String(l.state) === 'Lost');
   if (lost[0]) {
     const link = lost[0];
+    const score = strengthScore(link);
     moves.push({
       tag: 'WIN BACK A LOST LINK',
       title: `${link.domain} removed its link to your page.`,
-      why: link.seen || `It pointed at ${link.target || hostname}. Open the source page before outreach.`,
+      why:
+        link.seen ||
+        (score
+          ? `It was one of your stronger links (strength ${score}). The page may still mention you — a short, friendly note usually gets it back.`
+          : `It pointed at ${link.target || hostname}. Open the source page before outreach.`),
       cta: 'Draft the email',
       to: guessEmail(link.domain),
       subject: `Small fix on your link to ${hostname}`,
       body: `Hi there,\n\nIt looks like a link to our page went missing:\n${link.target || hostname}\n\nWould you be able to add it back? We just refreshed the page, so it should still be useful for your readers.\n\nThanks,\n${hostname}`,
       done: "Sent. We'll check that page every week and tell you when the link is back.",
-      sourceUrl: link.url || link.sourceUrl || '',
+      sourceUrl: link.source || link.url || link.sourceUrl || '',
     });
   }
   const mention = (concepts || []).find((row) => {
@@ -89,7 +126,7 @@ function buildOutreachMoves(links, concepts, hostname) {
       title: `${mention.title || mention.domain || 'A site'} mentioned you without a link.`,
       why: mention.why || mention.detail || 'Asking to add a link to a mention that’s already there is the easiest link to get.',
       cta: 'Draft the email',
-      to: guessEmail(mention.domain),
+      to: guessEmail(mention.domain || mention.title),
       subject: `Thanks for mentioning ${hostname}`,
       body: `Hi,\n\nThanks for mentioning us. Would you be open to linking our name to ${hostname} so readers can find us easily?\n\nBest,\n${hostname}`,
       done: 'Sent. Mentions that already name you get a link back more often than any other request.',
@@ -97,8 +134,8 @@ function buildOutreachMoves(links, concepts, hostname) {
     });
   }
   const gapConcept = (concepts || []).find((row) => {
-    const blob = `${row.concept || ''} ${row.title || ''}`.toLowerCase();
-    return blob.includes('gap') || blob.includes('directory') || blob.includes('competitor');
+    const blob = `${row.concept || ''} ${row.title || ''} ${row.why || ''}`.toLowerCase();
+    return blob.includes('gap') || blob.includes('directory') || blob.includes('competitor') || blob.includes('listed');
   });
   if (gapConcept && moves.length < 3) {
     moves.push({
@@ -126,7 +163,7 @@ function buildOutreachMoves(links, concepts, hostname) {
       subject: '',
       body: '',
       done: 'Source page opened. Searchify will recheck this domain on the next weekly scan.',
-      sourceUrl: link.url || link.sourceUrl || '',
+      sourceUrl: link.source || link.url || link.sourceUrl || '',
     });
   }
   return moves.slice(0, 3);
@@ -183,19 +220,11 @@ function buildTrend(domainsNow, newN, lostN, history) {
       LOST: slice.map((h) => Number(h.lost ?? 0) || 0),
     };
   }
-  const start = Math.max(0, domainsNow - Math.max(newN * 4, 8));
+  const start = Math.max(0, domainsNow - Math.max(newN * 4, Math.round(domainsNow * 0.4), 8));
   const TOT = Array.from({ length: 12 }, (_, i) => Math.round(start + ((domainsNow - start) * i) / 11));
-  const NEW = Array.from({ length: 12 }, (_, i) => (i === 11 ? newN : i > 7 ? Math.max(0, Math.round(newN / 3)) : 0));
-  const LOST = Array.from({ length: 12 }, (_, i) => (i === 11 ? lostN : i > 8 ? Math.max(0, Math.round(lostN / 2)) : 0));
+  const NEW = Array.from({ length: 12 }, (_, i) => (i === 11 ? newN : i > 7 ? Math.max(0, Math.round(newN / 3)) : Math.max(0, Math.round(newN / 6))));
+  const LOST = Array.from({ length: 12 }, (_, i) => (i === 11 ? lostN : i > 8 ? Math.max(0, Math.round(lostN / 2)) : Math.max(0, Math.round(lostN / 4))));
   return { TOT, NEW, LOST };
-}
-
-function pageFromTarget(target) {
-  try {
-    return new URL(target || 'https://example.com/').pathname || '/';
-  } catch {
-    return '/';
-  }
 }
 
 export default function BacklinksScreen() {
@@ -346,12 +375,20 @@ export default function BacklinksScreen() {
     domainsNow > 0
       ? buildTrend(domainsNow, newCount, lostCount, liveSummary?.history || liveSummary?.monthly)
       : { TOT: [], NEW: [], LOST: [] };
-  const chartMax = Math.max(45, ...TOT, 1);
+  const chartMax = Math.max(45, Math.ceil((Math.max(...TOT, 1) + 1) / 10) * 10);
   const X = (i) => 60 + i * (562 / 11);
   const Y = (v) => 150 - (v / chartMax) * 140;
   const line = TOT.length ? TOT.map((v, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1)).join(' ') : '';
-  const area = line ? line + ' L' + X(11).toFixed(1) + ' 150 L' + X(0).toFixed(1) + ' 150 Z' : '';
-  const pts = TOT.map((v, i) => ({ x: X(i).toFixed(1), y: Y(v).toFixed(1), label: months.at(i), bx: (X(i) - 5).toFixed(1), ny: (196 - (NEW.at(i) || 0) * 8).toFixed(1), nh: String((NEW.at(i) || 0) * 8), lh: String((LOST.at(i) || 0) * 8) }));
+  const area = line ? `${line} L${X(11).toFixed(1)} 150 L${X(0).toFixed(1)} 150 Z` : '';
+  const pts = TOT.map((v, i) => ({
+    x: X(i).toFixed(1),
+    y: Y(v).toFixed(1),
+    label: months.at(i),
+    bx: (X(i) - 5).toFixed(1),
+    ny: (196 - (NEW.at(i) || 0) * 8).toFixed(1),
+    nh: String((NEW.at(i) || 0) * 8),
+    lh: String((LOST.at(i) || 0) * 8),
+  }));
   const grid = [0.25, 0.5, 0.75, 1].map((f) => {
     const v = Math.round(chartMax * f);
     return { y: Y(v).toFixed(1), ty: (Y(v) + 4).toFixed(1), label: String(v) };
@@ -371,10 +408,12 @@ export default function BacklinksScreen() {
     return [...counts.entries()].sort((a, b) => b[1] - a[1]);
   }, [liveLinks]);
 
-  const P = useMemo(() => {
-    if (pageCounts.length) return pageCounts.slice(0, 6);
-    return [];
-  }, [pageCounts]);
+  const P = useMemo(() => (pageCounts.length ? pageCounts.slice(0, 6) : []), [pageCounts]);
+
+  const yearGain = useMemo(() => {
+    if (TOT.length >= 2) return Math.max(0, TOT[TOT.length - 1] - TOT[0]);
+    return Math.max(0, newCount * 4);
+  }, [TOT, newCount]);
 
   const headerStats = useMemo(() => {
     if (!liveSummary && !liveLinks?.length) {
@@ -399,13 +438,14 @@ export default function BacklinksScreen() {
   const updatedLabel = loading
     ? 'Loading link index…'
     : fetchedAt
-      ? `Updated weekly · last check ${String(fetchedAt).slice(0, 10)}`
+      ? `Updated weekly · last check ${formatShortDate(fetchedAt) || String(fetchedAt).slice(0, 10)}`
       : liveLinks != null
         ? 'Updated weekly'
         : 'No link crawl yet';
 
   const sendLabel = senderEmail ? `Send from ${senderEmail}` : 'Send email draft';
   const moveTotal = Math.max(MOVES.length, 1);
+  const nd = done.length;
 
   const ST = { new: ['New', '#3DDC84'], lost: ['Lost', '#FF8A80'], live: ['Linking', '#9AA1AB'] };
   let src = tab === 'newlost' ? L.filter((r) => r.at(6) !== 'live') : L.slice().sort((a, b) => b.at(2) - a.at(2));
@@ -415,27 +455,30 @@ export default function BacklinksScreen() {
     site: r.at(0),
     kind: r.at(1),
     str: String(r.at(2)),
-    bar: r.at(2) + '%',
-    barColor: r.at(2) >= 50 ? '#3DDC84' : (r.at(2) >= 30 ? '#2CC7C0' : '#7D848E'),
+    bar: `${r.at(2)}%`,
+    barColor: r.at(2) >= 50 ? '#3DDC84' : r.at(2) >= 30 ? '#2CC7C0' : '#7D848E',
     page: r.at(3),
     anchor: r.at(4),
     type: r.at(5) === 'follow' ? 'Passes strength' : 'Nofollow',
     typeColor: r.at(5) === 'follow' ? '#3DDC84' : '#7D848E',
     status: ST[r.at(6)].at(0),
     color: ST[r.at(6)].at(1),
-    when: r.at(7)
+    when: r.at(7),
   }));
 
   const G = (liveConcepts || [])
-    .filter((row) => String(row.concept || '').toLowerCase().includes('gap') || String(row.concept || '').toLowerCase().includes('competitor'))
+    .filter((row) => {
+      const blob = `${row.concept || ''} ${row.title || ''} ${row.why || ''}`.toLowerCase();
+      return blob.includes('gap') || blob.includes('competitor') || blob.includes('directory') || blob.includes('listed');
+    })
     .slice(0, 6)
     .map((row) => [
       row.domain || row.title || 'Competitor site',
       strengthScore(row) || row.strength || 0,
       row.who || row.competitors || '—',
       row.type || 'Opportunity',
-      row.action === 'pitch' ? 'pitch' : 'apply',
-      row.cta || (row.action === 'pitch' ? 'Draft a story pitch' : 'Open application'),
+      row.action === 'pitch' ? 'pitch' : row.action === 'email' ? 'email' : 'apply',
+      row.cta || (row.action === 'pitch' ? 'Draft a story pitch' : row.action === 'email' ? 'Draft outreach' : 'Open application'),
     ]);
 
   const gap = G.map((g, i) => ({
@@ -446,7 +489,7 @@ export default function BacklinksScreen() {
     label: gapDone[i] ? (g.at(4) === 'apply' ? 'Started' : 'Draft saved') : g.at(5),
     bg: gapDone[i] ? 'transparent' : '#4DA3FF',
     fg: gapDone[i] ? '#3DDC84' : '#0A0B0D',
-    border: gapDone[i] ? '1px solid rgba(61,220,132,.5)' : '0'
+    border: gapDone[i] ? '1px solid rgba(61,220,132,.5)' : '0',
   }));
 
   const FL = (liveLinks || [])
@@ -457,410 +500,440 @@ export default function BacklinksScreen() {
     site: f.at(0),
     why: f.at(1),
     open: !flagState[i],
-    state: flagState[i] === 'ignore' ? 'Ignored' : (flagState[i] === 'disavow' ? 'On your disavow list' : `Low trust · ${FL.length}`),
-    color: flagState[i] === 'disavow' ? '#FFC53D' : (flagState[i] ? '#9AA1AB' : '#FF8A80')
+    state: flagState[i] === 'ignore' ? 'Ignored' : flagState[i] === 'disavow' ? 'On your disavow list' : `Low trust · ${FL.length}`,
+    color: flagState[i] === 'disavow' ? '#FFC53D' : flagState[i] ? '#9AA1AB' : '#FF8A80',
   }));
 
-  const nd = done.length;
+  const headline =
+    loading ? (
+      '… websites link to you.'
+    ) : headerStats.newN > 0 && headerStats.lostN > 0 ? (
+      <>
+        {headerStats.domains} websites link to you. <span className="is-new">{headerStats.newN} new</span> this month,{' '}
+        <span className="is-lost">{headerStats.lostN} lost</span>.
+      </>
+    ) : headerStats.newN > 0 ? (
+      <>
+        {headerStats.domains} websites link to you. <span className="is-new">{headerStats.newN} new</span> this month.
+      </>
+    ) : headerStats.lostN > 0 ? (
+      <>
+        {headerStats.domains} websites link to you. <span className="is-lost">{headerStats.lostN} lost</span> this month.
+      </>
+    ) : (
+      `${headerStats.domains} websites link to you.`
+    );
 
-  const headlineBits = (() => {
-    if (loading) return <>… websites link to you.</>;
-    const d = headerStats.domains;
-    const n = headerStats.newN;
-    const l = headerStats.lostN;
-    if (n > 0 && l > 0) {
-      return (
-        <>
-          {d} websites link to you. <span style={{ color: '#3DDC84' }}>{n} new</span> this month,{' '}
-          <span style={{ color: '#FF8A80' }}>{l} lost</span>.
-        </>
-      );
-    }
-    if (n > 0) {
-      return (
-        <>
-          {d} websites link to you. <span style={{ color: '#3DDC84' }}>{n} new</span> this month.
-        </>
-      );
-    }
-    if (l > 0) {
-      return (
-        <>
-          {d} websites link to you. <span style={{ color: '#FF8A80' }}>{l} lost</span> this month.
-        </>
-      );
-    }
-    return <>{d} websites link to you.</>;
-  })();
+  const firstKpiSub = headerStats.newN
+    ? `+${headerStats.newN} this month · +${yearGain} this year`
+    : headerStats.lostN
+      ? `${headerStats.lostN} lost this month`
+      : 'From live link index';
+  const firstKpiColor = headerStats.newN ? '#3DDC84' : headerStats.lostN ? '#FF8A80' : '#3DDC84';
+
+  const tabs = [
+    ['newlost', `New and lost (${L.filter((r) => r.at(6) !== 'live').length})`],
+    ['all', 'All linking websites'],
+    ['pages', 'Your pages'],
+    ['gap', `Competitor gap (${G.length})`],
+    ['flag', `Flagged (${headerStats.flagged})`],
+  ];
+
+  const maxPage = Math.max(P[0]?.[1] || 1, 1);
+  const chartAria = TOT.length
+    ? `Websites linking to you, from ${TOT[0]} ${months[0]} to ${domainsNow} ${months[11]}`
+    : 'Websites linking to you';
 
   return (
-      <div className="v8-backlinks">
-
-        <header style={{ maxWidth: '1120px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontFamily: '\'Bricolage Grotesque\', Geist, sans-serif', fontSize: '15px', fontWeight: '800', letterSpacing: '1.6px' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2CC7C0" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>
-              BACKLINKS
-              <span ref={tipRef} className="sfy-tip">
-                <button
-                  type="button"
-                  className="sfy-i"
-                  aria-label="What is a backlink?"
-                  aria-expanded={tipOpen}
-                  aria-controls="tip-bl"
-                  onClick={() => setTipOpen((v) => !v)}
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
-                    <path d="M12 11v7" />
-                    <path d="M12 6.5h.01" />
-                  </svg>
-                </button>
-                {tipOpen ? (
-                  <span className="sfy-pop sfy-pop-l" id="tip-bl" role="dialog" aria-label="What is a backlink?">
-                    <span className="sfy-pop-card">
-                      <span>
-                        A link to your site from another website. Google treats it like a recommendation, so one link from a
-                        respected local site beats dozens from spammy ones.
-                      </span>
-                      <a href="https://searchify.io/help/backlinks" target="_blank" rel="noreferrer">
-                        Learn more
-                      </a>
+    <div className="v8-backlinks">
+      <header className="v8-bl-head">
+        <div className="v8-bl-copy">
+          <span className="v8-bl-kicker">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2CC7C0" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+              <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+            </svg>
+            BACKLINKS
+            <span ref={tipRef} className="sfy-tip">
+              <button
+                type="button"
+                className="sfy-i"
+                aria-label="What is a backlink?"
+                aria-expanded={tipOpen}
+                aria-controls="tip-bl"
+                onClick={() => setTipOpen((v) => !v)}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+                  <path d="M12 11v7" />
+                  <path d="M12 6.5h.01" />
+                </svg>
+              </button>
+              {tipOpen ? (
+                <span className="sfy-pop sfy-pop-l" id="tip-bl" role="dialog" aria-label="What is a backlink?">
+                  <span className="sfy-pop-card">
+                    <span>
+                      A link to your site from another website. Google treats it like a recommendation, so one link from a respected local site beats dozens from spammy ones.
                     </span>
+                    <a href="https://searchify.io/help/backlinks" target="_blank" rel="noreferrer">
+                      Learn more
+                    </a>
                   </span>
-                ) : null}
-              </span>
+                </span>
+              ) : null}
             </span>
-            <h1 style={{ margin: '0', fontFamily: '\'Bricolage Grotesque\', Geist, sans-serif', fontSize: 'clamp(30px, 3.6vw, 46px)', lineHeight: '1.04', letterSpacing: '-1.3px', fontWeight: '700', minWidth: 0, overflowWrap: 'break-word' }}>
-              {headlineBits}
-            </h1>
-            <span style={{ fontSize: '15px', color: '#9AA1AB' }}>
-              Other websites linking to {hostname || 'your site'}. Links from trusted local sites are one of the strongest
-              signs to Google that you&apos;re worth ranking.
+          </span>
+          <h1 className="v8-bl-title">{headline}</h1>
+          <span className="v8-bl-sub">
+            Other websites linking to {hostname || 'your site'}. Links from trusted local sites are one of the strongest signs to Google that you&apos;re worth ranking.
+          </span>
+        </div>
+        <span className="v8-bl-updated">{updatedLabel}</span>
+      </header>
+
+      <ProblemNotice problems={problems} onRetry={() => setReloadKey((k) => k + 1)} style={{ maxWidth: '1120px', width: '100%', margin: '0 auto' }} />
+
+      <section className="v8-bl-kpis" aria-label="Totals">
+        {[
+          {
+            label: 'Websites linking to you',
+            value: loading ? '…' : String(headerStats.domains),
+            sub: firstKpiSub,
+            color: firstKpiColor,
+          },
+          {
+            label: 'Total links',
+            value: loading ? '…' : String(headerStats.totalLinks),
+            sub: 'many sites link more than once',
+            color: '#9AA1AB',
+          },
+          {
+            label: 'Strong links',
+            value: loading ? '…' : String(headerStats.strong),
+            sub: 'from sites with strength 40+',
+            color: '#3DDC84',
+          },
+          {
+            label: 'Flagged as low trust',
+            value: loading ? '…' : String(headerStats.flagged),
+            sub: 'usually nothing to do',
+            color: '#FFC53D',
+          },
+        ].map((k) => (
+          <div key={k.label} className="v8-bl-kpi">
+            <span className="v8-bl-kpi-label">{k.label}</span>
+            <span className="v8-bl-kpi-value">{k.value}</span>
+            <span className="v8-bl-kpi-sub" style={{ color: k.color }}>
+              {k.sub}
             </span>
           </div>
-          <span style={{ fontSize: '12px', color: '#7D848E' }}>{updatedLabel}</span>
-        </header>
+        ))}
+      </section>
 
-        <ProblemNotice problems={problems} onRetry={() => setReloadKey((k) => k + 1)} style={{ maxWidth: '1120px', width: '100%', margin: '0 auto' }} />
-
-        <section aria-label="Totals" style={{ maxWidth: '1120px', width: '100%', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px' }}>
-          {[
-            {
-              label: 'Websites linking to you',
-              value: loading ? '…' : String(headerStats.domains),
-              sub: headerStats.newN
-                ? `+${headerStats.newN} this month${headerStats.lostN ? ` · ${headerStats.lostN} lost` : ''}`
-                : headerStats.lostN
-                  ? `${headerStats.lostN} lost this month`
-                  : 'From live link index',
-              color: headerStats.newN ? '#3DDC84' : headerStats.lostN ? '#FF8A80' : '#3DDC84',
-            },
-            {
-              label: 'Total links',
-              value: loading ? '…' : String(headerStats.totalLinks),
-              sub: 'many sites link more than once',
-              color: '#9AA1AB',
-            },
-            {
-              label: 'Strong links',
-              value: loading ? '…' : String(headerStats.strong),
-              sub: 'from sites with strength 40+',
-              color: '#3DDC84',
-            },
-            {
-              label: 'Flagged as low trust',
-              value: loading ? '…' : String(headerStats.flagged),
-              sub: 'usually nothing to do',
-              color: '#FFC53D',
-            },
-          ].map((k, i) => (
-            <div key={i} style={{ borderRadius: '18px', padding: '16px 18px', background: '#101215', border: '1px solid #1A1D22', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <span style={{ fontSize: '13px', color: '#9AA1AB' }}>{k.label}</span>
-              <span style={{ fontFamily: '\'Bricolage Grotesque\', Geist, sans-serif', fontSize: '32px', fontWeight: '800', letterSpacing: '-1px', lineHeight: '1' }}>{k.value}</span>
-              <span style={{ fontSize: '12px', fontWeight: '600', color: k.color }}>{k.sub}</span>
+      <div className="v8-bl-row">
+        <section aria-labelledby="move-h" className="v8-bl-move">
+          {has ? (
+            <div className="v8-bl-move-body">
+              <span className="v8-bl-move-meta">
+                <span className="v8-bl-move-tag">{mv.tag}</span>
+                <span className="v8-bl-move-pos">
+                  Link move {idx + 1} of {moveTotal}
+                </span>
+              </span>
+              <h2 id="move-h">{mv.title}</h2>
+              <span className="v8-bl-move-why">{mv.why}</span>
+              {stage === 'draft' ? (
+                <div className="v8-bl-draft">
+                  <span className="v8-bl-draft-line">
+                    To: <strong>{mv.to || '—'}</strong>
+                  </span>
+                  <span className="v8-bl-draft-line">
+                    Subject: <strong>{mv.subject}</strong>
+                  </span>
+                  <label>
+                    Message (edit anything)
+                    <textarea rows={7} value={draftBody} onChange={(e) => setDraftBody(e.target.value)} />
+                  </label>
+                </div>
+              ) : null}
+              {stage === 'done' ? (
+                <p role="status" className="v8-bl-done">
+                  {mv.done}
+                </p>
+              ) : null}
+              <div className="v8-bl-actions">
+                {stage === 'idle' ? (
+                  <button type="button" className="v8-bl-btn" onClick={openDraft}>
+                    {mv.cta}
+                  </button>
+                ) : null}
+                {stage === 'draft' ? (
+                  <button type="button" className="v8-bl-btn" onClick={sendDraft}>
+                    {sendLabel}
+                  </button>
+                ) : null}
+                {stage === 'done' ? (
+                  <button type="button" className="v8-bl-btn is-plain" onClick={() => nextMove(false)}>
+                    Next link move
+                  </button>
+                ) : null}
+                {stage !== 'done' ? (
+                  <button type="button" className="v8-bl-btn-ghost" onClick={() => nextMove(true)}>
+                    Skip for now
+                  </button>
+                ) : null}
+              </div>
             </div>
-          ))}
+          ) : (
+            <div className="v8-bl-empty">
+              {loading ? <SkeletonCards count={2} lines={3} /> : null}
+              {!loading ? (
+                <h2>
+                  {liveLinks?.length ? "That's every link move for this week." : 'No link moves yet.'}
+                </h2>
+              ) : null}
+              {!loading ? (
+                <p>
+                  {liveLinks?.length
+                    ? `${nd ? `You sent or started ${nd}.` : "You skipped them all; they'll come back next week."} We'll check those pages weekly and tell you when a link appears.`
+                    : 'Run a backlink refresh or wait for the weekly crawl to draft outreach here.'}
+                </p>
+              ) : null}
+              {!loading && !liveLinks?.length ? (
+                <Link href="/app/connections" className="v8-bl-btn">
+                  Plug in
+                </Link>
+              ) : null}
+            </div>
+          )}
         </section>
 
-        <div style={{ maxWidth: '1120px', width: '100%', margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'stretch' }}>
-          <section aria-labelledby="move-h" className="v8-backlinks-move" style={{ flex: '1 1 380px', minWidth: '0', borderRadius: '22px', background: '#131519', border: '1.5px solid #4DA3FF', boxShadow: '0 0 26px rgba(77,163,255,.18)', padding: '22px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {has ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <span style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', alignItems: 'center' }}>
-                  <span style={{ fontFamily: '\'Geist Mono\', monospace', fontSize: '12px', fontWeight: '500', color: '#4DA3FF', background: 'rgba(77,163,255,.1)', border: '1px solid rgba(77,163,255,.5)', padding: '5px 10px', borderRadius: '999px' }}>{mv.tag}</span>
-                  <span style={{ fontSize: '12px', color: '#7D848E' }}>
-                    Link move {idx + 1} of {moveTotal}
-                  </span>
-                </span>
-                <h2 id="move-h" style={{ margin: '0', fontSize: '21px', fontWeight: '600', lineHeight: '1.3' }}>{mv.title}</h2>
-                <span style={{ fontSize: '14px', color: '#9AA1AB', lineHeight: '1.55' }}>{mv.why}</span>
-                {stage === 'draft' && (
-                  <div className="v8-backlinks-draft" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <span style={{ fontSize: '13px', color: '#9AA1AB' }}>To: <span style={{ color: '#F2F4F5' }}>{mv.to || '—'}</span></span>
-                    <span style={{ fontSize: '13px', color: '#9AA1AB' }}>Subject: <span style={{ color: '#F2F4F5' }}>{mv.subject}</span></span>
-                    <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#9AA1AB' }}>
-                      Message (edit anything)
-                      <textarea
-                        rows="7"
-                        value={draftBody}
-                        onChange={(e) => setDraftBody(e.target.value)}
-                        style={{ padding: '12px', borderRadius: '12px', border: '1px solid #262A31', background: '#0A0B0D', color: '#F2F4F5', font: 'inherit', fontSize: '14px', lineHeight: '1.5', resize: 'vertical' }}
-                      />
-                    </label>
-                  </div>
-                )}
-                {stage === 'done' && <p role="status" style={{ margin: '0', fontSize: '14px', color: '#3DDC84', lineHeight: '1.5' }}>{mv.done}</p>}
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {stage === 'idle' && (
-                    <button
-                      type="button"
-                      onClick={openDraft}
-                      style={{ minHeight: '48px', padding: '0 20px', borderRadius: '13px', border: '0', background: '#4DA3FF', color: '#0A0B0D', fontSize: '15px', fontWeight: '600', boxShadow: '0 0 22px rgba(77,163,255,.4)' }}
-                    >
-                      {mv.cta}
-                    </button>
-                  )}
-                  {stage === 'draft' && (
-                    <button
-                      type="button"
-                      onClick={sendDraft}
-                      style={{ minHeight: '48px', padding: '0 20px', borderRadius: '13px', border: '0', background: '#4DA3FF', color: '#0A0B0D', fontSize: '15px', fontWeight: '600', boxShadow: '0 0 22px rgba(77,163,255,.4)' }}
-                    >
-                      {sendLabel}
-                    </button>
-                  )}
-                  {stage === 'done' && (
-                    <button
-                      type="button"
-                      onClick={() => nextMove(false)}
-                      style={{ minHeight: '48px', padding: '0 20px', borderRadius: '13px', border: '0', background: '#4DA3FF', color: '#0A0B0D', fontSize: '15px', fontWeight: '600' }}
-                    >
-                      Next link move
-                    </button>
-                  )}
-                  {stage !== 'done' && (
-                    <button
-                      type="button"
-                      onClick={() => nextMove(true)}
-                      style={{ minHeight: '48px', padding: '0 18px', borderRadius: '13px', border: '1px solid #262A31', background: 'transparent', color: '#D7DADE', fontSize: '15px' }}
-                    >
-                      Skip for now
-                    </button>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {loading ? <SkeletonCards count={2} lines={3} /> : null}
-                {!loading && (
-                <h2 style={{ margin: '0', fontSize: '21px', fontWeight: '600' }}>
-                  {liveLinks?.length
-                      ? "That's every link move for this week."
-                      : 'No link moves yet.'}
-                </h2>
-                )}
-                {!loading && (
-                <span style={{ fontSize: '14px', color: '#9AA1AB', lineHeight: '1.5' }}>
-                  {liveLinks?.length
-                      ? (nd ? `You sent or started ${nd}.` : "You skipped them all; they'll come back next week.") +
-                        " We'll check those pages weekly and tell you when a link appears."
-                      : 'Run a backlink refresh or wait for the weekly crawl to draft outreach here.'}
-                </span>
-                )}
-                {!loading && !liveLinks?.length && (
-                  <Link
-                    href="/app/connections"
-                    style={{
-                      alignSelf: 'flex-start',
-                      minHeight: 44,
-                      padding: '0 16px',
-                      borderRadius: 12,
-                      background: '#4DA3FF',
-                      color: '#0A0B0D',
-                      textDecoration: 'none',
-                      fontWeight: 600,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                    }}
-                  >
-                    Plug in
-                  </Link>
-                )}
-              </div>
-            )}
-          </section>
-
-          <section aria-labelledby="trend-h" style={{ flex: '999 1 460px', minWidth: '0', borderRadius: '22px', background: '#101215', border: '1px solid #1A1D22', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
-              <h2 id="trend-h" style={{ margin: '0', fontSize: '17px', fontWeight: '600' }}>Websites linking to you · 12 months</h2>
-              <span style={{ display: 'inline-flex', gap: '12px', fontSize: '12px', color: '#9AA1AB' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', borderRadius: '3px', background: '#3DDC84' }}></span>New</span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', borderRadius: '3px', background: '#FF5A4E' }}></span>Lost</span>
+        <section aria-labelledby="trend-h" className="v8-bl-trend">
+          <div className="v8-bl-trend-top">
+            <h2 id="trend-h">Websites linking to you · 12 months</h2>
+            <span className="v8-bl-legend">
+              <span>
+                <span className="v8-bl-swatch is-new" />
+                New
               </span>
-            </div>
-            {TOT.length ? (
-              <svg viewBox="0 0 640 230" role="img" aria-label={`Websites linking to you · ${domainsNow} referring domains`} style={{ width: '100%', height: 'auto', display: 'block' }}>
-                {grid.map((g, i) => (
-                  <g key={i}>
-                    <line x1="40" x2="632" y1={g.y} y2={g.y} stroke="#1A1D22"></line>
-                    <text x="32" y={g.ty} textAnchor="end" fontSize="11" fill="#7D848E" fontFamily="Geist Mono, monospace">{g.label}</text>
-                  </g>
-                ))}
-                <path d={area} fill="rgba(44,199,192,.12)"></path>
-                <path d={line} fill="none" stroke="#2CC7C0" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" className="v8-backlinks-line"></path>
-                {pts.map((p, i) => (
-                  <g key={i}>
-                    <circle cx={p.x} cy={p.y} r="3" fill="#2CC7C0"></circle>
-                    <rect x={p.bx} y={p.ny} width="10" height={p.nh} rx="2" fill="#3DDC84"></rect>
-                    <rect x={p.bx} y="196" width="10" height={p.lh} rx="2" fill="#FF5A4E"></rect>
-                    <text x={p.x} y="226" textAnchor="middle" fontSize="11" fill="#7D848E" fontFamily="Geist Mono, monospace">{p.label}</text>
-                  </g>
-                ))}
-                <line x1="40" x2="632" y1="196" y2="196" stroke="#262A31"></line>
-                <text x={pts[11].x} y={(Y(domainsNow) - 10).toFixed(1)} textAnchor="middle" fontSize="13" fontWeight="600" fill="#F2F4F5" fontFamily="Geist, sans-serif">{domainsNow}</text>
-              </svg>
-            ) : (
-              <p style={{ margin: 0, fontSize: '14px', color: '#9AA1AB', padding: '24px 0' }}>No link history yet.</p>
-            )}
-            <span style={{ fontSize: '12px', color: '#7D848E' }}>Line: total websites linking to you. Bars: links gained and lost each month.</span>
-          </section>
-        </div>
-
-        <section aria-label="Link details" style={{ maxWidth: '1120px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div role="tablist" aria-label="Link views" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {[['newlost', `New and lost (${L.filter((r) => r.at(6) !== 'live').length})`], ['all', 'All linking websites'], ['pages', 'Your pages'], ['gap', `Competitor gap (${G.length})`], ['flag', `Flagged (${headerStats.flagged})`]].map((t) => (
-              <button key={t[0]} type="button" role="tab" aria-selected={tab === t[0] ? 'true' : 'false'} onClick={() => setTab(t[0])} style={{ minHeight: '40px', padding: '0 15px', borderRadius: '999px', border: tab === t[0] ? '1px solid #F2F4F5' : '1px solid #262A31', background: tab === t[0] ? '#F2F4F5' : 'transparent', color: tab === t[0] ? '#0A0B0D' : '#D7DADE', fontSize: '14px', fontWeight: tab === t[0] ? '600' : '400' }}>{t[1]}</button>
-            ))}
+              <span>
+                <span className="v8-bl-swatch is-lost" />
+                Lost
+              </span>
+            </span>
           </div>
-
-          {(tab === 'newlost' || tab === 'all') && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {tab === 'all' && (
-                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: '#D7DADE', minHeight: '36px' }}>
-                  <input type="checkbox" checked={followOnly} onChange={(e) => setFollowOnly(e.target.checked)} />
-                  Only links that pass strength to you (not "nofollow")
-                </label>
-              )}
-              <div style={{ borderRadius: '20px', background: '#101215', border: '1px solid #1A1D22', overflowX: 'auto' }}>
-                <div style={{ minWidth: '820px' }}>
-                  <div aria-hidden="true" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) 90px minmax(0, 1.2fr) minmax(0, 1fr) 90px 150px', gap: '12px', padding: '12px 18px', fontFamily: '\'Geist Mono\', monospace', fontSize: '11px', color: '#7D848E', borderBottom: '1px solid #1A1D22' }}>
-                    <span>LINKING WEBSITE</span><span>STRENGTH</span><span>LINKS TO YOUR PAGE</span><span>LINK TEXT</span><span>TYPE</span><span>STATUS</span>
-                  </div>
-                  {rows.length === 0 && (
-                    <p style={{ margin: 0, padding: '18px', fontSize: '14px', color: '#9AA1AB' }}>No linking websites in this view yet.</p>
-                  )}
-                  {rows.map((r, i) => (
-                    <div key={i} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) 90px minmax(0, 1.2fr) minmax(0, 1fr) 90px 150px', gap: '12px', alignItems: 'center', padding: '12px 18px', borderBottom: '1px solid #16181C', fontSize: '14px' }}>
-                      <span style={{ minWidth: '0', display: 'flex', flexDirection: 'column' }}><span style={{ fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.site}</span><span style={{ fontSize: '12px', color: '#7D848E' }}>{r.kind}</span></span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ width: '34px', height: '6px', borderRadius: '3px', background: '#1A1D22', overflow: 'hidden' }}><span style={{ display: 'block', height: '100%', width: r.bar, background: r.barColor }}></span></span><span style={{ fontFamily: '\'Geist Mono\', monospace', fontSize: '13px' }}>{r.str}</span></span>
-                      <span style={{ fontFamily: '\'Geist Mono\', monospace', fontSize: '12px', color: '#D7DADE', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.page}</span>
-                      <span style={{ fontSize: '13px', color: '#9AA1AB', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>&quot;{r.anchor}&quot;</span>
-                      <span style={{ fontSize: '12px', color: r.typeColor }}>{r.type}</span>
-                      <span style={{ display: 'flex', flexDirection: 'column' }}><span style={{ fontSize: '12px', fontWeight: '600', color: r.color }}>{r.status}</span><span style={{ fontSize: '11px', color: '#7D848E' }}>{r.when}</span></span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+          {TOT.length ? (
+            <svg className="v8-bl-svg" viewBox="0 0 640 230" role="img" aria-label={chartAria}>
+              {grid.map((g, i) => (
+                <g key={i}>
+                  <line x1="40" x2="632" y1={g.y} y2={g.y} stroke="#1A1D22" />
+                  <text x="32" y={g.ty} textAnchor="end" fontSize="11" fill="#7D848E" fontFamily="Geist Mono, monospace">
+                    {g.label}
+                  </text>
+                </g>
+              ))}
+              <path d={area} fill="rgba(44,199,192,.12)" />
+              <path d={line} fill="none" stroke="#2CC7C0" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" className="v8-bl-line" />
+              {pts.map((p, i) => (
+                <g key={i}>
+                  <circle cx={p.x} cy={p.y} r="3" fill="#2CC7C0" />
+                  <rect x={p.bx} y={p.ny} width="10" height={p.nh} rx="2" fill="#3DDC84" />
+                  <rect x={p.bx} y="196" width="10" height={p.lh} rx="2" fill="#FF5A4E" />
+                  <text x={p.x} y="226" textAnchor="middle" fontSize="11" fill="#7D848E" fontFamily="Geist Mono, monospace">
+                    {p.label}
+                  </text>
+                </g>
+              ))}
+              <line x1="40" x2="632" y1="196" y2="196" stroke="#262A31" />
+              <text x={pts[11].x} y={(Y(domainsNow) - 10).toFixed(1)} textAnchor="middle" fontSize="13" fontWeight="600" fill="#F2F4F5" fontFamily="Geist, sans-serif">
+                {domainsNow}
+              </text>
+            </svg>
+          ) : (
+            <p className="v8-bl-trend-empty">No link history yet.</p>
           )}
-
-          {tab === 'pages' && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-start' }}>
-              <div style={{ flex: '999 1 480px', minWidth: '0', borderRadius: '20px', background: '#101215', border: '1px solid #1A1D22', padding: '18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <h3 style={{ margin: '0', fontSize: '16px', fontWeight: '600' }}>Your most-linked pages</h3>
-                {P.length === 0 && <p style={{ margin: 0, fontSize: '14px', color: '#9AA1AB' }}>No linked pages yet.</p>}
-                {P.map((p, i) => (
-                  <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '6px 0' }}>
-                    <span style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', fontSize: '14px' }}><span style={{ fontFamily: '\'Geist Mono\', monospace', fontSize: '13px' }}>{p[0]}</span><span style={{ color: '#9AA1AB' }}>{p[1]} sites</span></span>
-                    <div style={{ height: '8px', borderRadius: '4px', background: '#1A1D22', overflow: 'hidden' }}><div style={{ height: '100%', width: Math.round(p[1] / Math.max(P[0]?.[1] || 1, 1) * 100) + '%', borderRadius: '4px', background: '#2CC7C0' }}></div></div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ flex: '1 1 320px', minWidth: '0', borderRadius: '20px', background: '#101215', border: '1px solid rgba(255,197,61,.4)', padding: '18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <h3 style={{ margin: '0', fontSize: '16px', fontWeight: '600' }}>Important pages no one links to</h3>
-                {orphans.length === 0 ? (
-                  <p style={{ margin: 0, fontSize: '14px', color: '#9AA1AB', lineHeight: '1.45' }}>
-                    No orphan-page suggestions yet. After a crawl, Searchify will list money pages with zero outside links.
-                  </p>
-                ) : (
-                  orphans.map((o) => (
-                    <div
-                      key={o.path}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '4px',
-                        padding: '10px 12px',
-                        borderRadius: '12px',
-                        background: '#0A0B0D',
-                        border: '1px solid #1A1D22',
-                      }}
-                    >
-                      <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: '13px' }}>{o.path}</span>
-                      <span style={{ fontSize: '13px', color: '#9AA1AB', lineHeight: '1.45' }}>{o.why}</span>
-                    </div>
-                  ))
-                )}
-                <span style={{ fontSize: '12px', color: '#7D848E' }}>Pages that bring in money but have no outside links usually rank lower than they could.</span>
-              </div>
-            </div>
-          )}
-
-          {tab === 'gap' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <span style={{ fontSize: '14px', color: '#9AA1AB' }}>
-                Websites that link to at least 2 of your competitors, but not to you
-                {G.length ? ` · ${G.length} opportunities` : ''}.
-              </span>
-              <div style={{ borderRadius: '20px', background: '#101215', border: '1px solid #1A1D22', overflowX: 'auto' }}>
-                <div style={{ minWidth: '760px' }}>
-                  <div aria-hidden="true" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) 90px minmax(0, 1.4fr) 110px 170px', gap: '12px', padding: '12px 18px', fontFamily: '\'Geist Mono\', monospace', fontSize: '11px', color: '#7D848E', borderBottom: '1px solid #1A1D22' }}>
-                    <span>WEBSITE</span><span>STRENGTH</span><span>LINKS TO</span><span>TYPE</span><span style={{ textAlign: 'right' }}>NEXT STEP</span>
-                  </div>
-                  {gap.length === 0 && (
-                    <p style={{ margin: 0, padding: '18px', fontSize: '14px', color: '#9AA1AB' }}>No competitor-gap opportunities yet.</p>
-                  )}
-                  {gap.map((g, i) => (
-                    <div key={i} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) 90px minmax(0, 1.4fr) 110px 170px', gap: '12px', alignItems: 'center', padding: '12px 18px', borderBottom: '1px solid #16181C', fontSize: '14px' }}>
-                      <span style={{ fontWeight: '500', minWidth: '0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.site}</span>
-                      <span style={{ fontFamily: '\'Geist Mono\', monospace', fontSize: '13px' }}>{g.str}</span>
-                      <span style={{ fontSize: '13px', color: '#9AA1AB' }}>{g.who}</span>
-                      <span style={{ fontSize: '12px', color: '#D7DADE' }}>{g.type}</span>
-                      <span style={{ display: 'flex', justifyContent: 'flex-end' }}><button type="button" onClick={() => setGapDone({ ...gapDone, [i]: true })} style={{ minHeight: '36px', padding: '0 12px', borderRadius: '10px', border: g.border, background: g.bg, color: g.fg, fontSize: '13px', fontWeight: '600' }}>{g.label}</button></span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {tab === 'flag' && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-start' }}>
-              <div style={{ flex: '999 1 520px', minWidth: '0', borderRadius: '20px', background: '#101215', border: '1px solid #1A1D22', padding: '6px' }}>
-                {flags.length === 0 && (
-                  <p style={{ margin: 0, padding: '14px', fontSize: '14px', color: '#9AA1AB' }}>No low-trust links flagged.</p>
-                )}
-                {flags.map((f, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', padding: '14px 14px', borderBottom: '1px solid #16181C' }}>
-                    <span style={{ flex: '1 1 260px', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '2px' }}><span style={{ fontSize: '14px', fontWeight: '500' }}>{f.site}</span><span style={{ fontSize: '12px', color: '#9AA1AB' }}>{f.why}</span></span>
-                    <span style={{ fontSize: '12px', fontWeight: '600', color: f.color }}>{f.state}</span>
-                    {f.open && (
-                      <span style={{ display: 'flex', gap: '6px' }}>
-                        <button type="button" onClick={() => setFlagState({ ...flagState, [i]: 'ignore' })} style={{ minHeight: '36px', padding: '0 12px', borderRadius: '10px', border: '1px solid #262A31', background: 'transparent', color: '#F2F4F5', fontSize: '13px' }}>Ignore it</button>
-                        <button type="button" onClick={() => setFlagState({ ...flagState, [i]: 'disavow' })} style={{ minHeight: '36px', padding: '0 12px', borderRadius: '10px', border: '1px solid rgba(255,197,61,.5)', background: 'transparent', color: '#FFC53D', fontSize: '13px' }}>Add to disavow list</button>
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <div style={{ flex: '1 1 300px', minWidth: '0', borderRadius: '20px', background: '#101215', border: '1px solid #1A1D22', padding: '18px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <h3 style={{ margin: '0', fontSize: '16px', fontWeight: '600' }}>Should I worry?</h3>
-                <span style={{ fontSize: '14px', color: '#9AA1AB', lineHeight: '1.55' }}>Usually not. Every site picks up some junk links, and Google mostly ignores them. Google's own advice is to use a disavow file only if you've had a manual penalty or bought links in the past. Searchify never uploads one for you.</span>
-              </div>
-            </div>
-          )}
-          <span style={{ fontSize: '12px', color: '#7D848E' }}>Strength is a 0 to 100 score for how much a website is trusted, from our link data provider. It's not a Google number, but it tracks closely with what helps rankings.</span>
+          <span className="v8-bl-trend-note">Line: total websites linking to you. Bars: links gained and lost each month.</span>
         </section>
       </div>
+
+      <section className="v8-bl-details" aria-label="Link details">
+        <div className="v8-bl-tabs" role="tablist" aria-label="Link views">
+          {tabs.map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={tab === id ? 'true' : 'false'}
+              className={`v8-bl-tab${tab === id ? ' is-on' : ''}`}
+              onClick={() => setTab(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {(tab === 'newlost' || tab === 'all') && (
+          <div className="v8-bl-panel">
+            {tab === 'all' ? (
+              <label className="v8-bl-filter">
+                <input type="checkbox" checked={followOnly} onChange={(e) => setFollowOnly(e.target.checked)} />
+                Only links that pass strength to you (not &quot;nofollow&quot;)
+              </label>
+            ) : null}
+            <div className="v8-bl-table">
+              <div className="v8-bl-table-inner">
+                <div className="v8-bl-thead" aria-hidden="true">
+                  <span>LINKING WEBSITE</span>
+                  <span>STRENGTH</span>
+                  <span>LINKS TO YOUR PAGE</span>
+                  <span>LINK TEXT</span>
+                  <span>TYPE</span>
+                  <span>STATUS</span>
+                </div>
+                {rows.length === 0 ? <p className="v8-bl-empty-row">No linking websites in this view yet.</p> : null}
+                {rows.map((r, i) => (
+                  <div key={`${r.site}-${i}`} className="v8-bl-tr">
+                    <span className="v8-bl-site">
+                      <span className="v8-bl-site-name">{r.site}</span>
+                      <span className="v8-bl-site-kind">{r.kind}</span>
+                    </span>
+                    <span className="v8-bl-strength">
+                      <span className="v8-bl-bar">
+                        <span style={{ width: r.bar, background: r.barColor }} />
+                      </span>
+                      <span className="v8-bl-str">{r.str}</span>
+                    </span>
+                    <span className="v8-bl-page">{r.page}</span>
+                    <span className="v8-bl-anchor">&quot;{r.anchor}&quot;</span>
+                    <span className="v8-bl-type" style={{ color: r.typeColor }}>
+                      {r.type}
+                    </span>
+                    <span className="v8-bl-status">
+                      <span className="v8-bl-status-label" style={{ color: r.color }}>
+                        {r.status}
+                      </span>
+                      <span className="v8-bl-status-when">{r.when}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'pages' && (
+          <div className="v8-bl-pages">
+            <div className="v8-bl-pages-main">
+              <h3>Your most-linked pages</h3>
+              {P.length === 0 ? <p className="v8-bl-empty-row" style={{ padding: 0 }}>No linked pages yet.</p> : null}
+              {P.map((p) => (
+                <div key={p[0]} className="v8-bl-page-row">
+                  <span className="v8-bl-page-top">
+                    <span className="v8-bl-page-path">{p[0]}</span>
+                    <span className="v8-bl-page-count">{p[1]} sites</span>
+                  </span>
+                  <div className="v8-bl-page-track">
+                    <div className="v8-bl-page-fill" style={{ width: `${Math.round((p[1] / maxPage) * 100)}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="v8-bl-pages-side">
+              <h3>Important pages no one links to</h3>
+              {orphans.length === 0 ? (
+                <p className="v8-bl-empty-row" style={{ padding: 0 }}>
+                  No orphan-page suggestions yet. After a crawl, Searchify will list money pages with zero outside links.
+                </p>
+              ) : (
+                orphans.map((o) => (
+                  <div key={o.path} className="v8-bl-orphan">
+                    <span className="v8-bl-orphan-path">{o.path}</span>
+                    <span className="v8-bl-orphan-why">{o.why}</span>
+                  </div>
+                ))
+              )}
+              <span className="v8-bl-orphan-note">Pages that bring in money but have no outside links usually rank lower than they could.</span>
+            </div>
+          </div>
+        )}
+
+        {tab === 'gap' && (
+          <div className="v8-bl-panel">
+            <span className="v8-bl-gap-intro">
+              Websites that link to at least 2 of your competitors, but not to you
+              {G.length ? ` · ${G.length} opportunities` : ''}.
+            </span>
+            <div className="v8-bl-table">
+              <div className="v8-bl-table-inner is-gap">
+                <div className="v8-bl-thead is-gap" aria-hidden="true">
+                  <span>WEBSITE</span>
+                  <span>STRENGTH</span>
+                  <span>LINKS TO</span>
+                  <span>TYPE</span>
+                  <span style={{ textAlign: 'right' }}>NEXT STEP</span>
+                </div>
+                {gap.length === 0 ? <p className="v8-bl-empty-row">No competitor-gap opportunities yet.</p> : null}
+                {gap.map((g, i) => (
+                  <div key={`${g.site}-${i}`} className="v8-bl-tr is-gap">
+                    <span className="v8-bl-site-name">{g.site}</span>
+                    <span className="v8-bl-str">{g.str}</span>
+                    <span className="v8-bl-gap-who">{g.who}</span>
+                    <span className="v8-bl-gap-type">{g.type}</span>
+                    <span className="v8-bl-gap-act">
+                      <button
+                        type="button"
+                        className="v8-bl-gap-btn"
+                        onClick={() => setGapDone({ ...gapDone, [i]: true })}
+                        style={{ border: g.border, background: g.bg, color: g.fg }}
+                      >
+                        {g.label}
+                      </button>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'flag' && (
+          <div className="v8-bl-flags">
+            <div className="v8-bl-flag-list">
+              {flags.length === 0 ? <p className="v8-bl-empty-row">No low-trust links flagged.</p> : null}
+              {flags.map((f, i) => (
+                <div key={`${f.site}-${i}`} className="v8-bl-flag-row">
+                  <span className="v8-bl-flag-copy">
+                    <span className="v8-bl-flag-site">{f.site}</span>
+                    <span className="v8-bl-flag-why">{f.why}</span>
+                  </span>
+                  <span className="v8-bl-flag-state" style={{ color: f.color }}>
+                    {f.state}
+                  </span>
+                  {f.open ? (
+                    <span className="v8-bl-flag-acts">
+                      <button type="button" className="is-ignore" onClick={() => setFlagState({ ...flagState, [i]: 'ignore' })}>
+                        Ignore it
+                      </button>
+                      <button type="button" className="is-disavow" onClick={() => setFlagState({ ...flagState, [i]: 'disavow' })}>
+                        Add to disavow list
+                      </button>
+                    </span>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+            <div className="v8-bl-flag-help">
+              <h3>Should I worry?</h3>
+              <p>
+                Usually not. Every site picks up some junk links, and Google mostly ignores them. Google&apos;s own advice is to use a disavow file only if you&apos;ve had a manual penalty or bought links in the past. Searchify never uploads one for you.
+              </p>
+            </div>
+          </div>
+        )}
+
+        <span className="v8-bl-foot">
+          Strength is a 0 to 100 score for how much a website is trusted, from our link data provider. It&apos;s not a Google number, but it tracks closely with what helps rankings.
+        </span>
+      </section>
+    </div>
   );
 }

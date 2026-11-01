@@ -17,11 +17,12 @@ import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
+import "@/styles/v8-states.css";
 
 const SETTINGS_KEY = "sf_v8_settings_v1";
 const PLUGIN_ZIP =
   (typeof process !== "undefined" && process.env.NEXT_PUBLIC_WP_PLUGIN_URL) ||
-  "/app/connections";
+  "";
 
 function loadLocal() {
   try {
@@ -77,7 +78,7 @@ function isBlockedScan(scan) {
 
 export default function StatesScreen() {
   const [status, refreshStatus] = useConnectionStatus();
-  const [wpMeta, setWpMeta] = useState({ lastError: "", lastUsedAt: null, pages: 0 });
+  const [wpMeta, setWpMeta] = useState({ lastError: "", lastUsedAt: null, pages: 0, seo: "" });
   const [pendingShip, setPendingShip] = useState(0);
   const [scan, setScan] = useState(null);
   const [gscReady, setGscReady] = useState(true);
@@ -123,18 +124,22 @@ export default function StatesScreen() {
     const scanData = scanRes.data?.scan || null;
     setWpConnected(Boolean(wp));
     setScan(scanData);
+    const seoHint = scanData?.business
+      ? "SEO fields readable"
+      : scanData?.yoast || scanData?.rankMath
+        ? "Yoast detected"
+        : "pages mapped";
     setWpMeta({
       lastError: wp?.lastError || wpAny?.lastError || "",
       lastUsedAt: wp?.lastUsedAt || wpAny?.lastUsedAt || null,
       pages: Number(scanData?.pagesRead || scanData?.draftable || 0),
+      seo: seoHint,
     });
 
     const changes = Array.isArray(chRes.data) ? chRes.data : chRes.data?.changes || [];
     setPendingShip(queueItems(changes).length);
 
     const notices = opsRes.ok ? opsRes.data?.notices || [] : [];
-    // Only WordPress problems break the WordPress cable. Google "sync" notices used to count here,
-    // so a Search Console error made a connected WordPress site show as unplugged.
     const openBroken = notices.some((n) => {
       if (n.status && n.status !== "open") return false;
       const kind = String(n.kind || "");
@@ -147,7 +152,6 @@ export default function StatesScreen() {
     const weeks = gsc.weekly || gsc.panels?.weeklyClicks || [];
     const clicks = (weeks || []).reduce((s, w) => s + (Number(Array.isArray(w) ? w[1] : w?.clicks) || 0), 0);
     const daily = Array.isArray(gsc.daily) ? gsc.daily : [];
-    // Data is flowing as soon as a sync stored days or weeks — a quiet site can have 0 clicks.
     const hasSeries = (Array.isArray(weeks) && weeks.length >= 1) || daily.length > 0 || clicks > 0;
     setGscReady(hasSeries);
 
@@ -159,16 +163,14 @@ export default function StatesScreen() {
     reload().finally(() => setPageReady(true));
   }, [reload]);
 
-  // Connected = a connected WordPress row exists (the active-site match can miss www / old journey hosts).
   const wpOn = Boolean(status.wordpress) || wpConnected;
-  // Only a login / permission error means the cable is unplugged. Other last errors (for example
-  // "Nothing was published … missing credentials" from a dry run) keep it connected with a note.
   const wpAuthError =
     !/nothing was published|dry-run/i.test(wpMeta.lastError || "") &&
-    /401|403|incorrect password|invalid password|login|unauthori|forbidden|expired|revoked|invalid credential|could not be verified/i.test(wpMeta.lastError || "");
+    /401|403|incorrect password|invalid password|login|unauthori|forbidden|expired|revoked|invalid credential|could not be verified/i.test(
+      wpMeta.lastError || "",
+    );
   const wpLive = wpOn && !wpAuthError;
   const wpMissing = !wpOn;
-  // Cable broken when WP missing, errored, or ops says publish/sync broken.
   const fixed = wpLive && !opsBroken;
   const s1broken = !fixed;
 
@@ -181,22 +183,17 @@ export default function StatesScreen() {
     : "drop-shadow(0 0 8px rgba(255,90,78,.45))";
   const s1flow = fixed ? 0.9 : 0;
   const s1sparkOp = fixed ? 0 : 1;
-  const s1led = fixed ? "none" : "sfy-breathe .9s ease-in-out infinite";
-  const s1border = fixed ? "rgba(77,163,255,.45)" : "rgba(255,90,78,.55)";
-  const s1shadow = fixed ? "0 0 26px rgba(77,163,255,.15)" : "0 0 26px rgba(255,90,78,.15)";
   const s1aria = fixed ? "WordPress cable connected" : "WordPress cable unplugged";
   const s1title = fixed
-    ? wpMeta.lastError
-      ? "WordPress is connected — last publish needs a look"
+    ? pendingShip
+      ? "WordPress is back. Shipping resumed."
       : "WordPress is connected. Shipping is on."
     : wpMissing
       ? "WordPress is not connected yet"
-      : wpMeta.lastError
-        ? `WordPress came unplugged ${ago}`
-        : `WordPress came unplugged ${ago}`;
+      : `WordPress came unplugged ${ago}`;
   const s1body = fixed
     ? pendingShip
-      ? `The ${pendingShip} change${pendingShip === 1 ? "" : "s"} that ${pendingShip === 1 ? "was" : "were"} waiting can ship now.`
+      ? `The ${pendingShip} change${pendingShip === 1 ? "" : "s"} that ${pendingShip === 1 ? "was" : "were"} waiting ${pendingShip === 1 ? "is" : "are"} shipping now.`
       : wpMeta.lastError
         ? "The connection is live. The last publish didn't go through — the reason is below."
         : "Scanning and measuring continue. Approve a move when you are ready to ship."
@@ -207,10 +204,8 @@ export default function StatesScreen() {
   const s2done = wpLive;
   const s2waiting = !s2done;
   const pagesMapped = wpMeta.pages || scan?.pagesRead || 0;
-  const seoHint = scan?.business ? "SEO fields readable" : "pages mapped";
 
   const brandNew = Boolean(status.gsc) && !gscReady;
-  // Google account linked but the Search Console property isn't readable / verified.
   const googleLinked = status.googleAccount === "connected";
   const gscIssue = googleLinked && !status.gsc && (status.gscStatus === "unverified" || Boolean(status.google?.lastError));
   const googleError = status.google?.problem?.message || status.google?.lastError || "";
@@ -227,7 +222,7 @@ export default function StatesScreen() {
   };
 
   const downloadPlugin = () => {
-    if (PLUGIN_ZIP.startsWith("http") || PLUGIN_ZIP.endsWith(".zip")) {
+    if (PLUGIN_ZIP && (PLUGIN_ZIP.startsWith("http") || PLUGIN_ZIP.endsWith(".zip"))) {
       window.open(PLUGIN_ZIP, "_blank", "noopener,noreferrer");
       return;
     }
@@ -239,7 +234,7 @@ export default function StatesScreen() {
     await refreshStatus();
     await reload();
     setCheckingPlugin(false);
-    if (!status.wordpress) setWpDialog(true);
+    if (!status.wordpress && !wpConnected) setWpDialog(true);
   };
 
   const emailWebPerson = () => {
@@ -285,92 +280,37 @@ export default function StatesScreen() {
 
   if (!pageReady) {
     return (
-      <div style={{ padding: "28px clamp(16px, 4vw, 56px) 56px", background: "#0A0B0D" }}>
+      <div className="v8-states">
         <SkeletonCards count={3} lines={4} />
       </div>
     );
   }
 
+  const cardAClass = `v8-states-card${s1broken ? " is-broken" : " is-fixed"}`;
+  const cardBClass = `v8-states-card${s2waiting ? " is-waiting" : ""}`;
+  const cardCClass = `v8-states-card${brandNew ? " is-empty" : ""}`;
+  const cardDClass = `v8-states-card${scanBlocked ? " is-blocked" : ""}`;
+
   return (
     <>
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `@keyframes sfy-flow{to{stroke-dashoffset:-38}}@keyframes sfy-spark{0%,100%{opacity:0}30%,60%{opacity:1}}`,
-        }}
-      />
-      <div
-        style={{
-          minHeight: "auto",
-          background: "#0A0B0D",
-          color: "#F2F4F5",
-          fontFamily: "Geist, 'Helvetica Neue', sans-serif",
-          boxSizing: "border-box",
-          padding: "28px clamp(16px, 4vw, 56px) 56px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "28px",
-        }}
-      >
-        <div style={{ maxWidth: "1180px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "8px" }}>
-          <h1
-            style={{
-              margin: 0,
-              fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
-              fontSize: "clamp(32px, 4vw, 48px)",
-              letterSpacing: "-1.4px",
-              fontWeight: 700,
-            }}
-          >
-            When things go sideways
-          </h1>
-          <p style={{ margin: 0, fontSize: "16px", color: "#9AA1AB" }}>
-            Every problem says what happened, that nothing was lost, and gives one blue button to fix it.
-          </p>
+      <div className="v8-states">
+        <div className="v8-states-intro">
+          <h1>When things go sideways</h1>
+          <p>Every problem says what happened, that nothing was lost, and gives one blue button to fix it.</p>
         </div>
 
-        <div
-          style={{
-            maxWidth: "1180px",
-            width: "100%",
-            margin: "0 auto",
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 460px), 1fr))",
-            gap: "16px",
-          }}
-        >
-          <section
-            aria-labelledby="s1"
-            style={{
-              borderRadius: "24px",
-              background: "#101215",
-              border: `1px solid ${s1border}`,
-              boxShadow: s1shadow,
-              padding: "26px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-              transition: "border-color .4s ease, box-shadow .4s ease",
-              opacity: s1broken || fixed ? 1 : 0.85,
-            }}
-          >
-            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: "#9AA1AB" }}>
-              A · A CONNECTION BREAKS
-            </span>
-            <svg viewBox="0 0 600 100" role="img" aria-label={s1aria} style={{ width: "100%", height: "auto", overflow: "visible" }}>
-              <g
-                style={{
-                  transform: `translateX(${s1shift})`,
-                  transition: "transform .5s cubic-bezier(.3,1.4,.5,1)",
-                  filter: s1glow,
-                }}
-              >
+        <div className="v8-states-grid">
+          <section aria-labelledby="s1" className={cardAClass}>
+            <span className="v8-states-label">A · A CONNECTION BREAKS</span>
+            <svg viewBox="0 0 600 100" role="img" aria-label={s1aria} className="v8-states-svg">
+              <g className="v8-states-plug" style={{ transform: `translateX(${s1shift})`, filter: s1glow }}>
                 <path
                   d="M-60 50 C 80 50, 140 18, 250 40 S 360 76, 422 50"
                   fill="none"
                   stroke={s1cable}
                   strokeWidth="7"
                   strokeLinecap="round"
-                  style={{ transition: "stroke .4s ease" }}
+                  className="v8-states-cable"
                 />
                 <path
                   d="M-60 50 C 80 50, 140 18, 250 40 S 360 76, 422 50"
@@ -378,9 +318,10 @@ export default function StatesScreen() {
                   stroke="#CFE6FF"
                   strokeWidth="2.5"
                   strokeDasharray="3 16"
-                  style={{ opacity: s1flow, animation: "sfy-flow .7s linear infinite" }}
+                  className="v8-states-flow"
+                  style={{ opacity: s1flow }}
                 />
-                <rect x="418" y="30" width="58" height="40" rx="9" fill={s1cable} style={{ transition: "fill .4s ease" }} />
+                <rect x="418" y="30" width="58" height="40" rx="9" fill={s1cable} className="v8-states-cable" />
                 <rect x="476" y="38" width="24" height="6" rx="2" fill="#8A9099" />
                 <rect x="476" y="56" width="24" height="6" rx="2" fill="#8A9099" />
               </g>
@@ -390,248 +331,84 @@ export default function StatesScreen() {
                   stroke="#FF5A4E"
                   strokeWidth="2.5"
                   strokeLinecap="round"
-                  style={{ animation: "sfy-spark 1.2s ease-in-out infinite" }}
+                  className="v8-states-spark"
                 />
               </g>
               <rect x="506" y="18" width="80" height="64" rx="14" fill="#131519" stroke={s1socket} strokeWidth="2" />
               <rect x="506" y="37" width="16" height="8" rx="2" fill="#0A0B0D" />
               <rect x="506" y="55" width="16" height="8" rx="2" fill="#0A0B0D" />
-              <circle cx="564" cy="50" r="6" fill={s1socket} style={{ animation: s1led }} />
+              <circle cx="564" cy="50" r="6" fill={s1socket} className={`v8-states-led${fixed ? " is-off" : ""}`} />
             </svg>
-            <h2 id="s1" style={{ margin: 0, fontSize: "20px", fontWeight: 600 }}>
-              {s1title}
-            </h2>
-            <p style={{ margin: 0, fontSize: "15px", color: "#9AA1AB", lineHeight: 1.5 }}>{s1body}</p>
-            {wpMeta.lastError ? (
-              <p style={{ margin: 0, fontSize: "13px", color: "#FFC53D", fontFamily: "'Geist Mono', monospace" }}>
-                {wpMeta.lastError}
-              </p>
-            ) : null}
+            <h2 id="s1">{s1title}</h2>
+            <p>{s1body}</p>
+            {wpMeta.lastError ? <p className="v8-states-warn">{wpMeta.lastError}</p> : null}
             {s1broken ? (
-              <button
-                type="button"
-                onClick={() => setWpDialog(true)}
-                style={{
-                  alignSelf: "flex-start",
-                  minHeight: "50px",
-                  padding: "0 22px",
-                  borderRadius: "13px",
-                  border: 0,
-                  background: "#4DA3FF",
-                  color: "#0A0B0D",
-                  fontSize: "15px",
-                  fontWeight: 600,
-                  boxShadow: "0 0 22px rgba(77,163,255,.45)",
-                }}
-              >
+              <button type="button" className="v8-states-btn" onClick={() => setWpDialog(true)}>
                 Reconnect WordPress
               </button>
             ) : (
-              <Link
-                href="/app/connections"
-                style={{
-                  alignSelf: "flex-start",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  minHeight: "44px",
-                  padding: "0 14px",
-                  borderRadius: "11px",
-                  border: "1px solid #262A31",
-                  background: "transparent",
-                  color: "#9AA1AB",
-                  fontSize: "13px",
-                  textDecoration: "none",
-                }}
-              >
+              <Link href="/app/connections" className="v8-states-ghost">
                 Open connections
               </Link>
             )}
           </section>
 
-          <section
-            aria-labelledby="s2"
-            style={{
-              borderRadius: "24px",
-              background: "#101215",
-              border: s2waiting ? "1px solid rgba(255,197,61,.35)" : "1px solid #1A1D22",
-              padding: "26px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-            }}
-          >
-            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: "#9AA1AB" }}>
-              B · INSTALLING THE WORDPRESS PLUGIN
-            </span>
-            <h2 id="s2" style={{ margin: 0, fontSize: "20px", fontWeight: 600 }}>
-              Three steps, about two minutes
-            </h2>
-            <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "12px" }}>
-              <li style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
-                <span
-                  style={{
-                    width: "26px",
-                    height: "26px",
-                    borderRadius: "50%",
-                    background: "#262A31",
-                    display: "grid",
-                    placeItems: "center",
-                    fontSize: "13px",
-                  }}
-                >
-                  1
-                </span>
-                <span style={{ flex: "1 1 200px", fontSize: "15px" }}>Download the Searchify plugin</span>
-                <button
-                  type="button"
-                  onClick={downloadPlugin}
-                  style={{
-                    minHeight: "38px",
-                    padding: "0 12px",
-                    borderRadius: "10px",
-                    border: "1px solid #262A31",
-                    background: "transparent",
-                    color: "#D7DADE",
-                    fontSize: "13px",
-                  }}
-                >
-                  {PLUGIN_ZIP.endsWith(".zip") || PLUGIN_ZIP.startsWith("http") ? "Download .zip" : "Connect WordPress"}
+          <section aria-labelledby="s2" className={cardBClass}>
+            <span className="v8-states-label">B · INSTALLING THE WORDPRESS PLUGIN</span>
+            <h2 id="s2">Three steps, about two minutes</h2>
+            <ol className="v8-states-steps">
+              <li>
+                <span className="v8-states-num">1</span>
+                <span className="v8-states-step-copy">Download the Searchify plugin</span>
+                <button type="button" className="v8-states-chip" onClick={downloadPlugin}>
+                  Download .zip
                 </button>
               </li>
-              <li style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                <span
-                  style={{
-                    width: "26px",
-                    height: "26px",
-                    borderRadius: "50%",
-                    background: "#262A31",
-                    display: "grid",
-                    placeItems: "center",
-                    fontSize: "13px",
-                  }}
-                >
-                  2
-                </span>
-                <span style={{ fontSize: "15px" }}>In WordPress: Plugins → Add new → Upload → Activate</span>
+              <li>
+                <span className="v8-states-num">2</span>
+                <span style={{ fontSize: 15 }}>In WordPress: Plugins → Add new → Upload → Activate</span>
               </li>
-              <li style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
-                <span
-                  style={{
-                    width: "26px",
-                    height: "26px",
-                    borderRadius: "50%",
-                    background: "#262A31",
-                    display: "grid",
-                    placeItems: "center",
-                    fontSize: "13px",
-                  }}
-                >
-                  3
-                </span>
-                <span style={{ flex: "1 1 200px", fontSize: "15px" }}>Paste this site key into the plugin</span>
-                <code
-                  style={{
-                    fontFamily: "'Geist Mono', monospace",
-                    fontSize: "13px",
-                    padding: "8px 10px",
-                    borderRadius: "9px",
-                    background: "#0A0B0D",
-                    border: "1px solid #262A31",
-                  }}
-                >
-                  {siteKey}
-                </code>
-                <button
-                  type="button"
-                  onClick={copyKey}
-                  style={{
-                    minHeight: "38px",
-                    padding: "0 12px",
-                    borderRadius: "10px",
-                    border: "1px solid #262A31",
-                    background: "transparent",
-                    color: "#D7DADE",
-                    fontSize: "13px",
-                  }}
-                >
+              <li>
+                <span className="v8-states-num">3</span>
+                <span className="v8-states-step-copy">Paste this site key into the plugin</span>
+                <code className="v8-states-key">{siteKey}</code>
+                <button type="button" className="v8-states-chip" onClick={copyKey}>
                   {copied ? "Copied" : "Copy"}
                 </button>
               </li>
             </ol>
             {s2waiting ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap", paddingTop: "4px" }}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "14px", color: "#9AA1AB" }}>
-                  <span
-                    style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: "50%",
-                      background: "#FFC53D",
-                      animation: "sfy-breathe 1s ease-in-out infinite",
-                    }}
-                  />
+              <div className="v8-states-wait">
+                <span className="v8-states-wait-label">
+                  <span className="v8-states-dot" />
                   Waiting for your site to say hello…
                 </span>
-                <button
-                  type="button"
-                  onClick={checkInstalled}
-                  disabled={checkingPlugin}
-                  style={{
-                    minHeight: "46px",
-                    padding: "0 18px",
-                    borderRadius: "12px",
-                    border: 0,
-                    background: "#4DA3FF",
-                    color: "#0A0B0D",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                  }}
-                >
+                <button type="button" className="v8-states-btn is-sm" onClick={checkInstalled} disabled={checkingPlugin}>
                   {checkingPlugin ? "Checking…" : "I've installed it"}
                 </button>
               </div>
             ) : (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "14px", color: "#4DA3FF" }}>
-                <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#4DA3FF", boxShadow: "0 0 10px #4DA3FF" }} />
-                Connected · {seoHint}
+              <span className="v8-states-connected">
+                <span className="v8-states-connected-dot" />
+                Connected · {wpMeta.seo || "pages mapped"}
                 {pagesMapped ? ` · ${pagesMapped} pages mapped` : ""}
               </span>
             )}
           </section>
 
-          <section
-            aria-labelledby="s3"
-            style={{
-              borderRadius: "24px",
-              background: "#101215",
-              border: brandNew ? "1px solid rgba(77,163,255,.4)" : "1px solid #1A1D22",
-              padding: "26px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-            }}
-          >
-            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: "#9AA1AB" }}>
-              C · BRAND-NEW SITE, NO DATA YET
-            </span>
-            <div aria-hidden="true" style={{ display: "grid", gridTemplateColumns: "repeat(12, minmax(0, 1fr))", gap: "10px" }}>
+          <section aria-labelledby="s3" className={cardCClass}>
+            <span className="v8-states-label">C · BRAND-NEW SITE, NO DATA YET</span>
+            <div className="v8-states-empty-grid" aria-hidden="true">
               {empty.map((e, i) => (
-                <div key={i} style={{ aspectRatio: "1", display: "grid", placeItems: "center" }}>
+                <div key={i} className="v8-states-empty-cell">
                   <div
-                    style={{
-                      width: "50%",
-                      aspectRatio: "1",
-                      borderRadius: "50%",
-                      background: brandNew ? "#1A1D22" : gscReady ? "#262A31" : "#1A1D22",
-                      animation: brandNew || !gscReady ? "sfy-breathe 2.4s ease-in-out infinite" : "none",
-                      animationDelay: e.delay,
-                      opacity: gscReady && !brandNew ? 0.45 : 1,
-                    }}
+                    className={`v8-states-empty-dot${gscReady && !brandNew ? " is-dim" : ""}`}
+                    style={{ animationDelay: e.delay }}
                   />
                 </div>
               ))}
             </div>
-            <h2 id="s3" style={{ margin: 0, fontSize: "20px", fontWeight: 600 }}>
+            <h2 id="s3">
               {gscReady && status.gsc
                 ? "Search data is flowing"
                 : status.gsc
@@ -642,7 +419,7 @@ export default function StatesScreen() {
                       ? "Google is connected — pick your Search Console property"
                       : "Connect Search Console to fill the board"}
             </h2>
-            <p style={{ margin: 0, fontSize: "15px", color: "#9AA1AB", lineHeight: 1.5 }}>
+            <p>
               {gscReady && status.gsc
                 ? `${hostname || "Your site"} already has click and impression history in Searchify.`
                 : gscIssue
@@ -651,157 +428,54 @@ export default function StatesScreen() {
                     ? "Choose which Search Console property belongs to this site so the board can fill in."
                     : "Google takes a few days to start sending data for a newly connected site. Searchify has already read your pages — the colours appear as soon as the search data arrives."}
             </p>
-            {gscIssue && googleError ? (
-              <p style={{ margin: 0, fontSize: "13px", color: "#FFC53D", lineHeight: 1.5 }}>{googleError}</p>
-            ) : null}
+            {gscIssue && googleError ? <p className="v8-states-warn">{googleError}</p> : null}
             {gscReady && status.gsc ? (
-              <Link
-                href="/app/outcomes"
-                style={{
-                  alignSelf: "flex-start",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  minHeight: "46px",
-                  padding: "0 18px",
-                  borderRadius: "12px",
-                  background: "#4DA3FF",
-                  color: "#0A0B0D",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  textDecoration: "none",
-                }}
-              >
+              <Link href="/app/outcomes" className="v8-states-btn is-sm">
                 Open results
               </Link>
             ) : !status.gsc ? (
               <Link
                 href={googleLinked ? "/app/connections/google" : "/app/connections"}
-                style={{
-                  alignSelf: "flex-start",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  minHeight: "46px",
-                  padding: "0 18px",
-                  borderRadius: "12px",
-                  background: "#4DA3FF",
-                  color: "#0A0B0D",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  textDecoration: "none",
-                }}
+                className="v8-states-btn is-sm"
               >
                 {gscIssue ? "Fix Search Console" : googleLinked ? "Choose property" : "Connect Google"}
               </Link>
             ) : (
-              <label style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "14px" }}>
-                <input
-                  type="checkbox"
-                  checked={textReady}
-                  onChange={(e) => toggleTextReady(e.target.checked)}
-                  style={{ width: "18px", height: "18px", accentColor: "#4DA3FF" }}
-                />
+              <label className="v8-states-check">
+                <input type="checkbox" checked={textReady} onChange={(e) => toggleTextReady(e.target.checked)} />
                 Text me when it&apos;s ready
               </label>
             )}
           </section>
 
-          <section
-            aria-labelledby="s4"
-            style={{
-              borderRadius: "24px",
-              background: "#101215",
-              border: scanBlocked ? "1px solid rgba(255,90,78,.45)" : "1px solid #1A1D22",
-              padding: "26px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-            }}
-          >
-            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: "#9AA1AB" }}>
-              D · THE SCAN CAN&apos;T GET IN
-            </span>
-            <h2 id="s4" style={{ margin: 0, fontSize: "20px", fontWeight: 600 }}>
-              {scanBlocked ? "Your site blocked our scan" : scan?.pagesRead ? "Scan can reach your pages" : "If a firewall blocks the scan"}
+          <section aria-labelledby="s4" className={cardDClass}>
+            <span className="v8-states-label">D · THE SCAN CAN&apos;T GET IN</span>
+            <h2 id="s4">
+              {scanBlocked
+                ? "Your site blocked our scan"
+                : scan?.pagesRead
+                  ? "Scan can reach your pages"
+                  : "Your site blocked our scan"}
             </h2>
-            <p style={{ margin: 0, fontSize: "15px", color: "#9AA1AB", lineHeight: 1.5 }}>
+            <p>
               {scanBlocked
                 ? "A security setting on your site turned Searchify away. That's normal for sites with a firewall, and nothing on your site was changed."
-                : "A security setting on your site can turn Searchify away. That's normal for sites with a firewall, and nothing on your site is changed by the scan."}
+                : "A security setting on your site turned Searchify away. That's normal for sites with a firewall, and nothing on your site was changed."}
             </p>
-            <div
-              style={{
-                padding: "14px 16px",
-                borderRadius: "14px",
-                background: "#0A0B0D",
-                border: "1px solid #262A31",
-                display: "flex",
-                flexDirection: "column",
-                gap: "6px",
-                fontSize: "14px",
-              }}
-            >
+            <div className="v8-states-allow">
               <span>Ask your host or web person to allow:</span>
-              <code style={{ fontFamily: "'Geist Mono', monospace", fontSize: "13px", color: "#D7DADE" }}>SearchifyBot</code>
-              {scan?.error ? (
-                <span style={{ fontSize: "12px", color: "#FFC53D", fontFamily: "'Geist Mono', monospace" }}>{scan.error}</span>
-              ) : null}
+              <code>SearchifyBot</code>
+              {scan?.error ? <span className="v8-states-warn">{scan.error}</span> : null}
             </div>
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-              <button
-                type="button"
-                onClick={retryScan}
-                disabled={scanBusy}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  minHeight: "48px",
-                  padding: "0 20px",
-                  borderRadius: "12px",
-                  background: "#4DA3FF",
-                  color: "#0A0B0D",
-                  border: 0,
-                  fontSize: "15px",
-                  fontWeight: 600,
-                  boxShadow: "0 0 22px rgba(77,163,255,.4)",
-                }}
-              >
+            <div className="v8-states-actions">
+              <button type="button" className="v8-states-btn is-scan" onClick={retryScan} disabled={scanBusy}>
                 {scanBusy ? "Scanning…" : "Try the scan again"}
               </button>
-              <button
-                type="button"
-                onClick={emailWebPerson}
-                style={{
-                  minHeight: "48px",
-                  padding: "0 16px",
-                  borderRadius: "12px",
-                  border: "1px solid #262A31",
-                  background: "transparent",
-                  color: "#D7DADE",
-                  fontSize: "14px",
-                }}
-              >
+              <button type="button" className="v8-states-ghost is-action" onClick={emailWebPerson}>
                 Email these steps to my web person
               </button>
-              <Link
-                href="/app/results"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  minHeight: "48px",
-                  padding: "0 16px",
-                  borderRadius: "12px",
-                  border: "1px solid #262A31",
-                  color: "#D7DADE",
-                  fontSize: "14px",
-                  textDecoration: "none",
-                }}
-              >
-                Open the scan board
-              </Link>
             </div>
-            {scanNote || emailNote ? (
-              <p style={{ margin: 0, fontSize: "13px", color: "#9AA1AB" }}>{scanNote || emailNote}</p>
-            ) : null}
+            {scanNote || emailNote ? <p className="v8-states-note">{scanNote || emailNote}</p> : null}
           </section>
         </div>
       </div>

@@ -1,0 +1,375 @@
+/* Exact States.html / States.dc.html — problem + empty states */
+
+.v8-states {
+  min-height: 1100px;
+  background: #0a0b0d;
+  color: #f2f4f5;
+  font-family: var(--font-geist), Geist, "Helvetica Neue", sans-serif;
+  box-sizing: border-box;
+  padding: 28px clamp(16px, 4vw, 56px) 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.v8-states *,
+.v8-states *::before,
+.v8-states *::after {
+  box-sizing: border-box;
+}
+.v8-states a {
+  color: #d5f879;
+}
+.v8-states a:hover {
+  color: #ecffb8;
+}
+.v8-states button {
+  font-family: inherit;
+  cursor: pointer;
+}
+.v8-states input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #4da3ff;
+  flex: none;
+}
+
+@keyframes v8-states-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+@keyframes v8-states-flow {
+  to {
+    stroke-dashoffset: -38;
+  }
+}
+@keyframes v8-states-spark {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  30%,
+  60% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .v8-states *,
+  .v8-states *::before,
+  .v8-states *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.v8-states-intro {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.v8-states-intro h1 {
+  margin: 0;
+  font-family: "Bricolage Grotesque", Geist, sans-serif;
+  font-size: clamp(32px, 4vw, 48px);
+  letter-spacing: -1.4px;
+  font-weight: 700;
+}
+.v8-states-intro p {
+  margin: 0;
+  font-size: 16px;
+  color: #9aa1ab;
+}
+
+.v8-states-grid {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+  gap: 16px;
+}
+
+.v8-states-card {
+  border-radius: 24px;
+  background: #101215;
+  border: 1px solid #1a1d22;
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+.v8-states-card.is-broken {
+  border-color: rgba(255, 90, 78, 0.55);
+  box-shadow: 0 0 26px rgba(255, 90, 78, 0.15);
+}
+.v8-states-card.is-fixed {
+  border-color: rgba(77, 163, 255, 0.45);
+  box-shadow: 0 0 26px rgba(77, 163, 255, 0.15);
+}
+.v8-states-card.is-waiting {
+  border-color: rgba(255, 197, 61, 0.35);
+}
+.v8-states-card.is-empty {
+  border-color: rgba(77, 163, 255, 0.4);
+}
+.v8-states-card.is-blocked {
+  border-color: rgba(255, 90, 78, 0.45);
+}
+
+.v8-states-label {
+  font-family: "Geist Mono", monospace;
+  font-size: 12px;
+  color: #9aa1ab;
+}
+.v8-states-card h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+.v8-states-card > p {
+  margin: 0;
+  font-size: 15px;
+  color: #9aa1ab;
+  line-height: 1.5;
+}
+.v8-states-warn {
+  margin: 0;
+  font-size: 13px;
+  color: #ffc53d;
+  font-family: "Geist Mono", monospace;
+  line-height: 1.5;
+}
+.v8-states-note {
+  margin: 0;
+  font-size: 13px;
+  color: #9aa1ab;
+}
+
+.v8-states-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.v8-states-plug {
+  transition: transform 0.5s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.v8-states-cable {
+  transition: stroke 0.4s ease, fill 0.4s ease;
+}
+.v8-states-flow {
+  animation: v8-states-flow 0.7s linear infinite;
+}
+.v8-states-spark {
+  animation: v8-states-spark 1.2s ease-in-out infinite;
+}
+.v8-states-led {
+  animation: v8-states-breathe 0.9s ease-in-out infinite;
+}
+.v8-states-led.is-off {
+  animation: none;
+}
+
+.v8-states-btn {
+  align-self: flex-start;
+  min-height: 50px;
+  padding: 0 22px;
+  border-radius: 13px;
+  border: 0;
+  background: #4da3ff;
+  color: #0a0b0d;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 0 22px rgba(77, 163, 255, 0.45);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.v8-states-btn.is-sm {
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  box-shadow: none;
+}
+.v8-states-btn.is-scan {
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 22px rgba(77, 163, 255, 0.4);
+}
+.v8-states-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+.v8-states-ghost {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 11px;
+  border: 1px solid #262a31;
+  background: transparent;
+  color: #9aa1ab;
+  font-size: 13px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.v8-states-ghost.is-action {
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 12px;
+  color: #d7dade;
+  font-size: 14px;
+}
+.v8-states-chip {
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #262a31;
+  background: transparent;
+  color: #d7dade;
+  font-size: 13px;
+}
+
+.v8-states-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.v8-states-steps li {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.v8-states-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #262a31;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  flex: none;
+}
+.v8-states-step-copy {
+  flex: 1 1 200px;
+  font-size: 15px;
+}
+.v8-states-key {
+  font-family: "Geist Mono", monospace;
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: #0a0b0d;
+  border: 1px solid #262a31;
+}
+
+.v8-states-wait {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+.v8-states-wait-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #9aa1ab;
+}
+.v8-states-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffc53d;
+  animation: v8-states-breathe 1s ease-in-out infinite;
+}
+.v8-states-connected {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #4da3ff;
+}
+.v8-states-connected-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4da3ff;
+  box-shadow: 0 0 10px #4da3ff;
+}
+
+.v8-states-empty-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 10px;
+}
+.v8-states-empty-cell {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+.v8-states-empty-dot {
+  width: 50%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #1a1d22;
+  animation: v8-states-breathe 2.4s ease-in-out infinite;
+}
+.v8-states-empty-dot.is-dim {
+  background: #262a31;
+  opacity: 0.45;
+  animation: none;
+}
+
+.v8-states-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.v8-states-allow {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #0a0b0d;
+  border: 1px solid #262a31;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+}
+.v8-states-allow code {
+  font-family: "Geist Mono", monospace;
+  font-size: 13px;
+  color: #d7dade;
+}
+.v8-states-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .v8-states {
+    min-height: 0;
+    padding: 16px 16px 28px;
+    gap: 22px;
+  }
+  .v8-states-intro h1 {
+    font-size: clamp(28px, 8vw, 36px);
+  }
+}
