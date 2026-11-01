@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { previewSiteScan } from "@/lib/v1Api";
@@ -61,9 +61,20 @@ function firstName(email, brand) {
   return b || "there";
 }
 
+function fmtVol(n) {
+  if (n == null || n === "") return "—";
+  const v = Number(n);
+  if (!Number.isFinite(v)) return "—";
+  return v.toLocaleString();
+}
+
+function toneColor(tone) {
+  return TONE[tone]?.[0] || TONE.yellow[0];
+}
+
 /**
  * FreeAnalysis.dc.html — public website analysis before sign-up.
- * Live crawl via POST /api/v1/public/site-scan (+ Google Places when configured).
+ * Deep crawl via POST /api/v1/public/site-scan (+ Places + ranked keywords when configured).
  */
 export default function FreeAnalysisScreen() {
   const router = useRouter();
@@ -75,6 +86,8 @@ export default function FreeAnalysisScreen() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [visibleSteps, setVisibleSteps] = useState(0);
+  const scanReadyAt = useRef(0);
+  const minScanMs = useRef(0);
 
   useEffect(() => {
     const q = params?.get("site") || "";
@@ -82,7 +95,6 @@ export default function FreeAnalysisScreen() {
     if (q) setSite(q);
     if (em) setEmail(em);
     if (q && params?.get("run") === "1") {
-      // Auto-run when landing sends ?site=&run=1
       runAnalysis(q, em);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -95,9 +107,7 @@ export default function FreeAnalysisScreen() {
     return [
       { text: `Found ${pages} pages on your site`, delay: "0.2s" },
       {
-        text: scan?.platform
-          ? `Detected your platform: ${platform}`
-          : "Checked how your pages are built",
+        text: scan?.platform ? `Detected your platform: ${platform}` : "Checked how your pages are built",
         delay: "0.6s",
       },
       { text: "Checked titles, descriptions, links and headings", delay: "1.0s" },
@@ -107,20 +117,29 @@ export default function FreeAnalysisScreen() {
           : "Checked Google Places for nearby listings",
         delay: "1.4s",
       },
-      { text: "Built your free Google health report", delay: "1.8s" },
+      {
+        text: scan?.researchSource
+          ? `Matched ${scan.visibility?.searches || scan.keywords?.length || 0} live search rankings`
+          : "Built your free Google health report",
+        delay: "1.8s",
+      },
     ];
   }, [scan]);
 
   useEffect(() => {
     if (step !== "scan") return undefined;
     setVisibleSteps(0);
-    const timers = scanSteps.map((_, i) => setTimeout(() => setVisibleSteps(i + 1), 250 + i * 420));
-    const done = setTimeout(() => setStep("results"), 2800);
-    return () => {
-      timers.forEach(clearTimeout);
-      clearTimeout(done);
-    };
+    const timers = scanSteps.map((_, i) => setTimeout(() => setVisibleSteps(i + 1), 250 + i * 520));
+    minScanMs.current = 250 + scanSteps.length * 520 + 400;
+    return () => timers.forEach(clearTimeout);
   }, [step, scanSteps]);
+
+  useEffect(() => {
+    if (step !== "scan" || !scan) return undefined;
+    const wait = Math.max(0, minScanMs.current - (Date.now() - scanReadyAt.current));
+    const done = setTimeout(() => setStep("results"), wait || 200);
+    return () => clearTimeout(done);
+  }, [step, scan]);
 
   async function runAnalysis(rawSite = site, rawEmail = email) {
     const next = normalizeSiteUrl(rawSite);
@@ -132,8 +151,10 @@ export default function FreeAnalysisScreen() {
     setBusy(true);
     setStep("scan");
     setScan(null);
+    scanReadyAt.current = Date.now();
     const res = await previewSiteScan(next, { email: (rawEmail || "").trim() });
     setBusy(false);
+    scanReadyAt.current = Date.now();
     if (!res.ok) {
       setStep("start");
       const detail = res.data?.detail;
@@ -168,11 +189,20 @@ export default function FreeAnalysisScreen() {
   const gradeNote = scan?.gradeNote || "fair, with quick wins";
   const name = firstName(email || scan?.reportEmail, scan?.brand);
   const findings = scan?.findings || [];
+  const pageRows = scan?.pageRows?.length ? scan.pageRows : findings;
+  const problems = scan?.problems?.length ? scan.problems : findings.slice(0, 3);
   const places = scan?.places || [];
+  const keywords = scan?.keywords || [];
+  const gaps = scan?.gaps || [];
+  const competitors = scan?.competitors || [];
+  const visibility = scan?.visibility || {};
+  const category = scan?.category || "";
+  const city = scan?.city || "";
+  const placesQuery = scan?.placesQuery || (category ? `${category}${city ? ` in ${city}` : ""}` : "");
   const dots = useMemo(() => {
     const list = scan?.dots || [];
     if (list.length) {
-      return list.slice(0, 38).map((d) => {
+      return list.slice(0, 48).map((d) => {
         const tone = TONE[d.color] || TONE.yellow;
         return { color: tone[0], glow: tone[1] };
       });
@@ -184,8 +214,7 @@ export default function FreeAnalysisScreen() {
     });
   }, [scan]);
 
-  const rivals = places.slice(0, 4);
-  const youPct = rivals.length ? Math.max(6, Math.round(100 / (rivals.length + 1))) : 0;
+  const marketLabel = visibility.market || city || "your market";
 
   return (
     <div className="v8-fa">
@@ -196,8 +225,7 @@ export default function FreeAnalysisScreen() {
         </Link>
         <span className="v8-fa-nav">
           <Link href="/pricing">Pricing</Link>
-          {scan ? null : <span className="v8-fa-badge">NO LOGIN</span>}
-          {scan ? <span className="v8-fa-badge">LIVE SCAN</span> : null}
+          {scan ? <span className="v8-fa-badge">LIVE SCAN</span> : <span className="v8-fa-badge">NO LOGIN</span>}
         </span>
       </header>
 
@@ -206,8 +234,8 @@ export default function FreeAnalysisScreen() {
           <span className="v8-fa-script">Free, in about a minute</span>
           <h1 id="st-h">See how Google sees your website.</h1>
           <span className="v8-fa-lede">
-            Which pages look ready for Google, what&apos;s broken, and nearby Google Places listings. No login, no credit
-            card.
+            Deep page scan, Google health grade, and — when available — the searches you already show up for. No login,
+            no credit card.
           </span>
           <form
             className="v8-fa-form"
@@ -280,7 +308,9 @@ export default function FreeAnalysisScreen() {
             <button type="button" className="v8-fa-cta is-sm" onClick={() => setStep("results")}>
               See my results
             </button>
-          ) : null}
+          ) : (
+            <span style={{ fontSize: 13, color: "#9AA1AB" }}>Deep scan in progress — reading pages across your site…</span>
+          )}
         </section>
       ) : null}
 
@@ -298,19 +328,7 @@ export default function FreeAnalysisScreen() {
                   {pages} {pages === 1 ? "page" : "pages"} found
                 </span>
               </span>
-              <h1 id="sum-h">
-                {name}, we checked {pages} pages on {host}.{" "}
-                {red ? (
-                  <>
-                    {red} need urgent fixes
-                    {yellow ? `, and ${yellow} need work` : ""}.
-                  </>
-                ) : yellow ? (
-                  <>{yellow} pages need work.</>
-                ) : (
-                  <>Your listings look healthy so far.</>
-                )}
-              </h1>
+              <h1 id="sum-h">{scan.headline || `${name}, we checked ${pages} pages on ${host}.`}</h1>
               <p>
                 {scan.aboutGoogle ||
                   "Your site is readable, but titles and descriptions decide what Google shows. Fix the urgent ones first."}
@@ -337,14 +355,29 @@ export default function FreeAnalysisScreen() {
 
           <section className="v8-fa-kpis" aria-label="Visibility">
             {[
-              { label: "Pages we read", value: String(pages), sub: "live HTML from your site", color: "#F2F4F5" },
-              { label: "Urgent issues", value: String(red), sub: "titles, noindex, hidden pages", color: red ? "#FF5A4E" : "#3DDC84" },
-              { label: "Need work", value: String(yellow), sub: "descriptions and headings", color: yellow ? "#FFC53D" : "#3DDC84" },
               {
-                label: "Google Places nearby",
-                value: places.length ? String(places.length) : "—",
-                sub: places.length ? "from Google Places API" : "Connect Places key or try again later",
-                color: places.length ? "#F2F4F5" : "#9AA1AB",
+                label: "Searches you show up for",
+                value: visibility.searches ? String(visibility.searches) : "—",
+                sub: visibility.searches ? `in ${marketLabel}, any position` : "Connect Searchify SEO research for ranks",
+                color: "#F2F4F5",
+              },
+              {
+                label: "On page one",
+                value: visibility.searches ? String(visibility.pageOne || 0) : "—",
+                sub: "where nearly all the clicks happen",
+                color: "#FFC53D",
+              },
+              {
+                label: "Near misses",
+                value: visibility.searches ? String(visibility.nearMisses || 0) : "—",
+                sub: "on page 2, closest to a quick win",
+                color: "#FFC53D",
+              },
+              {
+                label: "Estimated visits from Google",
+                value: visibility.visits ? `~${fmtVol(visibility.visits)}` : pages ? String(pages) : "—",
+                sub: visibility.visits ? "a month" : "pages we read live",
+                color: "#F2F4F5",
               },
             ].map((k) => (
               <div key={k.label} className="v8-fa-kpi">
@@ -357,98 +390,124 @@ export default function FreeAnalysisScreen() {
 
           <div className="v8-fa-row2">
             <section className="v8-fa-panel v8-fa-kw" aria-labelledby="kw-h">
-              <h2 id="kw-h">Issues on pages we read</h2>
+              <h2 id="kw-h">{keywords.length ? "Searches you already show up for" : "Issues on pages we read"}</h2>
               <span style={{ fontSize: 13, color: "#9AA1AB" }}>
-                Free scan covers titles, descriptions, headings and noindex. Keyword ranks unlock after you connect Google.
+                {keywords.length
+                  ? "Your best ones. Anything on page 2 is a near miss: close enough that a fix can move it."
+                  : `Live crawl of ${pages} pages — titles, descriptions, headings and index status. Exact keyword ranks unlock after Google is connected.`}
               </span>
               <div style={{ overflowX: "auto" }}>
                 <div style={{ minWidth: 560 }}>
-                  <div className="v8-fa-table-head" aria-hidden="true">
-                    <span>PAGE</span>
-                    <span style={{ textAlign: "right" }}>STATUS</span>
-                    <span style={{ textAlign: "right" }}>TONE</span>
-                    <span>DETAIL</span>
-                  </div>
-                  {findings.length === 0 ? (
-                    <p style={{ margin: 0, padding: "12px 0", fontSize: 14, color: "#9AA1AB" }}>
-                      No urgent listing issues on the pages we checked.
-                    </p>
-                  ) : (
-                    findings.map((f) => (
-                      <div key={`${f.path}-${f.label}`} className="v8-fa-table-row">
-                        <span style={{ fontFamily: "var(--mono)", fontSize: 13 }}>{f.path || "/"}</span>
-                        <span style={{ textAlign: "right", fontWeight: 600, color: TONE[f.color]?.[0] || "#FFC53D" }}>
-                          {f.label}
-                        </span>
-                        <span style={{ textAlign: "right", fontFamily: "var(--mono)", fontSize: 12 }}>{f.color}</span>
-                        <span style={{ fontSize: 12, color: "#9AA1AB" }}>{f.detail}</span>
+                  {keywords.length ? (
+                    <>
+                      <div className="v8-fa-table-head" aria-hidden="true">
+                        <span>SEARCH</span>
+                        <span style={{ textAlign: "right" }}>SEARCHES / MO</span>
+                        <span style={{ textAlign: "right" }}>YOU&apos;RE AT</span>
+                        <span>STATUS</span>
                       </div>
-                    ))
+                      {keywords.map((row) => (
+                        <div key={row.keyword} className="v8-fa-table-row">
+                          <span>{row.keyword}</span>
+                          <span style={{ textAlign: "right", fontFamily: "var(--mono)", color: "#9AA1AB" }}>
+                            {fmtVol(row.volume)}
+                          </span>
+                          <span style={{ textAlign: "right", fontFamily: "var(--mono)", fontWeight: 600 }}>
+                            {row.position ? `#${row.position}` : "—"}
+                          </span>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: toneColor(row.tone) }}>{row.status}</span>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      <div className="v8-fa-table-head" aria-hidden="true">
+                        <span>PAGE</span>
+                        <span style={{ textAlign: "right" }}>STATUS</span>
+                        <span style={{ textAlign: "right" }}>WORDS</span>
+                        <span>DETAIL</span>
+                      </div>
+                      {(pageRows.length ? pageRows : []).slice(0, 12).map((f) => (
+                        <div key={`${f.path}-${f.label}`} className="v8-fa-table-row">
+                          <span style={{ fontFamily: "var(--mono)", fontSize: 13 }}>{f.path || "/"}</span>
+                          <span style={{ textAlign: "right", fontWeight: 600, color: toneColor(f.color) }}>{f.label}</span>
+                          <span style={{ textAlign: "right", fontFamily: "var(--mono)", fontSize: 12 }}>
+                            {f.words != null ? f.words : "—"}
+                          </span>
+                          <span style={{ fontSize: 12, color: "#9AA1AB" }}>{f.detail}</span>
+                        </div>
+                      ))}
+                      {!pageRows.length ? (
+                        <p style={{ margin: 0, padding: "12px 0", fontSize: 14, color: "#9AA1AB" }}>
+                          No readable pages returned for this scan.
+                        </p>
+                      ) : null}
+                    </>
                   )}
                 </div>
               </div>
             </section>
 
             <section className="v8-fa-panel v8-fa-rivals" aria-labelledby="cp-h">
-              <h2 id="cp-h">Google Places near you</h2>
+              <h2 id="cp-h">Who&apos;s getting your customers</h2>
               <span style={{ fontSize: 13, color: "#9AA1AB" }}>
-                Live listings from Google Places for &ldquo;{scan.brand || host}&rdquo;. Ratings help show who locals already trust.
+                {placesQuery
+                  ? `Google Places for “${placesQuery}” — same category as your site${city ? ` in ${city}` : ""}.`
+                  : "Nearby Google Places listings in your category, compared with your site."}
               </span>
-              {rivals.length === 0 ? (
+              {competitors.length === 0 && places.length === 0 ? (
                 <p style={{ margin: 0, fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>
-                  No Places results yet. When <code style={{ color: "#D7DADE" }}>GOOGLE_PLACES_API_KEY</code> is set on the
-                  server, this panel fills with nearby businesses and ratings.
+                  No Places rivals yet for this category. Solo still unlocks Search Console clicks and the exact searches
+                  you lose.
                 </p>
               ) : (
-                rivals.map((p, i) => (
-                  <div key={`${p.name}-${i}`} className="v8-fa-rival">
+                (competitors.length
+                  ? competitors
+                  : places.slice(0, 4).map((p, i) => ({
+                      label: p.name,
+                      name: p.name,
+                      pct: Math.max(12, 100 - i * 18),
+                      you: false,
+                      signal: `${p.rating}★ · ${p.reviews} reviews`,
+                      address: p.address,
+                    }))
+                ).map((row, i) => (
+                  <div key={`${row.label || row.name}-${i}`} className="v8-fa-rival">
                     <span className="v8-fa-rival-top">
-                      <span style={{ fontWeight: i === 0 ? 700 : 400 }}>{p.name || "Listing"}</span>
-                      <span style={{ fontFamily: "var(--mono)" }}>
-                        {p.rating}★ · {p.reviews} reviews
-                      </span>
+                      <span style={{ fontWeight: row.you ? 700 : 400 }}>{row.label || row.name}</span>
+                      <span style={{ fontFamily: "var(--mono)" }}>{row.signal}</span>
                     </span>
                     <div className="v8-fa-bar">
-                      <i
-                        style={{
-                          width: `${Math.max(12, 100 - i * 18)}%`,
-                          background: i === 0 ? "#D5F879" : "#4A5160",
-                        }}
-                      />
+                      <i style={{ width: `${row.pct || 12}%`, background: row.you ? "#D5F879" : "#4A5160" }} />
                     </div>
-                    {p.address ? (
-                      <span style={{ fontSize: 12, color: "#7D848E" }}>{p.address}</span>
-                    ) : null}
+                    {row.address ? <span style={{ fontSize: 12, color: "#7D848E" }}>{row.address}</span> : null}
                   </div>
                 ))
               )}
-              {rivals.length ? (
-                <div className="v8-fa-rival" style={{ marginTop: 6 }}>
-                  <span className="v8-fa-rival-top">
-                    <span style={{ fontWeight: 700 }}>You · {host}</span>
-                    <span style={{ fontFamily: "var(--mono)" }}>site scan</span>
-                  </span>
-                  <div className="v8-fa-bar">
-                    <i style={{ width: `${youPct}%`, background: "#D5F879" }} />
-                  </div>
-                </div>
-              ) : null}
             </section>
           </div>
 
           <div className="v8-fa-row2">
             <section className="v8-fa-panel" style={{ flex: "1 1 380px" }} aria-labelledby="gap-h">
-              <h2 id="gap-h">Searches competitors win (unlock)</h2>
+              <h2 id="gap-h">Searches your competitors win and you don&apos;t</h2>
               <span style={{ fontSize: 13, color: "#9AA1AB" }}>
-                Keyword volume and competitor SERP gaps need Search Console + research credits after you start Solo.
+                {gaps.some((g) => g.volume != null)
+                  ? "People are looking for these every month. You&apos;re not showing up in the top 100 yet."
+                  : `Phrases pulled from your ${category || "site"} pages${city ? ` and ${city}` : ""}. Exact monthly volume unlocks with Solo.`}
               </span>
-              {["Local service searches", "Near-me intent", "City + service phrases", "Emergency / cost queries"].map(
-                (label) => (
-                  <div key={label} className="v8-fa-gap-row">
-                    <span>{label}</span>
-                    <span style={{ fontFamily: "var(--mono)", color: "#9AA1AB" }}>after connect</span>
+              {gaps.length ? (
+                gaps.map((g) => (
+                  <div key={g.keyword} className="v8-fa-gap-row">
+                    <span>{g.keyword}</span>
+                    <span style={{ fontFamily: "var(--mono)", color: "#9AA1AB" }}>
+                      {g.volume != null ? `${fmtVol(g.volume)} / mo` : g.note || "volume after Solo"}
+                    </span>
                   </div>
-                ),
+                ))
+              ) : (
+                <p style={{ margin: 0, fontSize: 14, color: "#9AA1AB" }}>
+                  Connect Google to list the exact searches rivals win that you miss.
+                </p>
               )}
             </section>
             <section className="v8-fa-panel is-blue" style={{ flex: "1 1 380px" }} aria-labelledby="ai-h">
@@ -456,8 +515,9 @@ export default function FreeAnalysisScreen() {
               <span style={{ fontSize: 13, color: "#9AA1AB" }}>We read your pages the way Google does. Here&apos;s the gist:</span>
               <span className="v8-fa-about">{scan.aboutGoogle}</span>
               <span style={{ fontSize: 13, color: "#D7DADE", lineHeight: 1.5 }}>
-                That&apos;s why Google may be unsure where to send you. Fixing titles and descriptions is usually one of the
-                quickest wins.
+                {city
+                  ? `That’s why Google may be unsure whether to send ${city} searches your way. Fixing titles and local phrases is usually one of the quickest wins.`
+                  : "That’s why Google may be unsure where to send you. Fixing titles and descriptions is usually one of the quickest wins."}
               </span>
             </section>
           </div>
@@ -467,43 +527,41 @@ export default function FreeAnalysisScreen() {
               <h2 id="fx-h">The biggest problems we found</h2>
               <span style={{ fontSize: 13, color: "#9AA1AB" }}>Free to see. We&apos;ll fix them for you.</span>
             </div>
-            {(findings.length ? findings.slice(0, 3) : [{ color: "green", label: "No urgent issues", detail: "The pages we checked look listing-ready." }]).map(
-              (f) => (
-                <div key={`${f.path}-${f.label}-fix`} className="v8-fa-fix">
-                  <span
-                    className="v8-fa-fix-dot"
-                    style={{
-                      background: TONE[f.color]?.[0] || "#3DDC84",
-                      boxShadow: `0 0 10px ${TONE[f.color]?.[0] || "#3DDC84"}`,
-                    }}
-                  />
-                  <span className="v8-fa-fix-copy">
-                    <span style={{ fontSize: 15, fontWeight: 600 }}>
-                      {f.path && f.path !== "/" ? `${f.path}: ${f.label}` : f.label}
-                    </span>
-                    <span style={{ fontSize: 13, color: "#9AA1AB", lineHeight: 1.5 }}>
-                      {f.detail}
-                      {f.title ? ` Current title: “${f.title}”.` : ""}
-                    </span>
+            {problems.map((f) => (
+              <div key={`${f.path}-${f.label}-fix`} className="v8-fa-fix">
+                <span
+                  className="v8-fa-fix-dot"
+                  style={{
+                    background: toneColor(f.color),
+                    boxShadow: `0 0 10px ${toneColor(f.color)}`,
+                  }}
+                />
+                <span className="v8-fa-fix-copy">
+                  <span style={{ fontSize: 15, fontWeight: 600 }}>
+                    {f.path && f.path !== "/" ? `${f.path}: ${f.label}` : f.label}
                   </span>
-                  <Link href="/pricing" className="v8-fa-fix-btn">
-                    <Lock />
-                    Fix this for me
-                  </Link>
-                </div>
-              ),
-            )}
-            {pages > 3 ? (
+                  <span style={{ fontSize: 13, color: "#9AA1AB", lineHeight: 1.5 }}>
+                    {f.detail}
+                    {f.title ? ` Current title: “${f.title}”.` : ""}
+                  </span>
+                </span>
+                <button type="button" className="v8-fa-fix-btn" onClick={continueTrial}>
+                  <Lock />
+                  Fix this for me
+                </button>
+              </div>
+            ))}
+            {(scan.moreIssues > 0 || pages > 3) && (
               <>
                 <div className="v8-fa-blur" aria-hidden="true">
                   <span />
                   <span />
                 </div>
                 <span style={{ fontSize: 15, fontWeight: 600, textAlign: "center" }}>
-                  + more issues across your {pages} pages after you connect Google
+                  + {scan.moreIssues || Math.max(1, pages - problems.length)} more issues found across your {pages} pages
                 </span>
               </>
-            ) : null}
+            )}
           </section>
 
           <section className="v8-fa-final" aria-labelledby="cta-h">
@@ -511,9 +569,12 @@ export default function FreeAnalysisScreen() {
               <span className="v8-fa-script">This is only what&apos;s public.</span>
               <h2 id="cta-h">Connect Google to see the real numbers, and let us start fixing.</h2>
               <span style={{ fontSize: 15, color: "#D7DADE", lineHeight: 1.55 }}>
-                Everything above is from a live public crawl
-                {places.length ? " plus Google Places" : ""}. Connect Google Search Console and WordPress and you&apos;ll
-                see your actual clicks, the exact searches you&apos;re losing, and fixes ready to approve one tap at a time.
+                Everything above is from a live deep crawl of {pages} pages
+                {category ? ` as a ${category}` : ""}
+                {scan.researchSource ? ", public ranking estimates" : ""}
+                {places.length ? ", and Google Places rivals in your category" : ""}. Connect Google Search Console
+                {scan.platform === "WordPress" ? " and WordPress" : ""} and you&apos;ll see your actual clicks, the exact
+                searches you&apos;re losing, and every fix ready to approve one tap at a time.
               </span>
             </div>
             <div className="v8-fa-final-actions">
@@ -522,11 +583,7 @@ export default function FreeAnalysisScreen() {
               </button>
               <span style={{ fontSize: 12, color: "#7D848E", textAlign: "center" }}>
                 Card required, not charged for 30 days. Results take at least a month to show, so your free month ends with
-                a before-and-after report at{" "}
-                <Link href="/app/trial-report" style={{ color: "#9AA1AB" }}>
-                  /app/trial-report
-                </Link>
-                .
+                a before-and-after report.
               </span>
             </div>
           </section>
@@ -542,8 +599,8 @@ export default function FreeAnalysisScreen() {
             </div>
           )}
           <span style={{ fontSize: 12, color: "#7D848E", lineHeight: 1.5 }}>
-            Page health comes from a live crawl of your HTML. Places ratings come from Google Places when configured.
-            Keyword volumes and ranks unlock after Search Console is connected. Platform detected from your site&apos;s
+            Page health comes from a live deep crawl of your HTML. Rankings, search volumes and visits are estimates from
+            public search data when available and can differ from your own numbers. Platform detected from your site&apos;s
             code.
           </span>
         </div>
