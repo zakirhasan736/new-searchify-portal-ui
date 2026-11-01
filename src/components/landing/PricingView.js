@@ -584,6 +584,9 @@ export default function PricingView({ embedded = false, onboarding = false }) {
                 onClick={() => {
                   setPick(pl.id);
                   setErr("");
+                  if (typeof document !== "undefined") {
+                    document.getElementById("preview")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }
                 }}
               >
                 {pl.on && account?.planId === pl.id ? "Current plan" : pl.on ? "Selected" : `Choose ${pl.name}`}
@@ -628,8 +631,23 @@ export default function PricingView({ embedded = false, onboarding = false }) {
       <PricingPreview
         planId={pick === "premium" ? "agency" : pick}
         planName={chosen?.name || "Pro"}
-        onPickPlan={(id) => setPick(id === "agency" ? "premium" : id)}
-        plans={defs.map((d) => ({ id: d.id === "premium" ? "agency" : d.id, name: d.name }))}
+        onPickPlan={(id) => {
+          setPick(id === "agency" ? "premium" : id);
+          setErr("");
+        }}
+        onChoosePlan={(id) => {
+          setPick(id === "agency" ? "premium" : id);
+          setErr("");
+          if (typeof document !== "undefined") {
+            window.requestAnimationFrame(() => {
+              document.getElementById("order")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            });
+          }
+        }}
+        plans={defs.map((d) => ({
+          id: d.id === "premium" ? "agency" : d.id,
+          name: d.name,
+        }))}
       />
 
       <section className="v8-wrap v8-pricing-expect" aria-labelledby="exp-h">
@@ -665,7 +683,7 @@ export default function PricingView({ embedded = false, onboarding = false }) {
         </div>
       </section>
 
-      <section className="v8-wrap v8-pricing-panel" aria-label="Your order">
+      <section className="v8-wrap v8-pricing-panel" id="order" aria-label="Your order">
         <h2>Your order</h2>
         <div className="v8-pricing-row">
           <span>
