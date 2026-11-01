@@ -513,6 +513,96 @@ body:has(.v8-app-chrome) {
   }
 }
 
+/* Page progress (Path.html) */
+.v8-path-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  flex: none;
+}
+
+.v8-path-tip-btn {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid #5b616b;
+  background: transparent;
+  color: #9aa1ab;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.v8-path-tip-btn:hover,
+.v8-path-tip-btn[aria-expanded="true"] {
+  border-color: #d7dade;
+  color: #f2f4f5;
+}
+
+.v8-path-tip-btn:focus-visible {
+  outline: 2px solid #4da3ff;
+  outline-offset: 2px;
+}
+
+.v8-path-tip-pop {
+  position: absolute;
+  top: 100%;
+  left: -8px;
+  padding-top: 8px;
+  z-index: 40;
+  width: min(320px, calc(100vw - 32px));
+  text-align: left;
+}
+
+.v8-path-tip-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #16181c;
+  border: 1px solid #2e333b;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  font-size: 13px;
+  line-height: 1.5;
+  color: #d7dade;
+}
+
+.v8-path-tip-card a {
+  color: #4da3ff;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.v8-path-tip-card a:hover {
+  color: #8cc4ff;
+}
+
+.v8-path-current {
+  animation: sfy-breathe 2.4s ease-in-out infinite;
+}
+
+@media (max-width: 700px) {
+  .v8-path-tip-pop {
+    left: auto;
+    right: -8px;
+  }
+}
+
+/* Baseline (1b · Your starting point) */
+.bl-opt:hover {
+  border-color: #5b616b !important;
+}
+
+@media (max-width: 700px) {
+  .v8-baseline-stats {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* Site scan dots stay a compact field. The 1-column phone rule must not stack them. */
 .v8-scan-board-head {
   display: flex;

@@ -53,6 +53,8 @@ function isOn(pathname, item) {
   // Cancel flow lives under Settings → Plan and billing.
   if (item.id === "settings" && pathname === "/app/cancel") return true;
   if (item.id === "billing" && pathname === "/app/cancel") return false;
+  // Baseline (1b · Your starting point) sits under Plug in in the journey.
+  if (item.id === "connect" && pathname === "/app/baseline") return true;
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 

@@ -912,7 +912,7 @@ export default function ConnectScreen() {
         {ready ? (
           <button
             type="button"
-            onClick={() => router.push("/app/results")}
+            onClick={() => router.push("/app/baseline")}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -928,7 +928,7 @@ export default function ConnectScreen() {
               boxShadow: "0 0 24px rgba(77,163,255,.45)",
             }}
           >
-            See what it's costing you
+            Save your starting point
           </button>
         ) : (
           <span

@@ -413,6 +413,28 @@ export function markConnection(key, value) {
   return save(state);
 }
 
+/** Persist Plug-in → Baseline answers on the active site (leads, goal, scorecard searches). */
+export function saveBaseline(payload = {}) {
+  const state = loadJourney();
+  const site = state.sites.find((item) => item.id === state.activeId) || readySites(state).at(-1) || state.sites.at(-1);
+  if (!site) return state;
+  site.answers = {
+    ...(site.answers || {}),
+    baseline: {
+      ...(site.answers?.baseline || {}),
+      ...payload,
+      savedAt: new Date().toISOString(),
+    },
+  };
+  site.baselineDone = true;
+  return save(state);
+}
+
+export function baselineDone(state = loadJourney()) {
+  const site = activeJourneySite(state);
+  return Boolean(site?.baselineDone || site?.answers?.baseline?.savedAt);
+}
+
 export function saveDraft(answers, step) {
   const state = loadJourney();
   const draft = state.sites.find((site) => site.status === "draft");

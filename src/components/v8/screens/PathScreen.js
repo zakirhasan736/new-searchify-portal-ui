@@ -233,11 +233,29 @@ const rowVariants = {
 export default function PathScreen() {
   const reduce = useReducedMotion();
   const railRef = useRef(null);
+  const tipRef = useRef(null);
   const [pageId, setPageId] = useState("site");
   const [sel, setSel] = useState(null);
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tipOpen, setTipOpen] = useState(false);
   const { hostname } = activeSiteContext(loadJourney());
+
+  useEffect(() => {
+    if (!tipOpen) return undefined;
+    const onDoc = (event) => {
+      if (!tipRef.current?.contains(event.target)) setTipOpen(false);
+    };
+    const onKey = (event) => {
+      if (event.key === "Escape") setTipOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [tipOpen]);
 
   useEffect(() => {
     const { href } = activeSiteContext(loadJourney());
@@ -301,6 +319,8 @@ export default function PathScreen() {
       isDone: state === "done",
       isCurrent: state === "current",
       isLocked: state === "locked",
+      isGoal: d.n >= 5,
+      goalGlow: d.n === 6 ? "rgba(77,163,255,.45)" : "rgba(44,199,192,.4)",
       status: complete ? "COMPLETE" : { done: "DONE", current: "IN PROGRESS", locked: "NEXT" }[state],
       doneColor: complete ? "#4DA3FF" : "#3DDC84",
       doneGlow: complete ? "rgba(77,163,255,.6)" : "rgba(61,220,132,.35)",
@@ -400,63 +420,181 @@ export default function PathScreen() {
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", minWidth: 0 }}>
-          <h1
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+            <h1
+              style={{
+                margin: 0,
+                fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
+                fontSize: "clamp(34px, 4vw, 48px)",
+                lineHeight: 1,
+                letterSpacing: "-1.4px",
+                fontWeight: 700,
+                overflowWrap: "break-word",
+              }}
+            >
+              Page progress
+            </h1>
+            <span ref={tipRef} className="v8-path-tip">
+              <button
+                type="button"
+                className="v8-path-tip-btn"
+                aria-label="What is a page level?"
+                aria-expanded={tipOpen}
+                aria-controls="tip-level"
+                onClick={() => setTipOpen((v) => !v)}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+                  <path d="M12 11v7" />
+                  <path d="M12 6.5h.01" />
+                </svg>
+              </button>
+              {tipOpen ? (
+                <span className="v8-path-tip-pop" id="tip-level" role="dialog" aria-label="What is a page level?">
+                  <span className="v8-path-tip-card">
+                    <span>
+                      A page&apos;s level, from Poor to Excellent, is how many of six checks it passes, in order: Google can
+                      find it, its Google listing earns clicks, it&apos;s kept fresh, other pages link to it, it&apos;s seen
+                      beyond Google, and AI assistants cite it. Pass all six and Searchify locks the page.
+                    </span>
+                    <a href="https://searchify.io/help/page-levels" target="_blank" rel="noreferrer">
+                      Learn more
+                    </a>
+                  </span>
+                </span>
+              ) : null}
+            </span>
+          </div>
+          <p style={{ margin: 0, fontSize: "16px", color: "#9AA1AB", maxWidth: "560px", lineHeight: 1.5 }}>
+            Every page climbs the same six levels, from Poor to Excellent. When a page reaches Excellent, its lights turn
+            blue and Searchify locks it.
+          </p>
+        </div>
+        <label
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "6px",
+            fontSize: "13px",
+            color: "#9AA1AB",
+            minWidth: "min(280px, 100%)",
+            maxWidth: "100%",
+          }}
+        >
+          Show progress for
+          <select
+            value={pageId}
+            disabled={loading && empty}
+            onChange={(e) => {
+              setPageId(e.target.value);
+              setSel(null);
+            }}
+            style={{
+              minHeight: "48px",
+              padding: "0 14px",
+              borderRadius: "12px",
+              border: "1px solid #4DA3FF",
+              background: "#131519",
+              color: "#F2F4F5",
+              font: "inherit",
+              fontSize: "15px",
+              boxShadow: "0 0 18px rgba(77,163,255,.2)",
+              width: "100%",
+            }}
+          >
+            {(pageOptions.length
+              ? pageOptions
+              : [
+                  {
+                    id: "site",
+                    label: `Whole site · ${hostname || "your site"} — Level 1 · Poor`,
+                  },
+                ]
+            ).map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <section
+        aria-labelledby="goal-h"
+        style={{
+          maxWidth: "1120px",
+          width: "100%",
+          margin: "0 auto",
+          boxSizing: "border-box",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "18px 28px",
+          alignItems: "center",
+          padding: "20px 24px",
+          borderRadius: "20px",
+          background: "#0A0B0D",
+          border: "1px solid rgba(77,163,255,.55)",
+          boxShadow: "0 0 30px rgba(77,163,255,.18)",
+        }}
+      >
+        <div style={{ display: "flex", gap: "8px", flex: "none" }} aria-hidden="true">
+          <span
+            style={{
+              width: "46px",
+              height: "46px",
+              borderRadius: "50%",
+              display: "grid",
+              placeItems: "center",
+              border: "2px solid #2CC7C0",
+              color: "#2CC7C0",
+              fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
+              fontWeight: 800,
+              fontSize: "18px",
+              boxShadow: "0 0 16px rgba(44,199,192,.45)",
+            }}
+          >
+            5
+          </span>
+          <span
+            style={{
+              width: "46px",
+              height: "46px",
+              borderRadius: "50%",
+              display: "grid",
+              placeItems: "center",
+              border: "2px solid #4DA3FF",
+              color: "#4DA3FF",
+              fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
+              fontWeight: 800,
+              fontSize: "18px",
+              boxShadow: "0 0 16px rgba(77,163,255,.5)",
+            }}
+          >
+            6
+          </span>
+        </div>
+        <div style={{ flex: "1 1 420px", minWidth: 0, display: "flex", flexDirection: "column", gap: "6px" }}>
+          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", letterSpacing: "0.08em", color: "#4DA3FF" }}>
+            THE GOAL FOR EVERY PAGE
+          </span>
+          <h2
+            id="goal-h"
             style={{
               margin: 0,
               fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
-              fontSize: "clamp(34px, 4vw, 48px)",
-              lineHeight: 1,
-              letterSpacing: "-1.4px",
+              fontSize: "24px",
+              letterSpacing: "-0.5px",
               fontWeight: 700,
-              overflowWrap: "break-word",
             }}
           >
-            Page progress
-          </h1>
-          <p style={{ margin: 0, fontSize: "16px", color: "#9AA1AB", maxWidth: "560px", lineHeight: 1.5 }}>
-            Every page climbs the same six levels, from Poor to Excellent. When a page reaches Excellent,
-            its lights turn blue and Searchify locks it.
-          </p>
+            Great and Excellent are where you want to be.
+          </h2>
+          <span style={{ fontSize: "15px", color: "#D7DADE", lineHeight: 1.55 }}>
+            That&apos;s where your page gets seen beyond Google and named by AI assistants when customers ask. We&apos;ll
+            let you know the moment a page gets there. After that, the job changes from climbing to holding on: Searchify
+            keeps watch every week and steps in if anything slips, so the spot stays yours.
+          </span>
         </div>
-        {!empty && (
-          <label
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px",
-              fontSize: "13px",
-              color: "#9AA1AB",
-              minWidth: "280px",
-            }}
-          >
-            Show progress for
-            <select
-              value={pageId}
-              onChange={(e) => {
-                setPageId(e.target.value);
-                setSel(null);
-              }}
-              style={{
-                minHeight: "48px",
-                padding: "0 14px",
-                borderRadius: "12px",
-                border: "1px solid #4DA3FF",
-                background: "#131519",
-                color: "#F2F4F5",
-                font: "inherit",
-                fontSize: "15px",
-                boxShadow: "0 0 18px rgba(77,163,255,.2)",
-              }}
-            >
-              {pageOptions.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-      </div>
+      </section>
 
       {(loading || empty) && (
         <div
@@ -535,7 +673,8 @@ export default function PathScreen() {
             <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
           </svg>
           <span style={{ fontSize: "15px" }}>
-            All six levels done. This page is winning, so Searchify has locked it and won&apos;t change it.
+            All six levels done. This page is winning, so Searchify has locked it and won&apos;t change it. We&apos;ll keep
+            watching every week so it stays there.
           </span>
         </div>
       )}
@@ -615,6 +754,7 @@ export default function PathScreen() {
                   <div
                     data-level-node="1"
                     data-level-current="1"
+                    className="v8-path-current"
                     style={{
                       width: "52px",
                       height: "52px",
@@ -696,8 +836,26 @@ export default function PathScreen() {
                   transition: "background .25s ease, opacity .25s ease",
                 }}
               >
-                <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: l.qualityColor }}>
-                  LEVEL {l.n} · {l.quality}
+                <span style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                  <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: l.qualityColor }}>
+                    LEVEL {l.n} · {l.quality}
+                  </span>
+                  {l.isGoal ? (
+                    <span
+                      style={{
+                        fontFamily: "'Geist Mono', monospace",
+                        fontSize: "10px",
+                        letterSpacing: "0.06em",
+                        padding: "2px 7px",
+                        borderRadius: "6px",
+                        border: `1px solid ${l.qualityColor}`,
+                        color: l.qualityColor,
+                        boxShadow: `0 0 10px ${l.goalGlow}`,
+                      }}
+                    >
+                      THE GOAL
+                    </span>
+                  ) : null}
                 </span>
                 <span
                   style={{
@@ -762,6 +920,39 @@ export default function PathScreen() {
           <p style={{ margin: 0, fontSize: "15px", lineHeight: 1.55, color: "#D7DADE" }}>
             {selectedLevel.detail}
           </p>
+          {selectedLevel.isGoal ? (
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                alignItems: "flex-start",
+                padding: "12px 14px",
+                borderRadius: "14px",
+                background: "#0A0B0D",
+                border: "1px solid rgba(77,163,255,.45)",
+              }}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#4DA3FF"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                style={{ flex: "none", marginTop: 2 }}
+              >
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+              </svg>
+              <span style={{ fontSize: "14px", lineHeight: 1.5, color: "#D7DADE" }}>
+                This is the goal. We&apos;ll notify you when this page reaches it, and from then on Searchify&apos;s job is
+                keeping it there.
+              </span>
+            </div>
+          ) : null}
           {selectedLevel.isCurrent && !empty && (
             <>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
