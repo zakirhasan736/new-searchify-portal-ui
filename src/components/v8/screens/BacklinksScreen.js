@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   researchBacklinks,
@@ -171,7 +171,18 @@ function buildOutreachMoves(links, concepts, hostname) {
 }
 
 function normalizeLinksPayload(data) {
-  if (!data) return { links: [], summary: null, concepts: [], fetchedAt: '' };
+  if (!data) {
+    return {
+      links: [],
+      summary: null,
+      concepts: [],
+      fetchedAt: '',
+      overview: null,
+      keywordDestinations: [],
+      cached: false,
+      problem: null,
+    };
+  }
   const root = data.links || data.payload || data;
   const links = Array.isArray(root?.links)
     ? root.links
@@ -198,6 +209,14 @@ function normalizeLinksPayload(data) {
     summary: root?.summary || data.summary || null,
     concepts: Array.isArray(root?.concepts) ? root.concepts : Array.isArray(data.concepts) ? data.concepts : [],
     fetchedAt: root?.fetchedAt || data.fetchedAt || '',
+    overview: root?.overview || data.overview || null,
+    keywordDestinations: Array.isArray(root?.keywordDestinations)
+      ? root.keywordDestinations
+      : Array.isArray(data.keywordDestinations)
+        ? data.keywordDestinations
+        : [],
+    cached: Boolean(root?.cached ?? data.cached),
+    problem: data.problem || null,
   };
 }
 
@@ -240,42 +259,51 @@ export default function BacklinksScreen() {
   const [liveLinks, setLiveLinks] = useState(null);
   const [liveSummary, setLiveSummary] = useState(null);
   const [liveConcepts, setLiveConcepts] = useState([]);
+  const [overview, setOverview] = useState(null);
   const [fetchedAt, setFetchedAt] = useState('');
   const [orphans, setOrphans] = useState([]);
   const [senderEmail, setSenderEmail] = useState('');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [problems, setProblems] = useState([]);
   const [reloadKey, setReloadKey] = useState(0);
+  const forceRef = useRef(false);
   const { hostname, href } = activeSiteContext(loadJourney());
 
   useEffect(() => {
     const site = href || activeSiteContext(loadJourney()).href || '';
     let cancel = false;
     setLoading(true);
+    const force = forceRef.current;
+    forceRef.current = false;
     Promise.all([
-      // Stored backlink data is reused for 24h; forcing on every visit spent the monthly refresh quota.
-      site ? researchBacklinks({ site, force: false }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
+      // Stored backlink data is reused for 24h unless the user clicks Refresh.
+      site ? researchBacklinks({ site, force }).catch((err) => ({ ok: false, data: err?.data || {} })) : Promise.resolve({ ok: false }),
       loadFeature('backlinks').catch(() => ({ ok: false })),
       loadFeature('top-pages').catch(() => ({ ok: false })),
       getBusinessProfile().catch(() => ({ ok: false })),
     ])
       .then(([res, feat, pagesFeat, prof]) => {
         if (cancel) return;
-        setProblems(site ? problemsFrom(res, 'backlinks') : []);
         const fromResearch = res?.ok ? normalizeLinksPayload(res.data) : null;
         const fromFeat = normalizeLinksPayload(featurePayload(feat));
         const pick =
           fromResearch?.links?.length >= (fromFeat.links?.length || 0) ? fromResearch : fromFeat.links?.length ? fromFeat : fromResearch || fromFeat;
+        setProblems(site ? problemsFrom(res, 'backlinks') : []);
         setLiveLinks(pick.links || []);
         setLiveSummary(pick.summary || null);
         setLiveConcepts(pick.concepts || []);
+        setOverview(pick.overview || null);
         setFetchedAt(pick.fetchedAt || '');
 
         if (prof?.ok && prof.data) {
           setSenderEmail(prof.data.email || prof.data.workEmail || '');
         }
 
-        const linked = new Set((pick.links || []).map((l) => pageFromTarget(l.target)));
+        const linked = new Set([
+          ...(pick.links || []).map((l) => pageFromTarget(l.target)),
+          ...((pick.overview?.topLinkedPages || []).map((p) => p.page || pageFromTarget(p.url))),
+        ]);
         const tp = featurePayload(pagesFeat);
         const pageRows = tp.rows || tp.pages || [];
         const orphanRows = [];
@@ -297,12 +325,21 @@ export default function BacklinksScreen() {
         setOrphans(orphanRows);
       })
       .finally(() => {
-        if (!cancel) setLoading(false);
+        if (!cancel) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       });
     return () => {
       cancel = true;
     };
   }, [hostname, href, reloadKey]);
+
+  const refreshNow = () => {
+    setRefreshing(true);
+    forceRef.current = true;
+    setReloadKey((k) => k + 1);
+  };
 
   const MOVES = useMemo(() => {
     if (!liveLinks?.length) return [];
@@ -383,13 +420,18 @@ export default function BacklinksScreen() {
   }, [liveLinks]);
 
   const pageCounts = useMemo(() => {
+    // Prefer DataForSEO domain-pages summary (matches Backlinks.html “Your pages” list).
+    const fromOverview = (overview?.topLinkedPages || [])
+      .map((row) => [row.page || pageFromTarget(row.url), Number(row.referringDomains || row.backlinks || 0)])
+      .filter(([path, n]) => path && n > 0);
+    if (fromOverview.length) return fromOverview.sort((a, b) => b[1] - a[1]);
     const counts = new Map();
     (liveLinks || []).forEach((link) => {
       const path = pageFromTarget(link.target);
       counts.set(path, (counts.get(path) || 0) + 1);
     });
     return [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  }, [liveLinks]);
+  }, [liveLinks, overview]);
 
   const P = useMemo(() => (pageCounts.length ? pageCounts.slice(0, 6) : []), [pageCounts]);
 
@@ -399,24 +441,27 @@ export default function BacklinksScreen() {
   }, [TOT, newCount]);
 
   const headerStats = useMemo(() => {
-    if (!liveSummary && !liveLinks?.length) {
+    if (!liveSummary && !liveLinks?.length && !overview) {
       return { domains: 0, newN: 0, lostN: 0, totalLinks: 0, strong: 0, flagged: 0 };
     }
     const links = liveLinks || [];
-    const domains = liveSummary?.referringDomains ?? links.length;
+    const domains =
+      overview?.externalReferringDomains ??
+      liveSummary?.referringDomains ??
+      links.length;
     const newN = links.filter((l) => String(l.state) === 'New').length;
     const lostN = links.filter((l) => String(l.state) === 'Lost').length;
     const strong = links.filter((l) => strengthScore(l) >= 40).length;
     const flagged = links.filter((l) => Number(l.spamScore) >= 60).length;
     return {
-      domains: domains ?? links.length,
+      domains: Number(domains) || 0,
       newN,
       lostN,
-      totalLinks: liveSummary?.backlinks ?? links.length,
+      totalLinks: overview?.externalBacklinks ?? liveSummary?.backlinks ?? links.length,
       strong,
       flagged,
     };
-  }, [liveLinks, liveSummary]);
+  }, [liveLinks, liveSummary, overview]);
 
   const updatedLabel = loading
     ? 'Loading link index…'
@@ -549,10 +594,33 @@ export default function BacklinksScreen() {
             Other websites linking to {hostname || 'your site'}. Links from trusted local sites are one of the strongest signs to Google that you&apos;re worth ranking.
           </span>
         </div>
-        <span className="v8-bl-updated">{updatedLabel}</span>
+        <span className="v8-bl-updated">
+          {updatedLabel}
+          {href ? (
+            <>
+              {' · '}
+              <button
+                type="button"
+                disabled={loading || refreshing}
+                onClick={refreshNow}
+                style={{
+                  padding: 0,
+                  border: 0,
+                  background: 'transparent',
+                  color: refreshing ? '#7D848E' : '#4DA3FF',
+                  font: 'inherit',
+                  fontSize: 12,
+                  cursor: refreshing ? 'wait' : 'pointer',
+                }}
+              >
+                {refreshing ? 'Refreshing…' : 'Refresh'}
+              </button>
+            </>
+          ) : null}
+        </span>
       </header>
 
-      <ProblemNotice problems={problems} onRetry={() => setReloadKey((k) => k + 1)} style={{ maxWidth: '1120px', width: '100%', margin: '0 auto' }} />
+      <ProblemNotice problems={problems} onRetry={refreshNow} style={{ maxWidth: '1120px', width: '100%', margin: '0 auto' }} />
 
       <section className="v8-bl-kpis" aria-label="Totals">
         {[
