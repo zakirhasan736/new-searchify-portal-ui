@@ -569,6 +569,7 @@ body:has(.v8-app-chrome) {
   width: 280px;
   max-width: 80vw;
   text-align: left;
+  pointer-events: auto;
 }
 .sfy-pop.sfy-pop-l {
   left: -8px;
@@ -579,7 +580,43 @@ body:has(.v8-app-chrome) {
   right: -8px;
   transform: none;
 }
+/* Portaled tip — escapes overflow:hidden parents and stays in the viewport */
+.sfy-pop.sfy-pop-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: auto;
+  bottom: auto;
+  transform: none;
+  padding: 0;
+  margin: 0;
+  z-index: 12000;
+  max-width: calc(100vw - 24px);
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.55));
+}
+.sfy-pop.sfy-pop-fixed.sfy-pop-below .sfy-pop-card::before,
+.sfy-pop.sfy-pop-fixed.sfy-pop-above .sfy-pop-card::before {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #16181c;
+  border-left: 1px solid #2e333b;
+  border-top: 1px solid #2e333b;
+  left: var(--sfy-arrow, 20px);
+  margin-left: -5px;
+}
+.sfy-pop.sfy-pop-fixed.sfy-pop-below .sfy-pop-card::before {
+  top: -5px;
+  transform: rotate(45deg);
+}
+.sfy-pop.sfy-pop-fixed.sfy-pop-above .sfy-pop-card::before {
+  bottom: -5px;
+  top: auto;
+  transform: rotate(225deg);
+}
 .sfy-pop-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1071,7 +1108,7 @@ body:has(.v8-app-chrome) {
   outline: 2px solid #4da3ff;
   outline-offset: 2px;
 }
-.v8-connect .sfy-pop {
+.v8-connect .sfy-pop:not(.sfy-pop-fixed) {
   position: absolute;
   top: 100%;
   left: 50%;
@@ -1082,16 +1119,17 @@ body:has(.v8-app-chrome) {
   max-width: 80vw;
   text-align: left;
 }
-.v8-connect .sfy-pop.sfy-pop-l {
+.v8-connect .sfy-pop.sfy-pop-l:not(.sfy-pop-fixed) {
   left: -8px;
   transform: none;
 }
-.v8-connect .sfy-pop.sfy-pop-r {
+.v8-connect .sfy-pop.sfy-pop-r:not(.sfy-pop-fixed) {
   left: auto;
   right: -8px;
   transform: none;
 }
 .v8-connect .sfy-pop-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;

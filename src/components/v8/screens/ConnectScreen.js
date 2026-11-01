@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback, useId, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { deleteCmsConnection, disconnectGoogle, forgetWebsite, previewSiteScan, runSiteScan, startGoogleOAuth } from "@/lib/v1Api";
 import ConnectDialog, { useConnectionStatus } from "@/components/board/ConnectDialog";
 import V8PropertyPicker from "@/components/v8/V8PropertyPicker";
+import SfyTip from "@/components/v8/SfyTip";
 import { activeSiteContext } from "@/lib/siteContext";
 import { addReadyWebsite, dropReadyWebsite, loadJourney, readySites, selectJourneySite, websiteLabel } from "@/lib/journey";
 import { getBillingAccount } from "@/lib/billingApi";
@@ -13,6 +14,9 @@ import { SkeletonCards } from "@/components/v8/SkeletonWave";
 
 const TONE = { red: "#FF5A4E", yellow: "#FFC53D", green: "#3DDC84", blue: "#4DA3FF" };
 import "@/styles/v8-screens.css";
+
+/** @deprecated local alias — smart portaled tip */
+const PlugTip = SfyTip;
 
 const BLUE = "#4DA3FF";
 
@@ -53,97 +57,6 @@ const PLUG_TIPS = {
     href: "https://searchify.io/help/youtube",
   },
 };
-
-function PlugTip({ tipId, term, text, href, align = "l" }) {
-  const [open, setOpen] = useState(false);
-  const [pin, setPin] = useState(false);
-  const wrapRef = useRef(null);
-  const reactId = useId();
-  const popId = `tip-${tipId || reactId.replace(/:/g, "")}`;
-
-  useEffect(() => {
-    if (!open || !pin) return undefined;
-    const onDoc = (e) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) {
-        setOpen(false);
-        setPin(false);
-      }
-    };
-    const onKey = (e) => {
-      if (e.key === "Escape") {
-        setOpen(false);
-        setPin(false);
-      }
-    };
-    document.addEventListener("mousedown", onDoc);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDoc);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open, pin]);
-
-  if (!term || !text) return null;
-
-  return (
-    <span
-      ref={wrapRef}
-      className="sfy-tip"
-      onMouseEnter={() => {
-        if (!pin) setOpen(true);
-      }}
-      onMouseLeave={() => {
-        if (!pin) setOpen(false);
-      }}
-    >
-      <button
-        type="button"
-        className="sfy-i"
-        aria-label={`What is ${term}?`}
-        aria-expanded={open}
-        aria-controls={popId}
-        onFocus={() => {
-          if (!open) {
-            setOpen(true);
-            setPin(false);
-          }
-        }}
-        onBlur={(e) => {
-          const w = e.currentTarget.closest(".sfy-tip");
-          if (w && e.relatedTarget && w.contains(e.relatedTarget)) return;
-          setOpen(false);
-          setPin(false);
-        }}
-        onClick={() => {
-          if (open && pin) {
-            setOpen(false);
-            setPin(false);
-          } else {
-            setOpen(true);
-            setPin(true);
-          }
-        }}
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
-          <path d="M12 11v7" />
-          <path d="M12 6.5h.01" />
-        </svg>
-      </button>
-      {open ? (
-        <span className={`sfy-pop sfy-pop-${align}`} id={popId} role="dialog" aria-label={`What is ${term}?`}>
-          <span className="sfy-pop-card">
-            <span>{text}</span>
-            {href ? (
-              <a href={href} target="_blank" rel="noreferrer">
-                Learn more
-              </a>
-            ) : null}
-          </span>
-        </span>
-      ) : null}
-    </span>
-  );
-}
 
 function hostOf(value) {
   const raw = String(value || "").trim();

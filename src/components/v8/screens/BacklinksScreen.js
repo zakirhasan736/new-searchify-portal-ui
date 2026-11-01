@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   researchBacklinks,
@@ -12,6 +12,7 @@ import { activeSiteContext } from '@/lib/siteContext';
 import { loadJourney } from '@/lib/journey';
 import { SkeletonCards } from '@/components/v8/SkeletonWave';
 import ProblemNotice from '@/components/v8/ProblemNotice';
+import SfyTip from '@/components/v8/SfyTip';
 import { problemsFrom } from '@/lib/problems';
 import '@/styles/v8-screens.css';
 import '@/styles/v8-backlinks.css';
@@ -228,7 +229,6 @@ function buildTrend(domainsNow, newN, lostN, history) {
 }
 
 export default function BacklinksScreen() {
-  const tipRef = useRef(null);
   const [move, setMove] = useState(0);
   const [stage, setStage] = useState('idle');
   const [tab, setTab] = useState('newlost');
@@ -246,24 +246,7 @@ export default function BacklinksScreen() {
   const [loading, setLoading] = useState(true);
   const [problems, setProblems] = useState([]);
   const [reloadKey, setReloadKey] = useState(0);
-  const [tipOpen, setTipOpen] = useState(false);
   const { hostname, href } = activeSiteContext(loadJourney());
-
-  useEffect(() => {
-    if (!tipOpen) return undefined;
-    const onDoc = (event) => {
-      if (!tipRef.current?.contains(event.target)) setTipOpen(false);
-    };
-    const onKey = (event) => {
-      if (event.key === 'Escape') setTipOpen(false);
-    };
-    document.addEventListener('mousedown', onDoc);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDoc);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [tipOpen]);
 
   useEffect(() => {
     const site = href || activeSiteContext(loadJourney()).href || '';
@@ -554,33 +537,12 @@ export default function BacklinksScreen() {
               <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
             </svg>
             BACKLINKS
-            <span ref={tipRef} className="sfy-tip">
-              <button
-                type="button"
-                className="sfy-i"
-                aria-label="What is a backlink?"
-                aria-expanded={tipOpen}
-                aria-controls="tip-bl"
-                onClick={() => setTipOpen((v) => !v)}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
-                  <path d="M12 11v7" />
-                  <path d="M12 6.5h.01" />
-                </svg>
-              </button>
-              {tipOpen ? (
-                <span className="sfy-pop sfy-pop-l" id="tip-bl" role="dialog" aria-label="What is a backlink?">
-                  <span className="sfy-pop-card">
-                    <span>
-                      A link to your site from another website. Google treats it like a recommendation, so one link from a respected local site beats dozens from spammy ones.
-                    </span>
-                    <a href="https://searchify.io/help/backlinks" target="_blank" rel="noreferrer">
-                      Learn more
-                    </a>
-                  </span>
-                </span>
-              ) : null}
-            </span>
+            <SfyTip
+              tipId="backlinks"
+              term="backlink"
+              text="A link to your site from another website. Google treats it like a recommendation, so one link from a respected local site beats dozens from spammy ones."
+              href="https://searchify.io/help/backlinks"
+            />
           </span>
           <h1 className="v8-bl-title">{headline}</h1>
           <span className="v8-bl-sub">

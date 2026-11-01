@@ -35,6 +35,26 @@ export async function partnerResetPassword(email) {
   );
 }
 
+export async function partnerSetPassword(token, password) {
+  return json(
+    await fetch("/api/v1/partners/set-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, password }),
+    }),
+  );
+}
+
+export async function partnerSignAgreement({ signedName, acceptedRules, acceptedTerms }) {
+  return json(
+    await fetch("/api/v1/partners/agreement", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ signedName, acceptedRules, acceptedTerms }),
+    }),
+  );
+}
+
 export async function getPartnerMe() {
   return json(await fetch("/api/v1/partners/me", { headers: authHeaders(), cache: "no-store" }));
 }
@@ -69,25 +89,4 @@ export function partnerInitials(name) {
   if (!parts.length) return "??";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-export async function partnerSetPassword(token, password) {
-  return json(
-    await fetch("/api/v1/partners/set-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, password }),
-    }),
-  );
-}
-
-/** Pitch Studio: one campaign message with the partner's link and disclosure. AI when the server has it, templates otherwise. */
-export async function writePartnerMessage({ channel, audience, tone, angle }) {
-  return json(
-    await fetch("/api/v1/partners/write-message", {
-      method: "POST",
-      headers: { ...authHeaders(), "Content-Type": "application/json" },
-      body: JSON.stringify({ channel, audience, tone, angle }),
-    }),
-  );
 }

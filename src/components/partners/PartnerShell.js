@@ -4,10 +4,6 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import SearchifyMarkSvg from "@/components/v8/SearchifyMarkSvg";
-import SearchifyLoader from "@/components/v8/SearchifyLoader";
-import { ShellBusyProvider } from "@/components/v8/ShellBusy";
-import { motion } from "framer-motion";
-import MotionStage from "@/components/motion/MotionStage";
 import { getPartnerMe, partnerInitials } from "@/lib/partnerApi";
 import { userLogout } from "@/utils/users/Helpers";
 import { PARTNER_KEY, clearSessionFlag, isPartnerAuthenticated } from "@/lib/authRoles";
@@ -17,7 +13,6 @@ const TABS = [
   { href: "/partners/earnings", id: "earnings", label: "Earnings" },
   { href: "/partners/payout", id: "payout", label: "Payout and tax" },
   { href: "/partners/terms", id: "terms", label: "Agreement and rules" },
-  { href: "/partners/account", id: "account", label: "Account" },
 ];
 
 export const PartnerCtx = createContext({ ptype: "standard", setPtype: () => {}, me: null, overview: null });
@@ -97,6 +92,10 @@ export default function PartnerShell({
           router.replace("/partners/login");
           return;
         }
+        if (res.data?.needsAgreement && !String(pathname || "").startsWith("/partners/welcome")) {
+          router.replace("/partners/welcome");
+          return;
+        }
         const p = res.data?.profile || {};
         setProfile(p);
         const tier = res.data?.tier || p.tier || "standard";
@@ -123,7 +122,7 @@ export default function PartnerShell({
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, pathname]);
 
   const me = useMemo(() => meFromProfile(profile, ptype), [profile, ptype]);
   const ctx = useMemo(() => ({ ptype, setPtype, me, profile }), [ptype, setPtype, me, profile]);
@@ -140,7 +139,20 @@ export default function PartnerShell({
   };
 
   if (!ready) {
-    return <SearchifyLoader full label="Opening your partner centre" />;
+    return (
+      <div
+        className="partner-v8-root"
+        style={{
+          minHeight: 200,
+          background: "#0A0B0D",
+          color: "#9AA1AB",
+          fontFamily: "Geist, 'Helvetica Neue', sans-serif",
+          padding: 22,
+        }}
+      >
+        Loading partner centre…
+      </div>
+    );
   }
 
   const types = [
@@ -326,28 +338,18 @@ export default function PartnerShell({
                 aria-current={on ? "page" : undefined}
                 style={{
                   ...navLinkBase,
-                  position: "relative",
-                  ...(on ? { color: "#F2F4F5", fontWeight: 600 } : { color: "#9AA1AB" }),
+                  ...(on
+                    ? { background: "#1A1D22", color: "#F2F4F5", fontWeight: 600 }
+                    : { color: "#9AA1AB" }),
                 }}
               >
-                {on ? (
-                  <motion.span
-                    layoutId="partner-tab-pill"
-                    transition={{ type: "spring", stiffness: 420, damping: 36 }}
-                    style={{ position: "absolute", inset: 0, borderRadius: "inherit", background: "#1A1D22" }}
-                  />
-                ) : null}
-                <span style={{ position: "relative" }}>{tab.label}</span>
+                {tab.label}
               </Link>
             );
           })}
         </nav>
 
-        <ShellBusyProvider label="Opening your partner centre">
-          <MotionStage key={pathname} selector=":scope > *, :scope > * > *, :scope [data-reveal]" style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-            {children}
-          </MotionStage>
-        </ShellBusyProvider>
+        {children}
       </div>
     </PartnerCtx.Provider>
   );
