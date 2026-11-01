@@ -72,6 +72,33 @@ function toneColor(tone) {
   return TONE[tone]?.[0] || TONE.yellow[0];
 }
 
+const TOPIC_LABEL = {
+  title: "Title",
+  description: "Description",
+  heading: "Heading",
+  css: "CSS",
+  javascript: "JavaScript",
+  image: "Image",
+  ssr: "SSR",
+  csr: "CSR",
+  lcp: "LCP",
+  cls: "CLS",
+  inp: "INP",
+  speed: "Speed",
+};
+
+function topicLabel(topic) {
+  return TOPIC_LABEL[String(topic || "").toLowerCase()] || "";
+}
+
+function ratingColor(rating) {
+  const r = String(rating || "").toLowerCase();
+  if (r === "poor") return "#FF5A4E";
+  if (r === "needs improvement") return "#FFC53D";
+  if (r === "good") return "#3DDC84";
+  return "#9AA1AB";
+}
+
 /**
  * FreeAnalysis.dc.html — public website analysis before sign-up.
  * Deep crawl via POST /api/v1/public/site-scan (+ Places + ranked keywords when configured).
@@ -112,16 +139,28 @@ export default function FreeAnalysisScreen() {
       },
       { text: "Checked titles, descriptions, links and headings", delay: "1.0s" },
       {
+        text: scan?.pagespeed?.source
+          ? `Ran Google PageSpeed (LCP ${scan.pagespeed?.vitals?.lcp || "—"}, CLS ${scan.pagespeed?.vitals?.cls || "—"})`
+          : "Checked page speed signals when available",
+        delay: "1.35s",
+      },
+      {
+        text: scan?.rendering?.modeLabel
+          ? `Checked ${scan.rendering.modeLabel} · images & server loading path`
+          : "Checked SSR vs CSR delivery and image loading",
+        delay: "1.55s",
+      },
+      {
         text: scan?.places?.length
           ? `Looked up ${scan.places.length} Google Places listings nearby`
           : "Checked Google Places for nearby listings",
-        delay: "1.4s",
+        delay: "1.7s",
       },
       {
         text: scan?.researchSource
           ? `Matched ${scan.visibility?.searches || scan.keywords?.length || 0} live search rankings`
           : "Built your free Google health report",
-        delay: "1.8s",
+        delay: "2.1s",
       },
     ];
   }, [scan]);
@@ -196,9 +235,24 @@ export default function FreeAnalysisScreen() {
   const gaps = scan?.gaps || [];
   const competitors = scan?.competitors || [];
   const visibility = scan?.visibility || {};
+  const pagespeed = scan?.pagespeed || null;
+  const rendering = scan?.rendering || null;
   const category = scan?.category || "";
   const city = scan?.city || "";
   const placesQuery = scan?.placesQuery || (category ? `${category}${city ? ` in ${city}` : ""}` : "");
+  const topicFindings = useMemo(() => {
+    const rows = [...(problems || []), ...(findings || []), ...((rendering?.issues) || [])];
+    const seen = new Set();
+    const out = [];
+    rows.forEach((row) => {
+      const topic = String(row.topic || "").toLowerCase();
+      if (!topic || seen.has(topic)) return;
+      seen.add(topic);
+      out.push(row);
+    });
+    return out;
+  }, [problems, findings, rendering]);
+  const ssrSolutions = rendering?.solutions || [];
   const dots = useMemo(() => {
     const list = scan?.dots || [];
     if (list.length) {
@@ -388,6 +442,123 @@ export default function FreeAnalysisScreen() {
             ))}
           </section>
 
+          {pagespeed?.source || rendering ? (
+            <section className="v8-fa-panel" aria-labelledby="psi-h">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                <h2 id="psi-h" style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
+                  Page speed, SSR / CSR &amp; images
+                </h2>
+                <span style={{ fontSize: 13, color: "#9AA1AB" }}>
+                  {pagespeed?.source ? "Google PageSpeed · mobile" : "Live HTML delivery check"}
+                  {rendering?.modeLabel ? ` · ${rendering.modeLabel}` : ""}
+                </span>
+              </div>
+              {rendering?.modeNote ? (
+                <span style={{ fontSize: 14, color: "#D7DADE", lineHeight: 1.5 }}>{rendering.modeNote}</span>
+              ) : null}
+              <div className="v8-fa-kpis" style={{ margin: 0 }} aria-label="PageSpeed scores">
+                {[
+                  {
+                    label: "Performance",
+                    value: pagespeed?.performance || pagespeed?.scores?.performance || "—",
+                    sub: "Lighthouse score",
+                    color: "#F2F4F5",
+                  },
+                  {
+                    label: "LCP",
+                    value: pagespeed?.vitals?.lcp || "—",
+                    sub: pagespeed?.ratings?.lcp || "largest content paint",
+                    color: ratingColor(pagespeed?.ratings?.lcp),
+                  },
+                  {
+                    label: "CLS",
+                    value: pagespeed?.vitals?.cls || "—",
+                    sub: pagespeed?.ratings?.cls || "layout shift",
+                    color: ratingColor(pagespeed?.ratings?.cls),
+                  },
+                  {
+                    label: "TTFB",
+                    value: pagespeed?.vitals?.ttfb || "—",
+                    sub: "server response · SSR path",
+                    color: "#FFC53D",
+                  },
+                ].map((k) => (
+                  <div key={k.label} className="v8-fa-kpi">
+                    <span style={{ fontSize: 13, color: "#9AA1AB" }}>{k.label}</span>
+                    <strong style={{ color: k.color }}>{k.value}</strong>
+                    <span style={{ fontSize: 12, color: "#7D848E" }}>{k.sub}</span>
+                  </div>
+                ))}
+              </div>
+              {topicFindings.length ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+                  <span style={{ fontSize: 13, color: "#9AA1AB" }}>
+                    Warnings and errors for titles, headings, CSS, JavaScript, images, SSR/CSR, LCP and CLS:
+                  </span>
+                  {topicFindings.slice(0, 8).map((row) => (
+                    <div key={`${row.topic}-${row.label}`} className="v8-fa-gap-row" style={{ alignItems: "flex-start" }}>
+                      <span>
+                        {topicLabel(row.topic) ? (
+                          <span
+                            style={{
+                              display: "inline-block",
+                              marginRight: 8,
+                              fontFamily: "var(--mono)",
+                              fontSize: 11,
+                              padding: "2px 7px",
+                              borderRadius: 6,
+                              border: "1px solid #262A31",
+                              color: toneColor(row.color),
+                            }}
+                          >
+                            {topicLabel(row.topic)}
+                          </span>
+                        ) : null}
+                        {row.label}
+                      </span>
+                      <span style={{ fontFamily: "var(--mono)", color: "#9AA1AB", flex: "none" }}>
+                        {String(row.color) === "red" ? "error" : "warning"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {ssrSolutions.length ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
+                  <span style={{ fontSize: 13, color: "#9AA1AB" }}>
+                    Server-side (SSR) fixes for images and loading speed:
+                  </span>
+                  {ssrSolutions.map((row) => (
+                    <div key={row.label} className="v8-fa-gap-row" style={{ alignItems: "flex-start" }}>
+                      <span>
+                        <span
+                          style={{
+                            display: "inline-block",
+                            marginRight: 8,
+                            fontFamily: "var(--mono)",
+                            fontSize: 11,
+                            padding: "2px 7px",
+                            borderRadius: 6,
+                            border: "1px solid rgba(61,220,132,.45)",
+                            color: "#3DDC84",
+                          }}
+                        >
+                          {topicLabel(row.topic) || "SSR"}
+                        </span>
+                        <strong style={{ fontWeight: 600 }}>{row.label}</strong>
+                        {row.detail ? (
+                          <span style={{ display: "block", fontSize: 13, color: "#9AA1AB", marginTop: 3, lineHeight: 1.45 }}>
+                            {row.detail}
+                          </span>
+                        ) : null}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </section>
+          ) : null}
+
           <div className="v8-fa-row2">
             <section className="v8-fa-panel v8-fa-kw" aria-labelledby="kw-h">
               <h2 id="kw-h">{keywords.length ? "Searches you already show up for" : "Issues on pages we read"}</h2>
@@ -538,11 +709,13 @@ export default function FreeAnalysisScreen() {
                 />
                 <span className="v8-fa-fix-copy">
                   <span style={{ fontSize: 15, fontWeight: 600 }}>
+                    {topicLabel(f.topic) ? `${topicLabel(f.topic)} · ` : ""}
                     {f.path && f.path !== "/" ? `${f.path}: ${f.label}` : f.label}
                   </span>
                   <span style={{ fontSize: 13, color: "#9AA1AB", lineHeight: 1.5 }}>
                     {f.detail}
                     {f.title ? ` Current title: “${f.title}”.` : ""}
+                    {f.source === "pagespeed" ? " From Google PageSpeed Insights." : ""}
                   </span>
                 </span>
                 <button type="button" className="v8-fa-fix-btn" onClick={continueTrial}>
@@ -572,7 +745,10 @@ export default function FreeAnalysisScreen() {
                 Everything above is from a live deep crawl of {pages} pages
                 {category ? ` as a ${category}` : ""}
                 {scan.researchSource ? ", public ranking estimates" : ""}
-                {places.length ? ", and Google Places rivals in your category" : ""}. Connect Google Search Console
+                {places.length ? ", and Google Places rivals in your category" : ""}
+                {pagespeed?.source ? ", plus Google PageSpeed (titles, headings, CSS, JavaScript, images, LCP, CLS)" : ""}
+                {rendering ? ", and SSR vs CSR delivery" : ""}.
+                Connect Google Search Console
                 {scan.platform === "WordPress" ? " and WordPress" : ""} and you&apos;ll see your actual clicks, the exact
                 searches you&apos;re losing, and every fix ready to approve one tap at a time.
               </span>

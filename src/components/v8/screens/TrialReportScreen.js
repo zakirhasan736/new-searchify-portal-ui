@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getBillingAccount } from "@/lib/billingApi";
-import { loadFeature, featurePayload, listChanges } from "@/lib/v1Api";
+import { loadFeature, featurePayload, listChanges, getSiteScan } from "@/lib/v1Api";
 import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
 import { getUser } from "@/utils/users/Helpers";
@@ -17,14 +17,20 @@ const COL = {
   g: ["#3DDC84", "rgba(61,220,132,.2)"],
 };
 
-function dotsFromCounts(red, yellow, green, total = 38) {
-  const r = Math.max(0, Number(red) || 0);
-  const y = Math.max(0, Number(yellow) || 0);
-  const g = Math.max(0, total - r - y);
-  const keys = [...Array(r).fill("r"), ...Array(y).fill("y"), ...Array(Math.max(0, g)).fill("g")].slice(0, total);
-  while (keys.length < total) keys.push("g");
-  return keys.map((k) => ({ c: COL[k][0], g: COL[k][1] }));
-}
+const TOPIC_LABEL = {
+  title: "Title",
+  description: "Description",
+  heading: "Heading",
+  css: "CSS",
+  javascript: "JavaScript",
+  image: "Image",
+  ssr: "SSR",
+  csr: "CSR",
+  lcp: "LCP",
+  cls: "CLS",
+  inp: "INP",
+  speed: "Speed",
+};
 
 function improveDots(beforeKeys) {
   let reds = 0;
@@ -62,20 +68,103 @@ function statusForChange(change) {
   if (!change) return { status: "Waiting on data", color: "#9AA1AB" };
   const c = String(change);
   if (/proven|goal/i.test(c)) return { status: "Proven", color: "#3DDC84" };
-  if (/\+/.test(c) || /rising|early/i.test(c)) return { status: c.startsWith("+") ? `Early sign, ${c}` : "Early sign, rising", color: "#3DDC84" };
+  if (/\+/.test(c) || /rising|early/i.test(c)) {
+    return { status: c.startsWith("+") ? `Early sign, ${c}` : "Early sign, rising", color: "#3DDC84" };
+  }
   if (/waiting|connect|no pages|too early/i.test(c)) return { status: "Too early to call", color: "#9AA1AB" };
   return { status: c || "Early sign", color: "#FFC53D" };
 }
 
+function classifyTopic(text) {
+  const t = String(text || "").toLowerCase();
+  if (/\btitle\b|document.title|meta title/.test(t)) return "title";
+  if (/description|meta description|snippet/.test(t)) return "description";
+  if (/\bh1\b|heading|headline/.test(t)) return "heading";
+  if (/\bssr\b|server.?side|ttfb|time to first byte|server response/.test(t)) return "ssr";
+  if (/\bcsr\b|client.?side|hydrat/.test(t)) return "csr";
+  if (/\bimage\b|\bimg\b|webp|avif|srcset|offscreen/.test(t)) return "image";
+  if (/\bcss\b|stylesheet|render-blocking/.test(t)) return "css";
+  if (/javascript|\bjs\b|boot.?up|main.?thread/.test(t)) return "javascript";
+  if (/\blcp\b|largest contentful/.test(t)) return "lcp";
+  if (/\bcls\b|layout shift/.test(t)) return "cls";
+  return "";
+}
+
+function extractAuditTopics(audit, onPage) {
+  const topics = [];
+  const push = (topic, label, detail, severity = "yellow") => {
+    if (!topic || topics.some((t) => t.topic === topic && t.label === label)) return;
+    topics.push({ topic, label, detail, severity });
+  };
+
+  const panels = [...(audit?.tablePanels || []), ...(onPage?.tablePanels || [])];
+  panels.forEach((panel) => {
+    (panel.rows || []).forEach((row) => {
+      if (!Array.isArray(row) || !row.length) return;
+      const title = String(row[0] || "");
+      const status = String(row[1] || "");
+      if (!/fail|average|issue|poor|needs/i.test(status) && !/fail|average/i.test(String(row[2] || ""))) return;
+      const topic = classifyTopic(`${title} ${panel.title || ""}`);
+      if (!topic) return;
+      push(
+        topic,
+        title,
+        String(row[4] || row[3] || row[2] || status).slice(0, 180),
+        /fail|poor/i.test(status) ? "red" : "yellow",
+      );
+    });
+  });
+
+  (audit?.rows || []).forEach((row) => {
+    if (!Array.isArray(row) || !row.length) return;
+    const name = String(row[0] || "");
+    const topic = classifyTopic(name);
+    if (!topic) return;
+    const mobile = row[1];
+    const note = row[3] || row[2] || "";
+    if (mobile == null || mobile === "—" || mobile === "") return;
+    push(topic, name, String(note || mobile), /poor/i.test(String(note)) ? "red" : "yellow");
+  });
+
+  return topics.slice(0, 10);
+}
+
+function vitalsFromAudit(audit) {
+  const out = {};
+  (audit?.rows || []).forEach((row) => {
+    if (!Array.isArray(row) || !row.length) return;
+    const key = String(row[0] || "").toUpperCase();
+    if (key === "LCP") out.lcp = row[1];
+    if (key === "CLS") out.cls = row[1];
+    if (key === "PERFORMANCE") out.performance = row[1];
+    if (key === "SEO") out.seo = row[1];
+  });
+  const panels = audit?.tablePanels || [];
+  panels.forEach((panel) => {
+    if (!/vital/i.test(panel.title || "")) return;
+    (panel.rows || []).forEach((row) => {
+      if (!Array.isArray(row)) return;
+      const name = String(row[0] || "").toUpperCase();
+      if (name === "LCP") out.lcp = out.lcp || row[1];
+      if (name === "CLS") out.cls = out.cls || row[1];
+    });
+  });
+  return out;
+}
+
 /**
  * TrialReport.dc.html — Day-30 before-and-after for free-month accounts.
- * Live: billing account.since + changes + site audit snapshot when available.
+ * Live: billing trial clock + changes + site audit / PageSpeed topic reports.
  */
 export default function TrialReportScreen() {
   const [loading, setLoading] = useState(true);
   const [account, setAccount] = useState(null);
   const [changes, setChanges] = useState([]);
   const [auditCounts, setAuditCounts] = useState({ red: 0, yellow: 0, green: 21 });
+  const [auditPayload, setAuditPayload] = useState(null);
+  const [onPagePayload, setOnPagePayload] = useState(null);
+  const [scanSnapshot, setScanSnapshot] = useState(null);
+  const [organic, setOrganic] = useState(null);
   const { hostname } = activeSiteContext(loadJourney());
   const user = typeof window !== "undefined" ? getUser() : null;
 
@@ -86,26 +175,55 @@ export default function TrialReportScreen() {
       getBillingAccount().catch(() => ({ ok: false })),
       listChanges().catch(() => ({ ok: false })),
       loadFeature("site-audit").catch(() => ({ ok: false })),
+      loadFeature("on-page-seo").catch(() => ({ ok: false })),
       loadFeature("organic-search").catch(() => ({ ok: false })),
+      getSiteScan().catch(() => ({ ok: false })),
     ])
-      .then(([bill, ch, auditFeat]) => {
+      .then(([bill, ch, auditFeat, onPageFeat, organicFeat, scanRes]) => {
         if (cancel) return;
         if (bill?.ok) setAccount(bill.data || bill);
         const rows = Array.isArray(ch?.data) ? ch.data : ch?.data?.changes || ch?.data?.rows || [];
         setChanges(Array.isArray(rows) ? rows.slice(0, 12) : []);
+
         const audit = featurePayload(auditFeat);
-        const issues = audit.issues || audit.rows || [];
+        const onPage = featurePayload(onPageFeat);
+        setAuditPayload(audit);
+        setOnPagePayload(onPage);
+        setOrganic(featurePayload(organicFeat));
+
+        const scan = scanRes?.ok ? scanRes.data?.scan || scanRes.data || null : null;
+        setScanSnapshot(scan);
+
+        const issues = audit.issues || audit.rows || scan?.findings || [];
         if (Array.isArray(issues) && issues.length) {
           let red = 0;
           let yellow = 0;
           let green = 0;
           issues.forEach((row) => {
-            const sev = String(row.severity || row[1] || row.tone || "").toLowerCase();
-            if (/critical|error|red|urgent/.test(sev)) red += 1;
-            else if (/warn|medium|yellow/.test(sev)) yellow += 1;
+            if (Array.isArray(row)) {
+              const sev = String(row[1] || row[3] || "").toLowerCase();
+              if (/fail|poor|critical|error|red|urgent/.test(sev)) red += 1;
+              else if (/warn|average|medium|yellow|needs/.test(sev)) yellow += 1;
+              else green += 1;
+              return;
+            }
+            const sev = String(row.severity || row.color || row.tone || "").toLowerCase();
+            if (/critical|error|red|urgent|poor/.test(sev)) red += 1;
+            else if (/warn|medium|yellow|average/.test(sev)) yellow += 1;
             else green += 1;
           });
+          if (scan?.counts) {
+            red = Math.max(red, Number(scan.counts.red) || 0);
+            yellow = Math.max(yellow, Number(scan.counts.yellow) || 0);
+            green = Math.max(green, Number(scan.counts.green) || 0);
+          }
           setAuditCounts({ red, yellow, green: Math.max(green, 1) });
+        } else if (scan?.counts) {
+          setAuditCounts({
+            red: Number(scan.counts.red) || 0,
+            yellow: Number(scan.counts.yellow) || 0,
+            green: Math.max(Number(scan.counts.green) || 0, 1),
+          });
         }
       })
       .finally(() => {
@@ -127,6 +245,14 @@ export default function TrialReportScreen() {
     return Math.min(days, trialDays);
   }, [joined, trialDays]);
 
+  const daysLeft = useMemo(() => {
+    if (ends) {
+      const end = new Date(ends).getTime();
+      if (Number.isFinite(end)) return Math.max(0, Math.ceil((end - Date.now()) / 86400000));
+    }
+    return Math.max(0, trialDays - dayNum);
+  }, [ends, trialDays, dayNum]);
+
   const name = firstName(user, account?.business);
   const since = Array.isArray(account?.since) ? account.since : [];
   const moves = Number(account?.movesShipped || account?.measuredMoves || 0);
@@ -146,20 +272,144 @@ export default function TrialReportScreen() {
   const afterG = afterDots.filter((d) => d.key === "g").length;
   const afterLabel = `${afterR} urgent · ${afterY} need work · ${afterG} healthy`;
 
+  const vitals = useMemo(() => {
+    const fromScan = scanSnapshot?.pagespeed?.vitals || {};
+    const fromAudit = vitalsFromAudit(auditPayload || {});
+    return {
+      lcp: fromAudit.lcp || fromScan.lcp,
+      cls: fromAudit.cls || fromScan.cls,
+      performance: fromAudit.performance || scanSnapshot?.pagespeed?.performance,
+      seo: fromAudit.seo || scanSnapshot?.pagespeed?.seo,
+    };
+  }, [auditPayload, scanSnapshot]);
+
+  const topicReports = useMemo(() => {
+    const fromAudit = extractAuditTopics(auditPayload || {}, onPagePayload || {});
+    const fromScan = (scanSnapshot?.findings || [])
+      .filter((f) => f.topic)
+      .map((f) => ({
+        topic: f.topic,
+        label: f.label,
+        detail: f.detail,
+        severity: f.color === "red" ? "red" : "yellow",
+      }));
+    const fromRender = (scanSnapshot?.rendering?.issues || []).map((f) => ({
+      topic: f.topic,
+      label: f.label,
+      detail: f.detail,
+      severity: f.color === "red" ? "red" : "yellow",
+    }));
+    const merged = [...fromAudit];
+    [...fromScan, ...fromRender].forEach((row) => {
+      if (!merged.some((m) => m.topic === row.topic && m.label === row.label)) merged.push(row);
+    });
+    return merged.slice(0, 10);
+  }, [auditPayload, onPagePayload, scanSnapshot]);
+
+  const ssrSolutions = scanSnapshot?.rendering?.solutions || [];
+  const renderMode = scanSnapshot?.rendering?.modeLabel || "";
+
+  const organicStats = useMemo(() => {
+    const kpis = organic?.kpis || [];
+    const pick = (label) => {
+      const hit = kpis.find((row) => Array.isArray(row) && String(row[0] || "").toLowerCase().includes(label));
+      return hit ? hit[1] : null;
+    };
+    return {
+      queries: pick("quer") || pick("search") || organic?.panels?.queries || null,
+      clicks: pick("click") || null,
+      impressions: pick("impression") || pick("show") || null,
+    };
+  }, [organic]);
+
   const metrics = since.length
     ? since.map((row) => {
         const st = statusForChange(row.change);
         return { what: row.label, a: row.from, b: row.to, ...st };
       })
     : [
-        { what: "Healthy pages", a: String(beforeKeys.filter((k) => k === "g").length), b: String(afterG), status: moves ? "Proven" : "Waiting on first scan", color: moves ? "#3DDC84" : "#9AA1AB" },
-        { what: "Moves shipped", a: "0", b: String(moves), status: moves ? "Proven" : "Too early to call", color: moves ? "#3DDC84" : "#9AA1AB" },
+        {
+          what: "Healthy pages",
+          a: String(beforeKeys.filter((k) => k === "g").length),
+          b: String(afterG),
+          status: moves ? "Proven" : "Waiting on first scan",
+          color: moves ? "#3DDC84" : "#9AA1AB",
+        },
+        {
+          what: "Searches you show up for",
+          a: organicStats.queries != null ? String(organicStats.queries) : "—",
+          b: organicStats.queries != null ? String(organicStats.queries) : "—",
+          status: organicStats.queries != null ? "Early sign" : "Connect Search Console",
+          color: organicStats.queries != null ? "#FFC53D" : "#9AA1AB",
+        },
+        {
+          what: "Clicks from Google",
+          a: organicStats.clicks != null ? String(organicStats.clicks) : "—",
+          b: organicStats.clicks != null ? String(organicStats.clicks) : "—",
+          status: organicStats.clicks != null ? "Too early to call" : "Connect Search Console",
+          color: "#9AA1AB",
+        },
+        ...(vitals.lcp
+          ? [
+              {
+                what: "LCP (PageSpeed)",
+                a: "—",
+                b: String(vitals.lcp),
+                status: "Measured",
+                color: "#FFC53D",
+              },
+            ]
+          : []),
+        ...(vitals.cls
+          ? [
+              {
+                what: "CLS (PageSpeed)",
+                a: "—",
+                b: String(vitals.cls),
+                status: "Measured",
+                color: "#FFC53D",
+              },
+            ]
+          : []),
+        ...(scanSnapshot?.pagespeed?.vitals?.ttfb
+          ? [
+              {
+                what: "TTFB (server / SSR)",
+                a: "—",
+                b: String(scanSnapshot.pagespeed.vitals.ttfb),
+                status: "Measured",
+                color: "#FFC53D",
+              },
+            ]
+          : []),
+        ...(renderMode
+          ? [
+              {
+                what: "HTML delivery",
+                a: "—",
+                b: renderMode,
+                status: scanSnapshot?.rendering?.csrHeavy ? "CSR risk" : "SSR path",
+                color: scanSnapshot?.rendering?.csrHeavy ? "#FF5A4E" : "#3DDC84",
+              },
+            ]
+          : []),
+        {
+          what: "Moves shipped",
+          a: "0",
+          b: String(moves),
+          status: moves ? "Proven" : "Too early to call",
+          color: moves ? "#3DDC84" : "#9AA1AB",
+        },
       ];
 
   const fixed = changes
     .filter((c) => /shipped|live|applied|published|approved/i.test(String(c.status || c.state || c.action || "live")))
     .slice(0, 5)
-    .map((c) => c.summary || c.title || c.label || c.path || "Fix shipped to your site");
+    .map((c) => {
+      const text = c.summary || c.title || c.label || c.path || "Fix shipped to your site";
+      const topic = classifyTopic(text);
+      return topic ? `${TOPIC_LABEL[topic]} · ${text}` : text;
+    });
 
   const coming = changes
     .filter((c) => /pending|queued|draft|waiting/i.test(String(c.status || c.state || "")))
@@ -188,16 +438,22 @@ export default function TrialReportScreen() {
     <div className="v8-tr">
       <div className="v8-tr-inner">
         <span className="v8-tr-pills">
-          <span className="v8-tr-pill">
-            Day {dayNum} of your free month
+          <span className="v8-tr-pill">Day {dayNum} of your free month</span>
+          <span className="v8-tr-badge">
+            {daysLeft} day{daysLeft === 1 ? "" : "s"} left · {trialDays}-day trial
           </span>
-          {account?.sinceLive ? <span className="v8-tr-badge">LIVE DATA</span> : <span className="v8-tr-badge">WORKSPACE</span>}
+          {account?.sinceLive || auditPayload?.source === "google_pagespeed" ? (
+            <span className="v8-tr-badge">LIVE DATA</span>
+          ) : (
+            <span className="v8-tr-badge">WORKSPACE</span>
+          )}
         </span>
         <span className="v8-tr-script">Your first month, {name}.</span>
         <h1>Here&apos;s where you started, what we fixed, and what&apos;s moved so far.</h1>
         <span className="v8-tr-lede">
-          {rangeLabel}. Some of this is early: Google is still catching up on your most recent fixes, so we&apos;ve marked
-          what&apos;s proven and what&apos;s still coming.
+          {rangeLabel}. You&apos;re on day {dayNum} of {trialDays}
+          {ends ? ` · free month ends ${endLabel}` : ""}. Some of this is early: Google is still catching up on your most
+          recent fixes, so we&apos;ve marked what&apos;s proven and what&apos;s still coming.
           {account?.sinceNote ? ` ${account.sinceNote}` : ""}
         </span>
       </div>
@@ -216,9 +472,7 @@ export default function TrialReportScreen() {
           →
         </div>
         <div className="v8-tr-card is-now">
-          <span className="v8-tr-card-label">
-            DAY {dayNum} · NOW
-          </span>
+          <span className="v8-tr-card-label">DAY {dayNum} · NOW</span>
           <div className="v8-tr-dots" aria-hidden="true">
             {afterDots.map((d, i) => (
               <span key={i} style={{ background: d.c, boxShadow: `0 0 6px ${d.g}` }} />
@@ -249,10 +503,92 @@ export default function TrialReportScreen() {
           </div>
         </div>
         <span style={{ fontSize: 13, color: "#9AA1AB" }}>
-          From your Google Search Console and Analytics when connected. &ldquo;Too early&rdquo; means a fix went live
-          recently and Google hasn&apos;t finished re-reading the page.
+          From your Google Search Console, Analytics, and PageSpeed when connected. &ldquo;Too early&rdquo; means a fix
+          went live recently and Google hasn&apos;t finished re-reading the page.
         </span>
       </section>
+
+      {topicReports.length || ssrSolutions.length ? (
+        <section className="v8-tr-section" aria-labelledby="topics-h">
+          <h2 id="topics-h">Report by topic</h2>
+          <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>
+            Same areas as your free analysis — titles, descriptions, headings, CSS, JavaScript, images, SSR/CSR, LCP and
+            CLS — from live PageSpeed and site crawl data
+            {renderMode ? ` · ${renderMode}` : ""}.
+          </span>
+          {topicReports.length ? (
+            <div className="v8-tr-table">
+              <div style={{ minWidth: 620 }}>
+                {topicReports.map((row) => (
+                  <div
+                    key={`${row.topic}-${row.label}`}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "100px minmax(0, 1fr) 90px",
+                      gap: 12,
+                      alignItems: "start",
+                      padding: "13px 20px",
+                      borderBottom: "1px solid #16181C",
+                      fontSize: 15,
+                    }}
+                  >
+                    <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "#9AA1AB", paddingTop: 2 }}>
+                      {TOPIC_LABEL[row.topic] || row.topic}
+                    </span>
+                    <span>
+                      <strong style={{ fontWeight: 600 }}>{row.label}</strong>
+                      {row.detail ? (
+                        <span style={{ display: "block", fontSize: 13, color: "#9AA1AB", marginTop: 2 }}>{row.detail}</span>
+                      ) : null}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: row.severity === "red" ? "#FF5A4E" : "#FFC53D",
+                        textAlign: "right",
+                      }}
+                    >
+                      {row.severity === "red" ? "Error" : "Warning"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {ssrSolutions.length ? (
+            <div className="v8-tr-panel" style={{ maxWidth: "100%" }}>
+              <h2 style={{ margin: 0, fontSize: 18 }}>SSR fixes for images &amp; loading speed</h2>
+              <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>
+                Server-side rendering and image delivery — so LCP/TTFB improve before client JavaScript runs.
+              </span>
+              {ssrSolutions.map((row) => (
+                <div key={row.label} className="v8-tr-fix-row">
+                  <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style={{ flex: "none", marginTop: 3 }}>
+                    <path
+                      d="M5 12.5l4.5 4.5L19 7.5"
+                      fill="none"
+                      stroke="#3DDC84"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span>
+                    <strong style={{ fontWeight: 600 }}>
+                      {TOPIC_LABEL[row.topic] ? `${TOPIC_LABEL[row.topic]} · ` : ""}
+                      {row.label}
+                    </strong>
+                    {row.detail ? (
+                      <span style={{ display: "block", fontSize: 13, color: "#9AA1AB", marginTop: 2 }}>{row.detail}</span>
+                    ) : null}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="v8-tr-split">
         <div className="v8-tr-panel">
@@ -263,7 +599,14 @@ export default function TrialReportScreen() {
           {(fixed.length ? fixed : ["Connect Google and approve your first move to start this list."]).map((f) => (
             <div key={f} className="v8-tr-fix-row">
               <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style={{ flex: "none", marginTop: 3 }}>
-                <path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#3DDC84" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M5 12.5l4.5 4.5L19 7.5"
+                  fill="none"
+                  stroke="#3DDC84"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
               <span>{f}</span>
             </div>
@@ -293,7 +636,9 @@ export default function TrialReportScreen() {
       <section className="v8-tr-decide" aria-labelledby="dec-h">
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <h2 id="dec-h">Your free month ends on {endLabel}.</h2>
-          <span style={{ fontSize: 15, color: "#D7DADE" }}>Nothing to do if you&apos;d like to keep going. Or choose what&apos;s next:</span>
+          <span style={{ fontSize: 15, color: "#D7DADE" }}>
+            Nothing to do if you&apos;d like to keep going. Or choose what&apos;s next:
+          </span>
         </div>
         <div className="v8-tr-choices">
           <div className="v8-tr-choice is-primary">
