@@ -1,0 +1,158 @@
+/* Exact Backlinks.html / Backlinks.dc.html content column */
+
+.v8-backlinks {
+  flex: 999 1 560px;
+  min-width: 0;
+  min-height: 1400px;
+  background: #0a0b0d;
+  color: #f2f4f5;
+  font-family: var(--font-geist), Geist, "Helvetica Neue", sans-serif;
+  box-sizing: border-box;
+  padding: 28px clamp(16px, 4vw, 48px) 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.v8-backlinks *,
+.v8-backlinks *::before,
+.v8-backlinks *::after {
+  box-sizing: border-box;
+}
+.v8-backlinks a {
+  color: #d5f879;
+}
+.v8-backlinks a:hover {
+  color: #ecffb8;
+}
+.v8-backlinks button {
+  font-family: inherit;
+  cursor: pointer;
+}
+.v8-backlinks input[type="checkbox"] {
+  accent-color: #4da3ff;
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.v8-backlinks textarea:focus-visible,
+.v8-backlinks input:focus-visible,
+.v8-backlinks button:focus-visible,
+.v8-backlinks a:focus-visible {
+  outline: 2px solid #4da3ff;
+  outline-offset: 2px;
+}
+
+@keyframes v8-bl-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes v8-bl-draw {
+  from {
+    stroke-dashoffset: 1400;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .v8-backlinks *,
+  .v8-backlinks *::before,
+  .v8-backlinks *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Design tip styles from Backlinks.html */
+.v8-backlinks .sfy-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+.v8-backlinks .sfy-i {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid #5b616b;
+  background: transparent;
+  color: #9aa1ab;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+.v8-backlinks .sfy-i::after {
+  content: "";
+  position: absolute;
+  inset: -11px;
+}
+.v8-backlinks .sfy-i:hover,
+.v8-backlinks .sfy-i[aria-expanded="true"] {
+  border-color: #d7dade;
+  color: #f2f4f5;
+}
+.v8-backlinks .sfy-i:focus-visible {
+  outline: 2px solid #4da3ff;
+  outline-offset: 2px;
+}
+.v8-backlinks .sfy-pop {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding-top: 8px;
+  z-index: 40;
+  width: 280px;
+  max-width: 80vw;
+  text-align: left;
+}
+.v8-backlinks .sfy-pop.sfy-pop-l {
+  left: -8px;
+  transform: none;
+}
+.v8-backlinks .sfy-pop.sfy-pop-r {
+  left: auto;
+  right: -8px;
+  transform: none;
+}
+.v8-backlinks .sfy-pop-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #16181c;
+  border: 1px solid #2e333b;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  font-family: Geist, "Helvetica Neue", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.5;
+  color: #d7dade;
+  letter-spacing: 0;
+  white-space: normal;
+  text-transform: none;
+}
+.v8-backlinks .sfy-pop-card a {
+  font-weight: 500;
+}
+
+.v8-backlinks-line {
+  stroke-dasharray: 1400;
+  animation: v8-bl-draw 1.2s ease both;
+}
+.v8-backlinks-move {
+  animation: v8-bl-rise 0.3s ease both;
+}
+.v8-backlinks-draft {
+  animation: v8-bl-rise 0.25s ease both;
+}

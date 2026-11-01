@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   researchBacklinks,
@@ -14,6 +14,7 @@ import { SkeletonCards } from '@/components/v8/SkeletonWave';
 import ProblemNotice from '@/components/v8/ProblemNotice';
 import { problemsFrom } from '@/lib/problems';
 import '@/styles/v8-screens.css';
+import '@/styles/v8-backlinks.css';
 
 function strengthScore(link) {
   const raw = link.domainRank ?? link.rank ?? 0;
@@ -198,6 +199,7 @@ function pageFromTarget(target) {
 }
 
 export default function BacklinksScreen() {
+  const tipRef = useRef(null);
   const [move, setMove] = useState(0);
   const [stage, setStage] = useState('idle');
   const [tab, setTab] = useState('newlost');
@@ -215,7 +217,24 @@ export default function BacklinksScreen() {
   const [loading, setLoading] = useState(true);
   const [problems, setProblems] = useState([]);
   const [reloadKey, setReloadKey] = useState(0);
+  const [tipOpen, setTipOpen] = useState(false);
   const { hostname, href } = activeSiteContext(loadJourney());
+
+  useEffect(() => {
+    if (!tipOpen) return undefined;
+    const onDoc = (event) => {
+      if (!tipRef.current?.contains(event.target)) setTipOpen(false);
+    };
+    const onKey = (event) => {
+      if (event.key === 'Escape') setTipOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [tipOpen]);
 
   useEffect(() => {
     const site = href || activeSiteContext(loadJourney()).href || '';
@@ -444,30 +463,80 @@ export default function BacklinksScreen() {
 
   const nd = done.length;
 
+  const headlineBits = (() => {
+    if (loading) return <>… websites link to you.</>;
+    const d = headerStats.domains;
+    const n = headerStats.newN;
+    const l = headerStats.lostN;
+    if (n > 0 && l > 0) {
+      return (
+        <>
+          {d} websites link to you. <span style={{ color: '#3DDC84' }}>{n} new</span> this month,{' '}
+          <span style={{ color: '#FF8A80' }}>{l} lost</span>.
+        </>
+      );
+    }
+    if (n > 0) {
+      return (
+        <>
+          {d} websites link to you. <span style={{ color: '#3DDC84' }}>{n} new</span> this month.
+        </>
+      );
+    }
+    if (l > 0) {
+      return (
+        <>
+          {d} websites link to you. <span style={{ color: '#FF8A80' }}>{l} lost</span> this month.
+        </>
+      );
+    }
+    return <>{d} websites link to you.</>;
+  })();
+
   return (
-      <div style={{ flex: '999 1 560px', minWidth: 0, minHeight: 1400, background: '#0A0B0D', color: '#F2F4F5', fontFamily: 'Geist, \'Helvetica Neue\', sans-serif', boxSizing: 'border-box', padding: '28px clamp(16px, 4vw, 48px) 56px', display: 'flex', flexDirection: 'column', gap: 22 }}>
+      <div className="v8-backlinks">
 
         <header style={{ maxWidth: '1120px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontFamily: '\'Bricolage Grotesque\', Geist, sans-serif', fontSize: '15px', fontWeight: '800', letterSpacing: '1.6px' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2CC7C0" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>
               BACKLINKS
+              <span ref={tipRef} className="sfy-tip">
+                <button
+                  type="button"
+                  className="sfy-i"
+                  aria-label="What is a backlink?"
+                  aria-expanded={tipOpen}
+                  aria-controls="tip-bl"
+                  onClick={() => setTipOpen((v) => !v)}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+                    <path d="M12 11v7" />
+                    <path d="M12 6.5h.01" />
+                  </svg>
+                </button>
+                {tipOpen ? (
+                  <span className="sfy-pop sfy-pop-l" id="tip-bl" role="dialog" aria-label="What is a backlink?">
+                    <span className="sfy-pop-card">
+                      <span>
+                        A link to your site from another website. Google treats it like a recommendation, so one link from a
+                        respected local site beats dozens from spammy ones.
+                      </span>
+                      <a href="https://searchify.io/help/backlinks" target="_blank" rel="noreferrer">
+                        Learn more
+                      </a>
+                    </span>
+                  </span>
+                ) : null}
+              </span>
             </span>
             <h1 style={{ margin: '0', fontFamily: '\'Bricolage Grotesque\', Geist, sans-serif', fontSize: 'clamp(30px, 3.6vw, 46px)', lineHeight: '1.04', letterSpacing: '-1.3px', fontWeight: '700', minWidth: 0, overflowWrap: 'break-word' }}>
-              {headerStats.domains} websites link to you.
-              {headerStats.newN > 0 ? (
-                <>
-                  {' '}
-                  <span style={{ color: '#3DDC84' }}>{headerStats.newN} new</span>
-                  {headerStats.lostN > 0 ? ' this month, ' : ' this month.'}
-                </>
-              ) : null}
-              {headerStats.lostN > 0 ? (
-                <span style={{ color: '#FF8A80' }}>{headerStats.lostN} lost</span>
-              ) : null}
-              {headerStats.lostN > 0 ? '.' : null}
+              {headlineBits}
             </h1>
-            <span style={{ fontSize: '15px', color: '#9AA1AB' }}>Other websites linking to {hostname}. Links from trusted local sites are one of the strongest signs to Google that you&apos;re worth ranking.</span>
+            <span style={{ fontSize: '15px', color: '#9AA1AB' }}>
+              Other websites linking to {hostname || 'your site'}. Links from trusted local sites are one of the strongest
+              signs to Google that you&apos;re worth ranking.
+            </span>
           </div>
           <span style={{ fontSize: '12px', color: '#7D848E' }}>{updatedLabel}</span>
         </header>
@@ -479,8 +548,12 @@ export default function BacklinksScreen() {
             {
               label: 'Websites linking to you',
               value: loading ? '…' : String(headerStats.domains),
-              sub: headerStats.newN ? `+${headerStats.newN} new in this list` : 'From live link index',
-              color: '#3DDC84',
+              sub: headerStats.newN
+                ? `+${headerStats.newN} this month${headerStats.lostN ? ` · ${headerStats.lostN} lost` : ''}`
+                : headerStats.lostN
+                  ? `${headerStats.lostN} lost this month`
+                  : 'From live link index',
+              color: headerStats.newN ? '#3DDC84' : headerStats.lostN ? '#FF8A80' : '#3DDC84',
             },
             {
               label: 'Total links',
@@ -510,7 +583,7 @@ export default function BacklinksScreen() {
         </section>
 
         <div style={{ maxWidth: '1120px', width: '100%', margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'stretch' }}>
-          <section aria-labelledby="move-h" style={{ flex: '1 1 380px', minWidth: '0', borderRadius: '22px', background: '#131519', border: '1.5px solid #4DA3FF', boxShadow: '0 0 26px rgba(77,163,255,.18)', padding: '22px', display: 'flex', flexDirection: 'column', gap: '14px', animation: 'sfy-rise .3s ease both' }}>
+          <section aria-labelledby="move-h" className="v8-backlinks-move" style={{ flex: '1 1 380px', minWidth: '0', borderRadius: '22px', background: '#131519', border: '1.5px solid #4DA3FF', boxShadow: '0 0 26px rgba(77,163,255,.18)', padding: '22px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {has ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <span style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', alignItems: 'center' }}>
@@ -522,7 +595,7 @@ export default function BacklinksScreen() {
                 <h2 id="move-h" style={{ margin: '0', fontSize: '21px', fontWeight: '600', lineHeight: '1.3' }}>{mv.title}</h2>
                 <span style={{ fontSize: '14px', color: '#9AA1AB', lineHeight: '1.55' }}>{mv.why}</span>
                 {stage === 'draft' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', animation: 'sfy-rise .25s ease both' }}>
+                  <div className="v8-backlinks-draft" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <span style={{ fontSize: '13px', color: '#9AA1AB' }}>To: <span style={{ color: '#F2F4F5' }}>{mv.to || '—'}</span></span>
                     <span style={{ fontSize: '13px', color: '#9AA1AB' }}>Subject: <span style={{ color: '#F2F4F5' }}>{mv.subject}</span></span>
                     <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#9AA1AB' }}>
@@ -634,7 +707,7 @@ export default function BacklinksScreen() {
                   </g>
                 ))}
                 <path d={area} fill="rgba(44,199,192,.12)"></path>
-                <path d={line} fill="none" stroke="#2CC7C0" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" style={{ strokeDasharray: '1400', animation: 'sfy-draw 1.2s ease both' }}></path>
+                <path d={line} fill="none" stroke="#2CC7C0" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" className="v8-backlinks-line"></path>
                 {pts.map((p, i) => (
                   <g key={i}>
                     <circle cx={p.x} cy={p.y} r="3" fill="#2CC7C0"></circle>
@@ -736,7 +809,7 @@ export default function BacklinksScreen() {
           {tab === 'gap' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <span style={{ fontSize: '14px', color: '#9AA1AB' }}>
-                Websites that link to competitors but not to you
+                Websites that link to at least 2 of your competitors, but not to you
                 {G.length ? ` · ${G.length} opportunities` : ''}.
               </span>
               <div style={{ borderRadius: '20px', background: '#101215', border: '1px solid #1A1D22', overflowX: 'auto' }}>

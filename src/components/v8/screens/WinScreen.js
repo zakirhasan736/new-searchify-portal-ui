@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   researchKeywords,
@@ -18,6 +18,9 @@ import { SkeletonCards } from "@/components/v8/SkeletonWave";
 import ProblemNotice from "@/components/v8/ProblemNotice";
 import { problemsFrom } from "@/lib/problems";
 import "@/styles/v8-screens.css";
+
+const SPOT_TIP =
+  "Your spot on Google is the average position for this search. #1 is the top result — a smaller number is better. Search Console updates it as people search.";
 
 const TRACK_KEY = "sfy-tracked-keywords";
 
@@ -281,19 +284,71 @@ function mapKeywordRow(row, idx, changeByPath) {
   };
 }
 
+function SpotTip({ tipId, open, onToggle, tipRef }) {
+  return (
+    <span ref={tipRef} className="v8-path-tip">
+      <button
+        type="button"
+        className="v8-path-tip-btn"
+        aria-label="What is a spot on Google?"
+        aria-expanded={open}
+        aria-controls={tipId}
+        onClick={onToggle}
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+          <path d="M12 11v7" />
+          <path d="M12 6.5h.01" />
+        </svg>
+      </button>
+      {open ? (
+        <span className="v8-path-tip-pop" id={tipId} role="dialog" aria-label="What is a spot on Google?">
+          <span className="v8-path-tip-card">
+            <span>{SPOT_TIP}</span>
+            <a href="https://searchify.io/help/keyword-tracker" target="_blank" rel="noreferrer">
+              Learn more
+            </a>
+          </span>
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
 export default function WinScreen() {
+  const listTipRef = useRef(null);
+  const metricTipRef = useRef(null);
   const [selId, setSelId] = useState("");
   const [metric, setMetric] = useState("rank");
   const [K, setK] = useState([]);
   const [loading, setLoading] = useState(true);
   const [addTerm, setAddTerm] = useState("");
   const [tracking, setTracking] = useState(false);
-  const [ideas, setIdeas] = useState([]);
-  const [ideaTab, setIdeaTab] = useState("all");
   const [sitePages, setSitePages] = useState([]);
   const [pageNote, setPageNote] = useState("");
   const [problems, setProblems] = useState([]);
+  const [listTipOpen, setListTipOpen] = useState(false);
+  const [metricTipOpen, setMetricTipOpen] = useState(false);
   const { hostname, href } = activeSiteContext(loadJourney());
+
+  useEffect(() => {
+    if (!listTipOpen && !metricTipOpen) return undefined;
+    const onDoc = (event) => {
+      if (listTipOpen && !listTipRef.current?.contains(event.target)) setListTipOpen(false);
+      if (metricTipOpen && !metricTipRef.current?.contains(event.target)) setMetricTipOpen(false);
+    };
+    const onKey = (event) => {
+      if (event.key === "Escape") {
+        setListTipOpen(false);
+        setMetricTipOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [listTipOpen, metricTipOpen]);
 
   const rebuild = useCallback(async () => {
     const site = href || activeSiteContext(loadJourney()).href || "";
@@ -334,41 +389,17 @@ export default function WinScreen() {
         }
       };
 
-      const suggestionRows = [];
       if (kwRes?.ok) {
         const data = kwRes.data || {};
         (data.tracked || []).forEach(ingest);
         (data.ranked || []).forEach(ingest);
         (data.keywords || []).forEach(ingest);
-        const seenIdeas = new Set();
-        (data.ideas || []).forEach((row) => {
-          const keyword = String(row?.keyword || row?.term || "").trim();
-          const key = keyword.toLowerCase();
-          if (!keyword || seenIdeas.has(key) || byTerm.has(key)) return;
-          seenIdeas.add(key);
-          suggestionRows.push({
-            keyword,
-            volume: row.volume ?? null,
-            difficulty: row.difficulty ?? null,
-            intent: String(row.intent || "").trim(),
-            seed: String(row.seed || "").trim(),
-          });
-        });
+        setPageNote("");
       } else if (site) {
-        setPageNote(errorText(kwRes, "Keyword suggestions could not be loaded. Tracked keywords below still use what is already saved."));
+        setPageNote(errorText(kwRes, "Live keyword ranks could not be refreshed. Tracked keywords below still use what is already saved."));
       } else {
-        setPageNote("Add the website in setup so Searchify can suggest keywords for it.");
+        setPageNote("Add the website in setup so Searchify can track keywords for it.");
       }
-      const suggestionRank = (row) => {
-        const vol = Number(row.volume);
-        const hasVol = row.volume != null && row.volume !== "" && Number.isFinite(vol);
-        const diff = Number(row.difficulty);
-        const ease = Number.isFinite(diff) ? Math.max(0.2, (100 - Math.min(100, diff)) / 100) : 0.5;
-        return hasVol ? vol * ease : -1;
-      };
-      suggestionRows.sort((a, b) => suggestionRank(b) - suggestionRank(a));
-      setIdeas(suggestionRows.slice(0, 8));
-      if (kwRes?.ok) setPageNote("");
 
       const gsc = featurePayload(organic);
       (gsc.rows || gsc.queries || []).forEach(ingest);
@@ -449,44 +480,6 @@ export default function WinScreen() {
     });
     return { up, flat, down, measuring };
   }, [K]);
-
-  const ideaTabs = useMemo(() => {
-    const seeds = [];
-    const seen = new Set();
-    ideas.forEach((idea) => {
-      const seed = idea.seed;
-      if (!seed || seen.has(seed)) return;
-      seen.add(seed);
-      seeds.push(seed);
-    });
-    const tabs = [{ id: "all", label: "All" }];
-    if (seeds.length) {
-      seeds.forEach((seed) => tabs.push({ id: seed, label: seed }));
-    } else {
-      tabs.push(
-        { id: "questions", label: "Questions" },
-        { id: "buyers", label: "Buyers" },
-        { id: "guides", label: "Guides" },
-      );
-    }
-    return tabs;
-  }, [ideas]);
-
-  const visibleIdeas = useMemo(() => {
-    if (ideaTab === "all") return ideas;
-    if (ideas.some((idea) => idea.seed)) return ideas.filter((idea) => idea.seed === ideaTab);
-    return ideas.filter((idea) => {
-      const keyword = idea.keyword.toLowerCase();
-      const intent = String(idea.intent || "").toLowerCase();
-      const question = /^(how|what|why|when|where|who|which|can|does|is|are)\b/.test(keyword);
-      if (ideaTab === "questions") return question;
-      if (ideaTab === "buyers") return intent.includes("transaction") || intent.includes("commercial");
-      if (ideaTab === "guides") return intent.includes("inform") || (!question && !intent.includes("commercial") && !intent.includes("transaction"));
-      return true;
-    });
-  }, [ideas, ideaTab]);
-
-  const workedRows = useMemo(() => K.filter((row) => row.status === "worked"), [K]);
 
   const ST = {
     worked: {
@@ -683,32 +676,33 @@ export default function WinScreen() {
           </span>
           <span style={{ fontSize: "15px", color: "#9AA1AB" }}>{loading ? "" : trackedLabel}</span>
         </div>
-        {!empty && (
-          <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "13px", color: "#9AA1AB", minWidth: "300px" }}>
-            Keyword
-            <select
-              value={selId}
-              onChange={(e) => setSelId(e.target.value)}
-              style={{
-                minHeight: "48px",
-                padding: "0 14px",
-                borderRadius: "12px",
-                border: "1px solid #4DA3FF",
-                background: "#131519",
-                color: "#F2F4F5",
-                font: "inherit",
-                fontSize: "15px",
-                boxShadow: "0 0 18px rgba(77,163,255,.2)",
-              }}
-            >
-              {list.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.term}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
+        <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "13px", color: "#9AA1AB", minWidth: "300px" }}>
+          Keyword
+          <select
+            value={selId}
+            onChange={(e) => setSelId(e.target.value)}
+            disabled={!list.length}
+            style={{
+              minHeight: "48px",
+              padding: "0 14px",
+              borderRadius: "12px",
+              border: "1px solid #4DA3FF",
+              background: "#131519",
+              color: "#F2F4F5",
+              font: "inherit",
+              fontSize: "15px",
+              boxShadow: "0 0 18px rgba(77,163,255,.2)",
+              opacity: list.length ? 1 : 0.55,
+            }}
+          >
+            {!list.length ? <option value="">Add a keyword to track</option> : null}
+            {list.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.term}
+              </option>
+            ))}
+          </select>
+        </label>
       </header>
 
       <ProblemNotice problems={problems} onRetry={() => rebuild()} style={{ maxWidth: "1120px", width: "100%", margin: "0 auto" }} />
@@ -723,45 +717,8 @@ export default function WinScreen() {
           {pageNote}
         </p>
       ) : null}
-      {!loading && empty ? (
-        <div
-          style={{
-            maxWidth: "1120px",
-            width: "100%",
-            margin: "0 auto",
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 12,
-            alignItems: "center",
-            padding: "14px 16px",
-            borderRadius: 14,
-            border: "1px solid #262A31",
-            background: "#131519",
-            fontSize: 15,
-            color: "#D7DADE",
-          }}
-        >
-          <span style={{ flex: "1 1 240px" }}>
-            No keyword data yet. Connect Search Console or add a keyword below to start tracking.
-          </span>
-          <Link
-              href="/app/connections"
-              style={{
-                minHeight: 40,
-                padding: "0 16px",
-                borderRadius: 999,
-                background: "#4DA3FF",
-                color: "#0A0B0D",
-                textDecoration: "none",
-                fontWeight: 600,
-                display: "inline-flex",
-                alignItems: "center",
-              }}
-            >
-              Plug in
-            </Link>
-        </div>
-      ) : !loading && cur ? (
+
+      {!loading ? (
         <div
           style={{
             maxWidth: "1120px",
@@ -788,9 +745,20 @@ export default function WinScreen() {
             }}
           >
             <div style={{ display: "flex", flexDirection: "column", gap: "4px", margin: "10px 12px 6px" }}>
-              <h2 id="list-h" style={{ margin: "0", fontSize: "14px", fontWeight: "600", color: "#D7DADE" }}>
-                Tracked keywords
-              </h2>
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <h2 id="list-h" style={{ margin: "0", fontSize: "14px", fontWeight: "600", color: "#D7DADE" }}>
+                  Tracked keywords
+                </h2>
+                <SpotTip
+                  tipId="tip-spot"
+                  open={listTipOpen}
+                  onToggle={() => {
+                    setListTipOpen((v) => !v);
+                    setMetricTipOpen(false);
+                  }}
+                  tipRef={listTipRef}
+                />
+              </span>
               <span style={{ fontSize: "12px", color: "#7D848E", lineHeight: "1.4" }}>
                 Your spot on Google. <span style={{ color: "#D7DADE" }}>#1 is the top result</span> — a smaller number is
                 better.
@@ -825,6 +793,11 @@ export default function WinScreen() {
                 scrollbarWidth: "thin",
               }}
             >
+              {list.length === 0 ? (
+                <p style={{ margin: 0, padding: "14px 12px", fontSize: 14, color: "#9AA1AB", lineHeight: 1.45 }}>
+                  No keywords tracked yet. Add one below, or connect Search Console so ranks can fill in.
+                </p>
+              ) : null}
               {list.map((k) => (
                 <button
                   key={k.id}
@@ -907,7 +880,7 @@ export default function WinScreen() {
               ))}
             </div>
             <span style={{ padding: "8px 12px 0", fontSize: "12px", color: "#7D848E" }}>
-              Showing all {K.length} · scroll for more
+              {list.length ? `Showing all ${K.length} · scroll for more` : "Track a keyword to start measuring"}
             </span>
             <div
               style={{
@@ -979,514 +952,271 @@ export default function WinScreen() {
               animation: "sfy-rise .3s ease both",
             }}
           >
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <span
-                style={{
-                  alignSelf: "flex-start",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontFamily: "'Geist Mono', monospace",
-                  fontSize: "12px",
-                  fontWeight: "500",
-                  color: sc.text,
-                  background: sc.bg,
-                  border: `1px solid ${sc.border}`,
-                  padding: "6px 12px",
-                  borderRadius: "999px",
-                }}
-              >
-                {cur.badge}
-              </span>
-              <h1
-                style={{
-                  margin: "0",
-                  fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
-                  fontSize: "clamp(30px, 3.6vw, 46px)",
-                  lineHeight: "1.04",
-                  letterSpacing: "-1.3px",
-                  fontWeight: "700",
-                  minWidth: 0,
-                  overflowWrap: "break-word",
-                }}
-              >
-                {headline}
-              </h1>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <span style={{ fontSize: "13px", color: "#9AA1AB" }}>
-                  What we changed on <span style={{ fontFamily: "'Geist Mono', monospace", color: "#D7DADE" }}>{cur.page}</span> ·{" "}
-                  {cur.date}
-                </span>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
-                  <div
-                    style={{
-                      borderRadius: "16px",
-                      background: "#0E1013",
-                      border: "1px solid #1A1D22",
-                      padding: "16px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "8px",
-                    }}
-                  >
-                    <span style={{ fontSize: "12px", color: "#7D848E", fontFamily: "'Geist Mono', monospace" }}>BEFORE</span>
-                    <span style={{ fontSize: "16px", lineHeight: "1.4", color: "#9AA1AB" }}>{cur.was}</span>
-                  </div>
-                  <div
-                    style={{
-                      borderRadius: "16px",
-                      background: "rgba(77,163,255,.07)",
-                      border: "1.5px solid #4DA3FF",
-                      boxShadow: "0 0 26px rgba(77,163,255,.3), inset 0 0 18px rgba(77,163,255,.08)",
-                      padding: "16px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "8px",
-                    }}
-                  >
-                    <span style={{ fontSize: "12px", color: "#4DA3FF", fontFamily: "'Geist Mono', monospace" }}>AFTER</span>
-                    <span style={{ fontSize: "16px", lineHeight: "1.4" }}>{cur.now}</span>
-                  </div>
-                </div>
+            {empty ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "8px 0" }}>
+                <h1
+                  style={{
+                    margin: 0,
+                    fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
+                    fontSize: "clamp(30px, 3.6vw, 46px)",
+                    lineHeight: 1.04,
+                    letterSpacing: "-1.3px",
+                    fontWeight: 700,
+                  }}
+                >
+                  No keywords tracked yet.
+                </h1>
+                <p style={{ margin: 0, fontSize: 16, color: "#9AA1AB", lineHeight: 1.5 }}>
+                  Add a keyword on the left, or{" "}
+                  <Link href="/app/connections" style={{ color: "#4DA3FF" }}>
+                    plug in Search Console
+                  </Link>{" "}
+                  so Searchify can fill ranks automatically.
+                </p>
               </div>
-            </div>
-
-            <section
-              aria-label="Result"
-              style={{
-                background: "#131519",
-                border: "1px solid #262A31",
-                borderRadius: "24px",
-                padding: "clamp(20px, 3vw, 30px)",
-                display: "flex",
-                flexDirection: "column",
-                gap: "22px",
-              }}
-            >
-              <div role="group" aria-label="Choose a metric" style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                {metrics.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    aria-pressed={m.on ? "true" : "false"}
-                    onClick={() => setMetric(m.id)}
+            ) : (
+              <>
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <span
                     style={{
-                      minHeight: "40px",
-                      padding: "0 15px",
+                      alignSelf: "flex-start",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontFamily: "'Geist Mono', monospace",
+                      fontSize: "12px",
+                      fontWeight: "500",
+                      color: sc.text,
+                      background: sc.bg,
+                      border: `1px solid ${sc.border}`,
+                      padding: "6px 12px",
                       borderRadius: "999px",
-                      border: m.on ? "1px solid #F2F4F5" : "1px solid #262A31",
-                      background: m.on ? "#F2F4F5" : "transparent",
-                      color: m.on ? "#0A0B0D" : "#D7DADE",
-                      fontSize: "14px",
-                      fontWeight: m.on ? "600" : "400",
                     }}
                   >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
-                  gap: "16px",
-                  alignItems: "end",
-                }}
-              >
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: "#7D848E" }}>{beforeLabel}</span>
-                  <span
+                    {cur.badge}
+                  </span>
+                  <h1
                     style={{
+                      margin: "0",
                       fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
-                      fontSize: "clamp(44px, 6vw, 76px)",
-                      lineHeight: "0.9",
-                      letterSpacing: "-2px",
+                      fontSize: "clamp(30px, 3.6vw, 46px)",
+                      lineHeight: "1.04",
+                      letterSpacing: "-1.3px",
                       fontWeight: "700",
-                      color: "#9AA1AB",
+                      minWidth: 0,
+                      overflowWrap: "break-word",
                     }}
                   >
-                    {mv[0]}
-                  </span>
+                    {headline}
+                  </h1>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <span style={{ fontSize: "13px", color: "#9AA1AB" }}>
+                      What we changed on <span style={{ fontFamily: "'Geist Mono', monospace", color: "#D7DADE" }}>{cur.page}</span> ·{" "}
+                      {cur.date}
+                    </span>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
+                      <div
+                        style={{
+                          borderRadius: "16px",
+                          background: "#0E1013",
+                          border: "1px solid #1A1D22",
+                          padding: "16px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "8px",
+                        }}
+                      >
+                        <span style={{ fontSize: "12px", color: "#7D848E", fontFamily: "'Geist Mono', monospace" }}>BEFORE</span>
+                        <span style={{ fontSize: "16px", lineHeight: "1.4", color: "#9AA1AB" }}>{cur.was}</span>
+                      </div>
+                      <div
+                        style={{
+                          borderRadius: "16px",
+                          background: "rgba(77,163,255,.07)",
+                          border: "1.5px solid #4DA3FF",
+                          boxShadow: "0 0 26px rgba(77,163,255,.3), inset 0 0 18px rgba(77,163,255,.08)",
+                          padding: "16px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "8px",
+                        }}
+                      >
+                        <span style={{ fontSize: "12px", color: "#4DA3FF", fontFamily: "'Geist Mono', monospace" }}>AFTER</span>
+                        <span style={{ fontSize: "16px", lineHeight: "1.4" }}>{cur.now}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <svg
-                  width="36"
-                  height="36"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke={sc.arrow}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                  style={{ marginBottom: "12px" }}
-                >
-                  <path d="M5 12h14"></path>
-                  <path d="M13 6l6 6-6 6"></path>
-                </svg>
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: sc.arrow }}>{afterLabel}</span>
-                  <span
-                    style={{
-                      fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
-                      fontSize: "clamp(44px, 6vw, 76px)",
-                      lineHeight: "0.9",
-                      letterSpacing: "-2px",
-                      fontWeight: "800",
-                      color: sc.after,
-                    }}
-                  >
-                    {mv[1]}
-                  </span>
-                </div>
-              </div>
-              {metric === "rank" && curMove && (
-                <span
-                  style={{
-                    alignSelf: "flex-start",
-                    fontSize: "15px",
-                    fontWeight: "600",
-                    padding: "7px 14px",
-                    borderRadius: "999px",
-                    color: curMove.c,
-                    background: curMove.bg,
-                  }}
-                >
-                  {(curMove.n ? (curMove.c === "#3DDC84" ? "▲ " : "▼ ") : "") +
-                    curMove.w.charAt(0).toUpperCase() +
-                    curMove.w.slice(1) +
-                    " on Google"}
-                </span>
-              )}
-              <p style={{ margin: "0", fontSize: "18px", lineHeight: "1.45" }}>{mv[2]}</p>
-              <span style={{ fontSize: "13px", color: "#7D848E" }}>{SRC[metric]}</span>
-            </section>
 
-            {cur.status === "worked" && (
-              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-                <Link
-                  href="/app"
+                <section
+                  aria-label="Result"
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    minHeight: "52px",
-                    padding: "0 24px",
-                    borderRadius: "13px",
-                    background: "#4DA3FF",
-                    color: "#0A0B0D",
-                    fontSize: "15px",
-                    fontWeight: "600",
-                    textDecoration: "none",
-                    boxShadow: "0 0 22px rgba(77,163,255,.45)",
+                    background: "#131519",
+                    border: "1px solid #262A31",
+                    borderRadius: "24px",
+                    padding: "clamp(20px, 3vw, 30px)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "22px",
                   }}
                 >
-                  Do the same on {similarPages.length} similar page{similarPages.length === 1 ? "" : "s"}
-                </Link>
-                <span style={{ fontSize: "13px", color: "#9AA1AB" }}>Added to your total and this month&apos;s client report.</span>
-              </div>
-            )}
-            {cur.status === "dropped" && (
-              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-                <Link
-                  href="/app"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    minHeight: "52px",
-                    padding: "0 24px",
-                    borderRadius: "13px",
-                    background: "#FF5A4E",
-                    color: "#0A0B0D",
-                    fontSize: "15px",
-                    fontWeight: "600",
-                    textDecoration: "none",
-                  }}
-                >
-                  Open today&apos;s moves
-                </Link>
-              </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
+                    <div role="group" aria-label="Choose a metric" style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                      {metrics.map((m) => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          aria-pressed={m.on ? "true" : "false"}
+                          onClick={() => setMetric(m.id)}
+                          style={{
+                            minHeight: "40px",
+                            padding: "0 15px",
+                            borderRadius: "999px",
+                            border: m.on ? "1px solid #F2F4F5" : "1px solid #262A31",
+                            background: m.on ? "#F2F4F5" : "transparent",
+                            color: m.on ? "#0A0B0D" : "#D7DADE",
+                            fontSize: "14px",
+                            fontWeight: m.on ? "600" : "400",
+                          }}
+                        >
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
+                    <SpotTip
+                      tipId="tip-metric"
+                      open={metricTipOpen}
+                      onToggle={() => {
+                        setMetricTipOpen((v) => !v);
+                        setListTipOpen(false);
+                      }}
+                      tipRef={metricTipRef}
+                    />
+                  </div>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+                      gap: "16px",
+                      alignItems: "end",
+                    }}
+                  >
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: "#7D848E" }}>{beforeLabel}</span>
+                      <span
+                        style={{
+                          fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
+                          fontSize: "clamp(44px, 6vw, 76px)",
+                          lineHeight: "0.9",
+                          letterSpacing: "-2px",
+                          fontWeight: "700",
+                          color: "#9AA1AB",
+                        }}
+                      >
+                        {mv[0]}
+                      </span>
+                    </div>
+                    <svg
+                      width="36"
+                      height="36"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke={sc.arrow}
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                      style={{ marginBottom: "12px" }}
+                    >
+                      <path d="M5 12h14"></path>
+                      <path d="M13 6l6 6-6 6"></path>
+                    </svg>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "12px", color: sc.arrow }}>{afterLabel}</span>
+                      <span
+                        style={{
+                          fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
+                          fontSize: "clamp(44px, 6vw, 76px)",
+                          lineHeight: "0.9",
+                          letterSpacing: "-2px",
+                          fontWeight: "800",
+                          color: sc.after,
+                        }}
+                      >
+                        {mv[1]}
+                      </span>
+                    </div>
+                  </div>
+                  {metric === "rank" && curMove ? (
+                    <span
+                      style={{
+                        alignSelf: "flex-start",
+                        fontSize: "15px",
+                        fontWeight: "600",
+                        padding: "7px 14px",
+                        borderRadius: "999px",
+                        color: curMove.c,
+                        background: curMove.bg,
+                      }}
+                    >
+                      {(curMove.n ? (curMove.c === "#3DDC84" ? "▲ " : "▼ ") : "") +
+                        curMove.w.charAt(0).toUpperCase() +
+                        curMove.w.slice(1) +
+                        " on Google"}
+                    </span>
+                  ) : null}
+                  <p style={{ margin: "0", fontSize: "18px", lineHeight: "1.45" }}>{mv[2]}</p>
+                  <span style={{ fontSize: "13px", color: "#7D848E" }}>{SRC[metric]}</span>
+                </section>
+
+                {cur.status === "worked" ? (
+                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                    <Link
+                      href="/app"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        minHeight: "52px",
+                        padding: "0 24px",
+                        borderRadius: "13px",
+                        background: "#4DA3FF",
+                        color: "#0A0B0D",
+                        fontSize: "15px",
+                        fontWeight: "600",
+                        textDecoration: "none",
+                        boxShadow: "0 0 22px rgba(77,163,255,.45)",
+                      }}
+                    >
+                      Do the same on {similarPages.length} similar page{similarPages.length === 1 ? "" : "s"}
+                    </Link>
+                    <span style={{ fontSize: "13px", color: "#9AA1AB" }}>Added to your total and this month&apos;s client report.</span>
+                  </div>
+                ) : null}
+                {cur.status === "dropped" ? (
+                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                    <Link
+                      href="/app"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        minHeight: "52px",
+                        padding: "0 24px",
+                        borderRadius: "13px",
+                        background: "#FF5A4E",
+                        color: "#0A0B0D",
+                        fontSize: "15px",
+                        fontWeight: "600",
+                        textDecoration: "none",
+                      }}
+                    >
+                      Open today&apos;s moves
+                    </Link>
+                  </div>
+                ) : null}
+              </>
             )}
           </main>
         </div>
-      ) : null}
-
-      {/* Always show add-keyword when empty so Track works without list chrome */}
-      {empty && !loading && (
-        <div
-          style={{
-            maxWidth: "1120px",
-            width: "100%",
-            margin: "0 auto",
-            display: "flex",
-            gap: "8px",
-            padding: "10px",
-            borderRadius: 16,
-            background: "#101215",
-            border: "1px solid #1A1D22",
-          }}
-        >
-          <input
-            type="text"
-            value={addTerm}
-            onChange={(e) => setAddTerm(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleTrack();
-              }
-            }}
-            placeholder="Add a keyword to track"
-            style={{
-              flex: 1,
-              minHeight: 44,
-              padding: "0 12px",
-              borderRadius: 11,
-              border: "1px solid #262A31",
-              background: "#0A0B0D",
-              color: "#F2F4F5",
-              font: "inherit",
-              fontSize: 14,
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => handleTrack()}
-            disabled={tracking || !addTerm.trim()}
-            style={{
-              minHeight: 44,
-              padding: "0 14px",
-              borderRadius: 11,
-              border: 0,
-              background: "#4DA3FF",
-              color: "#0A0B0D",
-              fontSize: 14,
-              fontWeight: 600,
-            }}
-          >
-            Track
-          </button>
-        </div>
-      )}
-
-      {!loading ? (
-        <section
-          aria-label="Keyword suggestions"
-          style={{
-            maxWidth: "1120px",
-            width: "100%",
-            margin: "0 auto",
-            borderRadius: 22,
-            background: "#101215",
-            border: "1px solid #1A1D22",
-            padding: "14px 8px 8px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, margin: "0 12px 2px" }}>
-            <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#D7DADE" }}>Keyword suggestions</h2>
-            <span style={{ fontSize: 12, color: "#7D848E", lineHeight: 1.4 }}>
-              Ideas from DataForSEO for searches this site is not tracking yet. Volume is an estimate. A blank volume means the number is unknown.
-            </span>
-          </div>
-          <div role="tablist" aria-label="Suggestion groups" style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "0 6px" }}>
-            {ideaTabs.map((tab) => {
-              const on = tab.id === ideaTab || (tab.id === "all" && !ideaTabs.some((item) => item.id === ideaTab));
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={on ? "true" : "false"}
-                  onClick={() => setIdeaTab(tab.id)}
-                  style={{
-                    minHeight: 36,
-                    padding: "0 14px",
-                    borderRadius: 999,
-                    border: on ? "1px solid #F2F4F5" : "1px solid #262A31",
-                    background: on ? "#F2F4F5" : "transparent",
-                    color: on ? "#0A0B0D" : "#D7DADE",
-                    fontSize: 13,
-                    fontWeight: on ? 600 : 400,
-                  }}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-          <div aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: 12, padding: "0 12px", fontFamily: "'Geist Mono', monospace", fontSize: 10, letterSpacing: ".5px", color: "#7D848E" }}>
-            <span style={{ flex: 1 }}>KEYWORD</span>
-            <span style={{ width: 88, textAlign: "right" }}>VOLUME</span>
-            <span style={{ width: 72 }}></span>
-          </div>
-          <div style={{ maxHeight: 320, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
-            {visibleIdeas.length ? visibleIdeas.map((idea) => (
-              <div key={`${idea.seed}-${idea.keyword}`} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 52, padding: "8px 12px", borderRadius: 13 }}>
-                <span style={{ flex: "1 1 180px", minWidth: 0, display: "flex", flexDirection: "column" }}>
-                  <span style={{ fontSize: 14, lineHeight: 1.25 }}>{idea.keyword}</span>
-                  <span style={{ fontSize: 12, color: "#7D848E" }}>
-                    {idea.intent ? idea.intent : "Intent unknown"}
-                    {idea.difficulty != null && idea.difficulty !== "" ? ` · difficulty ${idea.difficulty}` : ""}
-                  </span>
-                </span>
-                <span style={{ flex: "none", width: 88, textAlign: "right", fontFamily: "'Geist Mono', monospace", fontSize: 13 }}>
-                  {idea.volume == null || idea.volume === "" ? "—" : Number(idea.volume).toLocaleString()}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleTrack(idea.keyword)}
-                  disabled={tracking}
-                  style={{ flex: "none", minHeight: 36, padding: "0 12px", borderRadius: 999, border: 0, background: "#4DA3FF", color: "#0A0B0D", fontSize: 13, fontWeight: 600 }}
-                >
-                  Track
-                </button>
-              </div>
-            )) : (
-              <span style={{ margin: "0 12px 8px", fontSize: 13, color: "#9AA1AB" }}>
-                No suggestions in this tab yet. They show up after Searchify reads this site.
-              </span>
-            )}
-          </div>
-        </section>
-      ) : null}
-
-      {!loading ? (
-        <section
-          aria-label="It worked"
-          style={{
-            maxWidth: "1120px",
-            width: "100%",
-            margin: "0 auto",
-            borderRadius: 22,
-            background: "#101215",
-            border: "1px solid #1A1D22",
-            padding: "14px 8px 10px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 6,
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, margin: "0 12px 4px" }}>
-            <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#D7DADE" }}>It worked</h2>
-            <span style={{ fontSize: 12, color: "#7D848E", lineHeight: 1.4 }}>
-              Keywords that moved up on Google. A smaller spot number is better.
-            </span>
-          </div>
-          {workedRows.length ? workedRows.map((row) => {
-            const item = list.find((entry) => entry.id === row.id) || row;
-            return (
-              <button
-                key={row.id}
-                type="button"
-                onClick={() => setSelId(row.id)}
-                aria-pressed={row.id === cur?.id ? "true" : "false"}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  width: "100%",
-                  minHeight: 52,
-                  padding: "8px 12px",
-                  borderRadius: 13,
-                  border: row.id === cur?.id ? "1px solid #3DDC84" : "1px solid transparent",
-                  background: "transparent",
-                  color: "#F2F4F5",
-                  textAlign: "left",
-                }}
-              >
-                <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#3DDC84", flex: "none" }} />
-                <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-                  <span style={{ fontSize: 14, fontWeight: 600 }}>{row.term}</span>
-                  <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: "#7D848E" }}>{row.page}</span>
-                </span>
-                <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 18, fontWeight: 700 }}>{item.nowRank || row.m.rank[1]}</span>
-                <span style={{ minWidth: 58, textAlign: "center", fontSize: 11, fontWeight: 600, padding: "4px 7px", borderRadius: 8, color: "#3DDC84", background: "rgba(61,220,132,.12)" }}>{item.move || "up"}</span>
-              </button>
-            );
-          }) : (
-            <span style={{ margin: "0 12px 8px", fontSize: 13, color: "#9AA1AB" }}>No keyword has moved up yet.</span>
-          )}
-        </section>
-      ) : null}
-
-      {!loading ? (
-        <section
-          aria-label="Similar pages"
-          style={{
-            maxWidth: "1120px",
-            width: "100%",
-            margin: "0 auto",
-            borderRadius: 22,
-            background: "#101215",
-            border: "1px solid #1A1D22",
-            padding: "16px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#D7DADE" }}>Similar pages</h2>
-            <span style={{ fontSize: 12, color: "#7D848E", lineHeight: 1.4 }}>
-              Other pages on {hostname || "this site"} besides {cur?.page || "the selected page"}. The button count matches this list.
-            </span>
-          </div>
-          {similarPages.length ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: 240, overflowY: "auto" }}>
-              {similarPages.map((page) => (
-                <div key={page.path} style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 40 }}>
-                  <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 12, color: "#D7DADE" }}>{page.path}</span>
-                  {page.title !== page.path ? <span style={{ fontSize: 13, color: "#9AA1AB", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{page.title}</span> : null}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <span style={{ fontSize: 13, color: "#9AA1AB" }}>No other pages yet. Run a site scan to find pages that can use the same change.</span>
-          )}
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-            {similarPages.length ? (
-              <Link
-                href="/app"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  minHeight: 52,
-                  padding: "0 24px",
-                  borderRadius: 13,
-                  background: "#4DA3FF",
-                  color: "#0A0B0D",
-                  fontSize: 15,
-                  fontWeight: 600,
-                  textDecoration: "none",
-                  boxShadow: "0 0 22px rgba(77,163,255,.45)",
-                }}
-              >
-                Do the same on {similarPages.length} similar page{similarPages.length === 1 ? "" : "s"}
-              </Link>
-            ) : (
-              <button
-                type="button"
-                disabled
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  minHeight: 52,
-                  padding: "0 24px",
-                  borderRadius: 13,
-                  border: 0,
-                  background: "#262A31",
-                  color: "#9AA1AB",
-                  fontSize: 15,
-                  fontWeight: 600,
-                }}
-              >
-                Do the same on 0 similar pages
-              </button>
-            )}
-            <span style={{ fontSize: 13, color: "#9AA1AB" }}>Added to your total and this month&apos;s client report.</span>
-          </div>
-        </section>
       ) : null}
     </div>
   );
