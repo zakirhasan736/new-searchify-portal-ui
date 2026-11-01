@@ -898,7 +898,7 @@ export default function HomeScreen() {
           <div style={{ display: "flex", flexDirection: "column", gap: "14px", padding: "18px 20px", borderRadius: "20px", background: "#101215", border: "1px solid #1A1D22" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
               <span style={{ fontSize: "13px", color: "#9AA1AB", marginRight: "4px" }}>Work on</span>
-              <PriorityInfoButton active={col} />
+              <PriorityInfoButton active={col} align="start" />
               {chips.map((ch, idx) =>
                 ch.on ? (
                   <button

@@ -654,8 +654,6 @@ export default function ScanScreen() {
         </button>
       </div>
 
-      <ProblemNotice problems={problems} onRetry={() => reloadLive()} style={{ maxWidth: "1180px", width: "100%", margin: "0 auto" }} />
-
       {stage === "reveal" ? (
         <div
           style={{
@@ -1290,36 +1288,30 @@ export default function ScanScreen() {
               gap: "18px",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
-                fontSize: "16px",
-                fontWeight: 800,
-                letterSpacing: "1.6px",
-                color: "#F2F4F5",
-              }}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#F2F4F5"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M5 3l14 7-6 2-2 6z"></path>
-              </svg>
-              <span className="v8-scan-hint-hover">HOVER OVER ANY DOT</span>
-              <span className="v8-scan-hint-tap">TAP A DOT TO OPEN</span>
-              <span style={{ marginLeft: "auto", display: "inline-flex" }}>
-                <PriorityInfoButton active={f === "all" ? "red" : f} label="What is each colour?" size={22} />
-              </span>
+            <div className="v8-scan-board-head">
+              <div className="v8-scan-board-title">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#F2F4F5"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 3l14 7-6 2-2 6z"></path>
+                </svg>
+                <span className="v8-scan-hint-hover">HOVER OVER ANY DOT</span>
+                <span className="v8-scan-hint-tap">TAP A DOT TO OPEN</span>
+              </div>
+              <PriorityInfoButton
+                active={f === "all" ? "red" : f}
+                label="What is each colour?"
+                size={22}
+                align="end"
+              />
             </div>
             <div
               className="v8-scan-chips"
@@ -1602,6 +1594,12 @@ export default function ScanScreen() {
           </div>
         </section>
       </div>
+
+      <ProblemNotice
+        problems={problems}
+        onRetry={() => reloadLive()}
+        style={{ maxWidth: "1180px", width: "100%", margin: "8px auto 0" }}
+      />
     </div>
   );
 }

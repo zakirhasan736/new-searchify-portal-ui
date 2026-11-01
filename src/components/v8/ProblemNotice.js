@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { actionHref, problemReport, supportMailto } from "@/lib/problems";
 import { FixPlayer } from "@/components/v8/FixGuide";
+import "@/styles/v8-problem-notice.css";
 
 /**
  * One consistent error / warning / info notice for every report area
@@ -61,6 +62,7 @@ function ProblemCard({ problem, onRetry }) {
 
   return (
     <section
+      className="v8-problem-notice"
       role={problem.severity === "error" ? "alert" : "status"}
       style={{
         border: `1px solid ${tone.border}`,
@@ -72,7 +74,7 @@ function ProblemCard({ problem, onRetry }) {
         gap: "8px",
       }}
     >
-      <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+      <div className="v8-problem-notice-row">
         <span
           aria-hidden="true"
           style={{
@@ -91,7 +93,7 @@ function ProblemCard({ problem, onRetry }) {
         >
           {problem.severity === "info" ? "i" : "!"}
         </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: "1 1 220px", minWidth: 0 }}>
           <p style={{ margin: 0, fontSize: "11px", letterSpacing: "0.5px", textTransform: "uppercase", color: tone.color, fontFamily: "'Geist Mono', monospace" }}>
             {tone.label}
             {problem.area ? ` · ${areaName(problem.area)}` : ""}
@@ -104,6 +106,7 @@ function ProblemCard({ problem, onRetry }) {
         {hasHelp ? (
           <button
             type="button"
+            className="v8-problem-notice-fix"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             style={{

@@ -514,6 +514,33 @@ body:has(.v8-app-chrome) {
 }
 
 /* Site scan dots stay a compact field. The 1-column phone rule must not stack them. */
+.v8-scan-board-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  font-family: "Bricolage Grotesque", Geist, sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  color: #f2f4f5;
+}
+
+.v8-scan-board-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.v8-scan-board-title > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .v8-scan-hint-tap {
   display: none;
 }

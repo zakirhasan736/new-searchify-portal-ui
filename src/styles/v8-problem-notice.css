@@ -1,0 +1,24 @@
+/* Site-audit / scan notes — wrap cleanly under the board on narrow screens */
+
+.v8-problem-notice-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.v8-problem-notice-fix {
+  margin-left: auto;
+}
+
+@media (max-width: 700px) {
+  .v8-problem-notice-fix {
+    margin-left: 28px;
+    width: calc(100% - 28px);
+  }
+
+  .v8-problem-notice [style*="padding-left: 28px"],
+  .v8-problem-notice [style*="paddingLeft: 28px"] {
+    padding-left: 0 !important;
+  }
+}

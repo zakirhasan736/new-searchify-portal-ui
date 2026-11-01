@@ -1,0 +1,228 @@
+/* Priority colour legend — anchored popover on desk, bottom sheet on phone */
+
+.v8-priority-info {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  z-index: 5;
+}
+
+.v8-priority-trigger {
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid #262a31;
+  background: #131519;
+  color: #9aa1ab;
+  display: grid;
+  place-items: center;
+  flex: none;
+  cursor: pointer;
+}
+
+.v8-priority-trigger.is-on,
+.v8-priority-trigger:hover {
+  border-color: rgba(77, 163, 255, 0.55);
+  background: rgba(77, 163, 255, 0.14);
+  color: #4da3ff;
+}
+
+.v8-priority-trigger:focus-visible {
+  outline: 2px solid #4da3ff;
+  outline-offset: 2px;
+}
+
+.v8-priority-pop {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 10px);
+  width: min(340px, calc(100vw - 24px));
+  max-height: min(70vh, 520px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid #262a31;
+  background: #101215;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.v8-priority-pop[data-placement="top"] {
+  top: auto;
+  bottom: calc(100% + 10px);
+}
+
+.v8-priority-pop[data-align="end"] {
+  right: 0;
+  left: auto;
+}
+
+.v8-priority-pop[data-align="start"] {
+  left: 0;
+  right: auto;
+}
+
+.v8-priority-pop .v8-priority-sheet-handle {
+  display: none;
+}
+
+.v8-priority-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.v8-priority-sheet {
+  width: min(520px, 100%);
+  max-height: min(78vh, 640px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 10px 16px 18px;
+  border-radius: 20px 20px 16px 16px;
+  border: 1px solid #262a31;
+  background: #101215;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.v8-priority-sheet-handle {
+  width: 42px;
+  height: 4px;
+  border-radius: 999px;
+  background: #2e333b;
+  margin: 2px auto 4px;
+  flex: none;
+}
+
+.v8-priority-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.v8-priority-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.v8-priority-copy strong {
+  font-size: 14px;
+  color: #f2f4f5;
+}
+
+.v8-priority-copy > span {
+  font-size: 13px;
+  color: #9aa1ab;
+  line-height: 1.45;
+}
+
+.v8-priority-close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid #262a31;
+  background: #131519;
+  color: #9aa1ab;
+  display: grid;
+  place-items: center;
+  flex: none;
+  cursor: pointer;
+}
+
+.v8-priority-close:hover {
+  color: #f2f4f5;
+  border-color: #3a404a;
+}
+
+.v8-priority-pop .v8-priority-close {
+  display: none;
+}
+
+.v8-priority-focus {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(77, 163, 255, 0.08);
+  border: 1px solid rgba(77, 163, 255, 0.28);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.v8-priority-focus > span:first-child {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.v8-priority-focus > span:last-child {
+  font-size: 13px;
+  color: #d7dade;
+  line-height: 1.45;
+}
+
+.v8-priority-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.v8-priority-list li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding-top: 8px;
+  border-top: 1px solid #1a1d22;
+}
+
+.v8-priority-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 4px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.v8-priority-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.v8-priority-item strong {
+  font-size: 13px;
+  color: #f2f4f5;
+}
+
+.v8-priority-item > span {
+  font-size: 12px;
+  color: #9aa1ab;
+  line-height: 1.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v8-priority-pop,
+  .v8-priority-sheet,
+  .v8-priority-backdrop {
+    transition: none !important;
+  }
+}
