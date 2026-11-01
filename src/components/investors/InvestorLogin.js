@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import SearchifyMarkSvg from "@/components/v8/SearchifyMarkSvg";
-import { investorSignIn } from "@/lib/investorApi";
+import { investorSetPassword, investorSignIn } from "@/lib/investorApi";
 import { INVESTOR_KEY, PARTNER_KEY, PREVIEW_KEY, clearSessionFlag, writeSessionFlag } from "@/lib/authRoles";
 import { parseJwt, userLogin, userLogout } from "@/utils/users/Helpers";
 
 const STEPS = ["Password", "Two-step code", "Device check"];
 
 const PROTECT = [
-  { title: "Invite only", detail: "There is no sign-up page. Aadle creates each investor account by hand." },
+  { title: "Invite only", detail: "There is no sign-up page. Aadle creates each investor account by hand in HQ → Shareholders." },
   {
     title: "Highly recommended: a YubiKey",
     detail:
@@ -35,11 +35,16 @@ function LockIcon() {
   );
 }
 
-export default function InvestorLogin() {
+function InvestorLoginInner() {
   const router = useRouter();
+  const params = useSearchParams();
+  const setupToken = useMemo(() => params?.get("setup") || "", [params]);
+  const [view, setView] = useState(setupToken ? "setpass" : "signin");
   const [step, setStep] = useState(0);
-  const [email, setEmail] = useState("nick@petitt.example");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [pass, setPass] = useState("");
+  const [pass2, setPass2] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -103,19 +108,46 @@ export default function InvestorLogin() {
     finish(res.data);
   };
 
+  const setNewPassword = async (e) => {
+    e?.preventDefault?.();
+    if (pass !== pass2) {
+      setErr("The two passwords don’t match.");
+      return;
+    }
+    setBusy(true);
+    setErr("");
+    const res = await investorSetPassword(setupToken, pass);
+    setBusy(false);
+    if (!res.ok || !res.data?.token) {
+      setErr(typeof res.data?.detail === "string" ? res.data.detail : "This link has expired. Ask Aadle for a new invite.");
+      return;
+    }
+    finish(res.data);
+  };
+
   const passkey = async () => {
     setBusy(true);
     setErr("");
-    // Demo: passkey path jumps to device check after a valid password session start.
     const res = await investorSignIn({ email, password: password || "Investor-2026", code: "123456" });
     setBusy(false);
     if (!res.ok) {
-      setErr("Passkey demo needs the seeded investor password (Investor-2026).");
+      setErr("Passkey demo needs a seeded investor password (Investor-2026), or sign in with email first.");
       return;
     }
     setPassword(password || "Investor-2026");
     setCode("123456");
     setStep(2);
+  };
+
+  const field = {
+    minHeight: 48,
+    padding: "0 14px",
+    borderRadius: 12,
+    border: "1px solid #262A31",
+    background: "#0A0B0D",
+    color: "#F2F4F5",
+    font: "inherit",
+    fontSize: 15,
   };
 
   return (
@@ -174,48 +206,23 @@ export default function InvestorLogin() {
             gap: 18,
           }}
         >
-          <ol aria-label="Sign-in steps" style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", gap: 6 }}>
-            {STEPS.map((label, i) => (
-              <li
-                key={label}
-                aria-current={i === step ? "step" : false}
-                style={{ flex: 1, height: 4, borderRadius: 2, background: i <= step ? "#9FE7F5" : "#262A31", position: "relative" }}
-              >
-                <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>{label}</span>
-              </li>
-            ))}
-          </ol>
-
-          {step === 0 ? (
-            <form onSubmit={continuePassword} style={{ display: "flex", flexDirection: "column", gap: 16, animation: "sfy-rise .25s ease both" }}>
+          {view === "setpass" ? (
+            <form onSubmit={setNewPassword} style={{ display: "flex", flexDirection: "column", gap: 16, animation: "sfy-rise .25s ease both" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <h1 id="si-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 32, letterSpacing: "-0.8px", fontWeight: 700 }}>
-                  Investor sign in
+                  Set your password
                 </h1>
                 <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>
-                  For Searchify&apos;s investors only. Customers and affiliates sign in elsewhere.
+                  Aadle invited you to the investor portal. Pick a password (link works for 3 days), then you&apos;re in.
                 </span>
               </div>
               <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "#9AA1AB" }}>
-                Email
-                <input
-                  type="email"
-                  autoComplete="username"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  style={{ minHeight: 48, padding: "0 14px", borderRadius: 12, border: "1px solid #262A31", background: "#0A0B0D", color: "#F2F4F5", font: "inherit", fontSize: 15 }}
-                />
+                New password
+                <input type="password" autoComplete="new-password" value={pass} onChange={(e) => setPass(e.target.value)} minLength={8} required style={field} />
               </label>
               <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "#9AA1AB" }}>
-                Password
-                <input
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Investor-2026"
-                  style={{ minHeight: 48, padding: "0 14px", borderRadius: 12, border: "1px solid #262A31", background: "#0A0B0D", color: "#F2F4F5", font: "inherit", fontSize: 15 }}
-                />
+                Confirm password
+                <input type="password" autoComplete="new-password" value={pass2} onChange={(e) => setPass2(e.target.value)} minLength={8} required style={field} />
               </label>
               {err ? (
                 <p role="alert" style={{ margin: 0, fontSize: 14, color: "#FF8A80" }}>
@@ -224,107 +231,147 @@ export default function InvestorLogin() {
               ) : null}
               <button
                 type="submit"
-                disabled={busy}
+                disabled={busy || !setupToken}
                 style={{ minHeight: 50, borderRadius: 12, border: 0, background: "#9FE7F5", color: "#0A0B0D", fontSize: 15, fontWeight: 600, opacity: busy ? 0.7 : 1 }}
               >
-                {busy ? "Checking…" : "Continue"}
-              </button>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: "#7D848E" }}>
-                <span style={{ flex: 1, height: 1, background: "#1A1D22" }} />
-                or
-                <span style={{ flex: 1, height: 1, background: "#1A1D22" }} />
-              </div>
-              <button
-                type="button"
-                onClick={passkey}
-                disabled={busy}
-                style={{
-                  minHeight: 50,
-                  borderRadius: 12,
-                  border: "1px solid #262A31",
-                  background: "transparent",
-                  color: "#F2F4F5",
-                  fontSize: 15,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 10,
-                }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="8" cy="9" r="4" />
-                  <path d="M11 12l9 0M17 12v3M20 12v2" />
-                </svg>
-                Sign in with a passkey
-              </button>
-              <span style={{ fontSize: 13, color: "#9AA1AB" }}>Forgot your password? Aadle resets it in person or by phone.</span>
-            </form>
-          ) : null}
-
-          {step === 1 ? (
-            <form onSubmit={continueCode} style={{ display: "flex", flexDirection: "column", gap: 16, animation: "sfy-rise .25s ease both" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <h1 id="si-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 32, letterSpacing: "-0.8px", fontWeight: 700 }}>
-                  Two-step code
-                </h1>
-                <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>Open your authenticator app. Demo code: 123456.</span>
-              </div>
-              <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "#9AA1AB" }}>
-                6-digit code
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  style={{ minHeight: 48, padding: "0 14px", borderRadius: 12, border: "1px solid #262A31", background: "#0A0B0D", color: "#F2F4F5", font: "inherit", fontSize: 15, letterSpacing: "0.2em" }}
-                />
-              </label>
-              {err ? (
-                <p role="alert" style={{ margin: 0, fontSize: 14, color: "#FF8A80" }}>
-                  {err}
-                </p>
-              ) : null}
-              <button
-                type="submit"
-                disabled={busy}
-                style={{ minHeight: 50, borderRadius: 12, border: 0, background: "#9FE7F5", color: "#0A0B0D", fontSize: 15, fontWeight: 600 }}
-              >
-                {busy ? "Checking…" : "Continue"}
-              </button>
-              <button type="button" onClick={() => setStep(0)} style={{ background: "none", border: 0, color: "#9AA1AB", fontSize: 13, padding: 0, textAlign: "left" }}>
-                ← Back
+                {busy ? "Saving…" : "Save and open portal"}
               </button>
             </form>
           ) : null}
 
-          {step === 2 ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "sfy-rise .25s ease both" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <h1 id="si-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 32, letterSpacing: "-0.8px", fontWeight: 700 }}>
-                  New device
-                </h1>
-                <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>
-                  We don&apos;t recognise this browser yet. Approve it to finish signing in. Trusted devices expire after 30 days.
-                </span>
-              </div>
-              {err ? (
-                <p role="alert" style={{ margin: 0, fontSize: 14, color: "#FF8A80" }}>
-                  {err}
-                </p>
+          {view === "signin" ? (
+            <>
+              <ol aria-label="Sign-in steps" style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", gap: 6 }}>
+                {STEPS.map((label, i) => (
+                  <li
+                    key={label}
+                    aria-current={i === step ? "step" : false}
+                    style={{ flex: 1, height: 4, borderRadius: 2, background: i <= step ? "#9FE7F5" : "#262A31", position: "relative" }}
+                  >
+                    <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>{label}</span>
+                  </li>
+                ))}
+              </ol>
+
+              {step === 0 ? (
+                <form onSubmit={continuePassword} style={{ display: "flex", flexDirection: "column", gap: 16, animation: "sfy-rise .25s ease both" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <h1 id="si-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 32, letterSpacing: "-0.8px", fontWeight: 700 }}>
+                      Investor sign in
+                    </h1>
+                    <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>
+                      For Searchify&apos;s investors only. Customers and affiliates sign in elsewhere.
+                    </span>
+                  </div>
+                  <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "#9AA1AB" }}>
+                    Email
+                    <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} style={field} />
+                  </label>
+                  <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "#9AA1AB" }}>
+                    Password
+                    <input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} style={field} />
+                  </label>
+                  {err ? (
+                    <p role="alert" style={{ margin: 0, fontSize: 14, color: "#FF8A80" }}>
+                      {err}
+                    </p>
+                  ) : null}
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    style={{ minHeight: 50, borderRadius: 12, border: 0, background: "#9FE7F5", color: "#0A0B0D", fontSize: 15, fontWeight: 600, opacity: busy ? 0.7 : 1 }}
+                  >
+                    {busy ? "Checking…" : "Continue"}
+                  </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: "#7D848E" }}>
+                    <span style={{ flex: 1, height: 1, background: "#1A1D22" }} />
+                    or
+                    <span style={{ flex: 1, height: 1, background: "#1A1D22" }} />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={passkey}
+                    disabled={busy}
+                    style={{
+                      minHeight: 50,
+                      borderRadius: 12,
+                      border: "1px solid #262A31",
+                      background: "transparent",
+                      color: "#F2F4F5",
+                      fontSize: 15,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 10,
+                    }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="8" cy="9" r="4" />
+                      <path d="M11 12l9 0M17 12v3M20 12v2" />
+                    </svg>
+                    Sign in with a passkey
+                  </button>
+                  <span style={{ fontSize: 13, color: "#9AA1AB" }}>Forgot your password? Aadle resets it in person or by phone.</span>
+                </form>
               ) : null}
-              <button
-                type="button"
-                disabled={busy}
-                onClick={continueDevice}
-                style={{ minHeight: 50, borderRadius: 12, border: 0, background: "#9FE7F5", color: "#0A0B0D", fontSize: 15, fontWeight: 600 }}
-              >
-                {busy ? "Approving…" : "Trust this device"}
-              </button>
-              <button type="button" onClick={() => setStep(1)} style={{ background: "none", border: 0, color: "#9AA1AB", fontSize: 13, padding: 0, textAlign: "left" }}>
-                ← Back
-              </button>
-            </div>
+
+              {step === 1 ? (
+                <form onSubmit={continueCode} style={{ display: "flex", flexDirection: "column", gap: 16, animation: "sfy-rise .25s ease both" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <h1 id="si-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 32, letterSpacing: "-0.8px", fontWeight: 700 }}>
+                      Two-step code
+                    </h1>
+                    <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>Open your authenticator app. Demo code: 123456.</span>
+                  </div>
+                  <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "#9AA1AB" }}>
+                    6-digit code
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      value={code}
+                      onChange={(e) => setCode(e.target.value)}
+                      style={{ ...field, letterSpacing: "0.2em" }}
+                    />
+                  </label>
+                  {err ? (
+                    <p role="alert" style={{ margin: 0, fontSize: 14, color: "#FF8A80" }}>
+                      {err}
+                    </p>
+                  ) : null}
+                  <button type="submit" disabled={busy} style={{ minHeight: 50, borderRadius: 12, border: 0, background: "#9FE7F5", color: "#0A0B0D", fontSize: 15, fontWeight: 600 }}>
+                    {busy ? "Checking…" : "Continue"}
+                  </button>
+                  <button type="button" onClick={() => setStep(0)} style={{ background: "none", border: 0, color: "#9AA1AB", fontSize: 13, padding: 0, textAlign: "left" }}>
+                    ← Back
+                  </button>
+                </form>
+              ) : null}
+
+              {step === 2 ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "sfy-rise .25s ease both" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <h1 id="si-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 32, letterSpacing: "-0.8px", fontWeight: 700 }}>
+                      New device
+                    </h1>
+                    <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>
+                      We don&apos;t recognise this browser yet. Approve it to finish signing in. Trusted devices expire after 30 days.
+                    </span>
+                  </div>
+                  {err ? (
+                    <p role="alert" style={{ margin: 0, fontSize: 14, color: "#FF8A80" }}>
+                      {err}
+                    </p>
+                  ) : null}
+                  <button type="button" disabled={busy} onClick={continueDevice} style={{ minHeight: 50, borderRadius: 12, border: 0, background: "#9FE7F5", color: "#0A0B0D", fontSize: 15, fontWeight: 600 }}>
+                    {busy ? "Approving…" : "Trust this device"}
+                  </button>
+                  <button type="button" onClick={() => setStep(1)} style={{ background: "none", border: 0, color: "#9AA1AB", fontSize: 13, padding: 0, textAlign: "left" }}>
+                    ← Back
+                  </button>
+                </div>
+              ) : null}
+            </>
           ) : null}
         </section>
 
@@ -343,8 +390,21 @@ export default function InvestorLogin() {
               </span>
             </div>
           ))}
+          {view === "setpass" ? (
+            <button type="button" onClick={() => setView("signin")} style={{ alignSelf: "flex-start", background: "none", border: 0, color: "#9AA1AB", fontSize: 13, padding: 0 }}>
+              Already set a password? Sign in →
+            </button>
+          ) : null}
         </aside>
       </div>
     </div>
+  );
+}
+
+export default function InvestorLogin() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#0A0B0D" }} />}>
+      <InvestorLoginInner />
+    </Suspense>
   );
 }

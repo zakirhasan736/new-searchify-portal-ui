@@ -86,6 +86,26 @@ export async function saveHqShareholders(body) {
   );
 }
 
+/** Owner creates an invite-only investor login and emails a set-password link. */
+export async function createHqInvestor(body) {
+  return json(
+    await fetch("/api/v1/hq/investors", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(body),
+    }),
+  );
+}
+
+export async function resendHqInvestorInvite(investorId) {
+  return json(
+    await fetch(`/api/v1/hq/investors/${encodeURIComponent(investorId)}/invite`, {
+      method: "POST",
+      headers: authHeaders(),
+    }),
+  );
+}
+
 /** founding: investors and developers (35-40%). Otherwise the affiliate program (20-25%). Rate defaults to the program's start. */
 export async function approvePartnerApplication(id, { rate = null, founding = false } = {}) {
   return json(

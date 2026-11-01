@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import HqPanel, { useFirstLoad } from "@/components/admin/HqPanel";
-import { getHqShareholders, saveHqShareholders } from "@/lib/hqApi";
+import { createHqInvestor, getHqShareholders, resendHqInvestorInvite, saveHqShareholders } from "@/lib/hqApi";
 import Modal from "@/components/account/Modal";
 
 // Cap table colours by position (the owners themselves are stored in HQ, not in the code).
@@ -24,6 +24,12 @@ export default function HqShareholders() {
   const [report, setReport] = useState(null);
   const [scenarios, setScenarios] = useState(null);
   const [live, setLive] = useState(false);
+  const [portalInvestors, setPortalInvestors] = useState([]);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteForm, setInviteForm] = useState({ email: "", displayName: "", firstName: "", pctPercent: "", shares: "", where: "", taxNote: "" });
+  const [inviteMsg, setInviteMsg] = useState("");
+  const [inviteLink, setInviteLink] = useState("");
+  const [inviteBusy, setInviteBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -33,6 +39,7 @@ export default function HqShareholders() {
       if (Array.isArray(d.holders)) setHolders(d.holders);
       if (Array.isArray(d.report)) setReport(d.report);
       if (d.scenarios) setScenarios(d.scenarios);
+      if (Array.isArray(d.portalInvestors)) setPortalInvestors(d.portalInvestors);
       const st = d.state || {};
       if (st.scenario) setSc(st.scenario);
       if (st.amount != null) setAmount(Number(st.amount));
@@ -46,6 +53,42 @@ export default function HqShareholders() {
       cancelled = true;
     };
   }, []);
+
+  const sendInvite = async () => {
+    setInviteBusy(true);
+    setInviteMsg("");
+    setInviteLink("");
+    const res = await createHqInvestor({
+      email: inviteForm.email.trim(),
+      displayName: inviteForm.displayName.trim(),
+      firstName: inviteForm.firstName.trim(),
+      pctPercent: inviteForm.pctPercent === "" ? null : Number(inviteForm.pctPercent),
+      shares: inviteForm.shares.trim(),
+      where: inviteForm.where.trim(),
+      taxNote: inviteForm.taxNote.trim(),
+    });
+    setInviteBusy(false);
+    if (!res.ok) {
+      setInviteMsg(typeof res.data?.detail === "string" ? res.data.detail : "Could not create the investor account.");
+      return;
+    }
+    if (Array.isArray(res.data?.portalInvestors)) setPortalInvestors(res.data.portalInvestors);
+    setInviteMsg(res.data?.detail || "Investor account created.");
+    if (res.data?.setupUrl) setInviteLink(res.data.setupUrl);
+    setInviteForm({ email: "", displayName: "", firstName: "", pctPercent: "", shares: "", where: "", taxNote: "" });
+  };
+
+  const resendInvite = async (id) => {
+    setInviteMsg("");
+    setInviteLink("");
+    const res = await resendHqInvestorInvite(id);
+    if (!res.ok) {
+      setInviteMsg(typeof res.data?.detail === "string" ? res.data.detail : "Could not resend the invite.");
+      return;
+    }
+    setInviteMsg(res.data?.detail || "Invite resent.");
+    if (res.data?.setupUrl) setInviteLink(res.data.setupUrl);
+  };
 
   const persist = (partial) => {
     saveHqShareholders(partial).then((res) => {
@@ -227,6 +270,52 @@ export default function HqShareholders() {
           </button>
         </div>
       </Modal>
+
+      <Modal open={inviteOpen} onClose={() => setInviteOpen(false)} title="Invite an investor to the portal" width={640}>
+        <p style={{ margin: 0, fontSize: 14, color: "#9AA1AB", lineHeight: 1.55 }}>
+          There is no public sign-up. You create the account here; Searchify emails them a set-password link (or you copy it if email isn&apos;t configured).
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
+          {[
+            ["Full name", "displayName", "text"],
+            ["First name (greeting)", "firstName", "text"],
+            ["Email", "email", "email"],
+            ["Ownership %", "pctPercent", "number"],
+            ["Shares label", "shares", "text"],
+            ["Country", "where", "text"],
+          ].map(([label, key, type]) => (
+            <label key={key} style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "#9AA1AB" }}>
+              {label}
+              <input
+                type={type}
+                value={inviteForm[key]}
+                onChange={(e) => setInviteForm({ ...inviteForm, [key]: e.target.value })}
+                style={{ minHeight: 40, padding: "0 10px", borderRadius: 10, border: "1px solid #262A31", background: "#0A0B0D", color: "#F2F4F5", font: "inherit", fontSize: 14 }}
+              />
+            </label>
+          ))}
+          <label style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "#9AA1AB" }}>
+            Tax note (optional)
+            <input
+              type="text"
+              value={inviteForm.taxNote}
+              onChange={(e) => setInviteForm({ ...inviteForm, taxNote: e.target.value })}
+              style={{ minHeight: 38, padding: "0 10px", borderRadius: 10, border: "1px solid #262A31", background: "#0A0B0D", color: "#F2F4F5", font: "inherit", fontSize: 13 }}
+            />
+          </label>
+        </div>
+        {inviteMsg ? <p role="status" style={{ margin: 0, fontSize: 14, color: inviteLink || inviteMsg.includes("emailed") ? "#3DDC84" : "#FFC53D" }}>{inviteMsg}</p> : null}
+        {inviteLink ? (
+          <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "#9AA1AB" }}>
+            Set-password link (send this if email didn&apos;t go out)
+            <input readOnly value={inviteLink} onFocus={(e) => e.target.select()} style={{ minHeight: 40, padding: "0 10px", borderRadius: 10, border: "1px solid #262A31", background: "#0A0B0D", color: "#9FE7F5", font: "inherit", fontSize: 12 }} />
+          </label>
+        ) : null}
+        <button type="button" disabled={inviteBusy} onClick={sendInvite} style={{ minHeight: 44, padding: "0 18px", borderRadius: 12, border: 0, background: "#9FE7F5", color: "#0A0B0D", fontSize: 14, fontWeight: 600 }}>
+          {inviteBusy ? "Creating…" : "Create account and send invite"}
+        </button>
+      </Modal>
+
       <>
         <div
           style={{
@@ -300,6 +389,94 @@ export default function HqShareholders() {
             })}
           </div>
         </div>
+
+        <section
+          aria-labelledby="portal-inv-h"
+          style={{
+            maxWidth: 1240,
+            width: "100%",
+            boxSizing: "border-box",
+            margin: "0 auto",
+            borderRadius: 22,
+            background: "#101215",
+            border: "1px solid #1A1D22",
+            padding: 20,
+            display: "flex",
+            flexDirection: "column",
+            gap: 14,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <h2 id="portal-inv-h" style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
+                Investor portal accounts
+              </h2>
+              <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>
+                Invite-only. You create each login here; they set a password from the email link, then sign in at /investors/login.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setInviteMsg("");
+                setInviteLink("");
+                setInviteOpen(true);
+              }}
+              style={{ minHeight: 40, padding: "0 14px", borderRadius: 12, border: 0, background: "#9FE7F5", color: "#0A0B0D", fontSize: 14, fontWeight: 600 }}
+            >
+              Create investor account
+            </button>
+          </div>
+          {inviteMsg && !inviteOpen ? (
+            <p role="status" style={{ margin: 0, fontSize: 14, color: "#3DDC84" }}>
+              {inviteMsg}
+            </p>
+          ) : null}
+          {inviteLink && !inviteOpen ? (
+            <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "#9AA1AB" }}>
+              Set-password link
+              <input readOnly value={inviteLink} onFocus={(e) => e.target.select()} style={{ minHeight: 40, padding: "0 10px", borderRadius: 10, border: "1px solid #262A31", background: "#0A0B0D", color: "#9FE7F5", font: "inherit", fontSize: 12 }} />
+            </label>
+          ) : null}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {portalInvestors.length === 0 ? (
+              <span style={{ fontSize: 14, color: "#7D848E" }}>No investor portal accounts yet.</span>
+            ) : (
+              portalInvestors.map((inv) => (
+                <div
+                  key={inv.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 12,
+                    flexWrap: "wrap",
+                    padding: "12px 14px",
+                    borderRadius: 14,
+                    background: "#0A0B0D",
+                    border: "1px solid #1A1D22",
+                  }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+                    <span style={{ fontSize: 15, fontWeight: 600 }}>{inv.displayName}</span>
+                    <span style={{ fontSize: 13, color: "#9AA1AB" }}>
+                      {inv.email}
+                      {inv.pctLabel ? ` · ${inv.pctLabel}` : ""}
+                      {inv.where ? ` · ${inv.where}` : ""}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => resendInvite(inv.id)}
+                    style={{ minHeight: 36, padding: "0 12px", borderRadius: 10, border: "1px solid #262A31", background: "transparent", color: "#F2F4F5", fontSize: 13 }}
+                  >
+                    Resend set-password link
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
 
         <section
           aria-labelledby="test-h"

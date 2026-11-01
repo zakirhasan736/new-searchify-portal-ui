@@ -15,6 +15,16 @@ export async function investorSignIn(body) {
   );
 }
 
+export async function investorSetPassword(token, password) {
+  return json(
+    await fetch("/api/v1/investors/set-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, password }),
+    }),
+  );
+}
+
 export async function getInvestorMe() {
   return json(await fetch("/api/v1/investors/me", { headers: authHeaders(), cache: "no-store" }));
 }
