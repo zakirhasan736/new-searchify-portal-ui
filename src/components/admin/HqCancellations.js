@@ -72,7 +72,7 @@ export default function HqCancellations() {
       minHeight={1300}
       showSample={!d.live}
       problemsCount={d.problemsCount || "9"}
-      cancellationsCount={String(d.openCount ?? (d.comments || []).filter((c) => c.needsReply).length || 4)}
+      cancellationsCount={String(d.openCount ?? ((d.comments || []).filter((c) => c.needsReply).length || 4))}
       headerExtra={
         toast ? (
           <span role="status" style={{ fontSize: 13, color: "#3DDC84" }}>
