@@ -1,7 +1,10 @@
 import { getUser, userIsAuthenticated } from "@/utils/users/Helpers";
 
 const PARTNER_KEY = "searchify-partner-signed-in";
+const INVESTOR_KEY = "searchify-investor-signed-in";
 const PREVIEW_KEY = "searchify-preview-signed-in";
+
+export { INVESTOR_KEY };
 
 export function readSessionFlag(key) {
   if (typeof window === "undefined") return false;
@@ -48,11 +51,24 @@ export function isPartnerUser(user = getUser()) {
   return t === "partner" || t === "affiliate" || role.includes("PARTNER") || role.includes("AFFILIATE");
 }
 
+export function isInvestorUser(user = getUser()) {
+  const t = userTypeOf(user);
+  const role = String(user?.data?.role || user?.result?.role || "").toUpperCase();
+  return t === "investor" || t === "shareholder" || role.includes("INVESTOR") || role.includes("SHAREHOLDER");
+}
+
+/** Investor / shareholder portal — investor JWT and/or dedicated session flag. */
+export function isInvestorAuthenticated() {
+  if (readSessionFlag(INVESTOR_KEY)) return true;
+  return userIsAuthenticated() && isInvestorUser();
+}
+
 /** Customer / agency workspace — real JWT, not partner-only or preview. */
 export function isCustomerAuthenticated() {
   if (!userIsAuthenticated()) return false;
   if (isAdminUser()) return false;
   if (isPartnerUser()) return false;
+  if (isInvestorUser()) return false;
   return true;
 }
 

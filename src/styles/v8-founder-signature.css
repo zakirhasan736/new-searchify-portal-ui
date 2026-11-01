@@ -1,0 +1,30 @@
+/* Canonical founder signature — identical on affiliate, investor, partner, customer, admin letters */
+.sfy-founder-sig {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: 0;
+}
+
+.sfy-founder-sig__ink {
+  font-family: "Mrs Saint Delafield", "Snell Roundhand", cursive;
+  font-size: 72px;
+  line-height: 1.25;
+  font-weight: 400;
+  color: #1f3a5f;
+  transform: rotate(-2deg);
+  transform-origin: left center;
+  margin: 6px 0 0;
+}
+
+.sfy-founder-sig__title {
+  font-size: 14px;
+  color: #6b6358;
+  line-height: 1.3;
+}
+
+@media (max-width: 720px) {
+  .sfy-founder-sig__ink {
+    font-size: 56px;
+  }
+}

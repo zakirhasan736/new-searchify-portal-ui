@@ -23,6 +23,7 @@ const AUTH = new Set([
   "/admin/login",
 ]);
 const PARTNERS = (pathname) => pathname === "/partners" || pathname.startsWith("/partners/");
+const INVESTORS = (pathname) => pathname === "/investors" || pathname.startsWith("/investors/");
 const HQ = (pathname) => pathname === "/admin" || pathname.startsWith("/admin/hq") || pathname === "/admin/settings";
 const SKINS = (pathname) => pathname === "/skins" || pathname.startsWith("/skins/");
 /** States.dc.html is full-bleed — no left Nav. */
@@ -46,6 +47,7 @@ export default function ProductShell({ children }) {
       MARKETING.has(pathname) ||
       AUTH.has(pathname) ||
       PARTNERS(pathname) ||
+      INVESTORS(pathname) ||
       HQ(pathname) ||
       SKINS(pathname) ||
       pathname.startsWith("/app") ||
@@ -71,7 +73,8 @@ export default function ProductShell({ children }) {
   if (V8_SIGNIN.has(pathname)) {
     return <ClientOnly>{withWall(children)}</ClientOnly>;
   }
-  if (MARKETING.has(pathname) || PARTNERS(pathname) || HQ(pathname)) {
+  if (MARKETING.has(pathname) || PARTNERS(pathname) ||
+      INVESTORS(pathname) || HQ(pathname)) {
     return <ClientOnly>{withWall(children)}</ClientOnly>;
   }
   if (pathname === "/app/start" || pathname === "/app/plans" || STANDALONE_APP(pathname)) {

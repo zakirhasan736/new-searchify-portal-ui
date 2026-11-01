@@ -13,8 +13,6 @@ export const SKIN_SECTIONS = [
       { n: "04", t: "Page progress", d: "Poor to Excellent, page by page", href: "/app/path" },
       { n: "05", t: "Keyword tracker", d: "Did the change work, keyword by keyword", href: "/app/keywords" },
       { n: "05b", t: "Backlinks", d: "New and lost links, competitor gap", href: "/app/backlinks" },
-      { n: "05c", t: "AI visibility", d: "Engine scores and LLM gaps", href: "/app/visibility" },
-      { n: "05d", t: "Site audit report", d: "GSC, speed, titles, indexing", href: "/app/audit" },
     ],
   },
   {
@@ -47,12 +45,25 @@ export const SKIN_SECTIONS = [
     ],
   },
   {
+    title: "Business partners",
+    tiles: [
+      { n: "27", t: "Shareholder portal: your stake", d: "Ownership, dividends, documents", href: "/investors" },
+      { n: "27a", t: "Shareholder sign in (secure)", d: "Invite-only · nick@petitt.example / Investor-2026", href: "/investors/login" },
+      { n: "28", t: "Shareholder: referral earnings", d: "Founding partner commissions", href: "/investors/earnings" },
+      { n: "29", t: "Investor: playbook and resources", d: "Pitch, rules, videos, media kit", href: "/investors/playbook" },
+    ],
+  },
+  {
     title: "Searchify HQ (internal)",
     tiles: [
-      { n: "23", t: "HQ customers", d: "Look up an account, refund, comp, cancel", href: "/admin/hq/customers" },
-      { n: "24", t: "HQ partners and payouts", d: "Payout run, applications, founding partners", href: "/admin/hq/partners" },
-      { n: "25", t: "HQ problems", d: "Failed payments, broken connections, rollbacks", href: "/admin/hq/problems" },
-      { n: "26", t: "HQ shareholders", d: "Dividend test, split, quarterly update", href: "/admin/hq/shareholders" },
+      { n: "17", t: "HQ overview", d: "MRR, customers, activation, churn", href: "/admin" },
+      { n: "20", t: "HQ customers", d: "Look up an account, refund, comp, cancel", href: "/admin/hq/customers" },
+      { n: "20b", t: "HQ cancellations and why", d: "Reasons, offers, comments, follow-ups", href: "/admin/hq/cancellations" },
+      { n: "21", t: "HQ affiliates and payouts", d: "Payout run, applications, founding partners", href: "/admin/hq/partners" },
+      { n: "22", t: "HQ problems", d: "Failed payments, broken connections, rollbacks", href: "/admin/hq/problems" },
+      { n: "23", t: "HQ shareholders", d: "Dividend test, split, quarterly update", href: "/admin/hq/shareholders" },
+      { n: "11", t: "Settings", d: "Team, notifications, autonomy, billing", href: "/app/settings" },
+      { n: "", t: "HQ settings", d: "Admin account and password", href: "/admin/settings" },
     ],
   },
   {

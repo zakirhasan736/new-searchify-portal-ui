@@ -15,8 +15,9 @@ import "@/styles/v8-screens.css";
 const TABS = [
   { href: "/admin", label: "Overview", exact: true },
   { href: "/admin/hq/customers", label: "Customers" },
-  { href: "/admin/hq/partners", label: "Partners and payouts" },
+  { href: "/admin/hq/partners", label: "Affiliates and payouts" },
   { href: "/admin/hq/problems", label: "Problems", badge: true },
+  { href: "/admin/hq/cancellations", label: "Cancellations", cancelBadge: true },
   { href: "/admin/hq/shareholders", label: "Shareholders" },
   { href: "/admin/settings", label: "Settings" },
 ];
@@ -51,9 +52,10 @@ export default function HqPanel({
   headerExtra,
   shellGap = 22,
   problemsCount,
+  cancellationsCount = "4",
   minHeight = 1200,
   // Kept for callers; HQ only shows real data, so there is no sample badge any more.
-  showSample: _showSample = false,
+  showSample = false,
   // True until the screen's first data has arrived: the full-screen six-dot loader covers the page meanwhile.
   loading = false,
 }) {
@@ -154,6 +156,40 @@ export default function HqPanel({
             >
               HQ
             </span>
+            {showSample ? (
+              <span
+                style={{
+                  fontFamily: "'Geist Mono', monospace",
+                  fontSize: 11,
+                  padding: "3px 8px",
+                  borderRadius: 6,
+                  border: "1px solid #3A404A",
+                  color: "#9AA1AB",
+                }}
+              >
+                SAMPLE DATA
+              </span>
+            ) : null}
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                fontFamily: "'Geist Mono', monospace",
+                fontSize: 11,
+                padding: "3px 8px",
+                borderRadius: 6,
+                background: "rgba(255,90,78,.14)",
+                color: "#FF8A80",
+                fontWeight: 600,
+              }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="5" y="11" width="14" height="10" rx="2" />
+                <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+              </svg>
+              OWNER ONLY
+            </span>
           </span>
           {headerExtra}
           <span style={{ display: "inline-flex", alignItems: "center", gap: 14 }}>
@@ -188,6 +224,7 @@ export default function HqPanel({
         >
           {TABS.map((tab) => {
             const on = tab.exact ? pathname === tab.href : pathname === tab.href || pathname.startsWith(`${tab.href}/`);
+            const showBadge = tab.badge || tab.cancelBadge;
             return (
               <Link
                 key={tab.href}
@@ -196,7 +233,7 @@ export default function HqPanel({
                 style={{
                   ...tabBase,
                   position: "relative",
-                  gap: tab.badge ? 8 : undefined,
+                  gap: showBadge ? 8 : undefined,
                   color: on ? "#F2F4F5" : "#9AA1AB",
                   fontWeight: on ? 600 : undefined,
                 }}
@@ -222,6 +259,21 @@ export default function HqPanel({
                     }}
                   >
                     {badgeCount}
+                  </span>
+                ) : null}
+                {tab.cancelBadge ? (
+                  <span
+                    style={{
+                      position: "relative",
+                      fontFamily: "'Geist Mono', monospace",
+                      fontSize: 11,
+                      padding: "2px 7px",
+                      borderRadius: 999,
+                      background: "rgba(255,197,61,.14)",
+                      color: "#FFC53D",
+                    }}
+                  >
+                    {cancellationsCount}
                   </span>
                 ) : null}
               </Link>

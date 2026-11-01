@@ -58,6 +58,20 @@ export async function hqProblemAction(problemId, action) {
   );
 }
 
+export async function getHqCancellations() {
+  return json(await fetch("/api/v1/hq/cancellations", { headers: authHeaders(), cache: "no-store" }));
+}
+
+export async function hqCancellationAction(itemId, body) {
+  return json(
+    await fetch(`/api/v1/hq/cancellations/${encodeURIComponent(itemId)}`, {
+      method: "PUT",
+      headers: authHeaders(),
+      body: JSON.stringify(body),
+    }),
+  );
+}
+
 export async function getHqShareholders() {
   return json(await fetch("/api/v1/hq/shareholders", { headers: authHeaders(), cache: "no-store" }));
 }

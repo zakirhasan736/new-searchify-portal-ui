@@ -550,13 +550,16 @@
   font-size: 17px;
   line-height: 1.75;
 }
+/* Kept in sync with .sfy-founder-sig (canonical FounderSignature) */
 .v8-aff-letter .sig {
   font-family: var(--sign);
-  font-size: 64px;
-  line-height: 1.2;
+  font-size: 72px;
+  line-height: 1.25;
+  font-weight: 400;
   color: #1f3a5f;
   transform: rotate(-2deg);
   transform-origin: left center;
+  margin: 6px 0 0;
 }
 .v8-aff-letter .sig-sub {
   font-size: 14px;
@@ -668,6 +671,6 @@
     max-width: none;
   }
   .v8-aff-letter .sig {
-    font-size: 48px;
+    font-size: 56px;
   }
 }

@@ -322,9 +322,14 @@
   flex-direction: column;
   gap: 12px;
 }
+/* Kept in sync with .sfy-founder-sig (canonical FounderSignature) */
 .v8-tr-sign {
   font-family: var(--sign);
-  font-size: 56px;
-  line-height: 1.2;
+  font-size: 72px;
+  line-height: 1.25;
+  font-weight: 400;
   color: #1f3a5f;
+  transform: rotate(-2deg);
+  transform-origin: left center;
+  margin: 6px 0 0;
 }

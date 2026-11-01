@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import HqPanel, { useFirstLoad } from "@/components/admin/HqPanel";
 import PasswordChangeForm from "@/components/account/PasswordChangeForm";
 import { authHeaders } from "@/utils/users/Helpers";
@@ -31,12 +32,22 @@ export default function HqSettings() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [firstLoad]);
 
   return (
     <HqPanel loading={loading} minHeight={900}>
       <section style={{ maxWidth: 1240, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 6 }}>
-        <h1 style={{ margin: 0, fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 700, letterSpacing: "-0.02em" }}>Settings</h1>
+        <h1
+          style={{
+            margin: 0,
+            fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
+            fontSize: "clamp(28px, 4vw, 40px)",
+            fontWeight: 700,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Settings
+        </h1>
         <p style={{ margin: 0, fontSize: 15, color: "#9AA1AB" }}>Your HQ admin account.</p>
       </section>
       <section
@@ -61,6 +72,12 @@ export default function HqSettings() {
             <dd style={{ margin: 0 }}>HQ admin</dd>
             <dt style={{ color: "#7D848E" }}>Sign-in page</dt>
             <dd style={{ margin: 0, fontFamily: "'Geist Mono', monospace", fontSize: 13 }}>/admin/login</dd>
+            <dt style={{ color: "#7D848E" }}>Workspace</dt>
+            <dd style={{ margin: 0 }}>
+              <Link href="/app/settings" style={{ color: "#D5F879", textDecoration: "none" }}>
+                Customer Settings →
+              </Link>
+            </dd>
           </dl>
           <p style={{ margin: 0, fontSize: 13, color: "#7D848E", lineHeight: 1.5 }}>
             Locked out with no email set up? Set a new ADMIN_PASSWORD in the backend environment and restart the API. It

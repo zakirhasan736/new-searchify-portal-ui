@@ -5,8 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { userLogout } from "@/utils/users/Helpers";
 import { PARTNER_KEY, PREVIEW_KEY, clearSessionFlag, isAdminAuthenticated } from "@/lib/authRoles";
-import SearchifyLoader from "@/components/v8/SearchifyLoader";
 import SearchifyMark from "@/components/landing/SearchifyMark";
+import SearchifyLoader from "@/components/v8/SearchifyLoader";
 import "@/styles/searchify-v3.css";
 import "@/styles/v8-kit.css";
 
@@ -19,9 +19,11 @@ const ADMIN_NAV = [
   { label: "Admin home", path: "/admin" },
   { label: "Tag management", path: "/admin/tagmgmt" },
   { label: "HQ customers", path: "/admin/hq/customers" },
-  { label: "HQ partners", path: "/admin/hq/partners" },
+  { label: "HQ affiliates", path: "/admin/hq/partners" },
   { label: "HQ problems", path: "/admin/hq/problems" },
+  { label: "HQ cancellations", path: "/admin/hq/cancellations" },
   { label: "HQ shareholders", path: "/admin/hq/shareholders" },
+  { label: "HQ settings", path: "/admin/settings" },
 ];
 
 export default function AdminShell({ children }) {
@@ -74,10 +76,13 @@ export default function AdminShell({ children }) {
                 {item.label}
               </Link>
             ))}
-            <Link href="/admin">HQ</Link>
-            <Link href="/admin/settings">Settings</Link>
+            <Link href="/app">Workspace</Link>
+            <Link href="/partners">Partner centre</Link>
           </nav>
           <div style={{ marginTop: "auto", display: "grid", gap: 10 }}>
+            <Link href="/app" className="sf-link">
+              Customer workspace →
+            </Link>
             <button
               type="button"
               className="sf-link"
@@ -85,7 +90,7 @@ export default function AdminShell({ children }) {
                 clearSessionFlag(PARTNER_KEY);
                 clearSessionFlag(PREVIEW_KEY);
                 userLogout();
-                router.replace("/admin/login");
+                router.replace("/admin/login?signedout=1");
               }}
             >
               Sign out

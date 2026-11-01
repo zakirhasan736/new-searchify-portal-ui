@@ -8,6 +8,7 @@ import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
 import { getUser } from "@/utils/users/Helpers";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
+import FounderSignature from "@/components/v8/FounderSignature";
 import "@/styles/v8-trial-report.css";
 
 const COL = {
@@ -326,8 +327,7 @@ export default function TrialReportScreen() {
           it. If anything in this report doesn&apos;t make sense, or you&apos;d like a hand with what&apos;s next, just
           reply. A real person reads every message, usually me.
         </span>
-        <span className="v8-tr-sign">Aadle M. Faqiryar</span>
-        <span style={{ fontSize: 13, color: "#6B6358" }}>Founder, Searchify</span>
+        <FounderSignature />
       </section>
     </div>
   );

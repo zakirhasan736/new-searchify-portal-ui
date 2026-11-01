@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import SearchifyMarkSvg from "@/components/v8/SearchifyMarkSvg";
+import FounderSignature from "@/components/v8/FounderSignature";
+import SearchifyLoader from "@/components/v8/SearchifyLoader";
 import { getPartnerMe, partnerInitials, partnerSignAgreement } from "@/lib/partnerApi";
 import { isPartnerAuthenticated } from "@/lib/authRoles";
 import "@/styles/v8-affiliate.css";
@@ -112,11 +114,7 @@ export default function PartnerWelcome() {
   };
 
   if (loading) {
-    return (
-      <div className="v8-aff">
-        <span style={{ color: "#9AA1AB" }}>Loading affiliate welcome…</span>
-      </div>
-    );
+    return <SearchifyLoader full label="Opening affiliate welcome" />;
   }
 
   return (
@@ -172,10 +170,7 @@ export default function PartnerWelcome() {
               fair for everyone, the agreement to sign, and then your link. It takes about two minutes.
             </p>
             <p>We’re glad to have you here.</p>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <span className="sig">Aadle Faqiryar</span>
-              <span className="sig-sub">Founder, Searchify</span>
-            </div>
+            <FounderSignature />
           </section>
           <div className="v8-aff-actions">
             <button type="button" className="v8-aff-cta" onClick={() => setStep(1)}>
