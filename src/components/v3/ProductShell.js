@@ -64,7 +64,13 @@ export default function ProductShell({ children }) {
     </>
   );
 
+  // SignIn.html / SignIn.dc.html are full-bleed — no legacy sf-auth chrome.
+  const V8_SIGNIN = new Set(["/login", "/signin", "/forgot", "/forgotpassword"]);
+
   if (SKINS(pathname)) return <ClientOnly>{children}</ClientOnly>;
+  if (V8_SIGNIN.has(pathname)) {
+    return <ClientOnly>{withWall(children)}</ClientOnly>;
+  }
   if (MARKETING.has(pathname) || PARTNERS(pathname) || HQ(pathname)) {
     return <ClientOnly>{withWall(children)}</ClientOnly>;
   }

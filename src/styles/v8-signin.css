@@ -1,0 +1,347 @@
+/* Exact presentation/SignIn.html + screens/SignIn.dc.html */
+
+.v8-signin {
+  --bg: #0a0b0d;
+  --surface: #101215;
+  --raised: #131519;
+  --line: #1a1d22;
+  --line-2: #262a31;
+  --text: #f2f4f5;
+  --muted: #9aa1ab;
+  --faint: #7d848e;
+  --soft: #d7dade;
+  --lime: #d5f879;
+  --blue: #4da3ff;
+  --blue-hover: #8cc4ff;
+  --red: #ff8a80;
+  --green: #3ddc84;
+  --display: var(--font-bricolage), "Bricolage Grotesque", Geist, "Helvetica Neue", sans-serif;
+  --ui: var(--font-geist), Geist, "Helvetica Neue", sans-serif;
+  min-height: 900px;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ui);
+  box-sizing: border-box;
+  padding: 22px clamp(16px, 4vw, 56px) 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+.v8-signin *,
+.v8-signin *::before,
+.v8-signin *::after {
+  box-sizing: border-box;
+}
+.v8-signin a {
+  color: var(--blue);
+}
+.v8-signin a:hover {
+  color: var(--blue-hover);
+}
+.v8-signin button {
+  font-family: inherit;
+  cursor: pointer;
+}
+.v8-signin input:focus-visible,
+.v8-signin button:focus-visible,
+.v8-signin a:focus-visible {
+  outline: 2px solid #4da3ff;
+  outline-offset: 2px;
+}
+
+@keyframes v8-si-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes v8-si-glint {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.v8-signin .si-dot {
+  animation: v8-si-glint 3s ease-in-out infinite;
+}
+.v8-signin .si-google:hover {
+  background: #1a1d22 !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .v8-signin *,
+  .v8-signin *::before,
+  .v8-signin *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.v8-signin-head {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.v8-signin-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text);
+}
+.v8-signin-brand:hover {
+  color: var(--text);
+}
+.v8-signin-brand span {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 19px;
+  letter-spacing: -0.4px;
+}
+.v8-signin-back {
+  font-size: 14px;
+  color: var(--muted);
+  text-decoration: none;
+}
+.v8-signin-back:hover {
+  color: var(--soft);
+}
+
+.v8-signin-body {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 56px;
+  align-items: center;
+}
+.v8-signin-intro {
+  flex: 1 1 420px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.v8-signin-intro h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(44px, 5.6vw, 76px);
+  line-height: 0.96;
+  letter-spacing: -2.4px;
+  font-weight: 800;
+}
+.v8-signin-intro p {
+  margin: 0;
+  font-size: 18px;
+  color: var(--muted);
+  line-height: 1.55;
+  max-width: 480px;
+}
+.v8-signin-board {
+  display: grid;
+  grid-template-columns: repeat(10, 18px);
+  gap: 10px;
+  padding: 22px;
+  border-radius: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  width: max-content;
+  max-width: 100%;
+}
+
+.v8-signin-card {
+  flex: 1 1 360px;
+  max-width: 440px;
+  min-width: 0;
+  border-radius: 24px;
+  background: var(--raised);
+  border: 1px solid var(--line-2);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: v8-si-rise 0.35s ease both;
+}
+.v8-signin-card h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+.v8-signin-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  border-radius: 14px;
+  border: 1px solid #3a404a;
+  background: #0a0b0d;
+  color: #f2f4f5;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  width: 100%;
+  padding: 0 14px;
+}
+.v8-signin-google:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.v8-signin-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--faint);
+}
+.v8-signin-or span:first-child,
+.v8-signin-or span:last-child {
+  flex: 1;
+  height: 1px;
+  background: var(--line-2);
+}
+.v8-signin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.v8-signin-field input {
+  min-height: 50px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line-2);
+  background: #0a0b0d;
+  color: #f2f4f5;
+  font: inherit;
+  font-size: 16px;
+  width: 100%;
+}
+.v8-signin-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: -4px;
+}
+.v8-signin-remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--soft);
+}
+.v8-signin-remember input {
+  accent-color: #4da3ff;
+  width: 18px;
+  height: 18px;
+}
+.v8-signin-linkbtn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: underline;
+}
+.v8-signin-linkbtn.is-back {
+  align-self: flex-start;
+  font-size: 14px;
+}
+.v8-signin-err {
+  margin: 0;
+  color: var(--red);
+  font-size: 14px;
+}
+.v8-signin-ok {
+  margin: 0;
+  font-size: 15px;
+  color: var(--green);
+  line-height: 1.5;
+}
+.v8-signin-submit {
+  min-height: 54px;
+  border-radius: 14px;
+  border: 0;
+  background: #4da3ff;
+  color: #0a0b0d;
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: 0 0 24px rgba(77, 163, 255, 0.45);
+  width: 100%;
+}
+.v8-signin-submit:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.v8-signin-submit.is-secondary {
+  min-height: 52px;
+}
+.v8-signin-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--muted);
+}
+.v8-signin-foot .is-affiliate {
+  font-size: 13px;
+}
+.v8-signin-foot .is-affiliate a {
+  color: var(--lime);
+}
+.v8-signin-foot .is-affiliate a:hover {
+  color: #ecffb8;
+}
+.v8-signin-reset-copy {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.v8-signin-reset-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (max-width: 720px) {
+  .v8-signin {
+    gap: 28px;
+    padding: 18px 16px calc(40px + env(safe-area-inset-bottom, 0px));
+  }
+  .v8-signin-body {
+    gap: 28px;
+  }
+  .v8-signin-intro h1 {
+    font-size: clamp(36px, 10vw, 48px);
+    letter-spacing: -1.6px;
+  }
+  .v8-signin-intro p {
+    font-size: 16px;
+  }
+  .v8-signin-board {
+    display: none;
+  }
+  .v8-signin-card {
+    max-width: none;
+    width: 100%;
+    padding: 22px 18px;
+  }
+}
