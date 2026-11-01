@@ -76,6 +76,8 @@ const TOPIC_LABEL = {
   title: "Title",
   description: "Description",
   heading: "Heading",
+  typography: "Typography",
+  bem: "BEM",
   css: "CSS",
   javascript: "JavaScript",
   image: "Image",
@@ -84,19 +86,31 @@ const TOPIC_LABEL = {
   lcp: "LCP",
   cls: "CLS",
   inp: "INP",
+  places: "Places",
+  grade: "Grade",
   speed: "Speed",
+  content: "Content",
 };
+
+const TOPIC_ORDER = [
+  "title",
+  "description",
+  "heading",
+  "typography",
+  "bem",
+  "css",
+  "javascript",
+  "image",
+  "lcp",
+  "cls",
+  "ssr",
+  "csr",
+  "places",
+  "grade",
+];
 
 function topicLabel(topic) {
   return TOPIC_LABEL[String(topic || "").toLowerCase()] || "";
-}
-
-function ratingColor(rating) {
-  const r = String(rating || "").toLowerCase();
-  if (r === "poor") return "#FF5A4E";
-  if (r === "needs improvement") return "#FFC53D";
-  if (r === "good") return "#3DDC84";
-  return "#9AA1AB";
 }
 
 /**
@@ -228,7 +242,6 @@ export default function FreeAnalysisScreen() {
   const gradeNote = scan?.gradeNote || "fair, with quick wins";
   const name = firstName(email || scan?.reportEmail, scan?.brand);
   const findings = scan?.findings || [];
-  const pageRows = scan?.pageRows?.length ? scan.pageRows : findings;
   const problems = scan?.problems?.length ? scan.problems : findings.slice(0, 3);
   const places = scan?.places || [];
   const keywords = scan?.keywords || [];
@@ -240,19 +253,70 @@ export default function FreeAnalysisScreen() {
   const category = scan?.category || "";
   const city = scan?.city || "";
   const placesQuery = scan?.placesQuery || (category ? `${category}${city ? ` in ${city}` : ""}` : "");
-  const topicFindings = useMemo(() => {
-    const rows = [...(problems || []), ...(findings || []), ...((rendering?.issues) || [])];
-    const seen = new Set();
-    const out = [];
-    rows.forEach((row) => {
-      const topic = String(row.topic || "").toLowerCase();
-      if (!topic || seen.has(topic)) return;
-      seen.add(topic);
-      out.push(row);
+  const topicStatus = useMemo(() => {
+    const fromApi = Array.isArray(scan?.topicStatus) ? scan.topicStatus : [];
+    if (fromApi.length) {
+      const map = new Map(fromApi.map((row) => [String(row.topic || "").toLowerCase(), row]));
+      return TOPIC_ORDER.map((key) => {
+        if (map.has(key)) return map.get(key);
+        return { topic: key, status: "ok", color: "green", label: "Looking fine", detail: "" };
+      });
+    }
+    const pool = [...(findings || []), ...((rendering?.issues) || []), ...((scan?.markup?.issues) || [])];
+    return TOPIC_ORDER.map((key) => {
+      if (key === "places") {
+        if (places.length) {
+          return {
+            topic: "places",
+            status: "ok",
+            color: "green",
+            label: `${places.length} Google Places rivals nearby`,
+            detail: placesQuery || category,
+          };
+        }
+        return {
+          topic: "places",
+          status: "warning",
+          color: "yellow",
+          label: "No Google Places rivals found yet",
+          detail: "",
+        };
+      }
+      const hit = pool.find((row) => String(row.topic || "").toLowerCase() === key);
+      if (!hit) return { topic: key, status: "ok", color: "green", label: "Looking fine", detail: "" };
+      return {
+        topic: key,
+        status: hit.color === "red" ? "error" : "warning",
+        color: hit.color || "yellow",
+        label: hit.label,
+        detail: hit.detail || "",
+      };
     });
-    return out;
-  }, [problems, findings, rendering]);
+  }, [scan, findings, rendering, places, placesQuery, category]);
+  const majorProblems = useMemo(() => {
+    const pool = [...(problems || [])];
+    const ranked = [...topicStatus]
+      .filter((t) => t.status === "error" || t.status === "warning")
+      .sort((a, b) => (a.status === "error" ? 0 : 1) - (b.status === "error" ? 0 : 1));
+    ranked.forEach((t) => {
+      if (pool.length >= 3) return;
+      if (pool.some((p) => p.label === t.label)) return;
+      pool.push({
+        color: t.color,
+        path: "/",
+        label: t.label,
+        detail: t.detail,
+        topic: t.topic,
+        source: "topic",
+      });
+    });
+    return pool.slice(0, 3);
+  }, [problems, topicStatus]);
   const ssrSolutions = rendering?.solutions || [];
+  const moreIssuesCount = Math.max(
+    0,
+    Number(scan?.moreIssues) || Math.max(0, (findings?.length || 0) + topicStatus.filter((t) => t.status !== "ok").length - majorProblems.length),
+  );
   const dots = useMemo(() => {
     const list = scan?.dots || [];
     if (list.length) {
@@ -411,26 +475,26 @@ export default function FreeAnalysisScreen() {
             {[
               {
                 label: "Searches you show up for",
-                value: visibility.searches ? String(visibility.searches) : "—",
-                sub: visibility.searches ? `in ${marketLabel}, any position` : "Connect Searchify SEO research for ranks",
+                value: String(visibility.searches || 0),
+                sub: visibility.searches ? `in ${marketLabel}, any position` : "in your market, any position",
                 color: "#F2F4F5",
               },
               {
                 label: "On page one",
-                value: visibility.searches ? String(visibility.pageOne || 0) : "—",
+                value: String(visibility.pageOne || 0),
                 sub: "where nearly all the clicks happen",
                 color: "#FFC53D",
               },
               {
                 label: "Near misses",
-                value: visibility.searches ? String(visibility.nearMisses || 0) : "—",
+                value: String(visibility.nearMisses || 0),
                 sub: "on page 2, closest to a quick win",
                 color: "#FFC53D",
               },
               {
                 label: "Estimated visits from Google",
-                value: visibility.visits ? `~${fmtVol(visibility.visits)}` : pages ? String(pages) : "—",
-                sub: visibility.visits ? "a month" : "pages we read live",
+                value: visibility.visits ? `~${fmtVol(visibility.visits)}` : "0",
+                sub: "a month",
                 color: "#F2F4F5",
               },
             ].map((k) => (
@@ -442,130 +506,63 @@ export default function FreeAnalysisScreen() {
             ))}
           </section>
 
-          {pagespeed?.source || rendering ? (
-            <section className="v8-fa-panel" aria-labelledby="psi-h">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-                <h2 id="psi-h" style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
-                  Page speed, SSR / CSR &amp; images
-                </h2>
-                <span style={{ fontSize: 13, color: "#9AA1AB" }}>
-                  {pagespeed?.source ? "Google PageSpeed · mobile" : "Live HTML delivery check"}
-                  {rendering?.modeLabel ? ` · ${rendering.modeLabel}` : ""}
-                </span>
-              </div>
-              {rendering?.modeNote ? (
-                <span style={{ fontSize: 14, color: "#D7DADE", lineHeight: 1.5 }}>{rendering.modeNote}</span>
-              ) : null}
-              <div className="v8-fa-kpis" style={{ margin: 0 }} aria-label="PageSpeed scores">
-                {[
-                  {
-                    label: "Performance",
-                    value: pagespeed?.performance || pagespeed?.scores?.performance || "—",
-                    sub: "Lighthouse score",
-                    color: "#F2F4F5",
-                  },
-                  {
-                    label: "LCP",
-                    value: pagespeed?.vitals?.lcp || "—",
-                    sub: pagespeed?.ratings?.lcp || "largest content paint",
-                    color: ratingColor(pagespeed?.ratings?.lcp),
-                  },
-                  {
-                    label: "CLS",
-                    value: pagespeed?.vitals?.cls || "—",
-                    sub: pagespeed?.ratings?.cls || "layout shift",
-                    color: ratingColor(pagespeed?.ratings?.cls),
-                  },
-                  {
-                    label: "TTFB",
-                    value: pagespeed?.vitals?.ttfb || "—",
-                    sub: "server response · SSR path",
-                    color: "#FFC53D",
-                  },
-                ].map((k) => (
-                  <div key={k.label} className="v8-fa-kpi">
-                    <span style={{ fontSize: 13, color: "#9AA1AB" }}>{k.label}</span>
-                    <strong style={{ color: k.color }}>{k.value}</strong>
-                    <span style={{ fontSize: 12, color: "#7D848E" }}>{k.sub}</span>
+          <section className="v8-fa-panel" aria-labelledby="topics-h">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+              <h2 id="topics-h" style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
+                Major issues we checked
+              </h2>
+              <span style={{ fontSize: 13, color: "#9AA1AB" }}>
+                Grade {grade}
+                {pagespeed?.vitals?.lcp ? ` · LCP ${pagespeed.vitals.lcp}` : ""}
+                {pagespeed?.vitals?.cls ? ` · CLS ${pagespeed.vitals.cls}` : ""}
+                {rendering?.modeLabel ? ` · ${rendering.modeLabel}` : ""}
+              </span>
+            </div>
+            <span style={{ fontSize: 13, color: "#9AA1AB", lineHeight: 1.45 }}>
+              Title, description, typography/headings, BEM, CSS, JavaScript, images, LCP, CLS, SSR, CSR, and Google Places —
+              live from your crawl{pagespeed?.source ? " and PageSpeed" : ""}.
+            </span>
+            <div className="v8-fa-topics">
+              {topicStatus.map((row) => (
+                <div key={row.topic} className={`v8-fa-topic is-${row.status || "ok"}`}>
+                  <span className="v8-fa-topic-tag" style={{ color: toneColor(row.color) }}>
+                    {topicLabel(row.topic) || row.topic}
+                  </span>
+                  <strong>{row.label}</strong>
+                  <span className="v8-fa-topic-state">
+                    {row.status === "error" ? "error" : row.status === "warning" ? "warning" : "ok"}
+                  </span>
+                  {row.detail ? <span className="v8-fa-topic-detail">{row.detail}</span> : null}
+                </div>
+              ))}
+            </div>
+            {ssrSolutions.length ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+                <span style={{ fontSize: 13, color: "#9AA1AB" }}>SSR fixes for images &amp; loading speed:</span>
+                {ssrSolutions.slice(0, 4).map((row) => (
+                  <div key={row.label} className="v8-fa-gap-row" style={{ alignItems: "flex-start" }}>
+                    <span>
+                      <strong style={{ fontWeight: 600 }}>
+                        {topicLabel(row.topic) ? `${topicLabel(row.topic)} · ` : ""}
+                        {row.label}
+                      </strong>
+                      {row.detail ? (
+                        <span style={{ display: "block", fontSize: 13, color: "#9AA1AB", marginTop: 3, lineHeight: 1.45 }}>
+                          {row.detail}
+                        </span>
+                      ) : null}
+                    </span>
                   </div>
                 ))}
               </div>
-              {topicFindings.length ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
-                  <span style={{ fontSize: 13, color: "#9AA1AB" }}>
-                    Warnings and errors for titles, headings, CSS, JavaScript, images, SSR/CSR, LCP and CLS:
-                  </span>
-                  {topicFindings.slice(0, 8).map((row) => (
-                    <div key={`${row.topic}-${row.label}`} className="v8-fa-gap-row" style={{ alignItems: "flex-start" }}>
-                      <span>
-                        {topicLabel(row.topic) ? (
-                          <span
-                            style={{
-                              display: "inline-block",
-                              marginRight: 8,
-                              fontFamily: "var(--mono)",
-                              fontSize: 11,
-                              padding: "2px 7px",
-                              borderRadius: 6,
-                              border: "1px solid #262A31",
-                              color: toneColor(row.color),
-                            }}
-                          >
-                            {topicLabel(row.topic)}
-                          </span>
-                        ) : null}
-                        {row.label}
-                      </span>
-                      <span style={{ fontFamily: "var(--mono)", color: "#9AA1AB", flex: "none" }}>
-                        {String(row.color) === "red" ? "error" : "warning"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-              {ssrSolutions.length ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
-                  <span style={{ fontSize: 13, color: "#9AA1AB" }}>
-                    Server-side (SSR) fixes for images and loading speed:
-                  </span>
-                  {ssrSolutions.map((row) => (
-                    <div key={row.label} className="v8-fa-gap-row" style={{ alignItems: "flex-start" }}>
-                      <span>
-                        <span
-                          style={{
-                            display: "inline-block",
-                            marginRight: 8,
-                            fontFamily: "var(--mono)",
-                            fontSize: 11,
-                            padding: "2px 7px",
-                            borderRadius: 6,
-                            border: "1px solid rgba(61,220,132,.45)",
-                            color: "#3DDC84",
-                          }}
-                        >
-                          {topicLabel(row.topic) || "SSR"}
-                        </span>
-                        <strong style={{ fontWeight: 600 }}>{row.label}</strong>
-                        {row.detail ? (
-                          <span style={{ display: "block", fontSize: 13, color: "#9AA1AB", marginTop: 3, lineHeight: 1.45 }}>
-                            {row.detail}
-                          </span>
-                        ) : null}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </section>
-          ) : null}
+            ) : null}
+          </section>
 
           <div className="v8-fa-row2">
             <section className="v8-fa-panel v8-fa-kw" aria-labelledby="kw-h">
-              <h2 id="kw-h">{keywords.length ? "Searches you already show up for" : "Issues on pages we read"}</h2>
+              <h2 id="kw-h">Searches you already show up for</h2>
               <span style={{ fontSize: 13, color: "#9AA1AB" }}>
-                {keywords.length
-                  ? "Your best ones. Anything on page 2 is a near miss: close enough that a fix can move it."
-                  : `Live crawl of ${pages} pages — titles, descriptions, headings and index status. Exact keyword ranks unlock after Google is connected.`}
+                Your best ones. Anything on page 2 is a near miss: close enough that a fix can move it.
               </span>
               <div style={{ overflowX: "auto" }}>
                 <div style={{ minWidth: 560 }}>
@@ -591,29 +588,10 @@ export default function FreeAnalysisScreen() {
                       ))}
                     </>
                   ) : (
-                    <>
-                      <div className="v8-fa-table-head" aria-hidden="true">
-                        <span>PAGE</span>
-                        <span style={{ textAlign: "right" }}>STATUS</span>
-                        <span style={{ textAlign: "right" }}>WORDS</span>
-                        <span>DETAIL</span>
-                      </div>
-                      {(pageRows.length ? pageRows : []).slice(0, 12).map((f) => (
-                        <div key={`${f.path}-${f.label}`} className="v8-fa-table-row">
-                          <span style={{ fontFamily: "var(--mono)", fontSize: 13 }}>{f.path || "/"}</span>
-                          <span style={{ textAlign: "right", fontWeight: 600, color: toneColor(f.color) }}>{f.label}</span>
-                          <span style={{ textAlign: "right", fontFamily: "var(--mono)", fontSize: 12 }}>
-                            {f.words != null ? f.words : "—"}
-                          </span>
-                          <span style={{ fontSize: 12, color: "#9AA1AB" }}>{f.detail}</span>
-                        </div>
-                      ))}
-                      {!pageRows.length ? (
-                        <p style={{ margin: 0, padding: "12px 0", fontSize: 14, color: "#9AA1AB" }}>
-                          No readable pages returned for this scan.
-                        </p>
-                      ) : null}
-                    </>
+                    <p style={{ margin: 0, padding: "12px 0", fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>
+                      No public rankings yet for this site. Connect Google Search Console in Solo to fill this table with
+                      your live searches, volumes, and positions.
+                    </p>
                   )}
                 </div>
               </div>
@@ -623,8 +601,8 @@ export default function FreeAnalysisScreen() {
               <h2 id="cp-h">Who&apos;s getting your customers</h2>
               <span style={{ fontSize: 13, color: "#9AA1AB" }}>
                 {placesQuery
-                  ? `Google Places for “${placesQuery}” — same category as your site${city ? ` in ${city}` : ""}.`
-                  : "Nearby Google Places listings in your category, compared with your site."}
+                  ? `Google Places for “${placesQuery}” — estimated monthly visits from Google, for the same kind of searches.`
+                  : "Estimated monthly visits from Google, for the same kind of searches."}
               </span>
               {competitors.length === 0 && places.length === 0 ? (
                 <p style={{ margin: 0, fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>
@@ -695,10 +673,10 @@ export default function FreeAnalysisScreen() {
 
           <section className="v8-fa-panel" aria-labelledby="fx-h">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-              <h2 id="fx-h">The biggest problems we found</h2>
+              <h2 id="fx-h">The 3 biggest problems we found</h2>
               <span style={{ fontSize: 13, color: "#9AA1AB" }}>Free to see. We&apos;ll fix them for you.</span>
             </div>
-            {problems.map((f) => (
+            {majorProblems.map((f) => (
               <div key={`${f.path}-${f.label}-fix`} className="v8-fa-fix">
                 <span
                   className="v8-fa-fix-dot"
@@ -710,7 +688,7 @@ export default function FreeAnalysisScreen() {
                 <span className="v8-fa-fix-copy">
                   <span style={{ fontSize: 15, fontWeight: 600 }}>
                     {topicLabel(f.topic) ? `${topicLabel(f.topic)} · ` : ""}
-                    {f.path && f.path !== "/" ? `${f.path}: ${f.label}` : f.label}
+                    {f.path && f.path !== "/" && f.path !== "" ? `${f.path}: ${f.label}` : f.label}
                   </span>
                   <span style={{ fontSize: 13, color: "#9AA1AB", lineHeight: 1.5 }}>
                     {f.detail}
@@ -724,17 +702,17 @@ export default function FreeAnalysisScreen() {
                 </button>
               </div>
             ))}
-            {(scan.moreIssues > 0 || pages > 3) && (
+            {moreIssuesCount > 0 ? (
               <>
                 <div className="v8-fa-blur" aria-hidden="true">
                   <span />
                   <span />
                 </div>
                 <span style={{ fontSize: 15, fontWeight: 600, textAlign: "center" }}>
-                  + {scan.moreIssues || Math.max(1, pages - problems.length)} more issues found across your {pages} pages
+                  + {moreIssuesCount} more issues found across your {pages} pages
                 </span>
               </>
-            )}
+            ) : null}
           </section>
 
           <section className="v8-fa-final" aria-labelledby="cta-h">

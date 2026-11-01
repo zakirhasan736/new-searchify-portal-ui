@@ -125,10 +125,8 @@ export default function StatesScreen() {
     setWpConnected(Boolean(wp));
     setScan(scanData);
     const seoHint = scanData?.business
-      ? "SEO fields readable"
-      : scanData?.yoast || scanData?.rankMath
-        ? "Yoast detected"
-        : "pages mapped";
+      ? "SEO fields readable via Searchify"
+      : "pages mapped";
     setWpMeta({
       lastError: wp?.lastError || wpAny?.lastError || "",
       lastUsedAt: wp?.lastUsedAt || wpAny?.lastUsedAt || null,

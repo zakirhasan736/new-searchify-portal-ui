@@ -40,9 +40,15 @@ const TOPICS = [
   { id: "titles", label: "Titles", area: ["Title"], keys: ["no_title", "title_too_long", "title_too_short", "duplicate_title", "irrelevant_title", "duplicate_title_tag"] },
   { id: "descriptions", label: "Descriptions", area: ["Description"], keys: ["no_description", "description_too_long", "description_too_short", "duplicate_description", "irrelevant_description"] },
   { id: "content", label: "Low content", area: ["Content", "Paragraphs"], keys: ["low_content_rate", "paragraph_content", "duplicate_content", "lorem_ipsum", "low_readability_rate"] },
-  { id: "images", label: "Images", area: ["Images", "Image"] },
+  { id: "images", label: "Images", area: ["Images", "Image"], keys: ["image_first_load", "images_no_dimensions", "image_file_names", "no_image_alt", "no_image_title"] },
   { id: "faq", label: "FAQ · reviews · prices", area: ["FAQ"], keys: ["schema_faq", "schema_review", "schema_price", "faq_without_schema", "accordion_without_faq"] },
-  { id: "assets", label: "CSS · scripts · speed", area: ["Assets", "Performance", "Speed", "Render"] },
+  {
+    id: "render",
+    label: "SSR · CSR · first paint",
+    area: ["Render", "Performance"],
+    keys: ["csr_heavy", "ssr_improve", "pre_render", "first_paint", "server_content", "render_mode", "image_first_load", "has_render_blocking_resources", "high_waiting_time", "high_loading_time"],
+  },
+  { id: "assets", label: "CSS · scripts · speed", area: ["Assets", "Performance", "Speed"], keys: ["large_page_size", "size_greater_than_3mb", "no_content_encoding"] },
   { id: "social", label: "Social & video", area: ["Social", "Video"] },
 ];
 
@@ -277,16 +283,27 @@ export default function SiteAuditReportScreen() {
 
   const vitals = featureVitals(speed);
   const criticalFindings = findings.filter((f) => /critical|error/i.test(f.severity || "")).length;
+  const renderFindings = useMemo(
+    () =>
+      findings.filter((f) => {
+        const key = findingKey(f);
+        return (
+          ["csr_heavy", "ssr_improve", "pre_render", "first_paint", "server_content", "render_mode", "image_first_load"].some((k) => key.includes(k)) ||
+          /render|ssr|csr|first paint|pre-render/i.test(String(f.area || "")) ||
+          /ssr|csr|first paint|pre-render|server html/i.test(String(f.name || ""))
+        );
+      }),
+    [findings],
+  );
+
   const speedCards = [
     ["LCP", vitals.lcp !== "—" ? vitals.lcp : kpiPick(speed, ["lcp", "largest contentful paint"])],
+    ["FCP", vitals.fcp !== "—" ? vitals.fcp : kpiPick(speed, ["fcp", "first contentful paint"])],
     ["CLS", vitals.cls !== "—" ? vitals.cls : kpiPick(speed, ["cls", "cumulative layout shift"])],
     ["INP", vitals.inp !== "—" ? vitals.inp : kpiPick(speed, ["inp", "interaction to next paint", "fid"])],
     ["SEO", seoScore || vitals.seo],
     ["Performance", vitals.performance !== "—" ? vitals.performance : kpiPick(speed, ["performance", "perf", "mobile perf"])],
-    [
-      "Errors",
-      String(criticalFindings || vitals.psiFails || 0),
-    ],
+    ["Errors", String(criticalFindings || vitals.psiFails || 0)],
   ];
 
   const counts = report?.statusCounts || {};
@@ -467,12 +484,82 @@ export default function SiteAuditReportScreen() {
 
       <div style={{ maxWidth: "1180px", width: "100%", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "10px" }}>
         {speedCards.map(([label, value]) => (
-          <div key={label} style={{ borderRadius: "16px", background: "#101215", border: "1px solid #1A1D22", padding: "14px 16px", display: "flex", flexDirection: "column", gap: "4px" }}>
+          <button
+            key={label}
+            type="button"
+            onClick={() => {
+              if (label === "FCP" || label === "LCP" || label === "Performance") setTopic("render");
+            }}
+            style={{ textAlign: "left", borderRadius: "16px", background: "#101215", border: "1px solid #1A1D22", padding: "14px 16px", display: "flex", flexDirection: "column", gap: "4px", color: "#F2F4F5", cursor: "pointer" }}
+          >
             <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>{label}</span>
             <strong style={{ fontSize: "20px" }}>{value}</strong>
-          </div>
+          </button>
         ))}
       </div>
+
+      {renderFindings.length ? (
+        <section
+          aria-labelledby="render-h"
+          style={{
+            maxWidth: "1180px",
+            width: "100%",
+            margin: "0 auto",
+            borderRadius: "22px",
+            background: "#101215",
+            border: "1px solid #1A1D22",
+            padding: "20px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+            <h2 id="render-h" style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
+              SSR, CSR, pre-rendering &amp; first paint
+            </h2>
+            <button type="button" onClick={() => setTopic("render")} style={{ ...ghostLink, minHeight: 34, fontSize: 12 }}>
+              Open topic · {renderFindings.length}
+            </button>
+          </div>
+          <p style={{ margin: 0, fontSize: 13, color: "#9AA1AB", lineHeight: 1.5 }}>
+            Cause → fix → what improves after. Searchify reads the first HTML the server sends. Titles and descriptions are controlled in the Searchify portal (Queue) — not in a third-party SEO plugin.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10 }}>
+            {renderFindings.slice(0, 6).map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setTopic("render");
+                  setOpen(item.id);
+                }}
+                style={{
+                  textAlign: "left",
+                  borderRadius: 14,
+                  border: "1px solid #1A1D22",
+                  background: "#0A0B0D",
+                  padding: "12px 14px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                  color: "#F2F4F5",
+                  cursor: "pointer",
+                }}
+              >
+                <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: severityTone(item.severity).dot }}>
+                  {severityTone(item.severity).label} · {item.area || "Render"}
+                </span>
+                <strong style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.35 }}>{item.name}</strong>
+                <span style={{ fontSize: 12, color: "#9AA1AB", lineHeight: 1.45 }}>
+                  {(item.fix || item.evidence || "").slice(0, 160)}
+                  {(item.fix || item.evidence || "").length > 160 ? "…" : ""}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <div role="group" aria-label="Severity" style={{ maxWidth: "1180px", width: "100%", margin: "0 auto", display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
         <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E", width: "56px" }}>SHOW</span>
@@ -791,7 +878,10 @@ export default function SiteAuditReportScreen() {
               "Typos in titles, headings and text",
               "Title and description length, missing, duplicate",
               "Low content and paragraphs",
-              "Images: alt, size, file names",
+              "Images: alt, size, file names, hero first-load",
+              "SSR vs CSR, pre-rendering, first paint (FCP), server-readable content",
+              "Image FAQs: visible Q&A + alt text, schema from Searchify publish",
+              "Titles & descriptions controlled in Searchify Queue (not a third-party SEO plugin)",
             ].map((label) => (
               <span key={label} style={{ fontSize: "13px", color: "#9AA1AB", padding: "8px 0", borderTop: "1px solid #1A1D22" }}>
                 {label}

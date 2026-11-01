@@ -147,9 +147,12 @@ export function sceneFor(step) {
   if (/cloudflare|firewall|cdn|wordfence|sucuri|bot/.test(t)) return "firewall";
   if (/search console|url inspection|request indexing|validate fix|sitemaps?\b/.test(t)) return "gsc";
   if (/rich results|schema|json-ld|structured data|faqpage/.test(t)) return "schema";
-  if (/wordpress|yoast|rank math|seo plugin|settings →|plugin|permalink/.test(t)) return "wordpress";
+  if (/\bssr\b|server-side|pre-render|prerender|first paint|\bfcp\b|ttfb|server html|server reading/.test(t)) return "ssr";
+  if (/\bcsr\b|client-side|hydrat|javascript runs|thin shell|thin html/.test(t)) return "csr";
+  if (/searchify|queue|approve|draft|open graph|publish/.test(t)) return "portal";
+  if (/wordpress|settings →|permalink|reading settings|discourage|wp-admin|featured image/.test(t)) return "wordpress";
   if (/redirect|301|https/.test(t)) return "redirect";
-  if (/image|alt text|alt=|webp|compress/.test(t)) return "image";
+  if (/image|alt text|alt=|webp|compress|width|height|lazy|hero|lcp/.test(t)) return "image";
   if (/title|description|h1|heading|paragraph|content|text|faq|question/.test(t)) return "editor";
   if (/re-check|scan again|run again|press run|try again|refresh/.test(t)) return "recheck";
   if (/email|support|developer|admin|host/.test(t)) return "handoff";
@@ -260,11 +263,14 @@ const SCENE_URL = {
   firewall: "dash.cloudflare.com › Security › Bots",
   gsc: "search.google.com/search-console",
   schema: "search.google.com/test/rich-results",
-  wordpress: "yoursite.com/wp-admin",
+  wordpress: "yoursite.com/wp-admin › Pages",
+  portal: "app.searchify › Queue › Approve",
+  ssr: "first HTML from the server (SSR)",
+  csr: "browser after JavaScript (CSR)",
   redirect: "http://yoursite.com → https://yoursite.com",
-  image: "yoursite.com/wp-admin › Media",
-  editor: "yoursite.com/wp-admin › Edit page",
-  recheck: "searchify › Re-check",
+  image: "Searchify › Site audit › Images",
+  editor: "Searchify › Queue › Edit title",
+  recheck: "Searchify › Site audit › Re-check",
   handoff: "Email to your developer",
   browser: "yoursite.com",
 };
@@ -459,14 +465,85 @@ function Scene({ scene, step, accent, reduce }) {
           <Cursor path={[[50, 85], [88, 18]]} reduce={reduce} delay={0.2} />
         </div>
       );
+    case "portal":
+      return (
+        <div style={{ ...pad, gap: "10px" }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <span style={{ fontFamily: MONO, fontSize: "10px", color: accent }}>SEARCHIFY</span>
+            <span style={{ fontSize: "11px", color: "#9AA1AB" }}>Queue · edit · approve</span>
+          </div>
+          <div style={{ borderRadius: "10px", border: `1px solid ${accent}55`, background: "#101215", padding: "10px", display: "flex", flexDirection: "column", gap: "6px" }}>
+            <span style={{ fontSize: "10px", color: "#7D848E" }}>{/description/i.test(step) ? "Meta description" : "Title tag"}</span>
+            <div style={{ position: "relative", padding: "6px 8px", borderRadius: "6px", border: "1px solid #262A31" }}>
+              <Typing text={/description/i.test(step) ? "Same-day roof repair in Calgary. Book a free inspection." : "Roof Repair Calgary | Same-day service"} reduce={reduce} />
+            </div>
+            <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
+              <span style={{ fontSize: "10px", padding: "4px 8px", borderRadius: "6px", border: "1px solid #262A31", color: "#9AA1AB" }}>Open Graph on</span>
+              <span style={{ fontSize: "10px", padding: "4px 8px", borderRadius: "6px", border: "1px solid #262A31", color: "#9AA1AB" }}>JSON-LD on</span>
+              <span style={{ marginLeft: "auto", fontSize: "10.5px", padding: "4px 10px", borderRadius: "6px", background: accent, color: "#0A0B0D", fontWeight: 600 }}>Approve</span>
+            </div>
+          </div>
+          <span style={{ fontSize: "10.5px", color: "#7D848E" }}>Titles &amp; descriptions are controlled here — not in a third-party SEO plugin.</span>
+          <Cursor path={[[20, 90], [88, 58]]} reduce={reduce} delay={0.8} />
+        </div>
+      );
+    case "ssr":
+      return (
+        <div style={pad}>
+          <span style={{ fontSize: "11px", fontWeight: 600, color: "#3DDC84" }}>SSR · first HTML from the server</span>
+          <motion.div initial={reduce ? false : { opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: reduce ? 0 : 0.4 }} style={{ borderRadius: "10px", border: "1px solid rgba(61,220,132,.35)", background: "#101215", padding: "10px", display: "flex", flexDirection: "column", gap: "5px" }}>
+            <span style={{ fontFamily: MONO, fontSize: "10px", color: "#3DDC84" }}>&lt;h1&gt; Roof repair Calgary &lt;/h1&gt;</span>
+            <span style={{ fontSize: "10.5px", color: "#D7DADE" }}>Copy + hero image already in the response</span>
+            <div style={{ height: "28px", borderRadius: "6px", background: "linear-gradient(90deg,#2B3A55,#4DA3FF66)" }} />
+          </motion.div>
+          <span style={{ fontSize: "10.5px", color: "#9AA1AB", lineHeight: 1.4 }}>After this improves: crawlers read content on first paint · LCP/FCP drop · Searchify matches Google.</span>
+          <Cursor path={[[70, 85], [40, 42]]} reduce={reduce} />
+        </div>
+      );
+    case "csr":
+      return (
+        <div style={pad}>
+          <span style={{ fontSize: "11px", fontWeight: 600, color: "#FFC53D" }}>CSR · thin shell until JavaScript runs</span>
+          <div style={{ borderRadius: "10px", border: "1px solid rgba(255,197,61,.35)", background: "#101215", padding: "10px", display: "flex", flexDirection: "column", gap: "6px" }}>
+            <span style={{ fontFamily: MONO, fontSize: "10px", color: "#FF8A80" }}>&lt;div id=&quot;root&quot;&gt;&lt;/div&gt;</span>
+            <span style={{ fontSize: "10.5px", color: "#9AA1AB" }}>Scripts loading… content not in first HTML</span>
+            <motion.div animate={reduce ? undefined : { opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.6, repeat: Infinity }} style={{ height: "8px", width: "70%", borderRadius: "4px", background: "#262A31" }} />
+          </div>
+          <span style={{ fontSize: "10.5px", color: "#9AA1AB", lineHeight: 1.4 }}>Fix: move H1, copy &amp; hero into SSR / pre-render. Then first paint shows real content.</span>
+          <Cursor path={[[25, 90], [55, 38]]} reduce={reduce} />
+        </div>
+      );
     case "wordpress":
     case "image":
     case "editor":
       return (
         <div style={{ ...pad, flexDirection: "row", gap: "0", padding: 0 }}>
           <div style={{ width: "26%", background: "#1D2327", padding: "10px 8px", display: "flex", flexDirection: "column", gap: "6px" }}>
-            {["Dashboard", "Pages", "Media", scene === "wordpress" ? "Yoast SEO" : "Posts", "Settings"].map((label, i) => (
-              <span key={label} style={{ fontSize: "10.5px", padding: "3px 6px", borderRadius: "4px", color: "#C3C4C7", background: (scene === "image" ? i === 2 : scene === "editor" ? i === 1 : i === 3) ? "#2271B1" : "transparent" }}>
+            {(scene === "editor" || scene === "image"
+              ? ["Home", "Queue", "Audit", "Images", "Settings"]
+              : ["Dashboard", "Pages", "Media", "Settings", "Reading"]
+            ).map((label, i) => (
+              <span
+                key={label}
+                style={{
+                  fontSize: "10.5px",
+                  padding: "3px 6px",
+                  borderRadius: "4px",
+                  color: "#C3C4C7",
+                  background:
+                    scene === "image"
+                      ? i === 3
+                        ? "#2271B1"
+                        : "transparent"
+                      : scene === "editor"
+                        ? i === 1
+                          ? "#2271B1"
+                          : "transparent"
+                        : i === 4
+                          ? "#2271B1"
+                          : "transparent",
+                }}
+              >
                 {label}
               </span>
             ))}
@@ -474,38 +551,38 @@ function Scene({ scene, step, accent, reduce }) {
           <div style={{ position: "relative", flex: 1, padding: "12px 14px", display: "flex", flexDirection: "column", gap: "8px" }}>
             {scene === "image" ? (
               <>
+                <span style={{ fontSize: "10px", color: accent, fontFamily: MONO }}>SITE AUDIT · IMAGES</span>
                 <div style={{ display: "flex", gap: "8px" }}>
                   <div style={{ width: "56px", height: "42px", borderRadius: "6px", background: "linear-gradient(135deg,#2B3A55,#4DA3FF55)" }} />
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "5px" }}>
-                    <span style={{ fontSize: "10px", color: "#7D848E" }}>Alternative text</span>
+                    <span style={{ fontSize: "10px", color: "#7D848E" }}>Alt text · width × height in SSR HTML</span>
                     <div style={{ position: "relative", padding: "5px 7px", borderRadius: "6px", border: "1px solid #262A31" }}>
                       <Typing text="Plumber fixing a kitchen sink in Toronto" reduce={reduce} />
                     </div>
                   </div>
                 </div>
-                <div style={line("60%")} />
-                <Highlight accent={accent} reduce={reduce} style={{ left: "calc(56px + 18px)", right: "12px", top: "26px", height: "26px" }} />
+                <span style={{ fontSize: "10px", color: "#7D848E" }}>Hero: eager · Below fold: lazy</span>
+                <Highlight accent={accent} reduce={reduce} style={{ left: "calc(56px + 18px)", right: "12px", top: "40px", height: "26px" }} />
               </>
             ) : scene === "editor" ? (
               <>
-                <span style={{ fontSize: "10px", color: "#7D848E" }}>{/title/i.test(step) ? "SEO title" : /description/i.test(step) ? "Meta description" : "Page heading / first paragraph"}</span>
+                <span style={{ fontSize: "10px", color: accent, fontFamily: MONO }}>SEARCHIFY QUEUE</span>
+                <span style={{ fontSize: "10px", color: "#7D848E" }}>{/title/i.test(step) ? "Title tag" : /description/i.test(step) ? "Meta description" : /faq/i.test(step) ? "FAQ heading + answer" : "Page heading / first paragraph"}</span>
                 <div style={{ position: "relative", padding: "6px 8px", borderRadius: "6px", border: "1px solid #262A31" }}>
-                  <Typing text="Emergency Plumber in Toronto | Acme Plumbing" reduce={reduce} />
+                  <Typing text={/faq/i.test(step) ? "Q: How fast can you arrive? A: Same day in Calgary." : "Emergency Plumber in Toronto | Acme Plumbing"} reduce={reduce} />
                 </div>
                 <div style={line("90%")} />
                 <div style={line("75%")} />
-                <div style={line("82%")} />
-                <span style={{ alignSelf: "flex-end", fontSize: "10.5px", padding: "4px 10px", borderRadius: "4px", background: "#2271B1", color: "#fff" }}>Update</span>
+                <span style={{ alignSelf: "flex-end", fontSize: "10.5px", padding: "4px 10px", borderRadius: "4px", background: accent, color: "#0A0B0D", fontWeight: 600 }}>Approve in Searchify</span>
               </>
             ) : (
               <>
-                <span style={{ fontSize: "11px", color: "#D7DADE", fontWeight: 600 }}>{/reading|discourage/i.test(step) ? "Reading Settings" : "Advanced"}</span>
+                <span style={{ fontSize: "11px", color: "#D7DADE", fontWeight: 600 }}>{/reading|discourage/i.test(step) ? "Reading Settings" : "Pages"}</span>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "7px 8px", borderRadius: "6px", background: "#101215" }}>
                   <motion.span initial={{ background: "#2271B1" }} animate={{ background: reduce ? "transparent" : ["#2271B1", "#2271B1", "transparent"] }} transition={{ duration: 2, times: [0, 0.85, 1] }} style={{ width: "12px", height: "12px", borderRadius: "3px", border: "1.5px solid #8C8F94" }} />
-                  <span style={{ fontSize: "10.5px", color: "#B6BCC5" }}>{/reading|discourage/i.test(step) ? "Discourage search engines from indexing" : "No index this page"}</span>
+                  <span style={{ fontSize: "10.5px", color: "#B6BCC5" }}>{/reading|discourage/i.test(step) ? "Discourage search engines from indexing" : "Edit page content in WordPress"}</span>
                 </div>
-                <div style={line("70%")} />
-                <div style={line("55%")} />
+                <span style={{ fontSize: "10px", color: "#7D848E", lineHeight: 1.4 }}>Titles &amp; meta stay in Searchify. WordPress is for page body, media, and Reading settings.</span>
                 <span style={{ alignSelf: "flex-start", fontSize: "10.5px", padding: "4px 10px", borderRadius: "4px", background: "#2271B1", color: "#fff" }}>Save changes</span>
               </>
             )}

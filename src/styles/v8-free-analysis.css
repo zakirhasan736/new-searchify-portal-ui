@@ -398,6 +398,51 @@
 .v8-fa-panel.is-blue {
   border-color: rgba(77, 163, 255, 0.35);
 }
+.v8-fa-topics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+.v8-fa-topic {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  min-width: 0;
+}
+.v8-fa-topic.is-error {
+  border-color: rgba(255, 90, 78, 0.45);
+}
+.v8-fa-topic.is-warning {
+  border-color: rgba(255, 197, 61, 0.4);
+}
+.v8-fa-topic.is-ok {
+  border-color: rgba(61, 220, 132, 0.28);
+}
+.v8-fa-topic-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.v8-fa-topic strong {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.v8-fa-topic-state {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #9aa1ab;
+}
+.v8-fa-topic-detail {
+  font-size: 12px;
+  color: #7d848e;
+  line-height: 1.45;
+}
 .v8-fa-row2 {
   display: flex;
   flex-wrap: wrap;

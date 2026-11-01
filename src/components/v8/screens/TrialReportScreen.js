@@ -65,14 +65,47 @@ function fmtDay(iso) {
 }
 
 function statusForChange(change) {
-  if (!change) return { status: "Waiting on data", color: "#9AA1AB" };
+  if (!change) return { status: "Too early to call", color: "#9AA1AB" };
   const c = String(change);
   if (/proven|goal/i.test(c)) return { status: "Proven", color: "#3DDC84" };
   if (/\+/.test(c) || /rising|early/i.test(c)) {
-    return { status: c.startsWith("+") ? `Early sign, ${c}` : "Early sign, rising", color: "#3DDC84" };
+    return {
+      status: /early sign/i.test(c) ? c : c.startsWith("+") ? `Early sign, ${c}` : "Early sign, rising",
+      color: "#3DDC84",
+    };
   }
   if (/waiting|connect|no pages|too early/i.test(c)) return { status: "Too early to call", color: "#9AA1AB" };
-  return { status: c || "Early sign", color: "#FFC53D" };
+  if (/^early sign$/i.test(c)) return { status: "Early sign", color: "#FFC53D" };
+  return { status: c || "Too early to call", color: "#9AA1AB" };
+}
+
+function asCount(value) {
+  if (value == null || value === "" || value === "—") return 0;
+  const n = Number(String(value).replace(/,/g, "").replace(/%/g, "").trim());
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+}
+
+function fmtCount(n) {
+  return Number(n || 0).toLocaleString("en-US");
+}
+
+const HONEST_METRICS = [
+  "Healthy pages",
+  "Searches you show up for",
+  "Times Google showed your site",
+  "Searches on page one",
+  "Clicks from Google",
+  "Calls and form leads",
+];
+
+function pickSinceRow(rows, label) {
+  const want = String(label).toLowerCase();
+  const list = Array.isArray(rows) ? rows : [];
+  return (
+    list.find((row) => String(row?.label || "").trim().toLowerCase() === want) ||
+    list.find((row) => String(row?.label || "").toLowerCase().includes(want.split(" ")[0])) ||
+    null
+  );
 }
 
 function classifyTopic(text) {
@@ -129,29 +162,6 @@ function extractAuditTopics(audit, onPage) {
   return topics.slice(0, 10);
 }
 
-function vitalsFromAudit(audit) {
-  const out = {};
-  (audit?.rows || []).forEach((row) => {
-    if (!Array.isArray(row) || !row.length) return;
-    const key = String(row[0] || "").toUpperCase();
-    if (key === "LCP") out.lcp = row[1];
-    if (key === "CLS") out.cls = row[1];
-    if (key === "PERFORMANCE") out.performance = row[1];
-    if (key === "SEO") out.seo = row[1];
-  });
-  const panels = audit?.tablePanels || [];
-  panels.forEach((panel) => {
-    if (!/vital/i.test(panel.title || "")) return;
-    (panel.rows || []).forEach((row) => {
-      if (!Array.isArray(row)) return;
-      const name = String(row[0] || "").toUpperCase();
-      if (name === "LCP") out.lcp = out.lcp || row[1];
-      if (name === "CLS") out.cls = out.cls || row[1];
-    });
-  });
-  return out;
-}
-
 /**
  * TrialReport.dc.html — Day-30 before-and-after for free-month accounts.
  * Live: billing trial clock + changes + site audit / PageSpeed topic reports.
@@ -165,6 +175,7 @@ export default function TrialReportScreen() {
   const [onPagePayload, setOnPagePayload] = useState(null);
   const [scanSnapshot, setScanSnapshot] = useState(null);
   const [organic, setOrganic] = useState(null);
+  const [ga4, setGa4] = useState(null);
   const { hostname } = activeSiteContext(loadJourney());
   const user = typeof window !== "undefined" ? getUser() : null;
 
@@ -177,9 +188,10 @@ export default function TrialReportScreen() {
       loadFeature("site-audit").catch(() => ({ ok: false })),
       loadFeature("on-page-seo").catch(() => ({ ok: false })),
       loadFeature("organic-search").catch(() => ({ ok: false })),
+      loadFeature("ga4-overview").catch(() => ({ ok: false })),
       getSiteScan().catch(() => ({ ok: false })),
     ])
-      .then(([bill, ch, auditFeat, onPageFeat, organicFeat, scanRes]) => {
+      .then(([bill, ch, auditFeat, onPageFeat, organicFeat, ga4Feat, scanRes]) => {
         if (cancel) return;
         if (bill?.ok) setAccount(bill.data || bill);
         const rows = Array.isArray(ch?.data) ? ch.data : ch?.data?.changes || ch?.data?.rows || [];
@@ -190,6 +202,7 @@ export default function TrialReportScreen() {
         setAuditPayload(audit);
         setOnPagePayload(onPage);
         setOrganic(featurePayload(organicFeat));
+        setGa4(featurePayload(ga4Feat));
 
         const scan = scanRes?.ok ? scanRes.data?.scan || scanRes.data || null : null;
         setScanSnapshot(scan);
@@ -254,7 +267,6 @@ export default function TrialReportScreen() {
   }, [ends, trialDays, dayNum]);
 
   const name = firstName(user, account?.business);
-  const since = Array.isArray(account?.since) ? account.since : [];
   const moves = Number(account?.movesShipped || account?.measuredMoves || 0);
 
   const beforeKeys = useMemo(() => {
@@ -271,17 +283,6 @@ export default function TrialReportScreen() {
   const afterY = afterDots.filter((d) => d.key === "y").length;
   const afterG = afterDots.filter((d) => d.key === "g").length;
   const afterLabel = `${afterR} urgent · ${afterY} need work · ${afterG} healthy`;
-
-  const vitals = useMemo(() => {
-    const fromScan = scanSnapshot?.pagespeed?.vitals || {};
-    const fromAudit = vitalsFromAudit(auditPayload || {});
-    return {
-      lcp: fromAudit.lcp || fromScan.lcp,
-      cls: fromAudit.cls || fromScan.cls,
-      performance: fromAudit.performance || scanSnapshot?.pagespeed?.performance,
-      seo: fromAudit.seo || scanSnapshot?.pagespeed?.seo,
-    };
-  }, [auditPayload, scanSnapshot]);
 
   const topicReports = useMemo(() => {
     const fromAudit = extractAuditTopics(auditPayload || {}, onPagePayload || {});
@@ -309,98 +310,115 @@ export default function TrialReportScreen() {
   const ssrSolutions = scanSnapshot?.rendering?.solutions || [];
   const renderMode = scanSnapshot?.rendering?.modeLabel || "";
 
-  const organicStats = useMemo(() => {
-    const kpis = organic?.kpis || [];
-    const pick = (label) => {
-      const hit = kpis.find((row) => Array.isArray(row) && String(row[0] || "").toLowerCase().includes(label));
-      return hit ? hit[1] : null;
+  const liveFallback = useMemo(() => {
+    const kpis = [...(organic?.kpis || []), ...((organic?.panels?.kpis) || [])];
+    const pick = (...parts) => {
+      const hit = kpis.find(
+        (row) => Array.isArray(row) && parts.some((p) => String(row[0] || "").toLowerCase().includes(p)),
+      );
+      return asCount(hit?.[1]);
     };
+    const queryRows = Array.isArray(organic?.rows)
+      ? organic.rows
+      : Array.isArray(organic?.panels?.queries)
+        ? organic.panels.queries
+        : [];
+    let pageOne = pick("page one", "page 1", "top 10");
+    if (!pageOne && queryRows.length) {
+      pageOne = queryRows.reduce((n, row) => {
+        let pos = 0;
+        try {
+          if (Array.isArray(row) && row.length >= 5) pos = Number(String(row[4]).replace(/,/g, ""));
+          else if (row && typeof row === "object") pos = Number(row.position || row.rank || 0);
+        } catch {
+          pos = 0;
+        }
+        return pos > 0 && pos <= 10 ? n + 1 : n;
+      }, 0);
+    }
+    const searches =
+      pick("quer", "search", "keyword") ||
+      (Array.isArray(queryRows) ? queryRows.length : 0) ||
+      asCount(scanSnapshot?.visibility?.searches);
+    const gaKpis = [...(ga4?.kpis || []), ...((ga4?.panels?.kpis) || [])];
+    const leadHit = gaKpis.find(
+      (row) =>
+        Array.isArray(row) &&
+        /conversion|key event|lead|call|form|contact/i.test(String(row[0] || "")),
+    );
     return {
-      queries: pick("quer") || pick("search") || organic?.panels?.queries || null,
-      clicks: pick("click") || null,
-      impressions: pick("impression") || pick("show") || null,
+      healthy: afterG || asCount(scanSnapshot?.counts?.green) || asCount(auditCounts.green),
+      searches,
+      impressions: pick("impression", "show"),
+      pageOne,
+      clicks: pick("click"),
+      leads: asCount(leadHit?.[1] || ga4?.conversions || ga4?.keyEvents || ga4?.leads),
     };
-  }, [organic]);
+  }, [organic, ga4, scanSnapshot, afterG, auditCounts.green]);
 
-  const metrics = since.length
-    ? since.map((row) => {
-        const st = statusForChange(row.change);
-        return { what: row.label, a: row.from, b: row.to, ...st };
-      })
-    : [
-        {
-          what: "Healthy pages",
-          a: String(beforeKeys.filter((k) => k === "g").length),
-          b: String(afterG),
-          status: moves ? "Proven" : "Waiting on first scan",
-          color: moves ? "#3DDC84" : "#9AA1AB",
-        },
-        {
-          what: "Searches you show up for",
-          a: organicStats.queries != null ? String(organicStats.queries) : "—",
-          b: organicStats.queries != null ? String(organicStats.queries) : "—",
-          status: organicStats.queries != null ? "Early sign" : "Connect Search Console",
-          color: organicStats.queries != null ? "#FFC53D" : "#9AA1AB",
-        },
-        {
-          what: "Clicks from Google",
-          a: organicStats.clicks != null ? String(organicStats.clicks) : "—",
-          b: organicStats.clicks != null ? String(organicStats.clicks) : "—",
-          status: organicStats.clicks != null ? "Too early to call" : "Connect Search Console",
-          color: "#9AA1AB",
-        },
-        ...(vitals.lcp
-          ? [
-              {
-                what: "LCP (PageSpeed)",
-                a: "—",
-                b: String(vitals.lcp),
-                status: "Measured",
-                color: "#FFC53D",
-              },
-            ]
-          : []),
-        ...(vitals.cls
-          ? [
-              {
-                what: "CLS (PageSpeed)",
-                a: "—",
-                b: String(vitals.cls),
-                status: "Measured",
-                color: "#FFC53D",
-              },
-            ]
-          : []),
-        ...(scanSnapshot?.pagespeed?.vitals?.ttfb
-          ? [
-              {
-                what: "TTFB (server / SSR)",
-                a: "—",
-                b: String(scanSnapshot.pagespeed.vitals.ttfb),
-                status: "Measured",
-                color: "#FFC53D",
-              },
-            ]
-          : []),
-        ...(renderMode
-          ? [
-              {
-                what: "HTML delivery",
-                a: "—",
-                b: renderMode,
-                status: scanSnapshot?.rendering?.csrHeavy ? "CSR risk" : "SSR path",
-                color: scanSnapshot?.rendering?.csrHeavy ? "#FF5A4E" : "#3DDC84",
-              },
-            ]
-          : []),
-        {
-          what: "Moves shipped",
-          a: "0",
-          b: String(moves),
-          status: moves ? "Proven" : "Too early to call",
-          color: moves ? "#3DDC84" : "#9AA1AB",
-        },
-      ];
+  const metrics = useMemo(() => {
+    const apiRows = Array.isArray(account?.trialMetrics) ? account.trialMetrics : [];
+    return HONEST_METRICS.map((label) => {
+      const row = pickSinceRow(apiRows, label);
+      let from = asCount(row?.from);
+      let to = asCount(row?.to);
+      let change = row?.change || "";
+
+      // Live fallbacks when billing pack has zeros but features already have numbers.
+      if (!apiRows.length || (from === 0 && to === 0)) {
+        if (label === "Healthy pages") {
+          to = liveFallback.healthy;
+          from = apiRows.length ? from : to;
+        } else if (label === "Searches you show up for") {
+          to = liveFallback.searches;
+          from = apiRows.length ? from : to;
+        } else if (label === "Times Google showed your site") {
+          to = liveFallback.impressions;
+          from = apiRows.length ? from : to;
+        } else if (label === "Searches on page one") {
+          to = liveFallback.pageOne;
+          from = apiRows.length ? from : to;
+        } else if (label === "Clicks from Google") {
+          to = liveFallback.clicks;
+          from = apiRows.length ? from : to;
+        } else if (label === "Calls and form leads") {
+          to = liveFallback.leads;
+          from = apiRows.length ? from : to;
+        }
+      } else {
+        // Prefer live "now" when feature data is richer than the billing snapshot.
+        if (label === "Healthy pages" && liveFallback.healthy > to) to = liveFallback.healthy;
+        if (label === "Searches you show up for" && liveFallback.searches > to) to = liveFallback.searches;
+        if (label === "Times Google showed your site" && liveFallback.impressions > to) to = liveFallback.impressions;
+        if (label === "Searches on page one" && liveFallback.pageOne > to) to = liveFallback.pageOne;
+        if (label === "Clicks from Google" && liveFallback.clicks > to) to = liveFallback.clicks;
+        if (label === "Calls and form leads" && liveFallback.leads > to) to = liveFallback.leads;
+      }
+
+      if (!change) {
+        if (from === 0 && to === 0) change = "Too early to call";
+        else if (label === "Healthy pages" && to > from && to - from >= 3) change = "Proven";
+        else if (to > from && from > 0) {
+          const pct = Math.round(((to - from) / from) * 100);
+          change = pct >= 10 ? `Early sign, +${pct}%` : "Early sign, rising";
+        } else if (to > from) change = "Early sign";
+        else change = "Too early to call";
+      }
+
+      const st = statusForChange(change);
+      return {
+        what: label,
+        a: fmtCount(from),
+        b: fmtCount(to),
+        status: st.status,
+        color: st.color,
+      };
+    });
+  }, [account?.trialMetrics, liveFallback]);
+
+  const metricsNote =
+    account?.trialMetricsNote ||
+    'From your Google Search Console and Analytics when connected. "Too early" means a fix went live recently or we do not have history yet.';
 
   const fixed = changes
     .filter((c) => /shipped|live|applied|published|approved/i.test(String(c.status || c.state || c.action || "live")))
@@ -502,10 +520,7 @@ export default function TrialReportScreen() {
             ))}
           </div>
         </div>
-        <span style={{ fontSize: 13, color: "#9AA1AB" }}>
-          From your Google Search Console, Analytics, and PageSpeed when connected. &ldquo;Too early&rdquo; means a fix
-          went live recently and Google hasn&apos;t finished re-reading the page.
-        </span>
+        <span style={{ fontSize: 13, color: "#9AA1AB" }}>{metricsNote}</span>
       </section>
 
       {topicReports.length || ssrSolutions.length ? (
