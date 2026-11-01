@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useId, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { deleteCmsConnection, disconnectGoogle, forgetWebsite, previewSiteScan, runSiteScan, startGoogleOAuth } from "@/lib/v1Api";
@@ -15,6 +15,135 @@ const TONE = { red: "#FF5A4E", yellow: "#FFC53D", green: "#3DDC84", blue: "#4DA3
 import "@/styles/v8-screens.css";
 
 const BLUE = "#4DA3FF";
+
+const PLUG_TIPS = {
+  gsc: {
+    term: "Search Console",
+    text: "Google’s free tool that shows which searches your site shows up for and how many people click. Searchify only reads it. It can’t change anything in your Google account.",
+    href: "https://searchify.io/help/search-console",
+  },
+  wp: {
+    term: "WordPress",
+    text: "Where fixes are made. Searchify only changes what you approve, and every change can be undone in one click.",
+    href: "https://searchify.io/help/wordpress",
+  },
+  ga: {
+    term: "Google Analytics",
+    text: "Shows visits, calls and leads from your site. Searchify only reads it, to measure what each fix earned (Pro and Agency).",
+    href: "https://searchify.io/help/google-analytics",
+  },
+  shopify: {
+    term: "Shopify",
+    text: "Online store platform. Searchify will map product and collection pages so approved SEO fixes can ship there — coming soon.",
+    href: "https://searchify.io/help/shopify",
+  },
+  webflow: {
+    term: "Webflow",
+    text: "Design and CMS platform. Searchify will map pages and CMS collections for approved fixes — coming soon.",
+    href: "https://searchify.io/help/webflow",
+  },
+  gbp: {
+    term: "Google Business Profile",
+    text: "Your Google business listing. Searchify will help with posts and Q&A that support local search — coming soon.",
+    href: "https://searchify.io/help/google-business-profile",
+  },
+  youtube: {
+    term: "YouTube",
+    text: "Video channel. Searchify will help align descriptions and chapters with your pages — coming soon.",
+    href: "https://searchify.io/help/youtube",
+  },
+};
+
+function PlugTip({ tipId, term, text, href, align = "l" }) {
+  const [open, setOpen] = useState(false);
+  const [pin, setPin] = useState(false);
+  const wrapRef = useRef(null);
+  const reactId = useId();
+  const popId = `tip-${tipId || reactId.replace(/:/g, "")}`;
+
+  useEffect(() => {
+    if (!open || !pin) return undefined;
+    const onDoc = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) {
+        setOpen(false);
+        setPin(false);
+      }
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        setPin(false);
+      }
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, pin]);
+
+  if (!term || !text) return null;
+
+  return (
+    <span
+      ref={wrapRef}
+      className="sfy-tip"
+      onMouseEnter={() => {
+        if (!pin) setOpen(true);
+      }}
+      onMouseLeave={() => {
+        if (!pin) setOpen(false);
+      }}
+    >
+      <button
+        type="button"
+        className="sfy-i"
+        aria-label={`What is ${term}?`}
+        aria-expanded={open}
+        aria-controls={popId}
+        onFocus={() => {
+          if (!open) {
+            setOpen(true);
+            setPin(false);
+          }
+        }}
+        onBlur={(e) => {
+          const w = e.currentTarget.closest(".sfy-tip");
+          if (w && e.relatedTarget && w.contains(e.relatedTarget)) return;
+          setOpen(false);
+          setPin(false);
+        }}
+        onClick={() => {
+          if (open && pin) {
+            setOpen(false);
+            setPin(false);
+          } else {
+            setOpen(true);
+            setPin(true);
+          }
+        }}
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+          <path d="M12 11v7" />
+          <path d="M12 6.5h.01" />
+        </svg>
+      </button>
+      {open ? (
+        <span className={`sfy-pop sfy-pop-${align}`} id={popId} role="dialog" aria-label={`What is ${term}?`}>
+          <span className="sfy-pop-card">
+            <span>{text}</span>
+            {href ? (
+              <a href={href} target="_blank" rel="noreferrer">
+                Learn more
+              </a>
+            ) : null}
+          </span>
+        </span>
+      ) : null}
+    </span>
+  );
+}
 
 function hostOf(value) {
   const raw = String(value || "").trim();
@@ -301,6 +430,7 @@ export default function ConnectScreen() {
 
   return (
     <div
+      className="v8-connect"
       style={{
         flex: "999 1 560px",
         minWidth: 0,
@@ -594,7 +724,17 @@ export default function ConnectScreen() {
                   gap: "8px",
                 }}
               >
-                <span style={{ fontSize: "18px", fontWeight: 600 }}>{p.name}</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "18px", fontWeight: 600 }}>{p.name}</span>
+                  {PLUG_TIPS[p.id] ? (
+                    <PlugTip
+                      tipId={p.id}
+                      term={PLUG_TIPS[p.id].term}
+                      text={PLUG_TIPS[p.id].text}
+                      href={PLUG_TIPS[p.id].href}
+                    />
+                  ) : null}
+                </span>
                 <span
                   style={{
                     display: "inline-flex",
@@ -982,13 +1122,13 @@ const MCP_LEVELS = [
 ];
 
 const PLUGIN_SOON = [
-  { name: "Shopify", desc: "Online stores: product and collection pages" },
-  { name: "Webflow", desc: "Webflow sites: pages and CMS collections" },
+  { id: "shopify", name: "Shopify", desc: "Online stores: product and collection pages" },
+  { id: "webflow", name: "Webflow", desc: "Webflow sites: pages and CMS collections" },
 ];
 
 const SOCIAL_SOON = [
-  { name: "Google Business Profile", desc: "Posts and Q&A for local search" },
-  { name: "YouTube", desc: "Descriptions and chapters linked to pages" },
+  { id: "gbp", name: "Google Business Profile", desc: "Posts and Q&A for local search" },
+  { id: "youtube", name: "YouTube", desc: "Descriptions and chapters linked to pages" },
 ];
 
 function PluginsAndMcpPanel({ siteHost }) {
@@ -1045,7 +1185,17 @@ function PluginsAndMcpPanel({ siteHost }) {
               }}
             >
               <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
-                <span style={{ fontSize: "14px", fontWeight: 500, color: "#9AA1AB" }}>{item.name}</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "14px", fontWeight: 500, color: "#9AA1AB" }}>{item.name}</span>
+                  {PLUG_TIPS[item.id] ? (
+                    <PlugTip
+                      tipId={`soon-${item.id}`}
+                      term={PLUG_TIPS[item.id].term}
+                      text={PLUG_TIPS[item.id].text}
+                      href={PLUG_TIPS[item.id].href}
+                    />
+                  ) : null}
+                </span>
                 <span style={{ fontSize: "13px", color: "#7D848E" }}>{item.desc}</span>
               </div>
               <span style={{ fontSize: "12px", fontWeight: 600, color: "#7D848E" }}>Coming soon</span>
@@ -1081,7 +1231,17 @@ function PluginsAndMcpPanel({ siteHost }) {
               }}
             >
               <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
-                <span style={{ fontSize: "14px", fontWeight: 500, color: "#9AA1AB" }}>{item.name}</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "14px", fontWeight: 500, color: "#9AA1AB" }}>{item.name}</span>
+                  {PLUG_TIPS[item.id] ? (
+                    <PlugTip
+                      tipId={`soon-${item.id}`}
+                      term={PLUG_TIPS[item.id].term}
+                      text={PLUG_TIPS[item.id].text}
+                      href={PLUG_TIPS[item.id].href}
+                    />
+                  ) : null}
+                </span>
                 <span style={{ fontSize: "13px", color: "#7D848E" }}>{item.desc}</span>
               </div>
               <span style={{ fontSize: "12px", fontWeight: 600, color: "#7D848E" }}>Coming soon</span>

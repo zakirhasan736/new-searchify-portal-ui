@@ -522,6 +522,91 @@ body:has(.v8-app-chrome) {
   }
 }
 
+/* Connect.html / shared info `i` tip (sfy-tip) — also used on Plug in cards */
+.sfy-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  flex: none;
+}
+.sfy-i {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid #5b616b;
+  background: transparent;
+  color: #9aa1ab;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  cursor: pointer;
+  font: inherit;
+}
+.sfy-i::after {
+  content: "";
+  position: absolute;
+  inset: -11px;
+}
+.sfy-i:hover,
+.sfy-i[aria-expanded="true"] {
+  border-color: #d7dade;
+  color: #f2f4f5;
+}
+.sfy-i:focus-visible {
+  outline: 2px solid #4da3ff;
+  outline-offset: 2px;
+}
+.sfy-pop {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding-top: 8px;
+  z-index: 40;
+  width: 280px;
+  max-width: 80vw;
+  text-align: left;
+}
+.sfy-pop.sfy-pop-l {
+  left: -8px;
+  transform: none;
+}
+.sfy-pop.sfy-pop-r {
+  left: auto;
+  right: -8px;
+  transform: none;
+}
+.sfy-pop-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #16181c;
+  border: 1px solid #2e333b;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  font-family: Geist, "Helvetica Neue", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.5;
+  color: #d7dade;
+  letter-spacing: 0;
+  white-space: normal;
+  text-transform: none;
+}
+.sfy-pop-card a {
+  color: #4da3ff;
+  font-weight: 500;
+  text-decoration: none;
+}
+.sfy-pop-card a:hover {
+  color: #8cc4ff;
+}
+
 /* Page progress (Path.html) */
 .v8-path-tip {
   position: relative;
@@ -949,4 +1034,87 @@ body:has(.v8-app-chrome) {
     animation: none;
     transition: none;
   }
+}
+
+/* Connect (Plug in) tips — from Connect.html */
+.v8-connect .sfy-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+.v8-connect .sfy-i {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid #5b616b;
+  background: transparent;
+  color: #9aa1ab;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  cursor: pointer;
+}
+.v8-connect .sfy-i::after {
+  content: "";
+  position: absolute;
+  inset: -11px;
+}
+.v8-connect .sfy-i:hover,
+.v8-connect .sfy-i[aria-expanded="true"] {
+  border-color: #d7dade;
+  color: #f2f4f5;
+}
+.v8-connect .sfy-i:focus-visible {
+  outline: 2px solid #4da3ff;
+  outline-offset: 2px;
+}
+.v8-connect .sfy-pop {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding-top: 8px;
+  z-index: 40;
+  width: 280px;
+  max-width: 80vw;
+  text-align: left;
+}
+.v8-connect .sfy-pop.sfy-pop-l {
+  left: -8px;
+  transform: none;
+}
+.v8-connect .sfy-pop.sfy-pop-r {
+  left: auto;
+  right: -8px;
+  transform: none;
+}
+.v8-connect .sfy-pop-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #16181c;
+  border: 1px solid #2e333b;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  font-family: Geist, "Helvetica Neue", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.5;
+  color: #d7dade;
+  letter-spacing: 0;
+  white-space: normal;
+  text-transform: none;
+}
+.v8-connect .sfy-pop-card a {
+  color: #4da3ff;
+  font-weight: 500;
+  text-decoration: none;
+}
+.v8-connect .sfy-pop-card a:hover {
+  color: #8cc4ff;
 }
