@@ -5,7 +5,15 @@ import Link from "next/link";
 import { useNavigate } from "@/lib/navigation";
 import { parseJwt, userLogin, userLogout } from "../../../utils/users/Helpers";
 import { fetchProjectByUserId } from "../../../utils/users/ProjectUtil";
-import { hydrateJourney, normalizeSiteUrl, postLoginPath, seedDraftSite, stashPendingSite } from "@/lib/journey";
+import {
+  adoptPlanFromBilling,
+  hydrateJourney,
+  normalizeSiteUrl,
+  postLoginPath,
+  seedDraftSite,
+  stashPendingSite,
+} from "@/lib/journey";
+import { getBillingAccount } from "@/lib/billingApi";
 import { PARTNER_KEY, PREVIEW_KEY, clearSessionFlag, isAdminUser, writeSessionFlag } from "@/lib/authRoles";
 import { errorText, forgotPassword } from "@/lib/accountApi";
 import "@/styles/v8-signin.css";
@@ -148,6 +156,8 @@ export default function Signin({ initialView = "signin" } = {}) {
     if (result.userType === "admin" || isAdminUser(user)) navigate("/admin");
     else {
       await hydrateJourney({ force: true });
+      const bill = await getBillingAccount().catch(() => ({ ok: false }));
+      if (bill?.ok) adoptPlanFromBilling(bill.data || bill);
       navigate(postLoginPath());
     }
   };

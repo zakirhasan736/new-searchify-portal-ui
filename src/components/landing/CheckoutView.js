@@ -10,6 +10,7 @@ import { PARTNER_KEY, PREVIEW_KEY, clearSessionFlag } from "@/lib/authRoles";
 import { readReferral } from "@/lib/referral";
 import {
   hydrateJourney,
+  markSelectedPlan,
   normalizeSiteUrl,
   seedDraftSite,
   stashPendingSite,
@@ -342,12 +343,14 @@ export default function CheckoutView() {
       billing: yearly ? "annual" : "monthly",
       email: email.trim(),
     });
-    await syncJourneyNow();
     setBusy(false);
     if (!res.ok) {
       setErr(res.data?.detail || "Could not start your plan. Try again.");
       return;
     }
+    // Persist planId locally before sync so we don't push null and wipe the server journey.
+    markSelectedPlan(res.data?.canonical || apiPlanId(plan), yearly ? "annual" : "monthly");
+    await syncJourneyNow();
     try {
       localStorage.setItem(
         "searchify-checkout-profile",

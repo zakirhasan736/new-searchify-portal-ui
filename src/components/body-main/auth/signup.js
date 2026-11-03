@@ -6,7 +6,15 @@ import { useSearchParams } from "next/navigation";
 import { useNavigate } from "@/lib/navigation";
 import { AuthField, AuthScreen, AuthSubmit, passwordIssues } from "@/components/v8/AuthScreen";
 import { PARTNER_KEY, PREVIEW_KEY, clearSessionFlag } from "@/lib/authRoles";
-import { hydrateJourney, normalizeSiteUrl, postLoginPath, seedDraftSite, stashPendingSite } from "@/lib/journey";
+import {
+  adoptPlanFromBilling,
+  hydrateJourney,
+  normalizeSiteUrl,
+  postLoginPath,
+  seedDraftSite,
+  stashPendingSite,
+} from "@/lib/journey";
+import { getBillingAccount } from "@/lib/billingApi";
 import { parseJwt, userLogin } from "@/utils/users/Helpers";
 import { fetchProjectByUserId } from "@/utils/users/ProjectUtil";
 import { readReferral } from "@/lib/referral";
@@ -61,6 +69,8 @@ export default function SignUp() {
       return;
     }
     await hydrateJourney({ force: true });
+    const bill = await getBillingAccount().catch(() => ({ ok: false }));
+    if (bill?.ok) adoptPlanFromBilling(bill.data || bill);
     navigate(postLoginPath());
   };
 

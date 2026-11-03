@@ -208,11 +208,31 @@ export function hydrateJourney({ force = false } = {}) {
       return mine ? local : empty();
     }
     if (mine && local.dirty && local.sites.length) {
+      // Keep server planId if a dirty local draft somehow lost it (common after checkout race).
+      if (!local.planId && server?.planId) {
+        writeLocal({
+          ...local,
+          planId: server.planId,
+          billing: local.billing || server.billing || "monthly",
+          owner: me,
+          dirty: true,
+        });
+      }
       await syncJourneyNow();
       return loadJourney();
     }
     if (server) {
-      writeLocal({ ...empty(), ...server, owner: me, dirty: false });
+      const merged = { ...empty(), ...server, owner: me, dirty: false };
+      // Prefer a valid local planId when server was wiped by an older null sync.
+      if (!merged.planId && mine && local.planId) {
+        merged.planId = local.planId;
+        merged.billing = local.billing || merged.billing;
+        merged.dirty = true;
+        writeLocal(merged);
+        await syncJourneyNow();
+        return loadJourney();
+      }
+      writeLocal(merged);
     } else if (mine && local.sites.length) {
       writeLocal({ ...local, owner: me, dirty: true });
       await syncJourneyNow();
@@ -258,6 +278,30 @@ export function selectJourneySite(id) {
     window.dispatchEvent(new CustomEvent("sf-site", { detail: { id: site.id } }));
   }
   return site;
+}
+
+/**
+ * Restore journey.planId from billing when checkout already happened but local/server
+ * journey lost the id (login then bounced to /app/plans = pricing UI).
+ */
+export function adoptPlanFromBilling(account) {
+  if (!account || typeof account !== "object") return loadJourney();
+  const state = loadJourney();
+  if (state.planId && planById(state.planId)) return state;
+  // Account defaults planId=solo for every user — only adopt after a real checkout.
+  const subscribed =
+    account.hasCheckout === true ||
+    account.trialActive === true ||
+    account.trialEnded === true ||
+    account.needsPaidPlan === true ||
+    Number(account.trialDays) > 0;
+  if (!subscribed) return state;
+  const plan = planById(account.canonical || account.planId);
+  if (!plan) return state;
+  state.planId = plan.id;
+  if (account.billing === "annual") state.billing = "annual";
+  save(state);
+  return loadJourney();
 }
 
 export function requiredJourneyPath(pathname) {
@@ -483,6 +527,17 @@ export function choosePlan(planId, billing) {
   state.billing = billing === "annual" ? "annual" : "monthly";
   save(state);
   return "/app";
+}
+
+/** Write plan after a successful checkout (no site-cap check — billing already accepted). */
+export function markSelectedPlan(planId, billing) {
+  const plan = planById(planId);
+  if (!plan) return null;
+  const state = loadJourney();
+  state.planId = plan.id;
+  state.billing = billing === "annual" ? "annual" : "monthly";
+  save(state);
+  return state;
 }
 
 export function recommendationsFor(site) {

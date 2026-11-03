@@ -8,7 +8,14 @@ import SearchifyLoader from "@/components/v8/SearchifyLoader";
 import PhoneTabBar from "@/components/v8/PhoneTabBar";
 import { authHeaders, getUser, userLogout } from "@/utils/users/Helpers";
 import { canAccessCustomerApp, isPartnerAuthenticated } from "@/lib/authRoles";
-import { activeJourneySite, hydrateJourney, loadJourney, planById, requiredJourneyPath } from "@/lib/journey";
+import {
+  activeJourneySite,
+  adoptPlanFromBilling,
+  hydrateJourney,
+  loadJourney,
+  planById,
+  requiredJourneyPath,
+} from "@/lib/journey";
 import { activeSiteContext } from "@/lib/siteContext";
 import { activateGoogleSite, syncGoogle } from "@/lib/v1Api";
 import { invalidateV3Cache } from "@/lib/v3Store";
@@ -107,6 +114,7 @@ export default function AppChrome({ children, current }) {
     ]).then(([_, acct, bill]) => {
       if (!live) return;
       const account = bill?.ok ? bill.data || bill : null;
+      if (account) adoptPlanFromBilling(account);
       const locked = accountNeedsPaidPlan(account);
       setTrialLocked(locked);
       if (locked) {

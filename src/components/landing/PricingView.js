@@ -7,7 +7,15 @@ import SearchifyMark from "@/components/landing/SearchifyMark";
 import { V8Button, V8Field, V8Segmented } from "@/components/v8/primitives";
 import { getBillingAccount, getBillingCatalog, getEarlyLaunch } from "@/lib/billingApi";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
-import { PLAN_ALIAS, choosePlan, hydrateJourney, readySites } from "@/lib/journey";
+import {
+  PLAN_ALIAS,
+  adoptPlanFromBilling,
+  choosePlan,
+  hydrateJourney,
+  loadJourney,
+  readySites,
+} from "@/lib/journey";
+import { accountNeedsPaidPlan } from "@/lib/trialGate";
 import PricingPreview from "@/components/landing/PricingPreview";
 import { getUser, userIsAuthenticated } from "@/utils/users/Helpers";
 import "@/styles/v8-kit.css";
@@ -278,18 +286,29 @@ export default function PricingView({ embedded = false, onboarding = false }) {
     };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisible);
-    if (onboarding && userIsAuthenticated()) {
-      hydrateJourney({ force: true }).then(() => {
-        if (!readySites().length) router.replace("/app/start");
-      });
-    }
     if (userIsAuthenticated()) {
-      getBillingAccount().then((res) => {
-        if (!res.ok || !res.data?.planId || cancelled) return;
-        setAccount(res.data);
-        setPick(res.data.planId);
-        if (res.data.billing === "annual") setPeriod("year");
-        if (res.data.email && String(res.data.email).includes("@")) setEmail(res.data.email);
+      Promise.all([
+        onboarding ? hydrateJourney({ force: true }) : Promise.resolve(null),
+        getBillingAccount(),
+      ]).then(([_, res]) => {
+        if (cancelled) return;
+        const data = res?.ok ? res.data : null;
+        if (data?.planId) {
+          setAccount(data);
+          setPick(data.planId);
+          if (data.billing === "annual") setPeriod("year");
+          if (data.email && String(data.email).includes("@")) setEmail(data.email);
+          adoptPlanFromBilling(data);
+        }
+        if (!onboarding) return;
+        if (!readySites().length) {
+          router.replace("/app/start");
+          return;
+        }
+        // Already checked out — don't trap returning customers on the pricing gate.
+        if (loadJourney().planId && data && !accountNeedsPaidPlan(data)) {
+          router.replace("/app");
+        }
       });
     }
     return () => {
