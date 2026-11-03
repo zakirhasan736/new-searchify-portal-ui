@@ -7,7 +7,8 @@ import LandingShell from "@/components/landing/LandingShell";
 import HomeBrandHero from "@/components/landing/HomeBrandHero";
 import TestimonialsSlider from "@/components/landing/TestimonialsSlider";
 import LandingMotion from "@/components/motion/LandingMotion";
-import { normalizeSiteUrl, seedDraftSite, stashPendingSite } from "@/lib/journey";
+import { hydrateJourney, normalizeSiteUrl, resolveSiteContinue, stashPendingSite } from "@/lib/journey";
+import { runSiteScan } from "@/lib/v1Api";
 import { userIsAuthenticated } from "@/utils/users/Helpers";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
 
@@ -234,13 +235,17 @@ export default function HomeView() {
     router.push(`/free-analysis?${q}`);
   };
 
-  const openFullScan = () => {
+  const openFullScan = async () => {
     const site = scan?.home || normalizeSiteUrl(heroUrl || footUrl);
     if (!site) return;
     stashPendingSite(site);
     if (userIsAuthenticated()) {
-      seedDraftSite(site);
-      router.push("/app/start");
+      await hydrateJourney({ force: true });
+      const resolved = resolveSiteContinue(site);
+      if (resolved.existing) {
+        runSiteScan({ site, force: true }).catch(() => {});
+      }
+      router.push(resolved.path);
       return;
     }
     const q = new URLSearchParams({ site, run: "1" });

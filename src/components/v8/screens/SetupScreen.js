@@ -12,6 +12,7 @@ import {
   markConnection,
   normalizeSiteUrl,
   peekPendingSite,
+  resolveSiteContinue,
   saveDraft,
   seedDraftSite,
   syncJourneyNow,
@@ -104,7 +105,17 @@ export default function SetupScreen() {
       await hydrateJourney();
       if (cancelled) return;
       const pending = normalizeSiteUrl(params.get("site") || peekPendingSite() || "");
-      if (pending) {
+      if (pending && !isNew) {
+        const resolved = resolveSiteContinue(pending, { ensureDraft: false });
+        if (resolved.existing) {
+          // Same domain already in the workspace — refresh scan, skip setup UI.
+          runSiteScan({ site: pending, force: true }).catch(() => {});
+          router.replace(resolved.path);
+          return;
+        }
+        seedDraftSite(pending);
+        wantAutoScan.current = true;
+      } else if (pending) {
         seedDraftSite(pending);
         wantAutoScan.current = true;
       }

@@ -10,10 +10,12 @@ import {
   hydrateJourney,
   normalizeSiteUrl,
   postLoginPath,
+  resolveSiteContinue,
   seedDraftSite,
   stashPendingSite,
 } from "@/lib/journey";
 import { getBillingAccount } from "@/lib/billingApi";
+import { runSiteScan } from "@/lib/v1Api";
 import { PARTNER_KEY, PREVIEW_KEY, clearSessionFlag, isAdminUser, writeSessionFlag } from "@/lib/authRoles";
 import { errorText, forgotPassword } from "@/lib/accountApi";
 import "@/styles/v8-signin.css";
@@ -144,6 +146,15 @@ export default function Signin({ initialView = "signin" } = {}) {
       try {
         const site = normalizeSiteUrl(new URLSearchParams(window.location.search).get("site") || "");
         if (site) {
+          await hydrateJourney({ force: true });
+          const bill = await getBillingAccount().catch(() => ({ ok: false }));
+          if (bill?.ok) adoptPlanFromBilling(bill.data || bill);
+          const resolved = resolveSiteContinue(site);
+          if (resolved.existing) {
+            runSiteScan({ site, force: true }).catch(() => {});
+            navigate(next.startsWith("/app/start") ? resolved.path : next);
+            return;
+          }
           stashPendingSite(site);
           if (next.startsWith("/app/start")) seedDraftSite(site);
         }

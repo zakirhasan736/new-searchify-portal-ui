@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { previewSiteScan } from "@/lib/v1Api";
-import { normalizeSiteUrl, stashPendingSite, seedDraftSite } from "@/lib/journey";
+import { previewSiteScan, runSiteScan } from "@/lib/v1Api";
+import { hydrateJourney, normalizeSiteUrl, resolveSiteContinue, stashPendingSite } from "@/lib/journey";
 import { userIsAuthenticated } from "@/utils/users/Helpers";
 import "@/styles/v8-free-analysis.css";
 
@@ -219,13 +219,18 @@ export default function FreeAnalysisScreen() {
     if (payload?.home) stashPendingSite(payload.home);
   }
 
-  const continueTrial = () => {
+  const continueTrial = async () => {
     const home = scan?.home || normalizeSiteUrl(site);
     if (!home) return;
     stashPendingSite(home);
     if (userIsAuthenticated()) {
-      seedDraftSite(home);
-      router.push("/app/start");
+      await hydrateJourney({ force: true });
+      const resolved = resolveSiteContinue(home);
+      if (resolved.existing) {
+        // Same connected domain — refresh scan data in place, skip setup.
+        runSiteScan({ site: home, force: true }).catch(() => {});
+      }
+      router.push(resolved.path);
       return;
     }
     const q = new URLSearchParams({ next: "/app/start", site: home });

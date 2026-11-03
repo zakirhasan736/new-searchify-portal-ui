@@ -47,10 +47,72 @@ export function takePendingSite() {
   return value;
 }
 
-/** Put a pending / query site onto the active draft so /app/start opens prefilled. */
+/** Hostname for matching journey sites (www. stripped, lowercased). */
+export function siteHost(raw) {
+  const href = normalizeSiteUrl(raw);
+  if (!href) return "";
+  try {
+    return new URL(href).hostname.replace(/^www\./i, "").toLowerCase();
+  } catch {
+    return String(raw || "")
+      .replace(/^https?:\/\//i, "")
+      .replace(/^www\./i, "")
+      .split("/")[0]
+      .toLowerCase();
+  }
+}
+
+export function findReadySiteByHost(raw, state = loadJourney()) {
+  const host = siteHost(raw);
+  if (!host) return null;
+  return readySites(state).find((site) => siteHost(site.answers?.site) === host) || null;
+}
+
+/**
+ * After a public scan / login with ?site=.
+ * If this host is already ready for the user, activate it and skip /app/start.
+ * Otherwise optionally seed a draft and send them to setup.
+ */
+export function resolveSiteContinue(raw, { ensureDraft = true } = {}) {
+  const href = normalizeSiteUrl(raw);
+  if (!href) {
+    return { existing: false, site: null, href: "", path: "/app/start" };
+  }
+  const existing = findReadySiteByHost(href);
+  if (existing) {
+    selectJourneySite(existing.id);
+    // Drop a stale draft for the same host so setup does not reopen.
+    const state = loadJourney();
+    const host = siteHost(href);
+    const nextSites = state.sites.filter(
+      (site) => !(site.status === "draft" && siteHost(site.answers?.site) === host),
+    );
+    if (nextSites.length !== state.sites.length) {
+      state.sites = nextSites;
+      state.activeId = existing.id;
+      save(state);
+    }
+    stashPendingSite("");
+    const planReady = Boolean(loadJourney().planId);
+    return { existing: true, site: existing, href, path: planReady ? "/app" : "/app/plans" };
+  }
+  if (ensureDraft) seedDraftSite(href);
+  else stashPendingSite(href);
+  return { existing: false, site: null, href, path: "/app/start" };
+}
+
+/** Put a pending / query site onto the active draft so /app/start opens prefilled.
+ *  If the host is already a ready workspace site, activate it instead of creating a draft.
+ */
 export function seedDraftSite(url) {
   const siteUrl = normalizeSiteUrl(url);
   if (!siteUrl) return null;
+  const existing = findReadySiteByHost(siteUrl);
+  if (existing) {
+    selectJourneySite(existing.id);
+    stashPendingSite("");
+    return existing;
+  }
   const state = loadJourney();
   let draft = state.sites.find((site) => site.status === "draft");
   if (!draft) {
@@ -324,6 +386,11 @@ export function requiredJourneyPath(pathname) {
 }
 
 export function postLoginPath() {
+  const pending = peekPendingSite();
+  if (pending) {
+    const resolved = resolveSiteContinue(pending);
+    if (resolved.existing) return resolved.path;
+  }
   return requiredJourneyPath("/app") || "/app";
 }
 

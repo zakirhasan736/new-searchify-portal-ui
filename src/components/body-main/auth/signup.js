@@ -11,10 +11,12 @@ import {
   hydrateJourney,
   normalizeSiteUrl,
   postLoginPath,
+  resolveSiteContinue,
   seedDraftSite,
   stashPendingSite,
 } from "@/lib/journey";
 import { getBillingAccount } from "@/lib/billingApi";
+import { runSiteScan } from "@/lib/v1Api";
 import { parseJwt, userLogin } from "@/utils/users/Helpers";
 import { fetchProjectByUserId } from "@/utils/users/ProjectUtil";
 import { readReferral } from "@/lib/referral";
@@ -60,7 +62,18 @@ export default function SignUp() {
     } catch {
       localStorage.setItem("project", "{}");
     }
+    await hydrateJourney({ force: true });
+    const bill = await getBillingAccount().catch(() => ({ ok: false }));
+    if (bill?.ok) adoptPlanFromBilling(bill.data || bill);
     if (site) {
+      const resolved = resolveSiteContinue(site);
+      if (resolved.existing) {
+        runSiteScan({ site, force: true }).catch(() => {});
+        navigate(
+          nextPath?.startsWith("/app/start") || !nextPath ? resolved.path : nextPath,
+        );
+        return;
+      }
       stashPendingSite(site);
       seedDraftSite(site);
     }
@@ -68,9 +81,6 @@ export default function SignUp() {
       navigate(nextPath);
       return;
     }
-    await hydrateJourney({ force: true });
-    const bill = await getBillingAccount().catch(() => ({ ok: false }));
-    if (bill?.ok) adoptPlanFromBilling(bill.data || bill);
     navigate(postLoginPath());
   };
 
