@@ -2,7 +2,7 @@ import { forward } from "@/lib/backend";
 
 // Tracked keywords live in the backend database (never in the browser).
 const READS = new Set(["tracked"]);
-const WRITES = new Set(["track", "untrack"]);
+const WRITES = new Set(["track", "untrack", "check-ranks"]);
 
 function notFound() {
   return new Response(JSON.stringify({ detail: "Not found" }), { status: 404, headers: { "Content-Type": "application/json" } });

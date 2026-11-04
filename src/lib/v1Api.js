@@ -1034,3 +1034,12 @@ export function changePath(c) {
     return c?.targetUrl || "—";
   }
 }
+
+// Live Google rank check now (DataForSEO SERP, desktop + mobile) for tracked keywords.
+export async function checkKeywordRanks({ site, keyword = "" }) {
+  return json(await fetch("/api/v1/research/keyword-tracking/check-ranks", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ site, keyword }),
+  }));
+}

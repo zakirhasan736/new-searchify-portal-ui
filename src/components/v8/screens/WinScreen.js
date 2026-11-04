@@ -9,6 +9,7 @@ import {
   approveChange,
   executeChange,
   runSiteScan,
+  checkKeywordRanks,
   getSiteScan,
   listChanges,
   changePath,
@@ -19,6 +20,8 @@ import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
 import ProblemNotice from "@/components/v8/ProblemNotice";
+import KeywordResearchPanel from "@/components/v8/screens/keywords/KeywordResearchPanel";
+import { RankChart, Sparkline } from "@/components/v8/screens/keywords/charts";
 import { problemsFrom } from "@/lib/problems";
 import "@/styles/v8-screens.css";
 
@@ -112,7 +115,12 @@ function normalizeTracked(row) {
     change: row.change || null,
     concept: row.concept || "",
     trackedSource: row.trackedSource || "",
-    measuring: base.position == null,
+    measuring: Boolean(row.measuring),
+    live: row.live || {},
+    rankSource: row.rankSource || "none",
+    difficulty: row.difficulty ?? null,
+    localVolume: row.localVolume ?? null,
+    trend: row.trend || [],
   };
 }
 
@@ -164,7 +172,13 @@ function measuringBadge(appliedAt) {
   return `MEASURING · DAY ${day} OF 28`;
 }
 
-function mapKeywordRow(row, idx, changeByPath) {
+function mapKeywordRow(source, idx, changeByPath, device = "desktop") {
+  // Live Google check for the chosen device; DataForSEO's estimate only until the first check.
+  const slot = source.live?.[device];
+  const live = Boolean(slot?.latest);
+  const row = live
+    ? { ...source, position: slot.latest.position, previous: slot.previous, measuring: false }
+    : source;
   const term = row.keyword;
   const page = row.page || "/";
   const own = row.change;
@@ -192,7 +206,7 @@ function mapKeywordRow(row, idx, changeByPath) {
   const prev = row.previous;
   const clicks = row.clicks != null ? Number(row.clicks) : null;
   const ctr = row.ctr;
-  const rankNow = rankLabel(pos);
+  const rankNow = live && pos == null ? "100+" : rankLabel(pos);
   const rankWas = prev != null ? rankLabel(prev) : "—";
   // Only real numbers: Search Console clicks/CTR and DataForSEO ranks. No estimates are filled in.
   const visitorsNow = clicks != null ? String(Math.round(clicks)) : "—";
@@ -218,6 +232,12 @@ function mapKeywordRow(row, idx, changeByPath) {
     now,
     concept: row.concept || "",
     volume: row.volume,
+    localVolume: row.localVolume,
+    difficulty: row.difficulty,
+    trend: row.trend,
+    live: source.live || {},
+    slot: slot || null,
+    rankSource: live ? "live" : source.rankSource,
     change: change && change.id ? { id: change.id, status: change.status } : null,
     m: {
       rank: [rankWas, rankNow, rankNarrative({ ...row, position: pos, previous: prev }, status)],
@@ -275,7 +295,11 @@ export default function WinScreen() {
   const metricTipRef = useRef(null);
   const [selId, setSelId] = useState("");
   const [metric, setMetric] = useState("rank");
-  const [K, setK] = useState([]);
+  const [raw, setRaw] = useState({ rows: [], changeByPath: new Map() });
+  const [device, setDevice] = useState("desktop");
+  const [checking, setChecking] = useState(false);
+  const [research, setResearch] = useState({});
+  const K = useMemo(() => raw.rows.map((row, idx) => mapKeywordRow(row, idx, raw.changeByPath, device)), [raw, device]);
   const [loading, setLoading] = useState(true);
   const [addTerm, setAddTerm] = useState("");
   const [tracking, setTracking] = useState("");
@@ -345,6 +369,12 @@ export default function WinScreen() {
       setSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
       setSuggestMeta(data.suggestionMeta || null);
       setScConnected(Boolean(data.searchConsoleConnected));
+      setResearch({
+        organicSummary: data.organicSummary || null,
+        cannibalization: data.cannibalization || [],
+        competitors: data.competitors || [],
+        localVolume: data.localVolume || null,
+      });
 
       const changes = Array.isArray(changeRes?.data) ? changeRes.data : changeRes?.data?.changes || [];
       const changeByPath = new Map();
@@ -354,9 +384,8 @@ export default function WinScreen() {
       });
 
       const rows = (data.trackedList || []).map(normalizeTracked).filter(Boolean);
-      const mapped = rows.map((row, idx) => mapKeywordRow(row, idx, changeByPath));
-      setK(mapped);
-      setSelId((prev) => (mapped.some((m) => m.id === prev) ? prev : mapped[0]?.id || ""));
+      setRaw({ rows, changeByPath });
+      setSelId((prev) => (rows.some((r) => keywordId(r.keyword) === prev) ? prev : rows[0] ? keywordId(rows[0].keyword) : ""));
     } catch {
       setPageNote("Keyword tracking could not be loaded. Try again in a moment.");
     } finally {
@@ -434,6 +463,25 @@ export default function WinScreen() {
     setPublishing(0);
   };
 
+  // Live Google check now (desktop + mobile) for every tracked keyword. Daily checks also run on their own.
+  const handleCheckRanks = async () => {
+    if (!href || checking) return;
+    setChecking(true);
+    setTrackNote("");
+    const res = await checkKeywordRanks({ site: href }).catch(() => ({ ok: false }));
+    if (res?.ok) {
+      const d = res.data || {};
+      setTrackNote(
+        `Checked ${d.checked || 0} rank${d.checked === 1 ? "" : "s"} live on Google${d.location ? ` in ${d.location.replace(/,/g, ", ")}` : ""}.` +
+          (d.failed ? ` ${d.failed} check${d.failed === 1 ? "" : "s"} failed and will retry with the daily check.` : ""),
+      );
+      await rebuild();
+    } else {
+      setTrackNote(errorText(res, "The live rank check did not run. Try again in a moment."));
+    }
+    setChecking(false);
+  };
+
   const handleReadSite = async () => {
     if (!href || reading) return;
     setReading(true);
@@ -493,6 +541,18 @@ export default function WinScreen() {
   };
 
   const cur = K.find((x) => x.id === selId) || K[0];
+  const lastCheck = useMemo(() => {
+    let best = null;
+    K.forEach((k) => {
+      Object.values(k.live || {}).forEach((s) => {
+        const at = s?.latest?.checkedAt;
+        if (at && (!best || at > best.at)) best = { at, location: s.latest.location };
+      });
+    });
+    if (!best) return null;
+    const d = new Date(best.at.endsWith("Z") ? best.at : `${best.at}Z`);
+    return { ...best, when: Number.isNaN(d.getTime()) ? "" : d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) };
+  }, [K]);
   const empty = !cur;
   const similarPages = useMemo(() => {
     const current = pathFrom(cur?.page || "");
@@ -561,7 +621,7 @@ export default function WinScreen() {
 
   const MLAB = { rank: "Spot on Google", visitors: "Visitors", leads: "Calls & leads", rate: "Click rate" };
   const SRC = {
-    rank: "From Search Console · your average spot on Google for this search (#1 is the top result)",
+    rank: "Live Google check · DataForSEO · your spot in the results for this search (#1 is the top result)",
     visitors: "From Search Console · clicks from this search",
     leads: "From Analytics · calls and form fills from this search",
     rate: "From Search Console · clicks ÷ times shown",
@@ -651,6 +711,53 @@ export default function WinScreen() {
             KEYWORD TRACKER
           </span>
           <span style={{ fontSize: "15px", color: "#9AA1AB" }}>{loading ? "" : trackedLabel}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <div role="group" aria-label="Device" style={{ display: "inline-flex", padding: "3px", borderRadius: "999px", border: "1px solid #262A31" }}>
+              {["desktop", "mobile"].map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  aria-pressed={device === d ? "true" : "false"}
+                  onClick={() => setDevice(d)}
+                  style={{
+                    minHeight: "30px",
+                    padding: "0 12px",
+                    borderRadius: "999px",
+                    border: 0,
+                    background: device === d ? "#F2F4F5" : "transparent",
+                    color: device === d ? "#0A0B0D" : "#D7DADE",
+                    fontSize: "13px",
+                    fontWeight: device === d ? 600 : 400,
+                  }}
+                >
+                  {d === "desktop" ? "Desktop" : "Mobile"}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={handleCheckRanks}
+              disabled={checking || !K.length}
+              style={{
+                minHeight: "36px",
+                padding: "0 14px",
+                borderRadius: "999px",
+                border: "1px solid #262A31",
+                background: "transparent",
+                color: "#D7DADE",
+                fontSize: "13px",
+                opacity: checking || !K.length ? 0.6 : 1,
+              }}
+            >
+              {checking ? "Checking Google…" : "Check ranks now"}
+            </button>
+            {lastCheck ? (
+              <span style={{ fontSize: "12px", color: "#7D848E" }}>
+                Last live check {lastCheck.when}
+                {lastCheck.location ? ` · ${lastCheck.location.replace(/,/g, ", ")}` : ""} · runs daily
+              </span>
+            ) : null}
+          </div>
         </div>
         <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "13px", color: "#9AA1AB", minWidth: "300px" }}>
           Keyword
@@ -1203,6 +1310,87 @@ export default function WinScreen() {
                   <span style={{ fontSize: "13px", color: "#7D848E" }}>{SRC[metric]}</span>
                 </section>
 
+                <section
+                  aria-label="On Google now"
+                  style={{
+                    background: "#101215",
+                    border: "1px solid #1A1D22",
+                    borderRadius: "24px",
+                    padding: "clamp(18px, 3vw, 24px)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "16px",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", flexWrap: "wrap", alignItems: "baseline" }}>
+                    <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 600, color: "#D7DADE" }}>Spot on Google over time</h2>
+                    <span style={{ fontSize: "12px", color: "#7D848E" }}>
+                      <span style={{ color: "#4DA3FF" }}>●</span> Desktop <span style={{ color: "#C8A2FF", marginLeft: 8 }}>●</span> Mobile
+                    </span>
+                  </div>
+                  {cur.live && Object.keys(cur.live).length ? (
+                    <RankChart series={cur.live} active={device} />
+                  ) : (
+                    <p style={{ margin: 0, fontSize: 14, color: "#9AA1AB" }}>
+                      The first live Google check has not run yet. Use “Check ranks now”, or it runs with the daily check.
+                    </p>
+                  )}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>ON THE RESULTS PAGE</span>
+                      <span style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                        {(cur.slot?.latest?.features || []).filter((f) => f.type !== "related_searches" && f.type !== "people_also_search").length ? (
+                          cur.slot.latest.features
+                            .filter((f) => f.type !== "related_searches" && f.type !== "people_also_search")
+                            .map((f) => (
+                              <span
+                                key={f.type}
+                                title={f.owned ? "This website appears here" : "Google shows this for the search"}
+                                style={{
+                                  fontSize: "12px",
+                                  padding: "4px 9px",
+                                  borderRadius: "999px",
+                                  color: f.owned ? "#3DDC84" : "#D7DADE",
+                                  background: f.owned ? "rgba(61,220,132,.12)" : "#1A1D22",
+                                }}
+                              >
+                                {f.owned ? "✓ " : ""}
+                                {f.label}
+                              </span>
+                            ))
+                        ) : (
+                          <span style={{ fontSize: "13px", color: "#7D848E" }}>Plain links only</span>
+                        )}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>TOP 3 ON GOOGLE</span>
+                      {(cur.slot?.latest?.top || []).length ? (
+                        cur.slot.latest.top.map((t) => (
+                          <span key={t.url} style={{ fontSize: "13px", color: t.domain === hostname ? "#3DDC84" : "#D7DADE", overflowWrap: "anywhere" }}>
+                            #{t.position} {t.domain}
+                          </span>
+                        ))
+                      ) : (
+                        <span style={{ fontSize: "13px", color: "#7D848E" }}>Shows after the first live check</span>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>SEARCHES / MONTH</span>
+                      <span style={{ fontSize: "20px", fontWeight: 700, fontFamily: "'Bricolage Grotesque', Geist, sans-serif" }}>
+                        {fmtNum(cur.volume)}
+                      </span>
+                      {cur.localVolume != null && research.localVolume?.available ? (
+                        <span style={{ fontSize: "12px", color: "#9AA1AB" }}>
+                          {fmtNum(cur.localVolume)} in {String(research.localVolume.location).split(",")[0]}
+                        </span>
+                      ) : null}
+                      <Sparkline values={cur.trend} width={120} height={26} label="Searches over the last 12 months" />
+                      <span style={{ fontSize: "12px", color: "#7D848E" }}>Difficulty {fmtNum(cur.difficulty)} / 100</span>
+                    </div>
+                  </div>
+                </section>
+
                 {cur.status === "worked" ? (
                   <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
                     <Link
@@ -1254,210 +1442,26 @@ export default function WinScreen() {
       ) : null}
 
       {!loading ? (
-        <section aria-labelledby="sugg-h" style={PANEL}>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "flex-end", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
-              <h2 id="sugg-h" style={H2}>
-                Suggested for your business
-              </h2>
-              <span style={{ fontSize: "13px", color: "#9AA1AB", lineHeight: 1.45 }}>
-                {business?.category
-                  ? `DataForSEO searches that match what ${business.brand || hostname || "this site"} sells — ${business.category}.`
-                  : "DataForSEO searches for this website."}{" "}
-                {suggestMeta?.judged === "ai"
-                  ? "Checked against the AI read of every page."
-                  : suggestMeta?.judged === "words"
-                    ? "Matched to your offers by wording (the AI check was not available)."
-                    : ""}
-              </span>
-            </div>
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              <button type="button" onClick={() => rebuild({ force: true })} style={GHOST}>
-                Refresh from DataForSEO
-              </button>
-              <button type="button" onClick={handleReadSite} disabled={reading} style={GHOST}>
-                {reading ? "Reading website…" : "Re-read website"}
-              </button>
-            </div>
-          </div>
-          {business?.error ? <p style={{ margin: 0, fontSize: 14, color: "#FF5A4E" }}>{business.error}</p> : null}
-          {suggestMeta?.needsSiteScan ? (
-            <p style={{ margin: 0, fontSize: 14, color: "#D7DADE", lineHeight: 1.45 }}>
-              The website has not been read yet, so these come straight from DataForSEO without a business check. Use “Re-read
-              website” to match suggestions to what the business sells.
-            </p>
-          ) : null}
-          {suggestions.length ? (
-            <div style={{ overflowX: "auto" }}>
-              <table style={TABLE}>
-                <thead>
-                  <tr style={{ color: "#7D848E", fontFamily: "'Geist Mono', monospace", fontSize: "11px", textAlign: "left" }}>
-                    <th style={TH}>KEYWORD</th>
-                    <th style={TH}>PART OF THE BUSINESS · PAGE</th>
-                    <th style={{ ...TH, textAlign: "right" }}>SEARCHES/MO</th>
-                    <th style={{ ...TH, textAlign: "right" }}>DIFFICULTY</th>
-                    <th style={TH}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {suggestions.slice(0, 40).map((row) => {
-                    const busy = tracking === String(row.keyword).toLowerCase();
-                    const page = pathFrom(row.page);
-                    return (
-                      <tr key={row.keyword} style={{ borderTop: "1px solid #1A1D22" }}>
-                        <td style={TD}>
-                          <span style={{ fontWeight: 600 }}>{row.keyword}</span>
-                          {row.fit === "core" ? <span style={PILL}>core</span> : null}
-                        </td>
-                        <td style={{ ...TD, color: "#9AA1AB" }}>
-                          {row.concept || "—"}
-                          <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>
-                            {page || "no page covers this yet"}
-                          </div>
-                        </td>
-                        <td style={{ ...TD, textAlign: "right" }}>{fmtNum(row.volume)}</td>
-                        <td style={{ ...TD, textAlign: "right" }}>{fmtNum(row.difficulty)}</td>
-                        <td style={{ ...TD, whiteSpace: "nowrap", textAlign: "right" }}>
-                          <button
-                            type="button"
-                            disabled={Boolean(tracking)}
-                            onClick={() => handleTrack(row.keyword, { page: row.page, concept: row.concept, source: "suggestion", apply: Boolean(page) })}
-                            style={{ ...PRIMARY, opacity: tracking ? 0.6 : 1 }}
-                          >
-                            {busy ? "Working…" : page ? "Track + update page" : "Track"}
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p style={{ margin: 0, fontSize: 14, color: "#9AA1AB" }}>
-              {suggestMeta ? "No new business searches found beyond what you already track or rank for." : "Suggestions appear after the first DataForSEO check."}
-            </p>
-          )}
-        </section>
-      ) : null}
-
-      {!loading ? (
-        <section aria-labelledby="cur-h" style={PANEL}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-            <h2 id="cur-h" style={H2}>
-              Current keywords
-            </h2>
-            <span style={{ fontSize: "13px", color: "#9AA1AB", lineHeight: 1.45 }}>
-              Searches {hostname || "this site"} shows up for now. DataForSEO ranks first
-              {scConnected ? ", with Search Console clicks added." : ". Connect Search Console to add real clicks and impressions."}
-            </span>
-          </div>
-          {current.length ? (
-            <div style={{ overflowX: "auto" }}>
-              <table style={TABLE}>
-                <thead>
-                  <tr style={{ color: "#7D848E", fontFamily: "'Geist Mono', monospace", fontSize: "11px", textAlign: "left" }}>
-                    <th style={TH}>KEYWORD</th>
-                    <th style={{ ...TH, textAlign: "right" }}>SPOT</th>
-                    <th style={{ ...TH, textAlign: "right" }}>SEARCHES/MO</th>
-                    <th style={{ ...TH, textAlign: "right" }}>CLICKS</th>
-                    <th style={TH}>SOURCE</th>
-                    <th style={TH}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {current.slice(0, 50).map((row) => {
-                    const isTracked = K.some((k) => k.term.toLowerCase() === String(row.keyword).toLowerCase());
-                    return (
-                      <tr key={row.keyword} style={{ borderTop: "1px solid #1A1D22" }}>
-                        <td style={TD}>
-                          {row.keyword}
-                          <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>{pathFrom(row.url) || ""}</div>
-                        </td>
-                        <td style={{ ...TD, textAlign: "right" }}>{rankLabel(row.position)}</td>
-                        <td style={{ ...TD, textAlign: "right" }}>{fmtNum(row.volume)}</td>
-                        <td style={{ ...TD, textAlign: "right" }}>{fmtNum(row.clicks)}</td>
-                        <td style={{ ...TD, color: "#9AA1AB" }}>
-                          {row.source}
-                          {row.source === "DataForSEO" && row.alsoInSearchConsole ? " + Search Console" : ""}
-                        </td>
-                        <td style={{ ...TD, textAlign: "right" }}>
-                          {isTracked ? (
-                            <span style={{ fontSize: "12px", color: "#3DDC84" }}>Tracked</span>
-                          ) : (
-                            <button
-                              type="button"
-                              disabled={Boolean(tracking)}
-                              onClick={() => handleTrack(row.keyword, { page: row.url || "", source: "current", apply: false })}
-                              style={{ ...GHOST, opacity: tracking ? 0.6 : 1 }}
-                            >
-                              {tracking === String(row.keyword).toLowerCase() ? "…" : "Track"}
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p style={{ margin: 0, fontSize: 14, color: "#9AA1AB" }}>
-              DataForSEO has not seen this website rank yet.{" "}
-              {scConnected ? null : (
-                <Link href="/app/connections" style={{ color: "#4DA3FF" }}>
-                  Connect Search Console
-                </Link>
-              )}
-            </p>
-          )}
-        </section>
+        <KeywordResearchPanel
+          suggestions={suggestions}
+          current={current}
+          organicSummary={research.organicSummary}
+          cannibalization={research.cannibalization}
+          competitors={research.competitors}
+          localVolume={research.localVolume}
+          business={business}
+          suggestMeta={suggestMeta}
+          scConnected={scConnected}
+          hostname={hostname}
+          trackedTerms={new Set(K.map((k) => k.term.toLowerCase()))}
+          tracking={tracking}
+          onTrack={handleTrack}
+          onRefresh={() => rebuild({ force: true })}
+          onReadSite={handleReadSite}
+          reading={reading}
+        />
       ) : null}
     </div>
   );
 }
 
-const PANEL = {
-  maxWidth: "1120px",
-  width: "100%",
-  margin: "0 auto",
-  boxSizing: "border-box",
-  borderRadius: "22px",
-  background: "#101215",
-  border: "1px solid #1A1D22",
-  padding: "18px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "14px",
-};
-const H2 = { margin: 0, fontSize: "16px", fontWeight: 600, color: "#F2F4F5" };
-const TABLE = { width: "100%", borderCollapse: "collapse", fontSize: "14px", color: "#F2F4F5" };
-const TH = { padding: "6px 8px", fontWeight: 500 };
-const TD = { padding: "10px 8px", verticalAlign: "top" };
-const PILL = {
-  marginLeft: "8px",
-  fontSize: "11px",
-  padding: "2px 7px",
-  borderRadius: "8px",
-  color: "#3DDC84",
-  background: "rgba(61,220,132,.12)",
-};
-const PRIMARY = {
-  minHeight: "38px",
-  padding: "0 14px",
-  borderRadius: "10px",
-  border: "0",
-  background: "#4DA3FF",
-  color: "#0A0B0D",
-  fontSize: "13px",
-  fontWeight: 600,
-};
-const GHOST = {
-  minHeight: "38px",
-  padding: "0 14px",
-  borderRadius: "10px",
-  border: "1px solid #262A31",
-  background: "transparent",
-  color: "#D7DADE",
-  fontSize: "13px",
-};
