@@ -5,6 +5,39 @@ async function json(res) {
   return { ok: res.ok, status: res.status, data };
 }
 
+export async function getHqMoney() {
+  return json(await fetch("/api/v1/hq/money", { headers: authHeaders(), cache: "no-store" }));
+}
+
+export async function declareHqDividend(pool, note = "") {
+  return json(
+    await fetch("/api/v1/hq/dividends/declare", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ pool, note }),
+    }),
+  );
+}
+
+export async function approveHqDividend(runId) {
+  return json(
+    await fetch(`/api/v1/hq/dividends/${encodeURIComponent(runId)}/approve`, {
+      method: "POST",
+      headers: authHeaders(),
+    }),
+  );
+}
+
+export async function markHqDividendPaid(runId, reference) {
+  return json(
+    await fetch(`/api/v1/hq/dividends/${encodeURIComponent(runId)}/paid`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ reference }),
+    }),
+  );
+}
+
 export async function getHqOverview(range = "30") {
   const q = new URLSearchParams({ range: String(range) });
   return json(await fetch(`/api/v1/hq/overview?${q}`, { headers: authHeaders(), cache: "no-store" }));
@@ -141,6 +174,64 @@ export async function runPartnerPayout(ids) {
       method: "POST",
       headers: authHeaders(),
       body: JSON.stringify(ids ? { ids } : {}),
+    }),
+  );
+}
+
+export async function getPayoutSettings() {
+  return json(await fetch("/api/v1/hq/payout-settings", { headers: authHeaders(), cache: "no-store" }));
+}
+
+export async function savePayoutSettings(body) {
+  return json(
+    await fetch("/api/v1/hq/payout-settings", {
+      method: "PUT",
+      headers: authHeaders(),
+      body: JSON.stringify(body),
+    }),
+  );
+}
+
+export async function getPayoutStatements() {
+  return json(await fetch("/api/v1/hq/statements", { headers: authHeaders(), cache: "no-store" }));
+}
+
+export async function draftPayoutStatement(body) {
+  return json(
+    await fetch("/api/v1/hq/statements", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(body),
+    }),
+  );
+}
+
+export async function editPayoutStatement(id, body) {
+  return json(
+    await fetch(`/api/v1/hq/statements/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      headers: authHeaders(),
+      body: JSON.stringify(body),
+    }),
+  );
+}
+
+export async function approvePayoutStatement(id, note = "") {
+  return json(
+    await fetch(`/api/v1/hq/statements/${encodeURIComponent(id)}/approve`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ note }),
+    }),
+  );
+}
+
+export async function rejectPayoutStatement(id, note = "") {
+  return json(
+    await fetch(`/api/v1/hq/statements/${encodeURIComponent(id)}/reject`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ note }),
     }),
   );
 }

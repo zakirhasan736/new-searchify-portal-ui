@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import SearchifyMark from "@/components/landing/SearchifyMark";
 import { passwordIssues } from "@/components/v8/AuthScreen";
-import { startCheckout } from "@/lib/billingApi";
+import { getBillingCatalog, getStripeConfig, startCheckout } from "@/lib/billingApi";
 import { PARTNER_KEY, PREVIEW_KEY, clearSessionFlag } from "@/lib/authRoles";
 import { readReferral } from "@/lib/referral";
 import {
@@ -124,10 +124,6 @@ export default function CheckoutView() {
   const [country, setCountry] = useState("CA");
   const [region, setRegion] = useState("Alberta");
   const [taxId, setTaxId] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExp, setCardExp] = useState("");
-  const [cardCvc, setCardCvc] = useState("");
-  const [postal, setPostal] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -141,6 +137,9 @@ export default function CheckoutView() {
   const [ads, setAds] = useState({});
   const [spend, setSpend] = useState(null);
   const [survey, setSurvey] = useState("open");
+  const [stripeOn, setStripeOn] = useState(false);
+  const [paidVia, setPaidVia] = useState("");
+  const [priceMo, setPriceMo] = useState({ solo: 49, pro: 79, agency: 399 });
 
   useEffect(() => {
     setPlan(normalizePlan(params.get("plan")));
@@ -164,6 +163,28 @@ export default function CheckoutView() {
       .catch(() => setGoogleOn(false));
   }, [params]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (params.get("error") === "payment") {
+      setErr("Stripe did not confirm the payment. Pick the plan again and finish the card on Stripe.");
+    }
+  }, [params]);
+
+  useEffect(() => {
+    getBillingCatalog()
+      .then((res) => {
+        const next = { solo: 49, pro: 79, agency: 399 };
+        for (const plan of res.data?.plans || []) {
+          const id = plan.id === "premium" ? "agency" : plan.id;
+          if (id in next && Number(plan.mo) > 0) next[id] = Number(plan.mo);
+        }
+        setPriceMo(next);
+      })
+      .catch(() => {});
+    getStripeConfig()
+      .then((res) => setStripeOn(Boolean(res.data?.configured)))
+      .catch(() => setStripeOn(false));
+  }, []);
+
   const from = String(params.get("from") || "").toLowerCase();
   const backHref = from === "billing" ? "/app/billing" : from === "plans" ? "/app/plans" : "/pricing";
   const backLabel = from === "billing" || from === "plans" ? "Back to plans" : "Back to pricing";
@@ -176,41 +197,51 @@ export default function CheckoutView() {
   const catalog = useMemo(() => {
     const after = (mo) => (yearly ? mo * 10 : mo);
     return {
-      solo: { name: "Solo", sub: "1 website", after: after(49), today: 0, free: true },
-      pro: { name: "Pro", sub: "Up to 5 websites · launch price", after: after(79), today: after(79), free: false },
-      agency: { name: "Agency", sub: "Up to 25 websites", after: after(399), today: after(399), free: false },
+      solo: { name: "Solo", sub: "1 website", after: after(priceMo.solo), today: 0, free: true },
+      pro: { name: "Pro", sub: "Up to 5 websites · launch price", after: after(priceMo.pro), today: after(priceMo.pro), free: false },
+      agency: { name: "Agency", sub: "Up to 25 websites", after: after(priceMo.agency), today: after(priceMo.agency), free: false },
     };
-  }, [yearly]);
+  }, [yearly, priceMo]);
 
   const chosen = catalog[plan] || catalog.solo;
   const countryMeta = COUNTRIES.find((c) => c.id === country) || COUNTRIES[0];
   const taxRate = countryMeta.tax;
   const tax = chosen.today * taxRate;
+  const renewTax = chosen.after * taxRate;
   const dueToday = chosen.today + tax;
   const per = yearly ? "a year" : "a month";
 
   const lines = chosen.free
     ? [
         { label: "Solo · first month", value: "Free", color: "#3DDC84" },
-        { label: "From day 31", value: `${money(chosen.after)}${yearly ? " / yr" : " / mo"}`, color: "#F2F4F5" },
-        { label: `${countryMeta.taxLabel} · ${region}`, value: money(0), color: "#9AA1AB" },
+        { label: "From day 31", value: `${money(chosen.after + renewTax)}${yearly ? " / yr" : " / mo"}`, color: "#F2F4F5" },
+        { label: `${countryMeta.taxLabel} · ${region}`, value: money(renewTax), color: "#9AA1AB" },
       ]
     : [
         { label: `${chosen.name}${yearly ? " · yearly" : " · monthly"}`, value: money(chosen.today), color: "#F2F4F5" },
         { label: `${countryMeta.taxLabel} · ${region}`, value: money(tax), color: "#9AA1AB" },
       ];
 
-  const headline = chosen.free ? "Start your free month of Solo." : `Start Searchify ${chosen.name}.`;
+  const renewAmount = chosen.after + renewTax;
+  const headline = from === "billing" || from === "plans"
+    ? `Switch to ${chosen.name}, billed ${yearly ? "yearly" : "monthly"}.`
+    : chosen.free
+      ? "Start your free month of Solo."
+      : `Start Searchify ${chosen.name}.`;
   const renewLine = chosen.free
-    ? `that after my free month, Solo renews at ${money(chosen.after)} ${per} until I cancel.`
-    : `that ${chosen.name} renews at ${money(chosen.after)} ${per} until I cancel.`;
+    ? `that after my free month, Solo renews at ${money(renewAmount)} ${per} until I cancel.`
+    : `that ${chosen.name} renews at ${money(renewAmount)} ${per} until I cancel.`;
   const afterLine = chosen.free
-    ? `Then ${money(chosen.after)} ${per} plus tax, starting on day 31. We email you 3 days before.`
-    : `Renews at ${money(chosen.after)} ${per} plus tax. Cancel any time.`;
-  const cta = chosen.free ? "Start my free month" : `Pay ${money(dueToday)} and start`;
-  const freeMonthText = `Your first month on Solo is free. Results take about a month to show, so this gives you time to see them. After that it’s ${
-    yearly ? "$490 a year" : "$49 a month"
-  }, and you can cancel any time before then.`;
+    ? `Then ${money(renewAmount)} ${per}, starting on day 31. We email you 3 days before.`
+    : `Renews at ${money(renewAmount)} ${per}. Cancel any time.`;
+  const cta = stripeOn
+    ? chosen.free
+      ? "Continue to Stripe"
+      : `Continue to Stripe · ${money(dueToday)}`
+    : chosen.free
+      ? "Start my free month"
+      : `Save ${chosen.name}`;
+  const freeMonthText = `Your first month on Solo is free. Results take about a month to show, so this gives you time to see them. After that it’s ${money(renewAmount)} ${per}, and you can cancel any time before then.`;
 
   const runsAds = Object.keys(ads).some((k) => ads[k] && k !== "No paid ads" && k !== "Prefer not to say");
 
@@ -324,7 +355,7 @@ export default function CheckoutView() {
       setErr("Enter your website.");
       return;
     }
-    // Card fields are UI-only until Stripe is wired — never send card data.
+    // The card is collected by Stripe Checkout. Never send card numbers from this page.
     setBusy(true);
     const account = await ensureAccount();
     if (!account.ok) {
@@ -342,10 +373,21 @@ export default function CheckoutView() {
       planId: apiPlanId(plan),
       billing: yearly ? "annual" : "monthly",
       email: email.trim(),
+      country,
     });
     setBusy(false);
+    const detail = res.data?.detail;
+    const detailText = typeof detail === "string" ? detail : "";
     if (!res.ok) {
-      setErr(res.data?.detail || "Could not start your plan. Try again.");
+      setErr(detailText || "Could not start your plan. Try again.");
+      return;
+    }
+    if (res.data?.already) {
+      setErr(detailText || "You're already on this plan and billing period.");
+      return;
+    }
+    if (res.data?.checkoutUrl) {
+      window.location.assign(res.data.checkoutUrl);
       return;
     }
     // Persist planId locally before sync so we don't push null and wipe the server journey.
@@ -371,6 +413,7 @@ export default function CheckoutView() {
     } catch {
       /* ignore */
     }
+    setPaidVia(res.data?.updated ? "stripe" : res.data?.provider || "internal");
     setDone(true);
   };
 
@@ -426,10 +469,12 @@ export default function CheckoutView() {
           <span className="v8-checkout-done-eyebrow">Welcome aboard, {first}.</span>
           <h1>{chosen.free ? "Your free month has started." : `You’re on ${chosen.name}.`}</h1>
           <p className="v8-checkout-done-body">
-            {chosen.free
-              ? "Nothing is charged today. We’ll check in on day 27 with your report."
-              : "Your plan is active. Card charging connects when Stripe is enabled."}{" "}
-            A receipt is on its way to {email.trim() || "your inbox"}.
+            {paidVia === "stripe"
+              ? "Stripe updated this subscription. The new price uses the card already on file."
+              : chosen.free
+                ? "Your free month is saved. No card was charged, because the Stripe test keys are not on the server yet."
+                : "Your plan is saved. No card was charged, because the Stripe test keys are not on the server yet."}{" "}
+            {email.trim() ? `We'll use ${email.trim()} for receipts.` : null}
           </p>
 
           {survey === "open" ? (
@@ -611,7 +656,7 @@ export default function CheckoutView() {
             {chosen.free ? (
               <div className="v8-checkout-free-note">
                 <span style={{ flex: 1, minWidth: 0 }}>
-                  You won&apos;t be charged today. Your card is only used from day 31, and we&apos;ll email you 3 days
+                  You won&apos;t be charged today. Stripe keeps the card and charges it from day 31. We email you 3 days
                   before with your before-and-after report.
                 </span>
                 <Tip id="free" openId={tip} setOpenId={setTip} label="What is the free month?" align="right">
@@ -622,31 +667,17 @@ export default function CheckoutView() {
                 </Tip>
               </div>
             ) : null}
-            <label className="v8-checkout-label">
-              Card number
-              <input
-                type="text"
-                inputMode="numeric"
-                autoComplete="cc-number"
-                placeholder="1234 1234 1234 1234"
-                value={cardNumber}
-                onChange={(e) => setCardNumber(e.target.value)}
-              />
-            </label>
-            <div className="v8-checkout-grid-3">
-              <label className="v8-checkout-label">
-                Expiry
-                <input type="text" autoComplete="cc-exp" placeholder="MM / YY" value={cardExp} onChange={(e) => setCardExp(e.target.value)} />
-              </label>
-              <label className="v8-checkout-label">
-                CVC
-                <input type="text" inputMode="numeric" autoComplete="cc-csc" placeholder="123" value={cardCvc} onChange={(e) => setCardCvc(e.target.value)} />
-              </label>
-              <label className="v8-checkout-label">
-                Postal / ZIP
-                <input type="text" autoComplete="postal-code" placeholder="T3B 0A1" value={postal} onChange={(e) => setPostal(e.target.value)} />
-              </label>
-            </div>
+            {stripeOn ? (
+              <p className="v8-checkout-stripe-note">
+                The card is entered on Stripe, not on this page. Searchify never sees the full card number.
+                {chosen.free ? " Solo is $0 today." : ` Stripe charges ${money(dueToday)} today.`}
+              </p>
+            ) : (
+              <p className="v8-checkout-stripe-note">
+                Stripe test keys are empty in the server settings, so this step saves the plan and does not charge a card.
+                Add the test secret and publishable keys, then restart the API, and this button will open Stripe.
+              </p>
+            )}
             <div className="v8-checkout-grid">
               <label className="v8-checkout-label">
                 Country
@@ -674,8 +705,9 @@ export default function CheckoutView() {
               <input type="text" value={taxId} onChange={(e) => setTaxId(e.target.value)} />
             </label>
             <span className="v8-checkout-stripe-note">
-              Card details will go straight to Stripe when payment is connected. Searchify never stores your full card
-              number — fields above are placeholders until Stripe is added.
+              {stripeOn
+                ? "Country is used for the tax added on the Stripe price. The card itself is collected on the next page."
+                : "Country is saved with the plan. Tax is added once Stripe checkout is turned on."}
             </span>
           </fieldset>
 

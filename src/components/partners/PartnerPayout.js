@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useShellBusy } from "@/components/v8/ShellBusy";
 import PartnerShell, { usePartnerCtx } from "@/components/partners/PartnerShell";
 import { getPartnerPayout, savePartnerPayout } from "@/lib/partnerApi";
+import { authHeaders } from "@/utils/users/Helpers";
 
 function nextPayoutLabel(now = new Date()) {
   const day = now.getDate() > 15 ? new Date(now.getFullYear(), now.getMonth() + 1, 15) : new Date(now.getFullYear(), now.getMonth(), 15);
@@ -117,6 +118,24 @@ function PartnerPayoutBody() {
         >
           How you get paid.
         </h1>
+        <button
+          type="button"
+          onClick={async () => {
+            const year = String(new Date().getFullYear());
+            const res = await fetch(`/api/v1/partners/statements.csv?year=${year}`, { headers: authHeaders() });
+            const text = await res.text();
+            const blob = new Blob([text], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `searchify-${year}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+          }}
+          style={{ alignSelf: "flex-start", minHeight: 36, border: "1px solid #262A31", borderRadius: 8, background: "#131519", color: "#F2F4F5", padding: "0 12px" }}
+        >
+          Download this year’s statement
+        </button>
         <span style={{ fontSize: 15, color: "#9AA1AB" }}>
           Payouts go out on the 15th for everything that cleared the month before, once you{"'re"} over $50. We need your tax details before the first one.
         </span>

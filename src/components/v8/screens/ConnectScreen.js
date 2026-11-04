@@ -8,7 +8,7 @@ import ConnectDialog, { useConnectionStatus } from "@/components/board/ConnectDi
 import V8PropertyPicker from "@/components/v8/V8PropertyPicker";
 import SfyTip from "@/components/v8/SfyTip";
 import { activeSiteContext } from "@/lib/siteContext";
-import { addReadyWebsite, dropReadyWebsite, loadJourney, readySites, selectJourneySite, websiteLabel } from "@/lib/journey";
+import { addReadyWebsite, dropReadyWebsite, loadJourney, readySites, selectJourneySite, syncJourneyNow, websiteLabel } from "@/lib/journey";
 import { getBillingAccount } from "@/lib/billingApi";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
 
@@ -157,7 +157,8 @@ export default function ConnectScreen() {
       setStatus(id, "connecting");
       if (id === "gsc" || id === "ga") {
         try {
-          const res = await startGoogleOAuth(id === "gsc" ? "gsc" : "ga4");
+          await syncJourneyNow();
+          const res = await startGoogleOAuth(id === "gsc" ? "gsc,ga4" : "gsc,ga4");
           if (res.data?.url) {
             window.location.href = res.data.url;
             return;
@@ -1016,7 +1017,13 @@ export default function ConnectScreen() {
       {status.googleAccount === "connected" || status.google?.connected ? (
         <V8PropertyPicker
           google={status.google}
-          siteLabel={siteHref || status.wordpressUrl || ""}
+          siteLabel={
+            siteHref ||
+            savedSites.find((site) => String(site.id) === String(activeId))?.answers?.site ||
+            savedSites[0]?.answers?.site ||
+            status.wordpressUrl ||
+            ""
+          }
           onSaved={async () => {
             await refreshStatus();
           }}

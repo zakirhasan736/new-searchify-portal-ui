@@ -19,6 +19,7 @@ const TABS = [
   { href: "/admin/hq/problems", label: "Problems", badge: true },
   { href: "/admin/hq/cancellations", label: "Cancellations", cancelBadge: true },
   { href: "/admin/hq/shareholders", label: "Shareholders" },
+  { href: "/admin/hq/payouts", label: "Monthly payout" },
   { href: "/admin/settings", label: "Settings" },
 ];
 

@@ -273,6 +273,7 @@ export default function SetupScreen() {
 
   const connectGsc = async () => {
     setErr("");
+    await syncJourneyNow();
     const res = await startGoogleOAuth("gsc,ga4", { add: false });
     if (res.data?.url) {
       window.location.href = res.data.url;

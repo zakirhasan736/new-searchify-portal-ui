@@ -3,18 +3,24 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import HqPanel, { useFirstLoad } from "@/components/admin/HqPanel";
-import { getHqOverview } from "@/lib/hqApi";
+import { declareHqDividend, getHqMoney, getHqOverview, markHqDividendPaid, approveHqDividend } from "@/lib/hqApi";
 import { buildHqOverviewModel } from "@/lib/hqOverviewModel";
 
 export default function HqOverview() {
   const [loading, firstLoad] = useFirstLoad();
   const [range, setRange] = useState("30");
   const [api, setApi] = useState(null);
+  const [money, setMoney] = useState(null);
+  const [pool, setPool] = useState("");
+  const [reference, setReference] = useState("");
 
   useEffect(() => {
     let cancelled = false;
     firstLoad(getHqOverview(range)).then((res) => {
       if (!cancelled && res.ok) setApi(res.data);
+    });
+    getHqMoney().then((res) => {
+      if (!cancelled && res.ok) setMoney(res.data);
     });
     return () => {
       cancelled = true;
@@ -84,6 +90,74 @@ export default function HqOverview() {
           Internal only · how the business is doing, updated hourly
           {api ? "" : " · loading…"}
         </span>
+        {money ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8, fontSize: 14, color: "#C5CAD1" }}>
+            <span>
+              Stripe {money.stripeConfigured ? "on" : "off"} · MRR ${Number(money.mrr || 0).toFixed(2)} · affiliate
+              liability ${Number(money.affiliateLiability || 0).toFixed(2)} · dividends payable $
+              {Number(money.dividendsPayable || 0).toFixed(2)}
+              {money.balance?.available != null ? ` · Stripe available $${Number(money.balance.available).toFixed(2)}` : ""}
+            </span>
+            <form
+              onSubmit={async (event) => {
+                event.preventDefault();
+                const res = await declareHqDividend(Number(pool), "");
+                if (res.ok) setMoney(await getHqMoney().then((r) => r.data));
+              }}
+              style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}
+            >
+              <input
+                value={pool}
+                onChange={(event) => setPool(event.target.value)}
+                placeholder="Dividend pool USD"
+                inputMode="decimal"
+                style={{ minHeight: 36, borderRadius: 8, border: "1px solid #262A31", background: "#101215", color: "#F2F4F5", padding: "0 10px" }}
+              />
+              <button type="submit" style={{ minHeight: 36, borderRadius: 8, border: 0, background: "#262A31", color: "#F2F4F5", padding: "0 12px" }}>
+                Declare dividend
+              </button>
+            </form>
+            {(money.dividends || []).slice(0, 3).map((run) => (
+              <div key={run.id} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <span>
+                  {run.id} · {run.status} · ${Number(run.net || 0).toFixed(2)} net
+                </span>
+                {run.status === "declared" ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await approveHqDividend(run.id);
+                      setMoney(await getHqMoney().then((r) => r.data));
+                    }}
+                    style={{ minHeight: 32, borderRadius: 8, border: 0, background: "#262A31", color: "#F2F4F5", padding: "0 10px" }}
+                  >
+                    Approve
+                  </button>
+                ) : null}
+                {run.status === "approved" ? (
+                  <>
+                    <input
+                      value={reference}
+                      onChange={(event) => setReference(event.target.value)}
+                      placeholder="Bank or Wise reference"
+                      style={{ minHeight: 32, borderRadius: 8, border: "1px solid #262A31", background: "#101215", color: "#F2F4F5", padding: "0 8px" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await markHqDividendPaid(run.id, reference);
+                        setMoney(await getHqMoney().then((r) => r.data));
+                      }}
+                      style={{ minHeight: 32, borderRadius: 8, border: 0, background: "#262A31", color: "#F2F4F5", padding: "0 10px" }}
+                    >
+                      Mark paid
+                    </button>
+                  </>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <section

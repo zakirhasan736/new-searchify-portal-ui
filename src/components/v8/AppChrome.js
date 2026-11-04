@@ -13,13 +13,15 @@ import {
   adoptPlanFromBilling,
   hydrateJourney,
   loadJourney,
+  markSelectedPlan,
   planById,
   requiredJourneyPath,
+  syncJourneyNow,
 } from "@/lib/journey";
 import { activeSiteContext } from "@/lib/siteContext";
 import { activateGoogleSite, syncGoogle } from "@/lib/v1Api";
 import { invalidateV3Cache } from "@/lib/v3Store";
-import { getBillingAccount } from "@/lib/billingApi";
+import { confirmCheckout, getBillingAccount } from "@/lib/billingApi";
 import { accountNeedsPaidPlan, isTrialLockAllowedPath, trialLockRedirect } from "@/lib/trialGate";
 import SkeletonPage from "@/components/v8/SkeletonWave";
 import MotionStage from "@/components/motion/MotionStage";
@@ -92,6 +94,26 @@ export default function AppChrome({ children, current }) {
   const mainRef = useRef(null);
   const bootedScope = useRef(false);
   const scopeGen = useRef(0);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("session_id");
+    if (params.get("checkout") !== "success" || !sessionId) return;
+    confirmCheckout(sessionId).then(async (res) => {
+      const checkout = res?.data?.checkout;
+      if (res?.ok && res.data?.ok !== false && checkout?.canonical) {
+        markSelectedPlan(checkout.canonical, checkout.billing);
+        try {
+          await syncJourneyNow();
+        } catch {
+          /* the server already stored the plan */
+        }
+        router.replace("/app");
+        return;
+      }
+      router.replace("/checkout?error=payment");
+    });
+  }, [router]);
 
   useEffect(() => {
     // Customer workspace needs a customer or admin JWT — not partner-only or preview-only session.

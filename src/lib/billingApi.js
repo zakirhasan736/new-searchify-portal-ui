@@ -23,12 +23,26 @@ export async function getBillingAccount() {
   );
 }
 
-export async function startCheckout({ planId, billing = "monthly", email = "" }) {
+export async function confirmCheckout(sessionId) {
+  return json(
+    await fetch("/api/v1/billing/checkout/confirm", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ sessionId }),
+    }),
+  );
+}
+
+export async function getStripeConfig() {
+  return json(await fetch("/api/v1/billing/stripe", { cache: "no-store" }));
+}
+
+export async function startCheckout({ planId, billing = "monthly", email = "", country = "" }) {
   return json(
     await fetch("/api/v1/billing/checkout", {
       method: "POST",
       headers: authHeaders(),
-      body: JSON.stringify({ planId, billing, email }),
+      body: JSON.stringify({ planId, billing, email, country }),
     }),
   );
 }
