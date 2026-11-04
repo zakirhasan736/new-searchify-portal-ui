@@ -481,6 +481,30 @@ export function researchKeywords({ site, terms = [], country = "", reach = "", f
   return research("keywords", { site, terms, country, reach, force, stored_only: storedOnly });
 }
 
+// Track a keyword for this website (saved on the server). With apply, Searchify also writes a new
+// title + meta description for the page that should rank for it; it waits for approval.
+export async function trackKeyword({ site, keyword, page = "", concept = "", source = "manual", apply = true }) {
+  const res = await json(await fetch("/api/v1/research/keyword-tracking/track", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ site, keyword, page, concept, source, apply }),
+  }));
+  invalidateV3Cache(["changes"]);
+  return res;
+}
+
+export async function untrackKeyword({ site, keyword }) {
+  return json(await fetch("/api/v1/research/keyword-tracking/untrack", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ site, keyword }),
+  }));
+}
+
+export async function trackedKeywords(site) {
+  return json(await fetch(`/api/v1/research/keyword-tracking/tracked?site=${encodeURIComponent(site || "")}`, { headers: authHeaders() }));
+}
+
 export function researchBacklinks({ site, force = false, storedOnly = false }) {
   return research("backlinks", { site, force, stored_only: storedOnly });
 }

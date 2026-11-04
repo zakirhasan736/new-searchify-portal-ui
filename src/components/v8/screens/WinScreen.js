@@ -4,12 +4,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   researchKeywords,
+  trackKeyword,
+  untrackKeyword,
+  approveChange,
+  executeChange,
+  runSiteScan,
   getSiteScan,
   listChanges,
   changePath,
   historyItems,
-  loadFeature,
-  featurePayload,
   errorText,
 } from "@/lib/v1Api";
 import { activeSiteContext } from "@/lib/siteContext";
@@ -21,8 +24,6 @@ import "@/styles/v8-screens.css";
 
 const SPOT_TIP =
   "Your spot on Google is the average position for this search. #1 is the top result — a smaller number is better. Search Console updates it as people search.";
-
-const TRACK_KEY = "sfy-tracked-keywords";
 
 function formatWinDate(iso) {
   if (!iso) return "—";
@@ -78,42 +79,6 @@ function collectScanPages(payload) {
   return rows;
 }
 
-function termKey(site) {
-  try {
-    const host = new URL(String(site || "").includes("://") ? site : `https://${site}`).hostname.replace(/^www\./, "");
-    return host ? `${TRACK_KEY}:${host}` : TRACK_KEY;
-  } catch {
-    return TRACK_KEY;
-  }
-}
-
-function parseTerms(raw) {
-  const list = raw ? JSON.parse(raw) : [];
-  return Array.isArray(list) ? list.map((t) => String(t).trim()).filter(Boolean) : [];
-}
-
-function loadLocalTerms(site) {
-  try {
-    const key = termKey(site);
-    const own = localStorage.getItem(key);
-    if (own) return parseTerms(own);
-    if (key === TRACK_KEY) return [];
-    const legacy = parseTerms(localStorage.getItem(TRACK_KEY));
-    if (legacy.length) localStorage.setItem(key, JSON.stringify(legacy.slice(0, 80)));
-    return legacy;
-  } catch {
-    return [];
-  }
-}
-
-function saveLocalTerms(terms, site) {
-  try {
-    localStorage.setItem(termKey(site), JSON.stringify(terms.slice(0, 80)));
-  } catch {
-    /* ignore */
-  }
-}
-
 function normalizeResearchRow(row) {
   if (!row || typeof row !== "object") return null;
   const keyword = String(row.keyword || row.term || row.query || "").trim();
@@ -133,24 +98,29 @@ function normalizeResearchRow(row) {
   };
 }
 
-function normalizeGscRow(row) {
-  if (Array.isArray(row)) {
-    const keyword = String(row[0] || "").trim();
-    if (!keyword) return null;
-    return {
-      keyword,
-      page: "/",
-      position: row[4] ?? row[3] ?? null,
-      previous: null,
-      volume: null,
-      clicks: row[1] ?? null,
-      impressions: row[2] ?? null,
-      ctr: typeof row[3] === "string" && String(row[3]).includes("%") ? row[3] : row[3],
-      measuring: false,
-      isNew: false,
-    };
-  }
-  return normalizeResearchRow(row);
+function keywordId(term) {
+  return `kw-${String(term || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60)}`;
+}
+
+// A tracked keyword as the backend stores it: DataForSEO numbers + the page update it started.
+function normalizeTracked(row) {
+  const base = normalizeResearchRow(row);
+  if (!base) return null;
+  return {
+    ...base,
+    page: pathFrom(row.page || row.url) || "/",
+    change: row.change || null,
+    concept: row.concept || "",
+    trackedSource: row.trackedSource || "",
+    measuring: base.position == null,
+  };
+}
+
+const OPEN_CHANGE = new Set(["proposed", "awaiting_approval", "approved", "failed", "needs_review"]);
+
+function fmtNum(n) {
+  if (n == null || n === "" || Number.isNaN(Number(n))) return "—";
+  return Math.round(Number(n)).toLocaleString("en-US");
 }
 
 function keywordStatus(row, appliedAt) {
@@ -197,47 +167,40 @@ function measuringBadge(appliedAt) {
 function mapKeywordRow(row, idx, changeByPath) {
   const term = row.keyword;
   const page = row.page || "/";
-  const change = changeByPath.get(page);
+  const own = row.change;
+  const change = own
+    ? {
+        id: own.id,
+        status: own.status,
+        appliedAt: own.appliedAt,
+        updatedAt: own.updatedAt,
+        proposed: {
+          title: own.title,
+          metaDescription: own.metaDescription,
+          beforeTitle: own.beforeTitle,
+          beforeMetaDescription: own.beforeDescription,
+        },
+      }
+    : changeByPath.get(page);
   const p = change?.proposed || {};
-  const appliedAt = change?.appliedAt || change?.updatedAt || null;
-  const status = keywordStatus(row, appliedAt);
+  const appliedAt = change?.appliedAt || null;
+  const status = keywordStatus(row, appliedAt || change?.updatedAt);
   const was = p.beforeTitle || p.liveTitle || p.beforeMetaDescription || "(Live page before changes)";
-  const now = p.title || p.metaDescription || row.url || "(Updated page copy)";
-  const date = change ? formatWinDate(appliedAt) : "—";
+  const now = p.title || p.metaDescription || row.url || "(No page update yet)";
+  const date = change ? formatWinDate(appliedAt || change.updatedAt) : "—";
   const pos = row.position;
   const prev = row.previous;
   const clicks = row.clicks != null ? Number(row.clicks) : null;
   const ctr = row.ctr;
-  const vol = row.volume;
   const rankNow = rankLabel(pos);
   const rankWas = prev != null ? rankLabel(prev) : "—";
-
-  let visitorsAfter = clicks != null ? String(Math.round(clicks)) : "—";
-  let visitorsBefore = "—";
-  if (clicks != null && prev != null && pos != null && Number(prev) !== Number(pos)) {
-    const ratio = Number(prev) > 0 ? Number(pos) / Number(prev) : 1;
-    visitorsBefore = String(Math.max(0, Math.round(clicks * Math.min(2.5, Math.max(0.3, ratio)))));
-  } else if (clicks != null) {
-    visitorsBefore = String(Math.max(0, Math.round(clicks * 0.85)));
-  } else if (vol != null) {
-    visitorsAfter = String(Math.max(1, Math.round(Number(vol) * 0.02)));
-    visitorsBefore = String(Math.max(1, Math.round(Number(vol) * 0.012)));
-  }
-
+  // Only real numbers: Search Console clicks/CTR and DataForSEO ranks. No estimates are filled in.
+  const visitorsNow = clicks != null ? String(Math.round(clicks)) : "—";
   const rateNow = pctLabel(typeof ctr === "string" ? parseFloat(ctr) : ctr);
-  const rateWas =
-    rateNow === "—"
-      ? "—"
-      : pctLabel((typeof ctr === "string" ? parseFloat(ctr) : Number(ctr)) * (status === "worked" ? 0.7 : status === "dropped" ? 1.2 : 0.95));
-
-  const leadAfter =
-    clicks != null ? String(Math.max(0, Math.round(clicks / 50))) : visitorsAfter === "—" ? "—" : String(Math.max(0, Math.round(Number(visitorsAfter) / 50)));
-  const leadBefore =
-    visitorsBefore === "—" ? "—" : String(Math.max(0, Math.round(Number(visitorsBefore) / 50)));
 
   const ST_BADGE =
     status === "measuring"
-      ? measuringBadge(appliedAt)
+      ? measuringBadge(appliedAt || change?.updatedAt)
       : status === "worked"
         ? "IT WORKED"
         : status === "dropped"
@@ -245,7 +208,7 @@ function mapKeywordRow(row, idx, changeByPath) {
           : "NO CLEAR EFFECT YET";
 
   return {
-    id: `kw-${idx}-${term.slice(0, 24).replace(/\s+/g, "-")}`,
+    id: keywordId(term),
     term,
     page,
     date,
@@ -253,32 +216,25 @@ function mapKeywordRow(row, idx, changeByPath) {
     badge: ST_BADGE,
     was,
     now,
+    concept: row.concept || "",
+    volume: row.volume,
+    change: change && change.id ? { id: change.id, status: change.status } : null,
     m: {
       rank: [rankWas, rankNow, rankNarrative({ ...row, position: pos, previous: prev }, status)],
       visitors: [
-        visitorsBefore,
-        status === "measuring" && visitorsAfter !== "—" ? "—" : visitorsAfter,
-        status === "measuring"
-          ? "Visitor numbers need the full 4 weeks."
-          : visitorsAfter !== "—" && visitorsBefore !== "—"
-            ? `${Math.max(0, Number(visitorsAfter) - Number(visitorsBefore))} more people a month from this search (from Search Console).`
-            : "Connect Search Console for click totals on this query.",
+        "—",
+        visitorsNow,
+        visitorsNow !== "—"
+          ? "Clicks from this search in the last 28 days (Search Console)."
+          : "Connect Search Console for real click totals on this search.",
       ],
-      leads: [
-        leadBefore,
-        status === "measuring" ? "—" : leadAfter,
-        status === "measuring"
-          ? "Lead numbers need the full 4 weeks."
-          : "Estimated calls & quotes from this search (≈ visitors ÷ 50). Connect Analytics for exacts.",
-      ],
+      leads: ["—", "—", "Calls and form fills need Google Analytics conversions for this search."],
       rate: [
-        rateWas,
-        status === "measuring" ? "—" : rateNow,
-        status === "measuring"
-          ? "Click rate needs the full 4 weeks."
-          : rateNow !== "—"
-            ? "Click-through rate from Search Console for this query."
-            : "Click rate comes from Search Console once enough impressions are logged.",
+        "—",
+        rateNow,
+        rateNow !== "—"
+          ? "Click-through rate from Search Console for this query."
+          : "Click rate comes from Search Console once enough impressions are logged.",
       ],
     },
   };
@@ -322,7 +278,15 @@ export default function WinScreen() {
   const [K, setK] = useState([]);
   const [loading, setLoading] = useState(true);
   const [addTerm, setAddTerm] = useState("");
-  const [tracking, setTracking] = useState(false);
+  const [tracking, setTracking] = useState("");
+  const [current, setCurrent] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggestMeta, setSuggestMeta] = useState(null);
+  const [business, setBusiness] = useState(null);
+  const [scConnected, setScConnected] = useState(false);
+  const [trackNote, setTrackNote] = useState("");
+  const [publishing, setPublishing] = useState(0);
+  const [reading, setReading] = useState(false);
   const [sitePages, setSitePages] = useState([]);
   const [pageNote, setPageNote] = useState("");
   const [problems, setProblems] = useState([]);
@@ -350,78 +314,37 @@ export default function WinScreen() {
     };
   }, [listTipOpen, metricTipOpen]);
 
-  const rebuild = useCallback(async () => {
+  const rebuild = useCallback(async ({ force = false } = {}) => {
     const site = href || activeSiteContext(loadJourney()).href || "";
     setLoading(true);
     try {
-      const localTerms = loadLocalTerms(site);
-      const [kwRes, organic, researchFeat, changeRes, scanRes] = await Promise.all([
-        site
-          ? researchKeywords({ site, terms: localTerms, force: false }).catch(() => ({ ok: false }))
-          : Promise.resolve({ ok: false }),
-        loadFeature("organic-search").catch(() => ({ ok: false })),
-        loadFeature("keyword-research").catch(() => ({ ok: false })),
+      const [kwRes, changeRes, scanRes] = await Promise.all([
+        site ? researchKeywords({ site, force }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
         listChanges({ force: true }).catch(() => ({ ok: false, data: [] })),
         site ? getSiteScan(site).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
       ]);
       setProblems(site ? problemsFrom(kwRes, "keywords") : []);
+      const scan = scanRes?.ok ? scanRes.data?.scan || scanRes.data || {} : {};
       setSitePages(scanRes?.ok ? collectScanPages(scanRes.data) : []);
+      setBusiness(scan.business && (scan.business.category || scan.business.business) ? { ...scan.business, error: scan.understandError || "" } : scan.understandError ? { error: scan.understandError } : null);
 
-      const byTerm = new Map();
-      const ingest = (row) => {
-        const n = normalizeResearchRow(row) || normalizeGscRow(row);
-        if (!n) return;
-        const key = n.keyword.toLowerCase();
-        if (!byTerm.has(key)) byTerm.set(key, n);
-        else {
-          const prev = byTerm.get(key);
-          byTerm.set(key, {
-            ...prev,
-            ...n,
-            position: n.position ?? prev.position,
-            previous: n.previous ?? prev.previous,
-            clicks: n.clicks ?? prev.clicks,
-            impressions: n.impressions ?? prev.impressions,
-            ctr: n.ctr ?? prev.ctr,
-            volume: n.volume ?? prev.volume,
-            page: n.page && n.page !== "/" ? n.page : prev.page,
-          });
-        }
-      };
-
+      let data = {};
       if (kwRes?.ok) {
-        const data = kwRes.data || {};
-        (data.tracked || []).forEach(ingest);
-        (data.ranked || []).forEach(ingest);
-        (data.keywords || []).forEach(ingest);
+        data = kwRes.data || {};
         setPageNote("");
       } else if (site) {
-        setPageNote(errorText(kwRes, "Live keyword ranks could not be refreshed. Tracked keywords below still use what is already saved."));
+        // Live research failed: still show what is stored (tracked list is in the database).
+        const stored = await researchKeywords({ site, storedOnly: true }).catch(() => null);
+        data = stored?.ok ? stored.data || {} : {};
+        setPageNote(errorText(kwRes, "Live keyword ranks could not be refreshed. Tracked keywords below use the last DataForSEO check."));
       } else {
         setPageNote("Add the website in setup so Searchify can track keywords for it.");
       }
 
-      const gsc = featurePayload(organic);
-      (gsc.rows || gsc.queries || []).forEach(ingest);
-
-      const kr = featurePayload(researchFeat);
-      (kr.rows || kr.ranked || []).forEach((r) => {
-        if (Array.isArray(r)) ingest({ keyword: r[0], volume: r[1], position: r[3] ?? r[2] });
-        else ingest(r);
-      });
-
-      localTerms.forEach((t) => {
-        if (!byTerm.has(t.toLowerCase())) {
-          byTerm.set(t.toLowerCase(), {
-            keyword: t,
-            page: "/",
-            position: null,
-            previous: null,
-            measuring: true,
-            isNew: true,
-          });
-        }
-      });
+      setCurrent(Array.isArray(data.current) ? data.current : []);
+      setSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
+      setSuggestMeta(data.suggestionMeta || null);
+      setScConnected(Boolean(data.searchConsoleConnected));
 
       const changes = Array.isArray(changeRes?.data) ? changeRes.data : changeRes?.data?.changes || [];
       const changeByPath = new Map();
@@ -430,7 +353,7 @@ export default function WinScreen() {
         if (path && path !== "—" && !changeByPath.has(path)) changeByPath.set(path, c);
       });
 
-      const rows = [...byTerm.values()].slice(0, 60);
+      const rows = (data.trackedList || []).map(normalizeTracked).filter(Boolean);
       const mapped = rows.map((row, idx) => mapKeywordRow(row, idx, changeByPath));
       setK(mapped);
       setSelId((prev) => (mapped.some((m) => m.id === prev) ? prev : mapped[0]?.id || ""));
@@ -445,26 +368,79 @@ export default function WinScreen() {
     rebuild();
   }, [rebuild, hostname]);
 
-  const handleTrack = async (raw) => {
+  // Track = save on the server + (apply) write a new title/description for the page, waiting for approval.
+  const handleTrack = async (raw, extra = {}) => {
     const term = String(raw ?? addTerm).trim();
     if (!term || tracking) return;
-    setTracking(true);
-    const next = [...new Set([term, ...loadLocalTerms(href)])];
-    saveLocalTerms(next, href);
-    setAddTerm("");
-    const site = href || "";
-    if (site) {
-      // A new term is not in the stored set, so the backend refreshes live without force (no wasted quota).
-      const live = await researchKeywords({ site, terms: next, force: false }).catch(() => ({ ok: false }));
-      if (!live?.ok) {
-        await rebuild();
-        setProblems(problemsFrom(live, "keywords"));
-        setTracking(false);
+    if (!href) {
+      setPageNote("Add the website in setup so Searchify can track keywords for it.");
+      return;
+    }
+    setTracking(term.toLowerCase());
+    setTrackNote("");
+    const res = await trackKeyword({
+      site: href,
+      keyword: term,
+      page: extra.page || "",
+      concept: extra.concept || "",
+      source: extra.source || "manual",
+      apply: extra.apply !== false,
+    }).catch(() => ({ ok: false }));
+    if (!res?.ok) {
+      setProblems(problemsFrom(res, "keywords"));
+      setTrackNote(errorText(res, "The keyword could not be tracked. Try again."));
+      setTracking("");
+      return;
+    }
+    if (raw == null) setAddTerm("");
+    const d = res.data || {};
+    const parts = [];
+    if (d.change?.id) parts.push(`A new title and description for ${pathFrom(d.change.targetUrl || d.change.target_url || "") || "the page"} is waiting for your approval.`);
+    if (d.note) parts.push(d.note);
+    (d.warnings || []).forEach((w) => parts.push(w));
+    setTrackNote(parts.join(" "));
+    await rebuild();
+    setSelId(keywordId(d.keyword || term));
+    setTracking("");
+  };
+
+  const handleUntrack = async (term) => {
+    if (!href || !term) return;
+    await untrackKeyword({ site: href, keyword: term }).catch(() => null);
+    setTrackNote(`Stopped tracking “${term}”.`);
+    await rebuild();
+  };
+
+  // Approve the exact text shown, then publish it to the connected website (WordPress, Shopify, Webflow…).
+  const handlePublish = async (change) => {
+    if (!change?.id || publishing) return;
+    setPublishing(change.id);
+    setTrackNote("");
+    if (change.status !== "approved") {
+      const ok = await approveChange(change.id).catch(() => ({ ok: false }));
+      if (!ok?.ok) {
+        setTrackNote(errorText(ok, "This update could not be approved."));
+        setPublishing(0);
         return;
       }
     }
+    const done = await executeChange(change.id).catch(() => ({ ok: false }));
+    setTrackNote(
+      done?.ok
+        ? "Published to your website. Searchify now measures this keyword's spot on Google."
+        : errorText(done, "Publishing failed. Connect WordPress, Shopify, or Webflow in Connections, then try again."),
+    );
     await rebuild();
-    setTracking(false);
+    setPublishing(0);
+  };
+
+  const handleReadSite = async () => {
+    if (!href || reading) return;
+    setReading(true);
+    const res = await runSiteScan({ site: href, force: true }).catch(() => ({ ok: false }));
+    if (!res?.ok) setTrackNote(errorText(res, "The website could not be read. Try again."));
+    await rebuild({ force: true });
+    setReading(false);
   };
 
   const summary = useMemo(() => {
@@ -712,6 +688,11 @@ export default function WinScreen() {
           <SkeletonCards count={2} lines={4} />
         </div>
       ) : null}
+      {trackNote ? (
+        <p role="status" style={{ maxWidth: "1120px", width: "100%", margin: "0 auto", fontSize: 14, lineHeight: 1.45, color: "#4DA3FF" }}>
+          {trackNote}
+        </p>
+      ) : null}
       {!loading && pageNote ? (
         <p style={{ maxWidth: "1120px", width: "100%", margin: "0 auto", fontSize: 14, lineHeight: 1.45, color: "#D7DADE" }}>
           {pageNote}
@@ -795,7 +776,7 @@ export default function WinScreen() {
             >
               {list.length === 0 ? (
                 <p style={{ margin: 0, padding: "14px 12px", fontSize: 14, color: "#9AA1AB", lineHeight: 1.45 }}>
-                  No keywords tracked yet. Add one below, or connect Search Console so ranks can fill in.
+                  No keywords tracked yet. Pick one from “Suggested for your business” below, or add your own.
                 </p>
               ) : null}
               {list.map((k) => (
@@ -1011,8 +992,17 @@ export default function WinScreen() {
                   </h1>
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     <span style={{ fontSize: "13px", color: "#9AA1AB" }}>
-                      What we changed on <span style={{ fontFamily: "'Geist Mono', monospace", color: "#D7DADE" }}>{cur.page}</span> ·{" "}
-                      {cur.date}
+                      {cur.date !== "—" ? "What we changed on" : "Page for this keyword:"}{" "}
+                      <span style={{ fontFamily: "'Geist Mono', monospace", color: "#D7DADE" }}>{cur.page}</span>
+                      {cur.date !== "—" ? <> · {cur.date}</> : null}
+                      {cur.concept ? <> · {cur.concept}</> : null} ·{" "}
+                      <button
+                        type="button"
+                        onClick={() => handleUntrack(cur.term)}
+                        style={{ border: 0, background: "none", padding: 0, color: "#7D848E", fontSize: "13px", textDecoration: "underline" }}
+                      >
+                        Stop tracking
+                      </button>
                     </span>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
                       <div
@@ -1047,6 +1037,50 @@ export default function WinScreen() {
                     </div>
                   </div>
                 </div>
+
+                {cur.change && OPEN_CHANGE.has(cur.change.status) ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "10px",
+                      alignItems: "center",
+                      borderRadius: "16px",
+                      border: "1px solid rgba(77,163,255,.5)",
+                      background: "rgba(77,163,255,.07)",
+                      padding: "14px 16px",
+                    }}
+                  >
+                    <span style={{ flex: "1 1 240px", fontSize: "14px", lineHeight: 1.45, color: "#D7DADE" }}>
+                      {cur.change.status === "approved"
+                        ? "Approved. Publish it to update the page on your website."
+                        : cur.change.status === "failed"
+                          ? "The last publish failed. Try again once the website connection works."
+                          : `This new title and description targets “${cur.term}”. Approve it to update the page on your website.`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handlePublish(cur.change)}
+                      disabled={Boolean(publishing)}
+                      style={{
+                        minHeight: "44px",
+                        padding: "0 18px",
+                        borderRadius: "11px",
+                        border: "0",
+                        background: "#4DA3FF",
+                        color: "#0A0B0D",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        opacity: publishing ? 0.6 : 1,
+                      }}
+                    >
+                      {publishing === cur.change.id ? "Publishing…" : cur.change.status === "approved" ? "Publish to website" : "Approve and publish"}
+                    </button>
+                    <Link href="/app/queue" style={{ fontSize: "14px", color: "#4DA3FF" }}>
+                      Edit first
+                    </Link>
+                  </div>
+                ) : null}
 
                 <section
                   aria-label="Result"
@@ -1218,6 +1252,212 @@ export default function WinScreen() {
           </main>
         </div>
       ) : null}
+
+      {!loading ? (
+        <section aria-labelledby="sugg-h" style={PANEL}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "flex-end", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
+              <h2 id="sugg-h" style={H2}>
+                Suggested for your business
+              </h2>
+              <span style={{ fontSize: "13px", color: "#9AA1AB", lineHeight: 1.45 }}>
+                {business?.category
+                  ? `DataForSEO searches that match what ${business.brand || hostname || "this site"} sells — ${business.category}.`
+                  : "DataForSEO searches for this website."}{" "}
+                {suggestMeta?.judged === "ai"
+                  ? "Checked against the AI read of every page."
+                  : suggestMeta?.judged === "words"
+                    ? "Matched to your offers by wording (the AI check was not available)."
+                    : ""}
+              </span>
+            </div>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              <button type="button" onClick={() => rebuild({ force: true })} style={GHOST}>
+                Refresh from DataForSEO
+              </button>
+              <button type="button" onClick={handleReadSite} disabled={reading} style={GHOST}>
+                {reading ? "Reading website…" : "Re-read website"}
+              </button>
+            </div>
+          </div>
+          {business?.error ? <p style={{ margin: 0, fontSize: 14, color: "#FF5A4E" }}>{business.error}</p> : null}
+          {suggestMeta?.needsSiteScan ? (
+            <p style={{ margin: 0, fontSize: 14, color: "#D7DADE", lineHeight: 1.45 }}>
+              The website has not been read yet, so these come straight from DataForSEO without a business check. Use “Re-read
+              website” to match suggestions to what the business sells.
+            </p>
+          ) : null}
+          {suggestions.length ? (
+            <div style={{ overflowX: "auto" }}>
+              <table style={TABLE}>
+                <thead>
+                  <tr style={{ color: "#7D848E", fontFamily: "'Geist Mono', monospace", fontSize: "11px", textAlign: "left" }}>
+                    <th style={TH}>KEYWORD</th>
+                    <th style={TH}>PART OF THE BUSINESS · PAGE</th>
+                    <th style={{ ...TH, textAlign: "right" }}>SEARCHES/MO</th>
+                    <th style={{ ...TH, textAlign: "right" }}>DIFFICULTY</th>
+                    <th style={TH}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {suggestions.slice(0, 40).map((row) => {
+                    const busy = tracking === String(row.keyword).toLowerCase();
+                    const page = pathFrom(row.page);
+                    return (
+                      <tr key={row.keyword} style={{ borderTop: "1px solid #1A1D22" }}>
+                        <td style={TD}>
+                          <span style={{ fontWeight: 600 }}>{row.keyword}</span>
+                          {row.fit === "core" ? <span style={PILL}>core</span> : null}
+                        </td>
+                        <td style={{ ...TD, color: "#9AA1AB" }}>
+                          {row.concept || "—"}
+                          <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>
+                            {page || "no page covers this yet"}
+                          </div>
+                        </td>
+                        <td style={{ ...TD, textAlign: "right" }}>{fmtNum(row.volume)}</td>
+                        <td style={{ ...TD, textAlign: "right" }}>{fmtNum(row.difficulty)}</td>
+                        <td style={{ ...TD, whiteSpace: "nowrap", textAlign: "right" }}>
+                          <button
+                            type="button"
+                            disabled={Boolean(tracking)}
+                            onClick={() => handleTrack(row.keyword, { page: row.page, concept: row.concept, source: "suggestion", apply: Boolean(page) })}
+                            style={{ ...PRIMARY, opacity: tracking ? 0.6 : 1 }}
+                          >
+                            {busy ? "Working…" : page ? "Track + update page" : "Track"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p style={{ margin: 0, fontSize: 14, color: "#9AA1AB" }}>
+              {suggestMeta ? "No new business searches found beyond what you already track or rank for." : "Suggestions appear after the first DataForSEO check."}
+            </p>
+          )}
+        </section>
+      ) : null}
+
+      {!loading ? (
+        <section aria-labelledby="cur-h" style={PANEL}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <h2 id="cur-h" style={H2}>
+              Current keywords
+            </h2>
+            <span style={{ fontSize: "13px", color: "#9AA1AB", lineHeight: 1.45 }}>
+              Searches {hostname || "this site"} shows up for now. DataForSEO ranks first
+              {scConnected ? ", with Search Console clicks added." : ". Connect Search Console to add real clicks and impressions."}
+            </span>
+          </div>
+          {current.length ? (
+            <div style={{ overflowX: "auto" }}>
+              <table style={TABLE}>
+                <thead>
+                  <tr style={{ color: "#7D848E", fontFamily: "'Geist Mono', monospace", fontSize: "11px", textAlign: "left" }}>
+                    <th style={TH}>KEYWORD</th>
+                    <th style={{ ...TH, textAlign: "right" }}>SPOT</th>
+                    <th style={{ ...TH, textAlign: "right" }}>SEARCHES/MO</th>
+                    <th style={{ ...TH, textAlign: "right" }}>CLICKS</th>
+                    <th style={TH}>SOURCE</th>
+                    <th style={TH}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {current.slice(0, 50).map((row) => {
+                    const isTracked = K.some((k) => k.term.toLowerCase() === String(row.keyword).toLowerCase());
+                    return (
+                      <tr key={row.keyword} style={{ borderTop: "1px solid #1A1D22" }}>
+                        <td style={TD}>
+                          {row.keyword}
+                          <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>{pathFrom(row.url) || ""}</div>
+                        </td>
+                        <td style={{ ...TD, textAlign: "right" }}>{rankLabel(row.position)}</td>
+                        <td style={{ ...TD, textAlign: "right" }}>{fmtNum(row.volume)}</td>
+                        <td style={{ ...TD, textAlign: "right" }}>{fmtNum(row.clicks)}</td>
+                        <td style={{ ...TD, color: "#9AA1AB" }}>
+                          {row.source}
+                          {row.source === "DataForSEO" && row.alsoInSearchConsole ? " + Search Console" : ""}
+                        </td>
+                        <td style={{ ...TD, textAlign: "right" }}>
+                          {isTracked ? (
+                            <span style={{ fontSize: "12px", color: "#3DDC84" }}>Tracked</span>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={Boolean(tracking)}
+                              onClick={() => handleTrack(row.keyword, { page: row.url || "", source: "current", apply: false })}
+                              style={{ ...GHOST, opacity: tracking ? 0.6 : 1 }}
+                            >
+                              {tracking === String(row.keyword).toLowerCase() ? "…" : "Track"}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p style={{ margin: 0, fontSize: 14, color: "#9AA1AB" }}>
+              DataForSEO has not seen this website rank yet.{" "}
+              {scConnected ? null : (
+                <Link href="/app/connections" style={{ color: "#4DA3FF" }}>
+                  Connect Search Console
+                </Link>
+              )}
+            </p>
+          )}
+        </section>
+      ) : null}
     </div>
   );
 }
+
+const PANEL = {
+  maxWidth: "1120px",
+  width: "100%",
+  margin: "0 auto",
+  boxSizing: "border-box",
+  borderRadius: "22px",
+  background: "#101215",
+  border: "1px solid #1A1D22",
+  padding: "18px",
+  display: "flex",
+  flexDirection: "column",
+  gap: "14px",
+};
+const H2 = { margin: 0, fontSize: "16px", fontWeight: 600, color: "#F2F4F5" };
+const TABLE = { width: "100%", borderCollapse: "collapse", fontSize: "14px", color: "#F2F4F5" };
+const TH = { padding: "6px 8px", fontWeight: 500 };
+const TD = { padding: "10px 8px", verticalAlign: "top" };
+const PILL = {
+  marginLeft: "8px",
+  fontSize: "11px",
+  padding: "2px 7px",
+  borderRadius: "8px",
+  color: "#3DDC84",
+  background: "rgba(61,220,132,.12)",
+};
+const PRIMARY = {
+  minHeight: "38px",
+  padding: "0 14px",
+  borderRadius: "10px",
+  border: "0",
+  background: "#4DA3FF",
+  color: "#0A0B0D",
+  fontSize: "13px",
+  fontWeight: 600,
+};
+const GHOST = {
+  minHeight: "38px",
+  padding: "0 14px",
+  borderRadius: "10px",
+  border: "1px solid #262A31",
+  background: "transparent",
+  color: "#D7DADE",
+  fontSize: "13px",
+};
