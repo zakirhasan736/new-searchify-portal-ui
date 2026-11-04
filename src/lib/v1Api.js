@@ -227,21 +227,16 @@ export async function syncGoogleLive(cmsConnectionId = null) {
   const sync = await syncGoogle(cmsConnectionId);
   if (!sync.ok) return sync;
   const enrich = await enrichGoogle();
-  const queue = await proposeFromGsc();
   invalidateV3Cache("all");
-  const queueError = !queue.ok
-    ? typeof queue.data?.detail === "string"
-      ? queue.data.detail
-      : "Could not open review opportunities from Search Console."
-    : "";
+  // Drafts are a separate request. Waiting on them here is what timed out the connection sync.
   return {
     ok: true,
     status: 200,
     data: {
       ...(sync.data || {}),
       enriched: enrich.ok ? enrich.data?.enriched || enrich.data : { error: enrich.data?.detail || "enrich skipped" },
-      queue: queue.ok ? queue.data : null,
-      queueError,
+      queue: null,
+      queueError: "",
     },
   };
 }
@@ -434,7 +429,7 @@ export function scanBrief(site = activeJourneySite()) {
   };
 }
 
-export async function proposeFromGsc({ breadth = "balanced", site = null, limit = 8, rescan = false } = {}) {
+export async function proposeFromGsc({ breadth = "balanced", site = null, limit = 3, rescan = false } = {}) {
   const scope = typeof window === "undefined" ? { site: "", brief: {} } : scanBrief(site || undefined);
   const res = await json(await fetch("/api/v1/operator/changes/from-gsc", {
     method: "POST",
