@@ -163,7 +163,7 @@ export default function HqPartners() {
       holdLabel: r.s === "held" ? "Held" : "Hold",
       holdBg: r.s === "held" ? "rgba(255,197,61,.16)" : "transparent",
       approveLabel: r.s === "approved" ? "Approved" : "Approve",
-      approveBg: r.s === "approved" ? "#3DDC84" : "#4DA3FF",
+      approveBg: r.s === "approved" ? "#3DDC84" : "#D5F879",
     };
   });
 
@@ -172,7 +172,7 @@ export default function HqPartners() {
       label: `Approved to pay ${PAY_DAY}`,
       value: money(payoutData.sumA),
       sub: `${payoutData.approved.length} partner${payoutData.approved.length === 1 ? "" : "s"}`,
-      color: "#4DA3FF",
+      color: "#D5F879",
     },
     { label: "On hold", value: money(payoutData.held), sub: "missing tax details or under review", color: "#FFC53D" },
     { label: `Carried to ${NEXT_MONTH}`, value: money(payoutData.carried), sub: "balances under $50", color: "#F2F4F5" },
@@ -270,9 +270,9 @@ export default function HqPartners() {
       return {
         at: `$${s / 1000}k`,
         label: done ? "Granted" : ok ? "Earned" : near ? "Holding" : "0.5%",
-        color: done ? "#0A0B0D" : ok ? "#4DA3FF" : near ? "#4DA3FF" : "#7D848E",
-        bg: done ? "#4DA3FF" : ok ? "rgba(213,248,121,.1)" : "#0A0B0D",
-        border: ok || done ? "#4DA3FF" : near ? "#4DA3FF" : "#1A1D22",
+        color: done ? "#0A0B0D" : ok ? "#D5F879" : near ? "#4DA3FF" : "#7D848E",
+        bg: done ? "#D5F879" : ok ? "rgba(213,248,121,.1)" : "#0A0B0D",
+        border: ok || done ? "#D5F879" : near ? "#4DA3FF" : "#1A1D22",
       };
     });
     return {
@@ -501,7 +501,7 @@ export default function HqPartners() {
                       fontFamily: "'Geist Mono', monospace",
                       fontSize: 13,
                       fontWeight: 600,
-                      color: "#4DA3FF",
+                      color: "#D5F879",
                     }}
                   >
                     {r.net}
@@ -616,7 +616,7 @@ export default function HqPartners() {
                 padding: "0 20px",
                 borderRadius: 12,
                 border: 0,
-                background: "#4DA3FF",
+                background: "#D5F879",
                 color: "#0A0B0D",
                 fontSize: 15,
                 fontWeight: 600,
@@ -703,7 +703,7 @@ export default function HqPartners() {
                       padding: "0 16px",
                       borderRadius: 12,
                       border: 0,
-                      background: "#4DA3FF",
+                      background: "#D5F879",
                       color: "#0A0B0D",
                       fontSize: 14,
                       fontWeight: 600,
@@ -720,9 +720,9 @@ export default function HqPartners() {
                       minHeight: 42,
                       padding: "0 16px",
                       borderRadius: 12,
-                      border: "1px solid #4DA3FF",
+                      border: "1px solid #D5F879",
                       background: "transparent",
-                      color: "#4DA3FF",
+                      color: "#D5F879",
                       fontSize: 14,
                       fontWeight: 600,
                     }}
@@ -758,7 +758,7 @@ export default function HqPartners() {
                   <button
                     type="button"
                     onClick={() => copyLink(a)}
-                    style={{ minHeight: 36, padding: "0 12px", borderRadius: 10, border: 0, background: "#4DA3FF", color: "#0A0B0D", fontSize: 13, fontWeight: 600 }}
+                    style={{ minHeight: 36, padding: "0 12px", borderRadius: 10, border: 0, background: "#D5F879", color: "#0A0B0D", fontSize: 13, fontWeight: 600 }}
                   >
                     {copiedLink === a.id ? "Copied" : "Copy link"}
                   </button>
@@ -934,7 +934,7 @@ export default function HqPartners() {
                   <span style={{ fontSize: 17, fontWeight: 600 }}>{f.name}</span>
                   <span style={{ fontSize: 12, color: "#7D848E" }}>Founding Partner Agreement · signed at closing</span>
                 </span>
-                <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 30, fontWeight: 800, color: "#4DA3FF" }}>
+                <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 30, fontWeight: 800, color: "#D5F879" }}>
                   {f.rate}%
                 </span>
               </div>
@@ -946,7 +946,7 @@ export default function HqPartners() {
                   </span>
                 </span>
                 <div style={{ height: 10, borderRadius: 5, background: "#1A1D22", overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: f.qualPct, borderRadius: 5, background: "#4DA3FF" }} />
+                  <div style={{ height: "100%", width: f.qualPct, borderRadius: 5, background: "#D5F879" }} />
                 </div>
                 <span style={{ fontSize: 12, color: "#7D848E" }}>{f.qualNote}</span>
               </div>
@@ -991,7 +991,7 @@ export default function HqPartners() {
                     minHeight: 44,
                     borderRadius: 12,
                     border: 0,
-                    background: "#4DA3FF",
+                    background: "#D5F879",
                     color: "#0A0B0D",
                     fontSize: 14,
                     fontWeight: 600,

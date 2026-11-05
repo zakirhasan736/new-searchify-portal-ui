@@ -351,7 +351,7 @@ export default function HqCancellations() {
                         padding: "0 14px",
                         borderRadius: 11,
                         border: 0,
-                        background: "#4DA3FF",
+                        background: "#D5F879",
                         color: "#0A0B0D",
                         fontSize: 13,
                         fontWeight: 600,
@@ -415,7 +415,7 @@ export default function HqCancellations() {
                 style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 14, padding: "6px 0", borderTop: "1px solid #16181C" }}
               >
                 <span>{r.label}</span>
-                <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 12, color: "#4DA3FF" }}>{r.count}</span>
+                <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 12, color: "#D5F879" }}>{r.count}</span>
               </div>
             ))}
             <span style={{ fontSize: 12, color: "#7D848E" }}>
@@ -426,7 +426,7 @@ export default function HqCancellations() {
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>After someone cancels</h2>
             {(d.followUps || []).map((f) => (
               <div key={f.when} style={{ display: "flex", gap: 12, fontSize: 13, lineHeight: 1.45 }}>
-                <span style={{ width: 66, flex: "none", fontFamily: "'Geist Mono', monospace", color: "#4DA3FF" }}>{f.when}</span>
+                <span style={{ width: 66, flex: "none", fontFamily: "'Geist Mono', monospace", color: "#D5F879" }}>{f.when}</span>
                 <span style={{ color: "#D7DADE" }}>{f.text}</span>
               </div>
             ))}

@@ -27,6 +27,7 @@ export function isTrialLockAllowedPath(pathname = "") {
   if (p === "/app/plan" || p.startsWith("/app/plan/")) return true;
   if (p === "/app/settings" || p.startsWith("/app/settings/")) return true;
   if (p === "/app/cancel" || p.startsWith("/app/cancel/")) return true;
+  if (p === "/app/mcp" || p.startsWith("/app/mcp/")) return true;
   return false;
 }
 

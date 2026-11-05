@@ -9,14 +9,14 @@
   --muted: #9aa1ab;
   --faint: #7d848e;
   --soft: #d7dade;
-  --lime: #d5f879;
+  --lime: #3ddc84;
   --green: #3ddc84;
   --yellow: #ffc53d;
   --display: var(--font-bricolage), "Bricolage Grotesque", Geist, sans-serif;
   --script: var(--font-caveat), Caveat, cursive;
   --sign: "Mrs Saint Delafield", "Snell Roundhand", cursive;
   --ui: var(--font-geist), Geist, "Helvetica Neue", sans-serif;
-  --mono: var(--font-geist-mono), "Geist Mono", monospace;
+  --mono: "Open Sans", sans-serif;
   flex: 999 1 560px;
   min-width: 0;
   color: var(--text);
@@ -33,10 +33,10 @@
   box-sizing: border-box;
 }
 .v8-tr a {
-  color: var(--lime);
+  color: #4da3ff;
 }
 .v8-tr a:hover {
-  color: #ecffb8;
+  color: #8cc4ff;
 }
 .v8-tr button {
   font-family: inherit;
@@ -282,7 +282,7 @@
   gap: 8px;
 }
 .v8-tr-choice.is-primary {
-  border-color: rgba(213, 248, 121, 0.5);
+  border-color: rgba(77, 163, 255, 0.5);
 }
 .v8-tr-choice a {
   display: inline-flex;
@@ -296,9 +296,9 @@
   margin-top: auto;
 }
 .v8-tr-choice.is-primary a {
-  background: var(--lime);
-  color: var(--bg);
-  border: 1px solid var(--lime);
+  background: #4da3ff;
+  color: #0a0b0d;
+  border: 1px solid #4da3ff;
 }
 .v8-tr-choice:not(.is-primary) a {
   background: transparent;

@@ -8,6 +8,13 @@
     opacity: 0.5;
   }
 }
+.pf-row {
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.pf-row:hover {
+  border-color: #2e333b !important;
+  background: #121418 !important;
+}
 .pf-go:hover {
   background: #7dbbff !important;
 }

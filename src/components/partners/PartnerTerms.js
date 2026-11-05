@@ -160,7 +160,7 @@ function PartnerTermsBody() {
       const reached = refMrr >= lvl;
       const isNext = i === nextIdx;
       const st = reached
-        ? ["Reached · held 3 months to earn", "#4DA3FF", "rgba(213,248,121,.06)", "rgba(213,248,121,.4)", "#4DA3FF", "#0A0B0D", `Your referrals bring in $${Math.round(refMrr).toLocaleString("en-US")} a month`]
+        ? ["Reached · held 3 months to earn", "#D5F879", "rgba(213,248,121,.06)", "rgba(213,248,121,.4)", "#D5F879", "#0A0B0D", `Your referrals bring in $${Math.round(refMrr).toLocaleString("en-US")} a month`]
         : isNext
           ? ["Next", "#4DA3FF", "#0A0B0D", "#1A1D22", "#1A1D22", "#F2F4F5", `$${Math.round(lvl - refMrr).toLocaleString("en-US")} a month to go`]
           : ["", "#7D848E", "#0A0B0D", "#1A1D22", "#1A1D22", "#7D848E", "0.5% of the company"];
@@ -288,7 +288,7 @@ function PartnerTermsBody() {
               </span>
               <span style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
                 <span>Your referrals now bring in</span>
-                <span style={{ fontFamily: "'Geist Mono', monospace", color: "#4DA3FF" }}>${Math.round(refMrr).toLocaleString("en-US")} / mo</span>
+                <span style={{ fontFamily: '"Open Sans", sans-serif', fontWeight: 700, color: "#D5F879" }}>${Math.round(refMrr).toLocaleString("en-US")} / mo</span>
               </span>
               {steps.map((st) => (
                 <div key={st.n} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 12, background: st.bg, border: `1px solid ${st.border}` }}>
@@ -314,6 +314,29 @@ function PartnerTermsBody() {
           ) : null}
         </section>
       </div>
+
+      <section id="plain" aria-labelledby="plain-h" style={{ maxWidth: 1180, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={{ fontFamily: "Caveat, 'Bradley Hand', cursive", fontSize: "clamp(40px, 4.4vw, 54px)", lineHeight: 1, fontWeight: 700, color: "#D5F879", marginTop: 18 }}>Searchify in plain English</span>
+          <h2 id="plain-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 30, letterSpacing: "-0.8px", fontWeight: 700 }}>Think of it as a mechanic for a website&apos;s Google health.</h2>
+          <span style={{ fontSize: 15, color: "#D7DADE", lineHeight: 1.6, maxWidth: 820 }}>It looks under the hood, explains what&apos;s wrong in normal words, fixes it once the owner says OK, and then checks whether the fix actually helped. You don&apos;t need to be an SEO expert to recommend it. You just need to know who it helps and why.</span>
+        </div>
+        <span style={{ fontFamily: '"Open Sans", sans-serif', fontWeight: 700, fontSize: 11, color: "#9AA1AB", letterSpacing: "0.06em" }}>THE 5 W&apos;S</span>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 10 }}>
+          {[
+            ["Who makes it?", "A small team in Calgary, led by founder Aadle Faqiryar, who spent years doing SEO for clients one at a time before turning it into software."],
+            ["What does it do?", "It connects to a WordPress site and Google, scans every page, and colours each one: red for dire, yellow for worth fixing, green for passing and blue for winning pages it locks and leaves alone. Then it suggests one fix at a time. The owner taps approve, Searchify makes the change, and it checks that the change is live."],
+            ["Where does it work?", "On WordPress sites today, which is about 43% of all websites, using Google Search Console, Google Analytics and Bing. Shopify, Wix, Squarespace and Webflow are on the list. Please don’t promise dates for those."],
+            ["When do people see results?", "Usually about a month after a fix. Searchify then shows honestly what each fix earned, good news or not."],
+            ["Why does anyone need it?", "Most business owners know their site should do better on Google, and now in AI answers like ChatGPT too. They just don’t have the time or know-how to figure out what to fix. Searchify does that part for them."],
+          ].map(([q, a], i) => (
+            <div key={q} style={{ borderRadius: 16, background: "#101215", border: "1px solid #1A1D22", padding: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 10 }}><span style={{ width: 30, height: 30, flex: "none", borderRadius: 9, display: "grid", placeItems: "center", background: "#D5F879", color: "#0A0B0D", fontWeight: 700, fontSize: 14 }}>{i + 1}</span><span style={{ fontSize: 16, fontWeight: 600 }}>{q}</span></span>
+              <span style={{ fontSize: 14, color: "#D7DADE", lineHeight: 1.55 }}>{a}</span>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <div style={{ maxWidth: 1180, width: "100%", margin: "0 auto", display: "flex", flexWrap: "wrap", gap: 20, alignItems: "stretch" }}>
         <section aria-labelledby="do-h" style={{ ...section, margin: 0, flex: "1 1 360px", minWidth: 0, gap: 10 }}>
@@ -360,7 +383,7 @@ function PartnerTermsBody() {
               <button
                 type="button"
                 onClick={() => doCopy(`d-${sn[0]}`, sn[1])}
-                style={{ alignSelf: "flex-start", minHeight: 36, padding: "0 12px", borderRadius: 10, border: 0, background: copied === `d-${sn[0]}` ? "#3DDC84" : "#4DA3FF", color: "#0A0B0D", fontSize: 13, fontWeight: 600 }}
+                style={{ alignSelf: "flex-start", minHeight: 36, padding: "0 12px", borderRadius: 10, border: 0, background: copied === `d-${sn[0]}` ? "#3DDC84" : "#D5F879", color: "#0A0B0D", fontSize: 13, fontWeight: 600 }}
               >
                 {copied === `d-${sn[0]}` ? "Copied" : "Copy"}
               </button>
@@ -387,9 +410,9 @@ function PartnerTermsBody() {
                 minHeight: 34,
                 padding: "0 12px",
                 borderRadius: 999,
-                border: `1px solid ${channel === id ? "#4DA3FF" : "#262A31"}`,
+                border: `1px solid ${channel === id ? "#D5F879" : "#262A31"}`,
                 background: channel === id ? "rgba(213,248,121,.08)" : "transparent",
-                color: channel === id ? "#4DA3FF" : "#9AA1AB",
+                color: channel === id ? "#D5F879" : "#9AA1AB",
                 fontSize: 13,
               }}
             >
@@ -411,7 +434,7 @@ function PartnerTermsBody() {
                 <button
                   type="button"
                   onClick={() => doCopy(`m-${m.id}`, m.text)}
-                  style={{ minHeight: 36, padding: "0 12px", borderRadius: 10, border: 0, background: copied === `m-${m.id}` ? "#3DDC84" : "#4DA3FF", color: "#0A0B0D", fontSize: 13, fontWeight: 600 }}
+                  style={{ minHeight: 36, padding: "0 12px", borderRadius: 10, border: 0, background: copied === `m-${m.id}` ? "#3DDC84" : "#D5F879", color: "#0A0B0D", fontSize: 13, fontWeight: 600 }}
                 >
                   {copied === `m-${m.id}` ? "Copied" : "Copy message"}
                 </button>

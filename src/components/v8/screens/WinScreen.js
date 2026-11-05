@@ -8,7 +8,6 @@ import {
   untrackKeyword,
   approveChange,
   executeChange,
-  runSiteScan,
   checkKeywordRanks,
   getSiteScan,
   listChanges,
@@ -21,7 +20,7 @@ import { loadJourney } from "@/lib/journey";
 import CheckPopup from "@/components/v8/CheckPopup";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
 import ProblemNotice from "@/components/v8/ProblemNotice";
-import KeywordResearchPanel from "@/components/v8/screens/keywords/KeywordResearchPanel";
+import KeywordGuide from "@/components/v8/screens/keywords/KeywordGuide";
 import { RankChart, Sparkline } from "@/components/v8/screens/keywords/charts";
 import { problemsFrom } from "@/lib/problems";
 import "@/styles/v8-screens.css";
@@ -304,20 +303,17 @@ export default function WinScreen() {
   const [loading, setLoading] = useState(true);
   const [addTerm, setAddTerm] = useState("");
   const [tracking, setTracking] = useState("");
-  const [current, setCurrent] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
-  const [suggestMeta, setSuggestMeta] = useState(null);
-  const [business, setBusiness] = useState(null);
-  const [scConnected, setScConnected] = useState(false);
   const [trackNote, setTrackNote] = useState("");
   const [publishing, setPublishing] = useState(0);
   const [publishWin, setPublishWin] = useState(null);
-  const [reading, setReading] = useState(false);
   const [sitePages, setSitePages] = useState([]);
   const [pageNote, setPageNote] = useState("");
   const [problems, setProblems] = useState([]);
   const [listTipOpen, setListTipOpen] = useState(false);
   const [metricTipOpen, setMetricTipOpen] = useState(false);
+  const [view, setView] = useState("guide");
+  const [freshN, setFreshN] = useState(0);
   const { hostname, href } = activeSiteContext(loadJourney());
 
   useEffect(() => {
@@ -350,9 +346,7 @@ export default function WinScreen() {
         site ? getSiteScan(site).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
       ]);
       setProblems(site ? problemsFrom(kwRes, "keywords") : []);
-      const scan = scanRes?.ok ? scanRes.data?.scan || scanRes.data || {} : {};
       setSitePages(scanRes?.ok ? collectScanPages(scanRes.data) : []);
-      setBusiness(scan.business && (scan.business.category || scan.business.business) ? { ...scan.business, error: scan.understandError || "" } : scan.understandError ? { error: scan.understandError } : null);
 
       let data = {};
       if (kwRes?.ok) {
@@ -367,10 +361,7 @@ export default function WinScreen() {
         setPageNote("Add the website in setup so Searchify can track keywords for it.");
       }
 
-      setCurrent(Array.isArray(data.current) ? data.current : []);
       setSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
-      setSuggestMeta(data.suggestionMeta || null);
-      setScConnected(Boolean(data.searchConsoleConnected));
       setResearch({
         organicSummary: data.organicSummary || null,
         cannibalization: data.cannibalization || [],
@@ -430,6 +421,7 @@ export default function WinScreen() {
     if (d.note) parts.push(d.note);
     (d.warnings || []).forEach((w) => parts.push(w));
     setTrackNote(parts.join(" "));
+    setFreshN((n) => n + 1);
     await rebuild();
     setSelId(keywordId(d.keyword || term));
     setTracking("");
@@ -493,15 +485,6 @@ export default function WinScreen() {
     setChecking(false);
   };
 
-  const handleReadSite = async () => {
-    if (!href || reading) return;
-    setReading(true);
-    const res = await runSiteScan({ site: href, force: true }).catch(() => ({ ok: false }));
-    if (!res?.ok) setTrackNote(errorText(res, "The website could not be read. Try again."));
-    await rebuild({ force: true });
-    setReading(false);
-  };
-
   const summary = useMemo(() => {
     let up = 0;
     let flat = 0;
@@ -526,11 +509,11 @@ export default function WinScreen() {
       after: "#3DDC84",
     },
     measuring: {
-      dot: "#4DA3FF",
-      text: "#4DA3FF",
-      bg: "rgba(77,163,255,.1)",
-      border: "rgba(77,163,255,.5)",
-      arrow: "#4DA3FF",
+      dot: "#FFC53D",
+      text: "#FFC53D",
+      bg: "rgba(255,197,61,.1)",
+      border: "rgba(255,197,61,.5)",
+      arrow: "#FFC53D",
       after: "#F2F4F5",
     },
     flat: {
@@ -659,9 +642,19 @@ export default function WinScreen() {
         ? "SO FAR"
         : "4 WEEKS AFTER";
 
-  const trackedLabel = empty
-    ? `No keywords tracked on ${hostname || "your site"} yet.`
-    : `${K.length} keywords tracked on ${hostname} · ${summary.up} up · ${summary.flat} flat · ${summary.down} down · ${summary.measuring} measuring`;
+  const areaName = research.localVolume?.location ? String(research.localVolume.location).split(",")[0] : "";
+  const trackedBits = [
+    summary.up ? `${summary.up} up` : "",
+    summary.flat ? `${summary.flat} flat` : "",
+    summary.down ? `${summary.down} down` : "",
+    summary.measuring ? `${summary.measuring} measuring` : "",
+  ].filter(Boolean);
+  const trackedLabel =
+    view === "guide"
+      ? `Searches around ${areaName || "your area"} that fit what you do`
+      : K.length
+        ? `${K.length} keywords tracked on ${hostname || "your site"}${trackedBits.length ? ` · ${trackedBits.join(" · ")}` : ""}`
+        : "Nothing tracked yet";
 
   const curMove = empty ? null : moveOf(cur);
 
@@ -722,84 +715,53 @@ export default function WinScreen() {
             KEYWORD TRACKER
           </span>
           <span style={{ fontSize: "15px", color: "#9AA1AB" }}>{loading ? "" : trackedLabel}</span>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-            <div role="group" aria-label="Device" style={{ display: "inline-flex", padding: "3px", borderRadius: "999px", border: "1px solid #262A31" }}>
-              {["desktop", "mobile"].map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  aria-pressed={device === d ? "true" : "false"}
-                  onClick={() => setDevice(d)}
-                  style={{
-                    minHeight: "30px",
-                    padding: "0 12px",
-                    borderRadius: "999px",
-                    border: 0,
-                    background: device === d ? "#F2F4F5" : "transparent",
-                    color: device === d ? "#0A0B0D" : "#D7DADE",
-                    fontSize: "13px",
-                    fontWeight: device === d ? 600 : 400,
-                  }}
-                >
-                  {d === "desktop" ? "Desktop" : "Mobile"}
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={handleCheckRanks}
-              disabled={checking || !K.length}
+        </div>
+        {view === "tracked" && K.length ? (
+          <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "13px", color: "#9AA1AB", minWidth: "300px" }}>
+            Keyword
+            <select
+              value={selId}
+              onChange={(e) => setSelId(e.target.value)}
               style={{
-                minHeight: "36px",
+                minHeight: "48px",
                 padding: "0 14px",
-                borderRadius: "999px",
-                border: "1px solid #262A31",
-                background: "transparent",
-                color: "#D7DADE",
-                fontSize: "13px",
-                opacity: checking || !K.length ? 0.6 : 1,
+                borderRadius: "12px",
+                border: "1px solid #4DA3FF",
+                background: "#131519",
+                color: "#F2F4F5",
+                fontFamily: "inherit",
+                fontSize: "15px",
+                boxShadow: "0 0 18px rgba(77,163,255,.2)",
               }}
             >
-              {checking ? "Checking Google…" : "Check ranks now"}
-            </button>
-            {lastCheck ? (
-              <span style={{ fontSize: "12px", color: "#7D848E" }}>
-                Last live check {lastCheck.when}
-                {lastCheck.location ? ` · ${lastCheck.location.replace(/,/g, ", ")}` : ""} · runs daily
-              </span>
-            ) : null}
-          </div>
-        </div>
-        <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "13px", color: "#9AA1AB", minWidth: "300px" }}>
-          Keyword
-          <select
-            value={selId}
-            onChange={(e) => setSelId(e.target.value)}
-            disabled={!list.length}
-            style={{
-              minHeight: "48px",
-              padding: "0 14px",
-              borderRadius: "12px",
-              border: "1px solid #4DA3FF",
-              background: "#131519",
-              color: "#F2F4F5",
-              font: "inherit",
-              fontSize: "15px",
-              boxShadow: "0 0 18px rgba(77,163,255,.2)",
-              opacity: list.length ? 1 : 0.55,
-            }}
-          >
-            {!list.length ? <option value="">Add a keyword to track</option> : null}
-            {list.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.term}
-              </option>
-            ))}
-          </select>
-        </label>
+              {list.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.term}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
       </header>
 
       <ProblemNotice problems={problems} onRetry={() => rebuild()} style={{ maxWidth: "1120px", width: "100%", margin: "0 auto" }} />
+
+      {!loading ? (
+        <nav aria-label="Keyword views" style={{ maxWidth: 1120, width: "100%", margin: "0 auto", display: "flex", gap: 8, flexWrap: "wrap", paddingBottom: 14, borderBottom: "1px solid #1A1D22" }}>
+          {[
+            { id: "guide", label: "Suggestions", count: suggestions.filter((row) => row.kind !== "gap").length },
+            { id: "tracked", label: "Tracked", count: K.length },
+          ].map((tab) => {
+            const on = view === tab.id;
+            return (
+              <button key={tab.id} type="button" aria-pressed={on} onClick={() => setView(tab.id)} style={{ display: "inline-flex", alignItems: "center", gap: 10, minHeight: 46, padding: "0 18px", borderRadius: 999, border: `1px solid ${on ? "#F2F4F5" : "#262A31"}`, background: on ? "#F2F4F5" : "transparent", color: on ? "#0A0B0D" : "#D7DADE", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
+                {tab.label}
+                <span style={{ fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: 12, padding: "2px 9px", borderRadius: 999, background: on ? "#0A0B0D" : "#1A1D22", color: on ? "#F2F4F5" : "#9AA1AB" }}>{tab.count}</span>
+              </button>
+            );
+          })}
+        </nav>
+      ) : null}
 
       {loading ? (
         <div style={{ maxWidth: "1120px", width: "100%", margin: "0 auto" }}>
@@ -817,7 +779,63 @@ export default function WinScreen() {
         </p>
       ) : null}
 
-      {!loading ? (
+      {!loading && view === "guide" ? (
+        <KeywordGuide
+          suggestions={suggestions}
+          competitors={research.competitors}
+          localVolume={research.localVolume}
+          trackedTerms={new Set(K.map((row) => row.term.toLowerCase()))}
+          tracking={tracking}
+          onTrack={handleTrack}
+          onUntrack={handleUntrack}
+          onSeeTracked={() => setView("tracked")}
+        />
+      ) : null}
+
+      {!loading && view === "tracked" && freshN > 0 ? (
+        <section aria-labelledby="cg-h" style={{ maxWidth: 1120, width: "100%", margin: "0 auto", boxSizing: "border-box", borderRadius: 22, background: "#101215", border: "1px solid rgba(61,220,132,.45)", boxShadow: "0 0 30px rgba(61,220,132,.08)", padding: "clamp(20px, 3vw, 30px)", display: "flex", flexDirection: "column", gap: 18, animation: "sfy-rise .3s ease both" }}>
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+            <span style={{ width: 44, height: 44, flex: "none", borderRadius: "50%", background: "rgba(61,220,132,.14)", display: "grid", placeItems: "center" }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DDC84" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
+            </span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
+              <h2 id="cg-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "clamp(24px, 2.6vw, 30px)", lineHeight: 1.1, letterSpacing: "-0.6px", fontWeight: 700 }}>Congratulations, you&apos;re now tracking {freshN} keywords.</h2>
+              <p style={{ margin: 0, fontSize: 16, lineHeight: 1.6, color: "#D7DADE", maxWidth: 760 }}>Results will begin to populate over the next 30 to 60 days, at minimum. Please give SEO time. It&apos;s a slow process, but a very rewarding one for your website and your business.</p>
+            </div>
+          </div>
+          <ol aria-label="What happens next" style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+            <li style={{ borderRadius: 14, background: "rgba(61,220,132,.07)", border: "1px solid rgba(61,220,132,.4)", padding: "14px 16px", display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: 11, color: "#3DDC84" }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: "#3DDC84", boxShadow: "0 0 8px #3DDC84" }} />TODAY</span>
+              <span style={{ fontSize: 15, fontWeight: 600 }}>Tracking starts</span>
+              <span style={{ fontSize: 13, color: "#9AA1AB" }}>We start watching these searches on Google.</span>
+            </li>
+            <li style={{ borderRadius: 14, background: "#0A0B0D", border: "1px solid #262A31", padding: "14px 16px", display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: 11, color: "#9AA1AB" }}><span style={{ width: 8, height: 8, boxSizing: "border-box", borderRadius: "50%", border: "2px solid #9AA1AB" }} />WITHIN 7 DAYS</span>
+              <span style={{ fontSize: 15, fontWeight: 600 }}>First reading</span>
+              <span style={{ fontSize: 13, color: "#9AA1AB" }}>Where you stand on Google today, if you show up at all.</span>
+            </li>
+            <li style={{ borderRadius: 14, background: "#0A0B0D", border: "1px solid #262A31", padding: "14px 16px", display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: 11, color: "#9AA1AB" }}><span style={{ width: 8, height: 8, boxSizing: "border-box", borderRadius: "50%", border: "2px solid #9AA1AB" }} />30 TO 60 DAYS</span>
+              <span style={{ fontSize: 15, fontWeight: 600 }}>Results start to show</span>
+              <span style={{ fontSize: 13, color: "#9AA1AB" }}>Movement on Google, visitors and calls.</span>
+            </li>
+          </ol>
+          <span style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, lineHeight: 1.5, color: "#D7DADE" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA1AB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: "none", marginTop: 1 }}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
+            We&apos;ll keep a watchful eye on these keywords. Nothing has been changed on your website yet, and we&apos;ll ask you before anything is.
+          </span>
+        </section>
+      ) : null}
+
+      {!loading && view === "tracked" && !K.length ? (
+        <div style={{ maxWidth: 1120, width: "100%", margin: "0 auto", boxSizing: "border-box", borderRadius: 22, background: "#101215", border: "1px solid #1A1D22", padding: "40px 28px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 14 }}>
+          <h2 style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 30, letterSpacing: "-0.6px" }}>Nothing tracked yet.</h2>
+          <p style={{ margin: 0, fontSize: 16, color: "#D7DADE", lineHeight: 1.55, maxWidth: 560 }}>Pick a few searches from Suggestions. We&apos;ll take a first reading of where you stand within 7 days, then show you the moves that get you higher.</p>
+          <button type="button" onClick={() => setView("guide")} style={{ minHeight: 52, padding: "0 22px", borderRadius: 13, border: 0, background: "#4DA3FF", color: "#0A0B0D", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>See suggestions</button>
+        </div>
+      ) : null}
+
+      {!loading && view === "tracked" && K.length ? (
         <div
           style={{
             maxWidth: "1120px",
@@ -862,6 +880,30 @@ export default function WinScreen() {
                 Your spot on Google. <span style={{ color: "#D7DADE" }}>#1 is the top result</span> — a smaller number is
                 better.
               </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 6 }}>
+                <div role="group" aria-label="Device" style={{ display: "inline-flex", padding: 3, borderRadius: 999, border: "1px solid #262A31" }}>
+                  {["desktop", "mobile"].map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      aria-pressed={device === d}
+                      onClick={() => setDevice(d)}
+                      style={{ minHeight: 30, padding: "0 12px", borderRadius: 999, border: 0, background: device === d ? "#F2F4F5" : "transparent", color: device === d ? "#0A0B0D" : "#D7DADE", fontSize: 13, fontWeight: device === d ? 600 : 400 }}
+                    >
+                      {d === "desktop" ? "Desktop" : "Mobile"}
+                    </button>
+                  ))}
+                </div>
+                <button type="button" onClick={handleCheckRanks} disabled={checking || !K.length} style={{ minHeight: 36, padding: "0 14px", borderRadius: 999, border: "1px solid #262A31", background: "transparent", color: "#D7DADE", fontSize: 13, opacity: checking || !K.length ? 0.6 : 1 }}>
+                  {checking ? "Checking Google…" : "Check ranks now"}
+                </button>
+                {lastCheck ? (
+                  <span style={{ fontSize: 12, color: "#7D848E" }}>
+                    Last live check {lastCheck.when}
+                    {lastCheck.location ? ` · ${lastCheck.location.replace(/,/g, ", ")}` : ""} · runs daily
+                  </span>
+                ) : null}
+              </div>
             </div>
             <div
               aria-hidden="true"
@@ -1014,7 +1056,7 @@ export default function WinScreen() {
                     border: "1px solid #262A31",
                     background: "#0A0B0D",
                     color: "#F2F4F5",
-                    font: "inherit",
+                    fontFamily: "inherit",
                     fontSize: "14px",
                   }}
                 />
@@ -1405,7 +1447,7 @@ export default function WinScreen() {
                 {cur.status === "worked" ? (
                   <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
                     <Link
-                      href="/app"
+                      href="/app/queue"
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
@@ -1420,7 +1462,7 @@ export default function WinScreen() {
                         boxShadow: "0 0 22px rgba(77,163,255,.45)",
                       }}
                     >
-                      Do the same on {similarPages.length} similar page{similarPages.length === 1 ? "" : "s"}
+                      Do the same on {similarPages.length ? `${similarPages.length} similar page${similarPages.length === 1 ? "" : "s"}` : "similar pages"}
                     </Link>
                     <span style={{ fontSize: "13px", color: "#9AA1AB" }}>Added to your total and this month&apos;s client report.</span>
                   </div>
@@ -1452,26 +1494,6 @@ export default function WinScreen() {
         </div>
       ) : null}
 
-      {!loading ? (
-        <KeywordResearchPanel
-          suggestions={suggestions}
-          current={current}
-          organicSummary={research.organicSummary}
-          cannibalization={research.cannibalization}
-          competitors={research.competitors}
-          localVolume={research.localVolume}
-          business={business}
-          suggestMeta={suggestMeta}
-          scConnected={scConnected}
-          hostname={hostname}
-          trackedTerms={new Set(K.map((k) => k.term.toLowerCase()))}
-          tracking={tracking}
-          onTrack={handleTrack}
-          onRefresh={() => rebuild({ force: true })}
-          onReadSite={handleReadSite}
-          reading={reading}
-        />
-      ) : null}
       <CheckPopup
         open={Boolean(publishWin)}
         titleId="win-h"

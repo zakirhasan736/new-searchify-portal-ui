@@ -357,8 +357,7 @@ export default function FreeAnalysisScreen() {
           <span className="v8-fa-script">Free, in about a minute</span>
           <h1 id="st-h">See how Google sees your website.</h1>
           <span className="v8-fa-lede">
-            Deep page scan, Google health grade, and — when available — the searches you already show up for. No login,
-            no credit card.
+            Which searches you show up for, who&apos;s beating you, and what&apos;s holding you back. No login, no credit card.
           </span>
           <form
             className="v8-fa-form"
@@ -632,7 +631,7 @@ export default function FreeAnalysisScreen() {
                       <span style={{ fontFamily: "var(--mono)" }}>{row.signal}</span>
                     </span>
                     <div className="v8-fa-bar">
-                      <i style={{ width: `${row.pct || 12}%`, background: row.you ? "#4DA3FF" : "#4A5160" }} />
+                      <i style={{ width: `${row.pct || 12}%`, background: row.you ? "#D5F879" : "#4A5160" }} />
                     </div>
                     {row.address ? <span style={{ fontSize: 12, color: "#7D848E" }}>{row.address}</span> : null}
                   </div>

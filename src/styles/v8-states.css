@@ -16,6 +16,13 @@
 .v8-states *::after {
   box-sizing: border-box;
 }
+.v8-states [style*="Geist Mono"],
+.v8-states-label,
+.v8-states-key,
+.v8-states-allow code {
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
+}
 .v8-states a {
   color: #d5f879;
 }

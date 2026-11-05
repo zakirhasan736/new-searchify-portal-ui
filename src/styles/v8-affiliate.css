@@ -18,7 +18,7 @@
   --script: var(--font-caveat), Caveat, cursive;
   --sign: "Mrs Saint Delafield", "Snell Roundhand", cursive;
   --ui: var(--font-geist), Geist, "Helvetica Neue", sans-serif;
-  --mono: var(--font-geist-mono), "Geist Mono", monospace;
+  --mono: "Open Sans", sans-serif;
   min-height: 100dvh;
   background: var(--bg);
   color: var(--text);
@@ -99,6 +99,7 @@
 }
 .v8-aff-chip {
   font-family: var(--mono);
+  font-weight: 700;
   font-size: 11px;
   padding: 3px 8px;
   border-radius: 6px;
@@ -465,6 +466,19 @@
   border-bottom: 1px solid var(--line);
   padding-bottom: 12px;
 }
+.v8-aff-nav a {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: 10px;
+  color: #d7dade;
+  text-decoration: none;
+  font-size: 14px;
+}
+.v8-aff-nav a:hover {
+  color: #f2f4f5;
+}
 .v8-aff-nav .is-lock {
   min-height: 38px;
   display: inline-flex;
@@ -511,7 +525,10 @@
   background: var(--blue);
 }
 .v8-aff-progress li.is-done i {
-  background: var(--green);
+  background: var(--lime);
+}
+.v8-aff-progress li.is-done span {
+  color: var(--lime);
 }
 .v8-aff-progress span {
   font-size: 13px;

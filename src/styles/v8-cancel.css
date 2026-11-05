@@ -78,7 +78,8 @@
   color: #3ddc84;
 }
 .v8-cancel-steps li span {
-  font-family: var(--font-geist-mono), "Geist Mono", ui-monospace, monospace;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
   font-size: 11px;
 }
 .v8-cancel-main {
@@ -111,9 +112,9 @@
   color: #f2f4f5;
 }
 .v8-cancel-badge {
-  font-family: var(--font-geist-mono), "Geist Mono", ui-monospace, monospace;
+  font-family: "Open Sans", sans-serif;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 700;
   margin-left: 6px;
   padding: 2px 7px;
   border-radius: 6px;
@@ -175,7 +176,8 @@
   flex-wrap: wrap;
 }
 .v8-cancel-since-from {
-  font-family: var(--font-geist-mono), "Geist Mono", ui-monospace, monospace;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
   font-size: 13px;
   color: #7d848e;
 }
@@ -341,9 +343,10 @@
   border: 1px solid #262a31;
   background: transparent;
   color: #f2f4f5;
+  font-family: inherit;
   font-size: 15px;
+  font-weight: 400;
   cursor: pointer;
-  font: inherit;
   text-decoration: none !important;
   display: inline-flex;
   align-items: center;
@@ -390,7 +393,8 @@
   color: #9aa1ab;
 }
 .v8-cancel-said {
-  font-family: var(--font-geist-mono), "Geist Mono", ui-monospace, monospace;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
   font-size: 12px;
   color: #9aa1ab;
 }
@@ -433,10 +437,11 @@
   border: 0;
   background: transparent;
   color: #d7dade;
+  font-family: inherit;
   font-size: 14px;
+  font-weight: 400;
   text-decoration: underline;
   cursor: pointer;
-  font: inherit;
 }
 .v8-cancel-ghost {
   min-height: 48px;
@@ -444,9 +449,10 @@
   border: 0;
   background: transparent;
   color: #9aa1ab;
+  font-family: inherit;
   font-size: 14px;
+  font-weight: 400;
   cursor: pointer;
-  font: inherit;
 }
 .v8-cancel-facts {
   list-style: none;
@@ -466,7 +472,7 @@
   border-bottom: 1px solid #1a1d22;
 }
 .v8-cancel-facts li:last-child {
-  border-bottom: 0;
+  border-bottom: 1px solid #1a1d22;
 }
 .v8-cancel-fact-icon {
   flex: none;

@@ -5,12 +5,8 @@ import Link from 'next/link';
 import { activeSiteContext } from '@/lib/siteContext';
 import {
   changePath,
-  featureKpi,
-  featurePayload,
   historyItems,
   listChanges,
-  loadFeature,
-  queueItems,
   undoChange,
   getBusinessProfile,
   getProductUsage,
@@ -116,14 +112,6 @@ function downloadCsv(rows, hostname) {
 }
 
 const REPORT_TOPICS = [
-  { id: 'gsc', label: 'Search Console' },
-  { id: 'speed', label: 'Speed Insights' },
-  { id: 'title', label: 'Title tags' },
-  { id: 'desc', label: 'Descriptions' },
-  { id: 'image', label: 'Images' },
-  { id: 'schema', label: 'Schema' },
-  { id: 'links', label: 'Links' },
-  { id: 'content', label: 'Content' },
   { id: 'results', label: 'Results: visitors and calls gained' },
   { id: 'changelog', label: 'Change log with before and after' },
   { id: 'health', label: 'Site health board' },
@@ -131,27 +119,25 @@ const REPORT_TOPICS = [
   { id: 'next', label: 'Coming up next month' },
 ];
 
-function TopicCard({ title, children }) {
-  return (
-    <section style={{ borderRadius: '20px', background: '#101215', border: '1px solid #1A1D22', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '10px', minWidth: 0 }}>
-      <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>{title}</h3>
-      {children}
-    </section>
-  );
+const MONO = '"Open Sans", sans-serif';
+const BENCH = 'Measured from your own Search Console data: 4 weeks before vs 4 weeks after';
+
+function stampOf(change) {
+  const iso = change.appliedAt || change.updatedAt || change.createdAt;
+  const time = iso ? new Date(iso).getTime() : 0;
+  return Number.isNaN(time) ? 0 : time;
 }
 
-function ReportLines({ rows, empty }) {
-  if (!rows.length) return <p style={{ margin: 0, fontSize: '14px', color: '#9AA1AB' }}>{empty}</p>;
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      {rows.map((row) => (
-        <div key={row.key} style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
-          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: '12px', color: '#7D848E' }}>{row.meta}</span>
-          <span style={{ fontSize: '14px', lineHeight: 1.45, overflowWrap: 'anywhere' }}>{row.text}</span>
-        </div>
-      ))}
-    </div>
-  );
+function exportCaps(planId) {
+  const id = String(planId || '').toLowerCase();
+  if (id === 'agency' || id === 'premium') return { pdf: null, sends: null, logins: null };
+  if (id === 'growth' || id === 'pro') return { pdf: 5, sends: 1, logins: 3 };
+  return { pdf: 1, sends: null, logins: null };
+}
+
+function capLabel(usedCount, cap) {
+  if (cap == null) return 'Unlimited';
+  return `${usedCount} of ${cap}`;
 }
 
 export default function ChangelogScreen() {
@@ -167,8 +153,8 @@ export default function ChangelogScreen() {
   const [confirmUndo, setConfirmUndo] = useState(null);
   const [agencyName, setAgencyName] = useState('Searchify (default)');
   const [planLabel, setPlanLabel] = useState('PRO');
+  const [planId, setPlanId] = useState('growth');
   const [periodLabel, setPeriodLabel] = useState('');
-  const [sources, setSources] = useState({ gsc: {}, speed: {}, queue: [] });
   const [include, setInclude] = useState(() => Object.fromEntries(REPORT_TOPICS.map((topic) => [topic.id, true])));
 
   const [all, setAll] = useState([]);
@@ -179,24 +165,14 @@ export default function ChangelogScreen() {
     try {
       const journey = loadJourney();
       setHostname(activeSiteContext(journey).hostname || 'Your site');
-      const [chRes, prof, usage, organic, audit] = await Promise.all([
+      const [chRes, prof, usage] = await Promise.all([
         listChanges({ force: true }),
         getBusinessProfile().catch(() => ({ ok: false })),
         getProductUsage().catch(() => ({ ok: false })),
-        loadFeature('organic-search').catch(() => ({ ok: false })),
-        loadFeature('site-audit').catch(() => ({ ok: false })),
       ]);
       const raw = Array.isArray(chRes.data) ? chRes.data : chRes.data?.changes || [];
-      const mapped = historyItems(raw).map(mapApiChange);
+      const mapped = historyItems(raw).slice().sort((a, b) => stampOf(b) - stampOf(a)).map(mapApiChange);
       setAll(mapped);
-      setSources({
-        gsc: featurePayload(organic),
-        speed: featurePayload(audit),
-        queue: queueItems(raw).slice(0, 6).map((item) => ({
-          page: changePath(item),
-          change: changeSummary(item),
-        })),
-      });
       setOpen((prev) => (mapped.some((m) => m.id === prev) ? prev : mapped[0]?.id || ''));
 
       if (prof?.ok && prof.data) {
@@ -204,9 +180,10 @@ export default function ChangelogScreen() {
         if (name) setAgencyName(name);
       }
       const u = usage?.ok ? usage.data : {};
-      const planId = u.plan || journey.planId || 'starter';
-      const plan = planById(planId);
-      setPlanLabel(String(plan?.name || planId || 'PRO').toUpperCase());
+      const nextPlan = u.plan || journey.planId || 'starter';
+      const plan = planById(nextPlan);
+      setPlanId(nextPlan);
+      setPlanLabel(String(plan?.name || nextPlan || 'PRO').toUpperCase());
       if (typeof u.reportsUsed === 'number') setUsed(Math.min(5, u.reportsUsed));
       else if (typeof u.pdfReports === 'number') setUsed(Math.min(5, u.pdfReports));
     } catch {
@@ -243,31 +220,30 @@ export default function ChangelogScreen() {
     setCsv(true);
   };
 
-  const accent = '#4DA3FF';
+  const accent = '#3DDC84';
 
   const TYPES = { title: 'TITLE TAG', desc: 'DESCRIPTION', image: 'IMAGES', schema: 'SCHEMA', links: 'LINKS', content: 'CONTENT' };
-  const BENCH = {
-    title: 'Similar title changes on local-service sites: median +18% clicks · 412 changes',
-    desc: 'Similar description changes: median +7% clicks · 389 changes',
-    image: 'Similar image alt-text changes: median +4% image-search visits · 120 changes',
-    schema: 'Similar FAQ schema changes: median +2% clicks · 97 changes',
-    links: 'Similar internal-link changes: median +9% clicks · 203 changes',
-    content: 'Similar guide refreshes: median +22% clicks · 156 changes'
-  };
 
-  const LOOK = { up: { dot: '#3DDC84', color: '#F2F4F5' }, measuring: { dot: '#4DA3FF', color: '#9AA1AB' }, flat: { dot: '#3A404A', color: '#9AA1AB' }, undone: { dot: '#FF5A4E', color: '#9AA1AB' } };
-
-  const totalCaptured = all.reduce((sum, r) => sum + (r.delta || 0), 0);
-  const undoneCount = all.filter((r) => r.res === 'undone').length;
+  const LOOK = { up: { dot: '#3DDC84', color: '#F2F4F5' }, measuring: { dot: '#FFC53D', color: '#9AA1AB' }, flat: { dot: '#3A404A', color: '#9AA1AB' }, undone: { dot: '#FF5A4E', color: '#9AA1AB' } };
 
   const rows = all.filter((r) => (type === 'all' || r.type === type) && (result === 'all' || r.res === result)).map((r) => {
     const isOpen = open === r.id;
+    const index = all.findIndex((item) => item.id === r.id);
+    const n = all.length - index;
+    const latest = n === all.length;
+    const first = n === 1;
     return {
       ...r,
-      typeLabel: TYPES[r.type],
-      bench: BENCH[r.type],
-      dot: LOOK[r.res].dot,
-      resultColor: LOOK[r.res].color,
+      n: String(n),
+      isLatest: latest,
+      isFirst: first,
+      numBg: latest ? 'rgba(77,163,255,.12)' : (first ? 'rgba(61,220,132,.1)' : '#16181C'),
+      numBorder: latest ? '#4DA3FF' : (first ? 'rgba(61,220,132,.6)' : '#262A31'),
+      numColor: latest ? '#4DA3FF' : (first ? '#3DDC84' : '#D7DADE'),
+      typeLabel: TYPES[r.type] || 'CHANGE',
+      bench: BENCH,
+      dot: (LOOK[r.res] || LOOK.measuring).dot,
+      resultColor: (LOOK[r.res] || LOOK.measuring).color,
       open: isOpen,
       openStr: String(isOpen),
       chev: isOpen ? 'rotate(180deg)' : 'none',
@@ -283,7 +259,7 @@ export default function ChangelogScreen() {
     off: type !== d[0]
   }));
 
-  const rdefs = [['all', 'Any result', '#9AA1AB'], ['up', 'Worked', '#3DDC84'], ['measuring', 'Measuring', '#4DA3FF'], ['flat', 'No effect', '#3A404A'], ['undone', 'Undone', '#FF5A4E']];
+  const rdefs = [['all', 'Any result', '#9AA1AB'], ['up', 'Worked', '#3DDC84'], ['measuring', 'Measuring', '#FFC53D'], ['flat', 'No effect', '#3A404A'], ['undone', 'Undone', '#FF5A4E']];
   const results = rdefs.map((d) => ({
     label: d[1],
     dot: d[2],
@@ -292,7 +268,12 @@ export default function ChangelogScreen() {
   }));
 
   const gained = rows.reduce((a, r) => a + (r.delta || 0), 0);
-  const slots = [0, 1, 2, 3, 4].map((i) => ({ color: i < used ? '#4DA3FF' : '#262A31', glow: i < used ? '0 0 8px rgba(77,163,255,.5)' : 'none' }));
+  const caps = exportCaps(planId);
+  const pdfCap = caps.pdf;
+  const pdfUsed = pdfCap == null ? used : Math.min(used, pdfCap);
+  const slotCount = pdfCap == null ? 0 : pdfCap;
+  const slots = Array.from({ length: slotCount }, (_, i) => ({ color: i < pdfUsed ? '#4DA3FF' : '#262A31', glow: i < pdfUsed ? '0 0 8px rgba(77,163,255,.5)' : 'none' }));
+  const atPdfLimit = pdfCap != null && pdfUsed >= pdfCap;
   const reports = made
     ? [{ name: `${periodLabel || 'This month'} · monthly`, meta: 'Branded PDF · just now', href: '/app/month' }]
     : [];
@@ -302,46 +283,7 @@ export default function ChangelogScreen() {
     return d.toLocaleString('en-US', { month: 'long', day: 'numeric' });
   })();
 
-  const gscKpis = [
-    ['Clicks', featureKpi(sources.gsc, 'click')],
-    ['Impressions', featureKpi(sources.gsc, 'impr')],
-    ['CTR', featureKpi(sources.gsc, 'ctr')],
-    ['Average position', featureKpi(sources.gsc, 'pos')],
-  ];
-  const gscQueries = (sources.gsc.rows || []).slice(0, 5).map((row, index) => ({
-    key: `q-${index}`,
-    meta: String(row[0] || 'Query'),
-    text: `Clicks ${row[1] ?? '—'} · impressions ${row[2] ?? '—'}`,
-  }));
-  const speedKpis = (sources.speed.kpis || sources.speed.panels?.kpis || []).slice(0, 6);
-  const listingRows = (kind, beforeKey, afterKey) =>
-    all
-      .filter((row) => {
-        if (kind === 'title') return row.afterTitle && row.afterTitle !== row.beforeTitle;
-        if (kind === 'desc') return row.afterDescription && row.afterDescription !== row.beforeDescription;
-        return row.type === kind;
-      })
-      .slice(0, 6)
-      .map((row) => ({
-        key: `${kind}-${row.id}`,
-        meta: `${row.date} · ${row.page}`,
-        text: kind === 'title'
-          ? `${row.beforeTitle || '(not set)'} → ${row.afterTitle}`
-          : kind === 'desc'
-          ? `${row.beforeDescription || '(not set)'} → ${row.afterDescription}`
-          : `${row.before} → ${row.after}`,
-      }));
-  const titleRows = listingRows('title');
-  const descRows = listingRows('desc');
-  const imageRows = listingRows('image');
-  const schemaRows = listingRows('schema');
-  const linkRows = listingRows('links');
-  const contentRows = listingRows('content');
-  const logRows = all.slice(0, 6).map((row) => ({
-    key: `log-${row.id}`,
-    meta: `${row.date} · ${TYPES[row.type] || row.type} · ${row.page}`,
-    text: `${row.before} → ${row.after}`,
-  }));
+  const monthName = (periodLabel || '').split(' ')[0] || 'Monthly';
 
   return (
       <div style={{ flex: '999 1 560px', minWidth: 0, minHeight: 1240, background: '#0A0B0D', color: '#F2F4F5', fontFamily: 'Geist, \'Helvetica Neue\', sans-serif', boxSizing: 'border-box', padding: '22px clamp(16px, 4vw, 56px) 56px', display: 'flex', flexDirection: 'column', gap: 28 }}>
@@ -359,11 +301,6 @@ export default function ChangelogScreen() {
         <div style={{ maxWidth: '1120px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', minWidth: 0 }}>
             <h1 style={{ margin: '0', fontFamily: '\'Bricolage Grotesque\', Geist, sans-serif', fontSize: 'clamp(36px, 4.6vw, 58px)', lineHeight: '1', letterSpacing: '-1.6px', fontWeight: '700', minWidth: 0, overflowWrap: 'break-word' }}>Reports and change log</h1>
-            <div style={{ display: 'flex', gap: '18px', flexWrap: 'wrap', fontSize: '14px', color: '#9AA1AB' }}>
-              <span><strong style={{ color: '#F2F4F5' }}>{all.length}</strong> changes shipped</span>
-              <span><strong style={{ color: accent }}>+{totalCaptured}</strong> visitors / mo captured</span>
-              <span><strong style={{ color: '#F2F4F5' }}>{undoneCount}</strong> undone automatically</span>
-            </div>
           </div>
           <div role="tablist" aria-label="View" style={{ display: 'inline-flex', padding: '4px', borderRadius: '14px', background: '#131519', border: '1px solid #262A31' }}>
             {[['log', 'Change log'], ['reports', 'Reports']].map((t) => (
@@ -372,12 +309,17 @@ export default function ChangelogScreen() {
           </div>
         </div>
 
+        <div role="note" style={{ maxWidth: '1120px', width: '100%', margin: '0 auto', boxSizing: 'border-box', display: 'flex', gap: '14px', alignItems: 'flex-start', padding: '16px 20px', borderRadius: '16px', background: 'rgba(255,197,61,.08)', border: '1px solid rgba(255,197,61,.5)' }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFC53D" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: 'none', marginTop: '1px' }}><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6"></path><path d="M12 7.5h.01"></path></svg>
+          <span style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><strong style={{ fontSize: '16px', color: '#F2F4F5' }}>You don&apos;t have to do anything here.</strong><span style={{ fontSize: '15px', lineHeight: 1.55, color: '#D7DADE' }}>This page is simply a record of every change made to your website and what each one earned. Come back whenever you&apos;re curious, or when you need a report to share.</span></span>
+        </div>
+
         {tab === 'log' && (
           <div style={{ maxWidth: '1120px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px', animation: 'sfy-rise .25s ease both' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '1 1 560px' }}>
                 <div role="group" aria-label="Filter by what changed" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span style={{ fontFamily: '\'Geist Mono\', monospace', fontSize: '11px', color: '#7D848E', width: '64px' }}>CHANGED</span>
+                  <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: '11px', color: '#7D848E', width: '64px' }}>FILTER BY</span>
                   {tdefs.map((d) => {
                     const f = types.find((t) => t.label === d[1]) || { label: d[1], count: '0', on: false };
                     return (
@@ -388,7 +330,7 @@ export default function ChangelogScreen() {
                   })}
                 </div>
                 <div role="group" aria-label="Filter by result" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span style={{ fontFamily: '\'Geist Mono\', monospace', fontSize: '11px', color: '#7D848E', width: '64px' }}>RESULT</span>
+                  <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: '11px', color: '#7D848E', width: '64px' }}>FILTER BY</span>
                   {rdefs.map((d) => {
                     const f = results.find((t) => t.label === d[1]) || { label: d[1], dot: d[2], on: false };
                     return (
@@ -424,11 +366,16 @@ export default function ChangelogScreen() {
               {rows.map((r) => (
                 <div key={r.id} style={{ borderBottom: '1px solid #1A1D22' }}>
                   <button type="button" onClick={() => setOpen(r.open ? null : r.id)} aria-expanded={r.openStr} style={{ width: '100%', textAlign: 'left', background: 'transparent', border: '0', color: '#F2F4F5', padding: '16px 22px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-                    <span style={{ fontFamily: '\'Geist Mono\', monospace', fontSize: '12px', color: '#7D848E', width: '52px' }}>{r.date}</span>
-                    <span style={{ fontFamily: '\'Geist Mono\', monospace', fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #262A31', color: '#D7DADE', width: '104px', textAlign: 'center', boxSizing: 'border-box' }}>{r.typeLabel}</span>
+                    <span aria-label={`Change number ${r.n}`} style={{ flex: 'none', width: '46px', height: '32px', borderRadius: '9px', background: r.numBg, border: `1px solid ${r.numBorder}`, color: r.numColor, display: 'grid', placeItems: 'center', fontFamily: '\'Bricolage Grotesque\', Geist, sans-serif', fontSize: '15px', fontWeight: 800 }}>#{r.n}</span>
+                    <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: '12px', color: '#7D848E', width: '52px' }}>{r.date}</span>
+                    <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #262A31', color: '#D7DADE', width: '104px', textAlign: 'center', boxSizing: 'border-box' }}>{r.typeLabel}</span>
                     <span style={{ flex: '1 1 240px', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <span style={{ fontSize: '15px' }}>{r.change}</span>
-                      <span style={{ fontFamily: '\'Geist Mono\', monospace', fontSize: '12px', color: '#9AA1AB' }}>{r.page}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '15px' }}>{r.change}</span>
+                        {r.isLatest ? <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: '10px', letterSpacing: '0.06em', padding: '2px 7px', borderRadius: '6px', border: '1px solid #4DA3FF', color: '#4DA3FF' }}>LATEST</span> : null}
+                        {r.isFirst ? <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: '10px', letterSpacing: '0.06em', padding: '2px 7px', borderRadius: '6px', border: '1px solid #3DDC84', color: '#3DDC84' }}>YOUR FIRST FIX</span> : null}
+                      </span>
+                      <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: '12px', color: '#9AA1AB' }}>{r.page}</span>
                     </span>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', width: '190px' }}>
                       <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: r.dot }}></span>
@@ -437,7 +384,7 @@ export default function ChangelogScreen() {
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9AA1AB" strokeWidth="2" strokeLinecap="round" aria-hidden="true" style={{ transform: r.chev, transition: 'transform .2s ease' }}><path d="M7 10l5 5 5-5"></path></svg>
                   </button>
                   {r.open && (
-                    <div style={{ padding: '0 22px 20px 90px', display: 'flex', flexDirection: 'column', gap: '12px', animation: 'sfy-rise .2s ease both' }}>
+                    <div className="v8-log-detail" style={{ padding: '0 22px 20px 152px', display: 'flex', flexDirection: 'column', gap: '12px', animation: 'sfy-rise .2s ease both' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px' }}>
                         <div style={{ borderRadius: '12px', background: '#0A0B0D', border: '1px solid #1A1D22', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '4px' }}><span style={{ fontFamily: '\'Geist Mono\', monospace', fontSize: '11px', color: '#7D848E' }}>BEFORE</span><span style={{ fontSize: '14px', color: '#9AA1AB' }}>{r.before}</span></div>
                         <div style={{ borderRadius: '12px', background: 'rgba(77,163,255,.06)', border: '1px solid #4DA3FF', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '4px' }}><span style={{ fontFamily: '\'Geist Mono\', monospace', fontSize: '11px', color: '#4DA3FF' }}>AFTER</span><span style={{ fontSize: '14px' }}>{r.after}</span></div>
@@ -525,33 +472,35 @@ export default function ChangelogScreen() {
                 ))}
               </fieldset>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-                {used < 5 ? (
-                  <button type="button" onClick={() => { setUsed(Math.min(5, used + 1)); setMade(true); }} style={{ minHeight: '52px', padding: '0 24px', borderRadius: '13px', border: '0', background: '#4DA3FF', color: '#0A0B0D', fontSize: '15px', fontWeight: '600', boxShadow: '0 0 22px rgba(77,163,255,.45)' }}>Generate branded PDF</button>
+                {!atPdfLimit ? (
+                  <button type="button" onClick={() => { setUsed(pdfCap == null ? used + 1 : Math.min(pdfCap, used + 1)); setMade(true); }} style={{ minHeight: '52px', padding: '0 24px', borderRadius: '13px', border: '0', background: '#4DA3FF', color: '#0A0B0D', fontSize: '15px', fontWeight: '600', boxShadow: '0 0 22px rgba(77,163,255,.45)' }}>Generate branded PDF</button>
                 ) : (
                   <Link href="/app/billing" style={{ display: 'inline-flex', alignItems: 'center', minHeight: '52px', padding: '0 22px', borderRadius: '13px', background: '#4DA3FF', color: '#0A0B0D', textDecoration: 'none', fontSize: '15px', fontWeight: '600' }}>Upgrade for unlimited reports</Link>
                 )}
                 <Link href="/app/month" style={{ display: 'inline-flex', alignItems: 'center', minHeight: '52px', padding: '0 18px', borderRadius: '13px', border: '1px solid #262A31', color: '#F2F4F5', textDecoration: 'none', fontSize: '15px' }}>Preview as client</Link>
               </div>
               {made && (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#4DA3FF' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4DA3FF', boxShadow: '0 0 10px #4DA3FF' }}></span>{periodLabel || 'Monthly'} report ready · added to the list</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#4DA3FF' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4DA3FF', boxShadow: '0 0 10px #4DA3FF' }}></span>{monthName} report ready · added to the list</span>
               )}
             </section>
 
             <aside style={{ flex: '1 1 320px', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ borderRadius: '24px', background: '#101215', border: '1px solid #1A1D22', padding: '22px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}><span style={{ fontSize: '16px', fontWeight: '600' }}>Your exports</span><span style={{ fontFamily: '\'Geist Mono\', monospace', fontSize: '11px', color: '#9AA1AB' }}>{planLabel} · THIS SITE · {(periodLabel || '').split(' ')[0]?.toUpperCase() || 'MONTH'}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}><span style={{ fontSize: '16px', fontWeight: '600' }}>Your exports</span><span style={{ fontFamily: MONO, fontWeight: 700, fontSize: '11px', color: '#9AA1AB' }}>{planLabel} · THIS SITE · {monthName.toUpperCase()}</span></div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}><span>Branded PDF reports</span><span style={{ fontFamily: '\'Geist Mono\', monospace', color: used >= 5 ? '#FFC53D' : '#F2F4F5' }}>{used} of 5</span></div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '4px' }}>
-                    {slots.map((s, i) => <div key={i} style={{ height: '8px', borderRadius: '4px', background: s.color, boxShadow: s.glow }}></div>)}
-                  </div>
-                  <span style={{ fontSize: '12px', color: '#7D848E' }}>Resets {nextReset}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}><span>Branded PDF reports</span><span style={{ fontFamily: MONO, fontWeight: 700, color: atPdfLimit ? '#FFC53D' : (pdfCap == null ? '#3DDC84' : '#F2F4F5') }}>{capLabel(pdfUsed, pdfCap)}</span></div>
+                  {slotCount > 0 ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${slotCount}, minmax(0, 1fr))`, gap: '4px' }}>
+                      {slots.map((s, i) => <div key={i} style={{ height: '8px', borderRadius: '4px', background: s.color, boxShadow: s.glow }}></div>)}
+                    </div>
+                  ) : null}
+                  <span style={{ fontSize: '12px', color: '#7D848E' }}>{pdfCap == null ? 'Included on this plan' : `Resets ${nextReset}`}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '12px', borderTop: '1px solid #1A1D22', fontSize: '14px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}><span>Scheduled client sends</span><span style={{ fontFamily: '\'Geist Mono\', monospace', color: '#9AA1AB' }}>—</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}><span>Client logins</span><span style={{ fontFamily: '\'Geist Mono\', monospace', color: '#9AA1AB' }}>—</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}><span>Scheduled client sends</span><span style={{ fontFamily: MONO, fontWeight: 700, color: caps.sends == null ? '#3DDC84' : '#9AA1AB' }}>{caps.sends == null ? (planId === 'starter' || planId === 'solo' ? 'Not on Solo' : 'Unlimited') : `0 of ${caps.sends}`}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}><span>Client logins</span><span style={{ fontFamily: MONO, fontWeight: 700, color: caps.logins == null ? '#3DDC84' : '#9AA1AB' }}>{caps.logins == null ? (planId === 'starter' || planId === 'solo' ? 'Not on Solo' : 'Unlimited') : `0 of ${caps.logins}`}</span></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}><span>CSV of your change log</span><span style={{ color: '#3DDC84' }}>Unlimited, always</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}><span>White-label (no Searchify name)</span><Link href="/app/billing" style={{ color: '#9AA1AB', fontSize: '13px' }}>Premium</Link></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}><span>White-label (no Searchify name)</span>{planId === 'agency' || planId === 'premium' ? <span style={{ color: '#3DDC84' }}>Included</span> : <Link href="/app/billing" style={{ color: '#9AA1AB', fontSize: '13px' }}>Premium</Link>}</div>
                 </div>
               </div>
 

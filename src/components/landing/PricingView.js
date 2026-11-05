@@ -544,7 +544,7 @@ export default function PricingView({ embedded = false, onboarding = false }) {
           onChange={setPeriod}
           options={[
             { value: "month", label: "Monthly" },
-            { value: "year", label: "Yearly · 2 months free", accent: "green" },
+            { value: "year", label: "Yearly · 2 months free" },
           ]}
         />
       </div>

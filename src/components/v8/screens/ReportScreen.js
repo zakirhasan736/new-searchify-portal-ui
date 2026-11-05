@@ -4,8 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { SkeletonCards } from '@/components/v8/SkeletonWave';
-import ProblemNotice from '@/components/v8/ProblemNotice';
-import { problemsFrom } from '@/lib/problems';
 import { buildAuditFindings } from '@/lib/auditFindings';
 import { activeSiteContext } from '@/lib/siteContext';
 import { clickHalves, issueCounts, monthEmail, publishedRows } from '@/lib/monthReport';
@@ -14,7 +12,6 @@ import {
   featureKpi,
   featurePayload,
   getBusinessProfile,
-  getGoogleStatus,
   getProductWorkspace,
   historyItems,
   listChanges,
@@ -35,12 +32,15 @@ function formatShortDate(iso) {
 
 function changeRowCopy(c) {
   const mon = c.monitoring || {};
-  const opp = String(c.opportunity || '').trim() || 'Change shipped';
+  const opp = String(c.opportunity || c.proposed?.title || '').trim() || 'Published fix';
+  const who = c.approvedByName || c.appliedByName || '';
+  const when = formatShortDate(c.appliedAt || c.updatedAt);
+  const sub = who && when !== '—' ? `${when} · approved by ${who}` : when;
   const rawDelta = mon.clickDelta ?? mon.click_delta ?? mon.visitorsDelta ?? mon.visitors_delta ?? mon.delta;
   if (rawDelta != null && Number(rawDelta) > 0) {
-    return { title: opp, sub: formatShortDate(c.appliedAt), result: `+${Math.round(Number(rawDelta))} visitors / mo`, accent: true };
+    return { title: opp, sub: 'Result came in this month', result: `+${Math.round(Number(rawDelta))} visitors a month`, tone: 'win' };
   }
-  if (['applied', 'monitoring', 'published_unverified'].includes(c.status)) {
+  if (['applied', 'monitoring', 'published_unverified', 'closed'].includes(c.status)) {
     const applied = c.appliedAt ? new Date(c.appliedAt) : null;
     const due =
       applied && !Number.isNaN(applied.getTime())
@@ -48,22 +48,12 @@ function changeRowCopy(c) {
         : null;
     return {
       title: opp,
-      sub: formatShortDate(c.appliedAt || c.updatedAt),
-      result: due ? `Measuring — results ${due}` : 'Measuring — results in ~28 days',
-      accent: false,
+      sub,
+      result: due ? `Live · measuring until ${due}` : 'Live · measuring',
+      tone: 'wait',
     };
   }
-  return { title: opp, sub: formatShortDate(c.appliedAt), result: mon.note || 'Shipped', accent: false };
-}
-
-// Search Console performance report for the connected property. Prefer the backend link;
-// build the same URL here when an older backend has not sent one yet.
-function searchConsoleLink(connection) {
-  const gsc = connection?.gsc || {};
-  if (gsc.links?.performance) return gsc.links.performance;
-  const property = String(gsc.siteUrl || connection?.gscSiteUrl || '').trim();
-  if (!property) return '';
-  return `https://search.google.com/search-console/performance/search-analytics?resource_id=${encodeURIComponent(property)}`;
+  return { title: opp, sub, result: mon.note || 'Live on your website', tone: 'plain' };
 }
 
 function kpiNum(payload, part) {
@@ -79,8 +69,10 @@ const EMPTY = {
   nextMonth: 'next month',
   headline: 'Your site report will fill in from live data.',
   visitors: '—',
-  visitorsSub: 'From Search Console',
+  visitorsLabel: 'visitors from Google',
+  visitorsSub: 'Search Console has no stored clicks yet',
   calls: '—',
+  callsSub: 'Google Analytics has no call or quote events stored yet',
   changes: [],
   linksTotal: '0',
   linksTotalSub: 'websites link to you',
@@ -100,25 +92,7 @@ export default function ReportScreen() {
   const [copied, setCopied] = useState(false);
   const [view, setView] = useState(EMPTY);
   const [loading, setLoading] = useState(true);
-  const [gscLink, setGscLink] = useState('');
-  const [problems, setProblems] = useState([]);
-  const accent = '#4DA3FF';
-
-  useEffect(() => {
-    if (clientView) return undefined;
-    let cancelled = false;
-    getGoogleStatus()
-      .then((res) => {
-        if (cancelled) return;
-        setGscLink(searchConsoleLink(res?.data?.connection));
-        const saved = res?.data?.connection?.problem;
-        if (saved) setProblems((list) => [saved, ...list.filter((p) => p.code !== saved.code)]);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [clientView]);
+  const accent = '#3DDC84';
 
   useEffect(() => {
     let cancelled = false;
@@ -146,10 +120,6 @@ export default function ReportScreen() {
     ])
       .then(([chRes, organic, traffic, pages, audit, landings, backlinks, auditRes, linkRes, workspace, biz, acct]) => {
         if (cancelled) return;
-        if (!clientView && href) {
-          const found = [...problemsFrom(auditRes, 'site_audit'), ...problemsFrom(linkRes, 'backlinks')];
-          setProblems((list) => [...list.filter((p) => p.area === 'search_console' || p.area === 'analytics' || p.area === 'google'), ...found]);
-        }
         const changes = Array.isArray(chRes.data) ? chRes.data : chRes.data?.changes || [];
         const gsc = featurePayload(organic);
         const ga = featurePayload(traffic);
@@ -165,10 +135,15 @@ export default function ReportScreen() {
         });
         const counts = issueCounts(built.findings);
         const history = historyItems(changes);
-        const recent = [...history]
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+        const monthChanges = [...history]
+          .filter((c) => {
+            const stamp = new Date(c.appliedAt || c.updatedAt || 0).getTime();
+            return Number.isFinite(stamp) && stamp >= monthStart;
+          })
           .sort((a, b) => String(b.appliedAt || b.updatedAt || '').localeCompare(String(a.appliedAt || a.updatedAt || '')))
-          .slice(0, 8);
-        const monthChanges = recent.map(changeRowCopy);
+          .slice(0, 8)
+          .map(changeRowCopy);
         const published = publishedRows(
           changes,
           (featurePayload(pages).rows || []).map((r) => ({ label: r[0], clicks: r[1], impressions: r[2], position: r[4] })),
@@ -178,7 +153,6 @@ export default function ReportScreen() {
             ? halves.latest.clicks - halves.earlier.clicks
             : null;
         const clicksMo = kpiNum(gsc, 'click');
-        const sessions = kpiNum(ga, 'session');
         const events = kpiNum(ga, 'event') || kpiNum(ga, 'engag') || kpiNum(ga, 'conver');
         const storedLinks = featurePayload(backlinks);
         const liveLinks = linkRes?.ok ? linkRes.data || {} : {};
@@ -224,23 +198,35 @@ export default function ReportScreen() {
           acct?.displayName ||
           EMPTY.agency;
         const contact = acct?.email || '';
+        const person = String(acct?.displayName || bizProfile.contactName || bizProfile.name || '').trim().split(/\s+/)[0] || '';
 
         let visitorsDisplay = '—';
-        let visitorsSub = 'From Search Console';
-        if (visitorDelta != null && visitorDelta !== 0) {
-          visitorsDisplay = `${visitorDelta > 0 ? '+' : ''}${visitorDelta}`;
-          visitorsSub = 'Latest 14 days vs prior 14 (Search Console)';
+        let visitorsLabel = 'visitors from Google';
+        let visitorsSub = 'Search Console has no stored clicks yet';
+        if (visitorDelta != null && visitorDelta > 0) {
+          visitorsDisplay = `+${visitorDelta}`;
+          visitorsLabel = 'more visitors a month from Google';
+          visitorsSub = 'Latest 14 days compared with the 14 before';
+        } else if (visitorDelta != null && visitorDelta < 0) {
+          visitorsDisplay = String(visitorDelta);
+          visitorsLabel = 'visitors from Google, latest 14 days vs the 14 before';
+          visitorsSub = 'From Search Console';
         } else if (clicksMo) {
-          visitorsDisplay = `+${clicksMo}`;
-          visitorsSub = 'Monthly clicks from Search Console';
+          visitorsDisplay = String(clicksMo);
+          visitorsLabel = 'visitors from Google this period';
+          visitorsSub = 'From Search Console';
         } else if (visitorDelta === 0) {
           visitorsDisplay = '0';
+          visitorsLabel = 'change in visitors from Google';
           visitorsSub = 'Clicks held steady over the last 28 days';
         }
 
         let callsDisplay = '—';
-        if (events) callsDisplay = `≈ ${Math.round(events)}`;
-        else if (sessions) callsDisplay = `≈ ${Math.max(1, Math.round(sessions / 30))}`;
+        let callsSub = 'Google Analytics has no call or quote events stored yet';
+        if (events) {
+          callsDisplay = `≈ ${Math.round(events)}`;
+          callsSub = 'From your Google Analytics';
+        }
 
         const emailBody = monthEmail({
           host: hostname,
@@ -256,10 +242,17 @@ export default function ReportScreen() {
           contact,
           month: `${monthName} report`,
           nextMonth: nextMonthName,
-          headline: brand && brand !== 'your-site' ? `${brand} is getting found more often.` : EMPTY.headline,
+          headline:
+            brand && brand !== 'your-site'
+              ? visitorDelta > 0
+                ? `${brand} is getting found more often.`
+                : `${brand} this month.`
+              : EMPTY.headline,
           visitors: visitorsDisplay,
+          visitorsLabel,
           visitorsSub,
           calls: callsDisplay,
+          callsSub,
           changes: monthChanges,
           linksTotal: String(refDomains),
           linksTotalSub: refDomains ? 'websites link to you' : 'no referring sites stored yet',
@@ -276,8 +269,8 @@ export default function ReportScreen() {
           next: queueNext,
           pendingNote:
             queueNext.length > 0
-              ? `${queueNext.length} of these need your OK before they go live.`
-              : 'Nothing waiting for approval.',
+              ? `${person ? `${person}, ` : ''}${queueNext.length} of these need your OK before they go live.`
+              : 'Nothing is waiting for your OK.',
           emailBody,
         });
       })
@@ -336,11 +329,6 @@ export default function ReportScreen() {
             <Link href="/app/history" style={{ display: 'inline-flex', alignItems: 'center', minHeight: '38px', padding: '0 12px', borderRadius: '10px', border: '1px solid #262A31', color: '#D7DADE', textDecoration: 'none', fontSize: '13px' }}>
               Edit sections
             </Link>
-            {gscLink ? (
-              <a href={gscLink} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', minHeight: '38px', padding: '0 12px', borderRadius: '10px', border: '1px solid #262A31', color: '#D7DADE', textDecoration: 'none', fontSize: '13px' }}>
-                Open Search Console ↗
-              </a>
-            ) : null}
             <button type="button" onClick={downloadPdf} style={{ minHeight: '38px', padding: '0 12px', borderRadius: '10px', border: '1px solid #262A31', background: 'transparent', color: '#D7DADE', fontSize: '13px' }}>
               Download PDF
             </button>
@@ -364,23 +352,21 @@ export default function ReportScreen() {
           </h1>
         </header>
 
-        {!clientView ? <ProblemNotice problems={problems} /> : null}
-
         <section aria-label="Headline results" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
           <div style={{ borderRadius: '22px', background: '#101215', border: '1px solid #1A1D22', padding: '24px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: '64px', lineHeight: '0.9', fontWeight: '800', letterSpacing: '-2px', color: accent }}>{view.visitors}</span>
-            <span style={{ fontSize: '15px' }}>more visitors a month from Google</span>
+            <span style={{ fontSize: '15px' }}>{view.visitorsLabel}</span>
             <span style={{ fontSize: '13px', color: '#9AA1AB' }}>{view.visitorsSub}</span>
           </div>
           <div style={{ borderRadius: '22px', background: '#101215', border: '1px solid #1A1D22', padding: '24px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: '64px', lineHeight: '0.9', fontWeight: '800', letterSpacing: '-2px', color: accent }}>{view.calls}</span>
             <span style={{ fontSize: '15px' }}>extra calls or quote requests a month</span>
-            <span style={{ fontSize: '13px', color: '#9AA1AB' }}>From your Google Analytics</span>
+            <span style={{ fontSize: '13px', color: '#9AA1AB' }}>{view.callsSub}</span>
           </div>
         </section>
 
         <section aria-labelledby="did-h" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <h2 id="did-h" style={{ margin: 0, fontSize: '22px', fontWeight: '600' }}>What we changed this month</h2>
+          <h2 id="did-h" style={{ margin: 0, fontSize: '22px', fontWeight: '600' }}>What we fixed this month</h2>
           <div style={{ display: 'flex', flexDirection: 'column', borderTop: '1px solid #1A1D22' }}>
             {view.changes.length ? (
               view.changes.map((row, idx) => (
@@ -389,11 +375,13 @@ export default function ReportScreen() {
                     <span style={{ fontSize: '15px' }}>{row.title}</span>
                     <span style={{ fontSize: '13px', color: '#9AA1AB' }}>{row.sub}</span>
                   </span>
-                  <span style={{ fontSize: '14px', color: row.accent ? accent : '#9AA1AB' }}>{row.result}</span>
+                  <span style={{ fontSize: '14px', color: row.tone === 'win' ? accent : row.tone === 'wait' ? '#FFC53D' : '#9AA1AB' }}>{row.result}</span>
                 </div>
               ))
             ) : (
-              <p style={{ margin: '16px 0', fontSize: '14px', color: '#9AA1AB' }}>No shipped changes in this window yet.</p>
+              <div style={{ display: 'flex', gap: '16px', padding: '16px 0', borderBottom: '1px solid #1A1D22' }}>
+                <span style={{ fontSize: '15px', color: '#9AA1AB' }}>Nothing published this month yet.</span>
+              </div>
             )}
           </div>
         </section>
@@ -432,7 +420,7 @@ export default function ReportScreen() {
                 <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#FFC53D' }} />
                 {view.health.yellow}
               </span>
-              <span style={{ fontSize: '13px', color: '#9AA1AB' }}>can wait</span>
+              <span style={{ fontSize: '13px', color: '#9AA1AB' }}>worth doing</span>
             </div>
             <div style={{ borderRadius: '16px', border: '1px solid #262A31', padding: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '26px', fontWeight: '700' }}>
@@ -456,33 +444,26 @@ export default function ReportScreen() {
             Coming up in {view.nextMonth}
           </h2>
           <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {view.next.length === 0 && <li style={{ fontSize: '14px', color: '#9AA1AB' }}>No queued moves yet.</li>}
+            {view.next.length === 0 && <li style={{ fontSize: '15px', color: '#9AA1AB' }}>Nothing queued for {view.nextMonth.toLowerCase()} yet.</li>}
             {view.next.map((line, idx) => (
               <li key={idx} style={{ display: 'flex', gap: '14px', fontSize: '15px' }}>
-                <span style={{ fontFamily: "'Geist Mono', monospace", color: '#9AA1AB' }}>{String(idx + 1).padStart(2, '0')}</span>
+                <span style={{ fontFamily: "'Open Sans', sans-serif", fontWeight: 700, color: '#9AA1AB' }}>{String(idx + 1).padStart(2, '0')}</span>
                 {line}
               </li>
             ))}
           </ol>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', padding: '18px', borderRadius: '18px', border: '1px solid #4DA3FF', boxShadow: '0 0 24px rgba(77,163,255,.18)' }}>
             <span style={{ flex: '1 1 260px', fontSize: '15px' }}>{view.pendingNote}</span>
-            {view.next.length > 0 && (
-              <Link href="/app" style={{ display: 'inline-flex', alignItems: 'center', minHeight: '48px', padding: '0 20px', borderRadius: '12px', background: '#4DA3FF', color: '#0A0B0D', textDecoration: 'none', fontSize: '15px', fontWeight: '600' }}>
+            {view.next.length > 0 ? (
+              <Link href="/app/queue" style={{ display: 'inline-flex', alignItems: 'center', minHeight: '48px', padding: '0 20px', borderRadius: '12px', background: '#4DA3FF', color: '#0A0B0D', textDecoration: 'none', fontSize: '15px', fontWeight: '600' }}>
                 Review them
               </Link>
-            )}
+            ) : null}
           </div>
         </section>
 
         <footer style={{ paddingTop: '20px', borderTop: '1px solid #1A1D22', fontSize: '13px', color: '#7D848E', lineHeight: '1.6' }}>
-          Every change listed here can be undone.
-          {view.contact ? (
-            <>
-              {' '}
-              Questions? Contact {view.contact}.
-            </>
-          ) : null}{' '}
-          · Made with Searchify
+          Every fix listed here is live on the website and can be undone. Google takes a few weeks to fully reflect new fixes, so the newest ones show up in next month&apos;s numbers. Questions? {view.contact ? `Reply to this email or contact ${view.contact}` : 'Reply to the email that sent this report'}. · Made with Searchify
         </footer>
         </>
         )}

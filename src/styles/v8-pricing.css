@@ -47,10 +47,10 @@
 }
 .v8-pricing-early-inner {
   background: #101215;
-  border: 1px solid #3a4a1c;
+  border: 1px solid rgba(61, 220, 132, 0.35);
   border-radius: 26px;
   padding: 28px;
-  box-shadow: 0 0 40px rgba(213, 248, 121, 0.08);
+  box-shadow: 0 0 40px rgba(61, 220, 132, 0.08);
 }
 .v8-pricing-early-top {
   display: flex;
@@ -67,18 +67,19 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--mono);
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.06em;
-  color: #d5f879;
+  color: #3ddc84;
 }
 .v8-pricing-pulse {
   display: inline-block;
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #d5f879;
-  box-shadow: 0 0 12px #d5f879;
+  background: #3ddc84;
+  box-shadow: 0 0 12px #3ddc84;
   animation: v8-pricing-pulse 1.4s ease-in-out infinite;
 }
 .v8-pricing-early-copy h2 {
@@ -132,7 +133,7 @@
   height: 28px;
   margin-left: 5px;
   border-radius: 2px;
-  background: #d5f879;
+  background: #4da3ff;
   animation: v8-pricing-blink 1.05s step-end infinite;
 }
 .v8-pricing-bar {
@@ -145,8 +146,8 @@
 .v8-pricing-bar-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #3ddc84, #d5f879);
-  box-shadow: 0 0 16px rgba(213, 248, 121, 0.5);
+  background: linear-gradient(90deg, #4da3ff, #3ddc84);
+  box-shadow: 0 0 16px rgba(61, 220, 132, 0.45);
   animation: v8-pricing-bar 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 .v8-pricing-bar-labels {
@@ -154,11 +155,12 @@
   justify-content: space-between;
   gap: 12px;
   margin-top: 10px;
-  font-family: var(--mono);
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
   font-size: 13px;
 }
 .v8-pricing-bar-labels span:first-child {
-  color: #d5f879;
+  color: #3ddc84;
 }
 .v8-pricing-bar-labels span:last-child {
   color: #9aa1ab;
@@ -195,7 +197,8 @@
   font-weight: 600;
 }
 .v8-pricing-tag {
-  font-family: var(--mono);
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
   font-size: 13px;
   color: #d7dade;
   letter-spacing: 0.04em;
@@ -206,8 +209,9 @@
 }
 .v8-pricing-founding {
   margin: 0 0 6px;
-  color: #d5f879;
-  font-family: var(--mono);
+  color: #3ddc84;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.04em;
 }
@@ -215,7 +219,8 @@
   margin: 0 0 4px;
   font-size: 13px;
   color: #4da3ff;
-  font-family: var(--mono);
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
   letter-spacing: 0.04em;
 }
 .v8-pricing-free-row {
@@ -420,7 +425,7 @@
   font-family: var(--font-caveat), Caveat, cursive;
   font-size: 36px;
   line-height: 1;
-  color: #d5f879;
+  color: #3ddc84;
 }
 .v8-pricing-expect h2 {
   margin: 0;
@@ -455,7 +460,8 @@
   gap: 6px;
 }
 .v8-pricing-timeline li > span:first-child {
-  font-family: var(--mono);
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
   font-size: 12px;
 }
 .v8-pricing-timeline strong {
@@ -529,13 +535,13 @@
   color: #9aa1ab;
 }
 .v8-pricing-row .mono {
-  font-family: var(--mono);
-  font-weight: 500;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
 }
 .v8-pricing-lock {
   margin: 0;
   font-size: 13px;
-  color: #d5f879;
+  color: #3ddc84;
 }
 .v8-pricing-panel hr {
   border: 0;
@@ -589,7 +595,7 @@
   font: inherit;
   font-size: 17px;
   font-weight: 600;
-  color: #d5f879;
+  color: #f2f4f5;
 }
 .v8-pricing-faq-icon {
   flex: none;
@@ -600,7 +606,7 @@
   height: 30px;
   border-radius: 50%;
   border: 1px solid #262a31;
-  color: #d5f879;
+  color: #9aa1ab;
   font-size: 20px;
   font-weight: 500;
   line-height: 1;

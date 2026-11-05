@@ -62,7 +62,7 @@ const DEFS = [
   },
 ];
 
-const QCOL = ["#FF5A4E", "#FF9F43", "#FFC53D", "#3DDC84", "#2CC7C0", "#4DA3FF"];
+const QCOL = ["#FF5A4E", "#FFC53D", "#FFC53D", "#3DDC84", "#3DDC84", "#4DA3FF"];
 
 function pathFromUrl(url) {
   try {
@@ -320,7 +320,7 @@ export default function PathScreen() {
       isCurrent: state === "current",
       isLocked: state === "locked",
       isGoal: d.n >= 5,
-      goalGlow: d.n === 6 ? "rgba(77,163,255,.45)" : "rgba(44,199,192,.4)",
+      goalGlow: d.n === 6 ? "rgba(77,163,255,.45)" : "rgba(61,220,132,.4)",
       status: complete ? "COMPLETE" : { done: "DONE", current: "IN PROGRESS", locked: "NEXT" }[state],
       doneColor: complete ? "#4DA3FF" : "#3DDC84",
       doneGlow: complete ? "rgba(77,163,255,.6)" : "rgba(61,220,132,.35)",
@@ -544,12 +544,12 @@ export default function PathScreen() {
               borderRadius: "50%",
               display: "grid",
               placeItems: "center",
-              border: "2px solid #2CC7C0",
-              color: "#2CC7C0",
+              border: "2px solid #3DDC84",
+              color: "#3DDC84",
               fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
               fontWeight: 800,
               fontSize: "18px",
-              boxShadow: "0 0 16px rgba(44,199,192,.45)",
+              boxShadow: "0 0 16px rgba(61,220,132,.45)",
             }}
           >
             5

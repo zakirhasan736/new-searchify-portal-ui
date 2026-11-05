@@ -29,17 +29,18 @@ export function meFromProfile(profile, ptype) {
   return {
     name,
     initials: partnerInitials(name),
-    sub: F ? "Founding partner" : since ? `Partner since ${since}` : "Partner",
+    sub: F ? "Founding partner" : since ? `Affiliate since ${since}` : "Affiliate",
   };
 }
 
 const SHELL_CSS = `
 .partner-v8-root{margin:0;background:#0A0B0D}
-.partner-v8-root a{color:#4DA3FF;text-decoration:none}
+.partner-v8-root a{color:#D5F879;text-decoration:none}
 .partner-v8-root a:hover{color:#ECFFB8}
 .partner-v8-root button{font-family:inherit;cursor:pointer}
 .partner-v8-root input:focus-visible,.partner-v8-root button:focus-visible,.partner-v8-root a:focus-visible,.partner-v8-root select:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
-.partner-v8-root input[type=checkbox]{accent-color:#4DA3FF;width:18px;height:18px;flex:none}
+.partner-v8-root input[type=checkbox]{accent-color:#D5F879;width:18px;height:18px;flex:none}
+.partner-v8-root [style*="Geist Mono"],.partner-v8-root [style*="geist-mono"]{font-family:"Open Sans",sans-serif !important;font-weight:700 !important}
 @keyframes sfy-grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 @keyframes sfy-rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion: reduce){.partner-v8-root *{animation:none !important;transition:none !important}}
@@ -152,7 +153,7 @@ export default function PartnerShell({
     <PartnerCtx.Provider value={ctx}>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link
-        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Caveat:wght@700&family=Geist:wght@400;500;600&family=Open+Sans:wght@700&display=swap"
         rel="stylesheet"
       />
       <style>{SHELL_CSS}</style>
@@ -195,15 +196,16 @@ export default function PartnerShell({
             </span>
             <span
               style={{
-                fontFamily: "'Geist Mono', monospace",
+                fontFamily: '"Open Sans", sans-serif',
+                fontWeight: 700,
                 fontSize: 11,
                 padding: "3px 8px",
                 borderRadius: 6,
-                border: "1px solid #4DA3FF",
-                color: "#4DA3FF",
+                border: "1px solid #D5F879",
+                color: "#D5F879",
               }}
             >
-              PARTNER CENTRE
+              AFFILIATE CENTRE
             </span>
           </span>
           {showPreview ? (

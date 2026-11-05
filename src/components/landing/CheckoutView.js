@@ -201,7 +201,6 @@ export default function CheckoutView() {
 
   const from = String(params.get("from") || "").toLowerCase();
   const backHref = from === "billing" ? "/app/billing" : from === "plans" ? "/app/plans" : "/pricing";
-  const backLabel = from === "billing" || from === "plans" ? "Back to plans" : "Back to pricing";
 
   useEffect(() => {
     const regions = REGIONS[country] || REGIONS.OTHER;
@@ -580,9 +579,6 @@ export default function CheckoutView() {
       <div className="v8-checkout-shell">
         <form className="v8-checkout-form" aria-label="Checkout" onSubmit={submit}>
           <div className="v8-checkout-hero">
-            <Link href={backHref} className="v8-checkout-back">
-              ← {backLabel}
-            </Link>
             <span className="v8-checkout-eyebrow">Almost there.</span>
             <h1>{headline}</h1>
           </div>

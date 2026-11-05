@@ -6,7 +6,7 @@ import { createHqInvestor, getHqShareholders, resendHqInvestorInvite, saveHqShar
 import Modal from "@/components/account/Modal";
 
 // Cap table colours by position (the owners themselves are stored in HQ, not in the code).
-const HOLDER_COLORS = ["#4DA3FF", "#4DA3FF", "#3DDC84", "#FFC53D", "#B48CFF", "#FF8A80"];
+const HOLDER_COLORS = ["#D5F879", "#9FE7F5", "#4DA3FF", "#3DDC84", "#FFC53D", "#FF8A80"];
 
 const money = (v) => (v < 0 ? "−$" : "$") + Math.abs(Math.round(v)).toLocaleString("en-US");
 const cents = (v) => `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -281,7 +281,7 @@ export default function HqShareholders() {
           <button type="button" onClick={() => setDraft([...draft, { name: "", pctText: "", shares: "", where: "", whText: "0", note: "" }])} style={{ minHeight: 44, padding: "0 16px", borderRadius: 12, border: "1px solid #262A31", background: "transparent", color: "#F2F4F5", fontSize: 14 }}>
             Add owner
           </button>
-          <button type="button" disabled={ownersBusy} onClick={saveOwners} style={{ minHeight: 44, padding: "0 18px", borderRadius: 12, border: 0, background: "#4DA3FF", color: "#0A0B0D", fontSize: 14, fontWeight: 600 }}>
+          <button type="button" disabled={ownersBusy} onClick={saveOwners} style={{ minHeight: 44, padding: "0 18px", borderRadius: 12, border: 0, background: "#D5F879", color: "#0A0B0D", fontSize: 14, fontWeight: 600 }}>
             {ownersBusy ? "Saving…" : "Save owners"}
           </button>
         </div>
@@ -731,7 +731,7 @@ export default function HqShareholders() {
                         fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
                         fontSize: 28,
                         fontWeight: 800,
-                        color: "#4DA3FF",
+                        color: "#D5F879",
                         minWidth: 120,
                         textAlign: "right",
                       }}
@@ -783,7 +783,7 @@ export default function HqShareholders() {
                         <span style={{ textAlign: "right", fontFamily: "'Geist Mono', monospace", fontSize: 13, color: "#FFC53D" }}>
                           {s.wh}
                         </span>
-                        <span style={{ textAlign: "right", fontFamily: "'Geist Mono', monospace", fontSize: 13, color: "#4DA3FF" }}>
+                        <span style={{ textAlign: "right", fontFamily: "'Geist Mono', monospace", fontSize: 13, color: "#D5F879" }}>
                           {s.net}
                         </span>
                       </div>
@@ -803,7 +803,7 @@ export default function HqShareholders() {
                       padding: "0 18px",
                       borderRadius: 12,
                       border: 0,
-                      background: "#4DA3FF",
+                      background: "#D5F879",
                       color: "#0A0B0D",
                       fontSize: 14,
                       fontWeight: 600,
@@ -1011,7 +1011,7 @@ export default function HqShareholders() {
                       padding: "0 16px",
                       borderRadius: 12,
                       border: 0,
-                      background: "#4DA3FF",
+                      background: "#D5F879",
                       color: "#0A0B0D",
                       fontSize: 14,
                       fontWeight: 600,

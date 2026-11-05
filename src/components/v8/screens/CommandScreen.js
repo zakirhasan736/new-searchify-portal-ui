@@ -536,7 +536,7 @@ export default function CommandScreen() {
   };
 
   return (
-    <div style={{ flex: '999 1 560px', minWidth: 0, minHeight: 1100, background: '#0A0B0D', color: '#F2F4F5', fontFamily: "Geist, 'Helvetica Neue', sans-serif", boxSizing: 'border-box', padding: '28px clamp(16px, 4vw, 48px) 56px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="v8-command" style={{ flex: '999 1 560px', minWidth: 0, minHeight: 1100, background: '#0A0B0D', color: '#F2F4F5', fontFamily: "Geist, 'Helvetica Neue', sans-serif", boxSizing: 'border-box', padding: '28px clamp(16px, 4vw, 48px) 56px', display: 'flex', flexDirection: 'column', gap: 24 }}>
       <header style={{ maxWidth: '1120px', width: '100%', margin: '0 auto', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
           <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: '15px', fontWeight: '800', letterSpacing: '1.6px' }}>AGENCY COMMAND CENTRE</span>
@@ -598,12 +598,12 @@ export default function CommandScreen() {
                 <span style={{ fontSize: '12px', color: '#9AA1AB' }}>
                   {q.client}
                   <span style={{ color: '#3A404A' }}> · </span>
-                  <span style={{ fontFamily: "'Geist Mono', monospace" }}>{q.page}</span>
+                  <span style={{ fontFamily: '"Open Sans", sans-serif', fontWeight: 700 }}>{q.page}</span>
                 </span>
                 <span style={{ fontSize: '15px', fontWeight: '500' }}>{q.what}</span>
               </span>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: '#4DA3FF', whiteSpace: 'nowrap' }}>{q.gain}</span>
-              {q.lowRisk && <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: '10px', padding: '3px 7px', borderRadius: '6px', border: '1px solid #262A31', color: '#9AA1AB' }}>LOW RISK</span>}
+              <span style={{ fontSize: '13px', fontWeight: '600', color: '#D5F879', whiteSpace: 'nowrap' }}>{q.gain}</span>
+              {q.lowRisk && <span style={{ fontFamily: '"Open Sans", sans-serif', fontWeight: 700, fontSize: '10px', padding: '3px 7px', borderRadius: '6px', border: '1px solid #262A31', color: '#9AA1AB' }}>LOW RISK</span>}
               {q.open && (
                 <span style={{ display: 'flex', gap: '8px' }}>
                   <button type="button" onClick={q.skip} style={{ minHeight: '38px', padding: '0 14px', borderRadius: '11px', border: '1px solid #262A31', background: 'transparent', color: '#F2F4F5', fontSize: '13px' }}>Skip</button>
@@ -649,7 +649,7 @@ export default function CommandScreen() {
             {!loading && reportRows.length === 0 && (
               <div style={{ fontSize: '14px', color: '#9AA1AB', padding: '8px 0' }}>
                 No reports scheduled.{' '}
-                <Link href="/app/history" style={{ color: '#4DA3FF', textDecoration: 'none' }}>
+                <Link href="/app/history" className="v8-command-link">
                   Create one
                 </Link>
               </div>
@@ -660,7 +660,7 @@ export default function CommandScreen() {
                   <span style={{ fontSize: '14px' }}>{r.client}</span>
                   <span style={{ fontSize: '12px', color: '#9AA1AB' }}>{r.when}</span>
                 </span>
-                <Link href="/app/month" style={{ fontSize: '12px', color: '#9AA1AB', textDecoration: 'none' }}>
+                <Link href="/app/month" className="v8-command-quiet">
                   Preview
                 </Link>
                 {r.open && (
@@ -679,7 +679,7 @@ export default function CommandScreen() {
         <h2 id="health-h" style={{ margin: 0, fontSize: '17px', fontWeight: '600' }}>Client health · last 30 days</h2>
         <div style={{ borderRadius: '20px', background: '#101215', border: '1px solid #1A1D22', overflowX: 'auto' }}>
           <div style={{ minWidth: '880px' }}>
-            <div aria-hidden="true" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) 120px minmax(0, 1.6fr) 110px 90px 90px 120px', gap: '12px', padding: '12px 18px', fontFamily: "'Geist Mono', monospace", fontSize: '11px', color: '#7D848E', borderBottom: '1px solid #1A1D22' }}>
+            <div aria-hidden="true" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) 120px minmax(0, 1.6fr) 110px 90px 90px 120px', gap: '12px', padding: '12px 18px', fontFamily: '"Open Sans", sans-serif', fontWeight: 700, fontSize: '11px', color: '#7D848E', borderBottom: '1px solid #1A1D22' }}>
               <span>CLIENT</span>
               <span>LEVEL</span>
               <span>CLICKS, 30 DAYS</span>
@@ -691,7 +691,7 @@ export default function CommandScreen() {
             {!loading && clients.length === 0 && (
               <p style={{ margin: '18px', fontSize: '14px', color: '#9AA1AB' }}>
                 No client sites yet.{' '}
-                <Link href="/app/workspace" style={{ color: '#4DA3FF', textDecoration: 'none' }}>
+                <Link href="/app/workspace" className="v8-command-link">
                   Add a site
                 </Link>
               </p>
@@ -700,7 +700,7 @@ export default function CommandScreen() {
               <div key={`${c.name}-${i}`} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) 120px minmax(0, 1.6fr) 110px 90px 90px 120px', gap: '12px', alignItems: 'center', padding: '12px 18px', borderBottom: '1px solid #16181C', fontSize: '14px' }}>
                 <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontWeight: '500' }}>{c.name}</span>
-                  <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: '11px', color: '#7D848E' }}>{c.domain}</span>
+                  <span style={{ fontFamily: '"Open Sans", sans-serif', fontWeight: 700, fontSize: '11px', color: '#7D848E' }}>{c.domain}</span>
                 </span>
                 <span style={{ fontSize: '13px', color: c.qColor }}>
                   Level {c.level} · {c.quality}
@@ -718,10 +718,10 @@ export default function CommandScreen() {
                 <span style={{ fontSize: '13px', color: '#D7DADE' }}>{c.waiting}</span>
                 <span style={{ fontSize: '13px', color: c.redColor }}>{c.red}</span>
                 <span style={{ display: 'flex', gap: '6px' }}>
-                  <span title="Search Console" style={{ fontFamily: "'Geist Mono', monospace", fontSize: '10px', padding: '3px 6px', borderRadius: '6px', border: `1px solid ${c.gscColor}`, color: c.gscColor }}>
+                  <span title="Search Console" style={{ fontFamily: '"Open Sans", sans-serif', fontWeight: 700, fontSize: '10px', padding: '3px 6px', borderRadius: '6px', border: `1px solid ${c.gscColor}`, color: c.gscColor }}>
                     GSC
                   </span>
-                  <span title="WordPress" style={{ fontFamily: "'Geist Mono', monospace", fontSize: '10px', padding: '3px 6px', borderRadius: '6px', border: `1px solid ${c.wpColor}`, color: c.wpColor }}>
+                  <span title="WordPress" style={{ fontFamily: '"Open Sans", sans-serif', fontWeight: 700, fontSize: '10px', padding: '3px 6px', borderRadius: '6px', border: `1px solid ${c.wpColor}`, color: c.wpColor }}>
                     WP
                   </span>
                 </span>

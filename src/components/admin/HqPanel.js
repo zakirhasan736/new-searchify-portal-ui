@@ -19,8 +19,6 @@ const TABS = [
   { href: "/admin/hq/problems", label: "Problems", badge: true },
   { href: "/admin/hq/cancellations", label: "Cancellations", cancelBadge: true },
   { href: "/admin/hq/shareholders", label: "Shareholders" },
-  { href: "/admin/hq/payouts", label: "Monthly payout" },
-  { href: "/admin/settings", label: "Settings" },
 ];
 
 /**
@@ -99,12 +97,14 @@ export default function HqPanel({
       {loading && !capped ? <SearchifyLoader full label="Opening Searchify HQ" /> : null}
       <style>{`
         @keyframes sfy-grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
-        .hq-shell a.hq-exit:hover{color:#ECFFB8}
+        .hq-shell a{color:#D5F879;text-decoration:none}
+        .hq-shell a:hover{color:#ECFFB8}
         .hq-shell button{font-family:inherit;cursor:pointer}
         .hq-shell button:disabled{cursor:not-allowed;opacity:.45}
-        .hq-shell input[type=range]{accent-color:#4DA3FF}
-        .hq-shell input[type=checkbox]{accent-color:#4DA3FF;width:18px;height:18px}
-        .hq-shell button:focus-visible,.hq-shell a:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
+        .hq-shell input[type=range]{accent-color:#D5F879}
+        .hq-shell input[type=checkbox]{accent-color:#D5F879;width:18px;height:18px}
+        .hq-shell button:focus-visible,.hq-shell a:focus-visible,.hq-shell input:focus-visible,.hq-shell select:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
+        .hq-shell [style*="Geist Mono"]{font-family:"Open Sans",sans-serif !important;font-weight:700 !important}
         @media (prefers-reduced-motion: reduce){.hq-shell *{animation:none !important;transition:none !important}}
       `}</style>
       <div
@@ -150,7 +150,7 @@ export default function HqPanel({
                 fontSize: 11,
                 padding: "3px 8px",
                 borderRadius: 6,
-                background: "#4DA3FF",
+                background: "#D5F879",
                 color: "#0A0B0D",
                 fontWeight: 600,
               }}
@@ -262,7 +262,7 @@ export default function HqPanel({
                     {badgeCount}
                   </span>
                 ) : null}
-                {tab.cancelBadge ? (
+                {tab.cancelBadge && pathname.startsWith("/admin/hq/cancellations") ? (
                   <span
                     style={{
                       position: "relative",

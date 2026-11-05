@@ -17,7 +17,7 @@
   --display: var(--font-bricolage), "Bricolage Grotesque", Geist, sans-serif;
   --script: var(--font-caveat), Caveat, cursive;
   --ui: var(--font-geist), Geist, "Helvetica Neue", sans-serif;
-  --mono: var(--font-geist-mono), "Geist Mono", monospace;
+  --mono: "Open Sans", sans-serif;
   min-height: 100dvh;
   background: var(--bg);
   color: var(--text);

@@ -1,371 +1,215 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import SearchifyMark from "@/components/landing/SearchifyMark";
+import { useEffect, useState } from "react";
 import "@/styles/v8-pricing-preview.css";
 
-const KIND_COLOR = {
-  dire: "#FF5A4E",
-  medium: "#FFC53D",
-  passes: "#3DDC84",
-  locked: "#4DA3FF",
+const ICONS = {
+  call: "M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z",
+  form: "M4 5h16v14H4z M4 7l8 6 8-6",
+  rank: "M3 17l6-6 4 4 8-8 M14 7h7v7",
+  fix: "M20 6L9 17l-5-5",
+  eye: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z M12 9a3 3 0 1 0 0 6 3 3 0 1 0 0-6z",
+  report: "M14 2H6v20h12V6z M14 2v4h4 M8 13h8 M8 17h5",
+  chat: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
+  user: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 3a4 4 0 1 0 0 8 4 4 0 1 0 0-8z",
 };
 
-const PREVIEWS = {
+const COLORS = {
+  call: "#3DDC84",
+  form: "#3DDC84",
+  fix: "#3DDC84",
+  rank: "#4DA3FF",
+  eye: "#4DA3FF",
+  chat: "#4DA3FF",
+  report: "#FFC53D",
+  user: "#F2F4F5",
+};
+
+const SCENES = {
   solo: {
-    header: "1 WEBSITE",
-    sitesLabel: "YOUR SITE",
-    sites: [{ name: "Your website", kind: "medium" }],
-    boardLabel: "YOUR WEBSITE · 32 PAGES",
-    board: { dire: 4, medium: 8, passes: 17, locked: 3 },
-    moves: [
-      { kind: "dire", label: "META", fixes: "dire", title: "Add meta descriptions to 12 pages", why: "Pages show blank snippets in Google" },
-      { kind: "dire", label: "TITLE", fixes: "dire", title: "Rewrite the title on your main service page", why: "It hides the words people search for" },
-      { kind: "medium", label: "LINKS", fixes: "medium", title: "Fix 3 broken internal links", why: "Visitors hit dead ends" },
+    who: "Example: a local business, 1 website",
+    lead: "One website, one owner. Here is what a good first 90 days can look like.",
+    stats: [
+      { label: "Calls from Google", sub: "extra a month by day 90", n: 9, pre: "+", color: "#3DDC84" },
+      { label: "Quote requests", sub: "from your website form", n: 6, pre: "+", color: "#3DDC84" },
+      { label: "Visitors from Google", sub: "extra a month", n: 410, pre: "+", color: "#4DA3FF" },
     ],
-    widgets: [
-      { label: "Pages passing", value: "17 → 20", bar: 62, color: "#3DDC84" },
-      { label: "Tracked keywords", value: "10", bar: 40, color: "#4DA3FF" },
-      { label: "Monthly PDF report", value: "Ready", bar: 100, color: "#2CC7C0" },
+    pops: [
+      [1, "fix", "4 urgent fixes published", "Live on your website. You approved each one.", "DAY 3"],
+      [3, "rank", "Moved up on Google", "A tracked search moved closer to the top.", "DAY 26"],
+      [5, "eye", "More people are finding you", "Visitors from Google start to climb.", "DAY 34"],
+      [7, "call", "New call from Google", "Someone searched and called.", "DAY 41"],
+      [9, "form", "New quote request", "A form came in from the website.", "DAY 52"],
+      [11, "report", "Your 90-day report is ready", "Before and after, in plain words.", "DAY 90"],
     ],
   },
   pro: {
-    header: "5 WEBSITES · AUTOPILOT ON FOR LOW-RISK FIXES",
-    sitesLabel: "YOUR SITES",
-    sites: [
-      { name: "Main site", kind: "dire" },
-      { name: "Online shop", kind: "medium" },
-      { name: "Booking site", kind: "passes" },
-      { name: "Second location", kind: "medium" },
-      { name: "Careers", kind: "passes" },
+    who: "Example: a growing company, up to 5 websites",
+    lead: "More websites, more ways in. Searchify handles the small fixes and tells you where the calls come from.",
+    stats: [
+      { label: "Calls from Google", sub: "extra a month, all sites", n: 27, pre: "+", color: "#3DDC84" },
+      { label: "Quote requests", sub: "from your website forms", n: 18, pre: "+", color: "#3DDC84" },
+      { label: "Visitors from Google", sub: "extra a month, all sites", n: 1240, pre: "+", color: "#4DA3FF" },
     ],
-    boardLabel: "MAIN SITE · 32 PAGES",
-    board: { dire: 5, medium: 9, passes: 14, locked: 4 },
-    moves: [
-      { kind: "dire", label: "TITLE", fixes: "dire", title: "Rewrite the title on your top service page", why: "Ranks 11th, one spot off page one" },
-      { kind: "medium", label: "AI ANSWERS", fixes: "medium", title: "Add FAQ schema to 4 booking pages", why: "Helps you show up in AI answers" },
-      {
-        kind: "passes",
-        label: "AUTOPILOT",
-        fixes: "passes",
-        title: "Added alt text to 6 images automatically",
-        why: "Low-risk fix handled by autopilot, still undoable",
-        doneText: "Shipped by autopilot · live check passed · undo available",
-        autoDone: true,
-      },
-    ],
-    widgets: [
-      { label: "Calls and leads from Analytics", value: "+14 this month", bar: 70, color: "#3DDC84" },
-      { label: "Mentioned in AI answers", value: "3 of 10 questions", bar: 30, color: "#4DA3FF" },
-      { label: "Client report sent", value: "Mon 9:00", bar: 100, color: "#2CC7C0" },
+    pops: [
+      [1, "fix", "Autopilot handled 6 small fixes", "Image text and broken links. All undoable.", "DAY 2"],
+      [3, "rank", "A second site is on page one", "A local search moved into the top results.", "DAY 29"],
+      [5, "chat", "An AI answer mentioned you", "A customer asked, and the answer named the business.", "DAY 38"],
+      [7, "call", "New calls this week", "From people who found you on Google.", "DAY 46"],
+      [9, "form", "New quote request", "A form came in on another site.", "DAY 58"],
+      [11, "report", "Your monthly report went out", "Monday morning, automatically.", "DAY 63"],
     ],
   },
   agency: {
-    header: "ALL CLIENTS · 18 OF 25 WEBSITES",
-    sitesLabel: "CLIENTS",
-    sites: [
-      { name: "Northgate Roofing", kind: "dire" },
-      { name: "Harbour Physio", kind: "passes" },
-      { name: "Bloom Florists", kind: "passes" },
-      { name: "Peak Accounting", kind: "medium" },
-      { name: "+ 14 more", kind: "locked" },
+    who: "Example: a small agency, many client websites",
+    lead: "Every client in one place. Wins you can show, problems caught early, reports that send themselves.",
+    stats: [
+      { label: "Extra leads for your clients", sub: "calls and forms, all clients", n: 212, pre: "+", color: "#3DDC84" },
+      { label: "Clients improving", sub: "on your roster", n: 14, post: " of 18", color: "#3DDC84" },
+      { label: "Hours saved on reports", sub: "a month", n: 31, color: "#4DA3FF" },
     ],
-    boardLabel: "NORTHGATE ROOFING · 32 PAGES",
-    board: { dire: 6, medium: 7, passes: 15, locked: 4 },
-    moves: [
-      { kind: "dire", label: "ALERT", fixes: "dire", title: "Northgate Roofing: 5 pages dropped overnight", why: "Flagged first so you see it before the client does" },
-      {
-        kind: "medium",
-        label: "BATCH",
-        fixes: "medium",
-        title: "Approve 9 fixes across 4 clients",
-        why: "Batched into one review",
-        doneText: "9 approved · live checks passed · undo available",
-      },
-      {
-        kind: "passes",
-        label: "WHITE-LABEL",
-        fixes: "passes",
-        title: "Monthly reports sent under your logo",
-        why: "No Searchify name anywhere",
-        doneText: "18 client reports delivered",
-        autoDone: true,
-      },
+    pops: [
+      [1, "fix", "Fixes approved across several clients", "One review, done in a few minutes.", "DAY 4"],
+      [3, "rank", "A client dropped overnight", "Caught and put back before they noticed.", "DAY 17"],
+      [5, "report", "Reports sent under your logo", "No Searchify name anywhere.", "DAY 31"],
+      [7, "form", "A client’s forms picked up", "Their best stretch this year.", "DAY 44"],
+      [9, "chat", "A client replied to your report", "They can see the phones are busier.", "DAY 47"],
+      [11, "rank", "Another client is on page one", "A local search moved into the top results.", "DAY 70"],
     ],
-    widgets: [
-      { label: "Reports with your branding", value: "18 sent", bar: 100, color: "#2CC7C0" },
-      { label: "Client logins active", value: "41", bar: 65, color: "#4DA3FF" },
-      { label: "Team seats", value: "4 teammates", bar: 45, color: "#3DDC84" },
+  },
+  managed: {
+    who: "Example: a busy owner who rarely logs in",
+    lead: "You run your business. Our team runs Searchify for you, from setup to monthly report.",
+    isManaged: true,
+    you: ["A 20-minute kickoff call", "Read one short email a month"],
+    us: ["Connect your website and Google", "Find, write and publish every fix", "Watch Google and react to drops", "Report what changed, in plain words"],
+    stats: [
+      { label: "Time you spent on it", sub: "one kickoff call, then reading emails", n: 45, post: " min", color: "#F2F4F5" },
+      { label: "Fixes done for you", sub: "found, written and published by us", n: 38, color: "#4DA3FF" },
+      { label: "Calls from Google", sub: "extra a month by day 90", n: 31, pre: "+", color: "#3DDC84" },
+    ],
+    pops: [
+      [1, "user", "Meet your strategist", "Sovereign Standard booked a 20-minute kickoff call.", "DAY 1"],
+      [3, "fix", "We connected everything for you", "Search Console, Analytics and WordPress.", "DAY 2"],
+      [5, "fix", "Fixes published this week", "Nothing for you to approve.", "DAY 9"],
+      [7, "rank", "Moved up on Google", "A main search moved closer to the top.", "DAY 33"],
+      [9, "call", "Your phone is ringing more", "More calls from Google this month.", "DAY 45"],
+      [11, "report", "Your monthly update is in your inbox", "A short read. Reply with any questions.", "DAY 60"],
     ],
   },
 };
 
-function shuffleKinds(board) {
-  const kinds = [];
-  ["dire", "medium", "passes", "locked"].forEach((k) => {
-    for (let i = 0; i < (board[k] || 0); i += 1) kinds.push(k);
-  });
-  let seed = 7;
-  for (let i = kinds.length - 1; i > 0; i -= 1) {
-    seed = (seed * 9301 + 49297) % 233280;
-    const j = Math.floor((seed / 233280) * (i + 1));
-    const tmp = kinds[i];
-    kinds[i] = kinds[j];
-    kinds[j] = tmp;
-  }
-  while (kinds.length < 32) kinds.push("passes");
-  return kinds.slice(0, 32);
+const TABS = [
+  ["solo", "Solo"],
+  ["pro", "Pro"],
+  ["agency", "Agency"],
+  ["managed", "Managed"],
+];
+
+function shown(stat, tick) {
+  const eased = 1 - (1 - Math.min(1, tick / 11)) ** 2;
+  return `${stat.pre || ""}${Math.round(stat.n * eased).toLocaleString("en-US")}${stat.post || ""}`;
 }
 
-function CheckIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 12l5 5L20 7" />
-    </svg>
-  );
-}
-
-/**
- * Exact PricingPreview.html / PricingPreview.dc.html product mock.
- * Tabs sync with Pricing plan selection; Approve demos the approve → green-dot flow.
- */
-export default function PricingPreview({
-  planId = "pro",
-  planName = "Pro",
-  onPickPlan,
-  onChoosePlan,
-  plans = [],
-}) {
-  const id = planId === "premium" ? "agency" : planId;
-  const data = PREVIEWS[id] || PREVIEWS.pro;
-  const tabs = plans.length
-    ? plans.map((t) => ({
-        id: t.id === "premium" ? "agency" : t.id,
-        name: t.name,
-        catalogId: t.id === "agency" ? "premium" : t.id === "premium" ? "premium" : t.id,
-      }))
-    : [
-        { id: "solo", name: "Solo", catalogId: "solo" },
-        { id: "pro", name: "Pro", catalogId: "pro" },
-        { id: "agency", name: "Agency", catalogId: "premium" },
-      ];
-
-  const lead = id === "agency" ? "Your Monday on" : "Your first week on";
-  const board = data.board || { dire: 0, medium: 0, passes: 0, locked: 0 };
-  const kinds = useMemo(() => shuffleKinds(board), [id, board.dire, board.medium, board.passes, board.locked]);
-
-  const [approved, setApproved] = useState(() => new Set());
-  const [playKey, setPlayKey] = useState(0);
+export default function PricingPreview({ planId = "pro", planName = "Pro", onPickPlan, onChoosePlan }) {
+  const [tab, setTab] = useState(planId === "managed" ? "managed" : planId || "pro");
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    // Restart the demo animation whenever the selected plan changes.
-    const auto = new Set();
-    (data.moves || []).forEach((m, i) => {
-      if (m.autoDone) auto.add(i);
-    });
-    setApproved(auto);
-    setPlayKey((k) => k + 1);
-  }, [id]);
+    if (planId && planId !== "managed") setTab(planId);
+  }, [planId]);
 
-  const fixAt = useMemo(() => {
-    const map = {};
-    (data.moves || []).forEach((m, i) => {
-      if (!m.fixes) return;
-      if (!approved.has(i) && !m.autoDone) return;
-      for (let k = 0; k < kinds.length; k += 1) {
-        if (kinds[k] === m.fixes && map[k] === undefined) {
-          map[k] = 0.35 + i * 0.25;
-          break;
-        }
-      }
-    });
-    return map;
-  }, [approved, data.moves, kinds]);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => (n > 17 ? 0 : n + 1)), 1000);
+    return () => clearInterval(id);
+  }, [tab]);
 
-  const direLeft = kinds.filter((k, i) => k === "dire" && fixAt[i] === undefined).length;
+  const scene = SCENES[tab] || SCENES.pro;
+  const progress = Math.min(1, tick / 11);
+  const pops = scene.pops.filter((row) => row[0] <= tick);
 
-  const pickTab = (tab) => {
-    onPickPlan?.(tab.catalogId || (tab.id === "agency" ? "premium" : tab.id));
-  };
-
-  const approveMove = (index) => {
-    setApproved((prev) => {
-      const next = new Set(prev);
-      next.add(index);
-      return next;
-    });
-  };
-
-  const chooseThisPlan = () => {
-    const catalogId = id === "agency" ? "premium" : id;
-    onPickPlan?.(catalogId);
-    onChoosePlan?.(catalogId);
-    if (typeof document !== "undefined") {
-      document.getElementById("order")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+  const choose = (id) => {
+    setTab(id);
+    setTick(0);
+    if (id !== "managed") onPickPlan?.(id);
   };
 
   return (
-    <section className="v8-pricing-preview" id="preview" aria-label="Plan preview">
-      <div className="v8-pricing-preview-inner">
-        <div className="v8-pricing-preview-intro">
-          <p className="v8-pricing-preview-kicker">SEE IT BEFORE YOU PICK</p>
+    <section id="preview" aria-label="Plan preview" className="v8-pv">
+      <div className="v8-pv-inner">
+        <div className="v8-pv-head">
+          <p className="v8-pv-kicker">WHAT YOU COULD SEE</p>
           <h2>
-            {lead} <span>{planName}</span>
+            {tab === "managed" ? "Hands off with" : "What could change on"}{" "}
+            <span className="v8-pv-script">{tab === "managed" ? "Managed" : planName}</span>
           </h2>
-          <p>Watch Searchify suggest each move, wait for your approval, and turn red pages green.</p>
-          <div className="v8-pricing-preview-tabs" role="group" aria-label="Preview a plan">
-            {tabs.map((t) => {
-              const on = t.id === id;
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  aria-pressed={on}
-                  className={on ? "is-on" : ""}
-                  onClick={() => pickTab(t)}
-                >
-                  {t.name}
-                </button>
-              );
-            })}
+          <p className="v8-pv-lead">{scene.lead}</p>
+          <div role="group" aria-label="Preview a plan" className="v8-pv-tabs">
+            {TABS.map(([id, name]) => (
+              <button key={id} type="button" aria-pressed={tab === id} className={`v8-pv-tab${tab === id ? " is-on" : ""}${id === "managed" && tab === id ? " is-managed" : ""}`} onClick={() => choose(id)}>
+                {name}
+              </button>
+            ))}
           </div>
         </div>
-
-        <div className="v8-pricing-preview-frame" key={`${id}-${playKey}`}>
-          <div className="v8-pricing-preview-top">
-            <div className="v8-pricing-preview-brand">
-              <SearchifyMark size={36} />
-              <span>searchify</span>
+        <div className="v8-pv-grid">
+          <div className="v8-pv-phone">
+            <div className="v8-pv-phone-top">
+              <span>{scene.who}</span>
+              <span className="v8-pv-day">DAY {Math.max(1, Math.round(90 * progress))} OF 90</span>
             </div>
-            <span className="v8-pricing-preview-header">{data.header}</span>
-          </div>
-
-          <div className="v8-pricing-preview-body">
-            <div className="v8-pricing-preview-board">
-              <p className="v8-pricing-preview-mono">{data.sitesLabel}</p>
-              <div className="v8-pricing-preview-sites">
-                {data.sites.map((s, i) => (
-                  <span key={s.name} className="sf-in" style={{ animationDelay: `${0.05 + i * 0.08}s` }}>
-                    <i style={{ background: KIND_COLOR[s.kind] || KIND_COLOR.medium }} />
-                    {s.name}
-                  </span>
-                ))}
-              </div>
-
-              <div className="v8-pricing-preview-board-meta">
-                <span>{data.boardLabel}</span>
-                <span style={{ color: "#FF5A4E" }}>SHOWING {direLeft} DIRE</span>
-              </div>
-
-              <div className="v8-pricing-preview-dots" aria-hidden="true">
-                {kinds.map((k, i) => {
-                  const col = KIND_COLOR[k] || KIND_COLOR.passes;
-                  const lit = k === "dire";
-                  const fixed = fixAt[i] !== undefined;
-                  return (
-                    <span key={`${k}-${i}`} className="sf-in v8-pricing-preview-dot" style={{ animationDelay: `${0.05 + i * 0.02}s` }}>
-                      <span
-                        className="v8-pricing-preview-dot-base"
-                        style={{
-                          background: col,
-                          opacity: lit ? 1 : 0.18,
-                          boxShadow: lit ? `0 0 12px ${col}` : "none",
-                        }}
-                      />
-                      {fixed ? (
-                        <span
-                          className="sf-pop v8-pricing-preview-dot-fix"
-                          style={{
-                            background: KIND_COLOR.passes,
-                            boxShadow: `0 0 14px ${KIND_COLOR.passes}`,
-                            animationDelay: `${fixAt[i]}s`,
-                          }}
-                        />
-                      ) : null}
+            <div className="v8-pv-track"><div style={{ width: `${Math.round(progress * 100)}%` }} /></div>
+            <div className="v8-pv-pops" aria-live="polite">
+              {pops.map((row) => {
+                const color = COLORS[row[1]];
+                return (
+                  <div key={row[2]} className="v8-pv-pop">
+                    <span className="v8-pv-icon" style={{ background: `${color}24`, color }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={ICONS[row[1]]} /></svg>
                     </span>
-                  );
-                })}
-              </div>
-
-              <div className="v8-pricing-preview-legend">
-                {[
-                  { label: `DIRE ${direLeft}`, color: KIND_COLOR.dire, lit: direLeft > 0 },
-                  { label: `MEDIUM ${board.medium}`, color: KIND_COLOR.medium },
-                  { label: `PASSES ${board.passes}`, color: KIND_COLOR.passes },
-                  { label: `LOCKED ${board.locked}`, color: KIND_COLOR.locked },
-                ].map((l) => (
-                  <span key={l.label}>
-                    <i
-                      style={{
-                        background: l.color,
-                        boxShadow: l.lit ? `0 0 8px ${l.color}` : "none",
-                        opacity: l.lit ? 1 : 0.6,
-                      }}
-                    />
-                    {l.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="v8-pricing-preview-side">
-              <p className="v8-pricing-preview-mono">NEXT BEST MOVES · ONE AT A TIME</p>
-              <ul className="v8-pricing-preview-moves">
-                {(data.moves || []).map((m, i) => {
-                  const col = KIND_COLOR[m.kind] || KIND_COLOR.passes;
-                  const done = approved.has(i) || m.autoDone;
-                  const enterDelay = 0.9 + i * 0.6;
-                  return (
-                    <li key={m.title} className="sf-in" style={{ animationDelay: `${enterDelay.toFixed(2)}s` }}>
-                      <div className="v8-pricing-preview-move-row">
-                        <i style={{ background: col, boxShadow: `0 0 10px ${col}` }} />
-                        <div>
-                          <span className="v8-pricing-preview-move-tag" style={{ color: col }}>
-                            {(m.kind || "").toUpperCase()} · {m.label}
-                          </span>
-                          <strong>{m.title}</strong>
-                          <span className="v8-pricing-preview-move-why">{m.why}</span>
-                        </div>
-                      </div>
-                      {done ? (
-                        <p className="sf-in v8-pricing-preview-done" style={{ animationDelay: m.autoDone ? "0.2s" : "0.15s" }}>
-                          <CheckIcon />
-                          {m.doneText || "Approved · live check passed · undo available"}
-                        </p>
-                      ) : (
-                        <button type="button" className="v8-pricing-preview-approve" onClick={() => approveMove(i)}>
-                          Approve this move
-                        </button>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+                    <span>
+                      <span className="v8-pv-when">SEARCHIFY · {row[4]}</span>
+                      <strong>{row[2]}</strong>
+                      <span className="v8-pv-sub">{row[3]}</span>
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
-
-          <div className="v8-pricing-preview-month">
-            <p className="v8-pricing-preview-mono">THIS MONTH</p>
-            <div className="v8-pricing-preview-widgets">
-              {(data.widgets || []).map((w, i) => (
-                <div key={w.label}>
-                  <span>{w.label}</span>
-                  <strong>{w.value}</strong>
-                  <i>
-                    <b className="sf-bar" style={{ width: `${w.bar}%`, background: w.color, animationDelay: `${(1 + i * 0.3).toFixed(2)}s` }} />
-                  </i>
+          <div className="v8-pv-side">
+            {scene.stats.map((stat) => (
+              <div key={stat.label} className="v8-pv-stat">
+                <span className="v8-pv-dot" style={{ background: stat.color, boxShadow: `0 0 12px ${stat.color}` }} />
+                <span>
+                  <strong>{stat.label}</strong>
+                  <span>{stat.sub}</span>
+                </span>
+                <b style={{ color: stat.color }}>{shown(stat, tick)}</b>
+              </div>
+            ))}
+            {scene.isManaged ? (
+              <div className="v8-pv-parts">
+                <div>
+                  <span>YOUR PART</span>
+                  {scene.you.map((line) => <p key={line}>{line}</p>)}
                 </div>
-              ))}
+                <div>
+                  <span>OUR PART</span>
+                  {scene.us.map((line) => <p key={line}>{line}</p>)}
+                </div>
+              </div>
+            ) : null}
+            <div className="v8-pv-actions">
+              {scene.isManaged ? (
+                <a className="v8-pv-cta is-green" href="https://sovereignstandard.ca" target="_blank" rel="noreferrer">Talk to Sovereign Standard</a>
+              ) : (
+                <button type="button" className="v8-pv-cta" onClick={() => onChoosePlan?.(tab)}>Choose {planName}</button>
+              )}
+              <button type="button" className="v8-pv-replay" onClick={() => setTick(0)}>Play it again</button>
             </div>
+            <p className="v8-pv-note">An illustrative example of a typical local business, not a promise. Every website is different, and results build over months.</p>
           </div>
-        </div>
-
-        <div className="v8-pricing-preview-actions">
-          <p className="v8-pricing-preview-note">EXAMPLE PREVIEW · YOUR NUMBERS WILL DIFFER</p>
-          <button type="button" className="v8-pricing-preview-cta" onClick={chooseThisPlan}>
-            Choose {planName} · continue to order
-          </button>
         </div>
       </div>
     </section>

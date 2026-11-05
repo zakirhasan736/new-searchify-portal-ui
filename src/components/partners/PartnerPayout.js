@@ -73,7 +73,7 @@ function PartnerPayoutBody() {
         label,
         sub,
         checked: method === id,
-        border: method === id ? "#4DA3FF" : "#262A31",
+        border: method === id ? "#D5F879" : "#262A31",
         bg: method === id ? "rgba(213,248,121,.06)" : "#0A0B0D",
       })),
     [method],

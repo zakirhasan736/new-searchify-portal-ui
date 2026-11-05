@@ -69,7 +69,7 @@ export function buildHqOverviewModel(api, range) {
   const H = healthMap[R] || healthMap["30"];
   const label = { 30: "last 30 days", 90: "last 90 days", 365: "last 12 months" }[R];
   const names = ["Site visitors", "Free scans run", "Sign-ups", "Activated (both plug-ins)", "Became paying"];
-  const fcol = ["#5B616B", "#8A93A3", "#B9D96A", "#C9EC72", "#4DA3FF"];
+  const fcol = ["#5B616B", "#8A93A3", "#B9D96A", "#C9EC72", "#D5F879"];
   const funnel = F.map((v, i) => ({
     name: names[i],
     value: Number(v).toLocaleString("en-US"),
@@ -116,7 +116,7 @@ export function buildHqOverviewModel(api, range) {
     { label: "Win rate", sub: "measured changes with a positive result", value: H[2], color: "#3DDC84" },
     { label: "Time to first ship", sub: "median, sign-up to first approved move", value: H[3], color: "#3DDC84" },
   ];
-  const pc = ["#4A5160", "#8A93A3", "#4DA3FF", "#9FE7F5"];
+  const pc = ["#4A5160", "#8A93A3", "#D5F879", "#9FE7F5"];
   const pn = ["Solo · $29", "Pro · $79", "Premium · $399", "Enterprise"];
   const mix = parts[parts.length - 1].map((v, i) => ({
     name: pn[i],

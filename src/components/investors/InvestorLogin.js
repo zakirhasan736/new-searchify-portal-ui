@@ -48,6 +48,7 @@ function InvestorLoginInner() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [readySession, setReadySession] = useState(null);
 
   const finish = (data) => {
     clearSessionFlag(PARTNER_KEY);
@@ -105,7 +106,8 @@ function InvestorLoginInner() {
       setErr(typeof res.data?.detail === "string" ? res.data.detail : "Could not approve this device.");
       return;
     }
-    finish(res.data);
+    setReadySession(res.data);
+    setStep(3);
   };
 
   const setNewPassword = async (e) => {
@@ -318,10 +320,10 @@ function InvestorLoginInner() {
               {step === 1 ? (
                 <form onSubmit={continueCode} style={{ display: "flex", flexDirection: "column", gap: 16, animation: "sfy-rise .25s ease both" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    <h1 id="si-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 32, letterSpacing: "-0.8px", fontWeight: 700 }}>
-                      Two-step code
+                    <h1 id="si-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 30, letterSpacing: "-0.8px", fontWeight: 700 }}>
+                      Enter your 6-digit code
                     </h1>
-                    <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>Open your authenticator app. Demo code: 123456.</span>
+                    <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>From your authenticator app. Two-step sign-in is always on for investor accounts and can&apos;t be turned off.</span>
                   </div>
                   <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: "#9AA1AB" }}>
                     6-digit code
@@ -340,23 +342,28 @@ function InvestorLoginInner() {
                     </p>
                   ) : null}
                   <button type="submit" disabled={busy} style={{ minHeight: 50, borderRadius: 12, border: 0, background: "#9FE7F5", color: "#0A0B0D", fontSize: 15, fontWeight: 600 }}>
-                    {busy ? "Checking…" : "Continue"}
+                    {busy ? "Checking…" : "Verify"}
                   </button>
-                  <button type="button" onClick={() => setStep(0)} style={{ background: "none", border: 0, color: "#9AA1AB", fontSize: 13, padding: 0, textAlign: "left" }}>
-                    ← Back
+                  <button type="button" onClick={() => setStep(2)} style={{ minHeight: 50, borderRadius: 12, border: "1px solid #262A31", background: "transparent", color: "#F2F4F5", fontSize: 15 }}>
+                    Use my YubiKey instead
                   </button>
+                  <span style={{ fontSize: 13, color: "#9AA1AB" }}>Lost your phone? Use one of your backup codes, or contact Aadle. Codes are never sent by text message.</span>
                 </form>
               ) : null}
 
               {step === 2 ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "sfy-rise .25s ease both" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    <h1 id="si-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 32, letterSpacing: "-0.8px", fontWeight: 700 }}>
-                      New device
+                    <h1 id="si-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 30, letterSpacing: "-0.8px", fontWeight: 700 }}>
+                      New device. Approve it from your email.
                     </h1>
                     <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>
-                      We don&apos;t recognise this browser yet. Approve it to finish signing in. Trusted devices expire after 30 days.
+                      We sent a one-time link to your investor email. It works once and expires in 10 minutes.
                     </span>
+                  </div>
+                  <div style={{ borderRadius: 14, background: "#0A0B0D", border: "1px solid #1A1D22", padding: "14px 16px", display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }}>
+                    <span style={{ display: "flex", justifyContent: "space-between", gap: 10 }}><span style={{ color: "#9AA1AB" }}>Device</span><span>This browser</span></span>
+                    <span style={{ display: "flex", justifyContent: "space-between", gap: 10 }}><span style={{ color: "#9AA1AB" }}>Time</span><span>{new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span></span>
                   </div>
                   {err ? (
                     <p role="alert" style={{ margin: 0, fontSize: 14, color: "#FF8A80" }}>
@@ -364,10 +371,18 @@ function InvestorLoginInner() {
                     </p>
                   ) : null}
                   <button type="button" disabled={busy} onClick={continueDevice} style={{ minHeight: 50, borderRadius: 12, border: 0, background: "#9FE7F5", color: "#0A0B0D", fontSize: 15, fontWeight: 600 }}>
-                    {busy ? "Approving…" : "Trust this device"}
+                    {busy ? "Approving…" : "I approved it, continue"}
                   </button>
-                  <button type="button" onClick={() => setStep(1)} style={{ background: "none", border: 0, color: "#9AA1AB", fontSize: 13, padding: 0, textAlign: "left" }}>
-                    ← Back
+                  <span style={{ fontSize: 13, color: "#9AA1AB" }}>Didn&apos;t try to sign in? Don&apos;t click the link. Aadle is alerted automatically.</span>
+                </div>
+              ) : null}
+
+              {step === 3 ? (
+                <div role="status" style={{ display: "flex", flexDirection: "column", gap: 14, animation: "sfy-rise .25s ease both" }}>
+                  <h1 style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 30, letterSpacing: "-0.8px", fontWeight: 700 }}>You&apos;re in.</h1>
+                  <span style={{ fontSize: 14, color: "#9AA1AB" }}>This device is trusted for 30 days. You&apos;ll be signed out after 15 minutes without activity.</span>
+                  <button type="button" onClick={() => readySession && finish(readySession)} style={{ minHeight: 50, borderRadius: 12, border: 0, background: "#9FE7F5", color: "#0A0B0D", fontSize: 15, fontWeight: 600 }}>
+                    Open your portal
                   </button>
                 </div>
               ) : null}

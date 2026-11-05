@@ -56,7 +56,7 @@ export function buildPartnerOverviewModel(api, state) {
       pressed: on,
       cursor: "pointer",
       bg: on ? "rgba(213,248,121,.06)" : "#101215",
-      border: on ? "#4DA3FF" : "#1A1D22",
+      border: on ? "#D5F879" : "#1A1D22",
       glow: on ? "0 0 22px rgba(213,248,121,.15)" : "none",
     };
   });
@@ -78,7 +78,7 @@ export function buildPartnerOverviewModel(api, state) {
     label: "You earned",
     value: money(earnedRange),
     sub: R === "all" ? "since you joined, incl. this month" : "in this period",
-    valueColor: "#4DA3FF",
+    valueColor: "#D5F879",
     pressed: false,
     cursor: "default",
     bg: "#101215",
@@ -89,7 +89,7 @@ export function buildPartnerOverviewModel(api, state) {
   const series = { clicks: CLICKS, signups: SIGNUPS, paying: PAYING }[M].slice(N - W);
   const hi = Math.max(2, Math.max(...series, 0) * 1.15);
   const bw = Math.min(40, (668 / Math.max(1, W)) * 0.62);
-  const COL = { clicks: "#4DA3FF", signups: "#4DA3FF", paying: "#3DDC84" };
+  const COL = { clicks: "#4DA3FF", signups: "#D5F879", paying: "#3DDC84" };
   const bars = series.map((v, i) => {
     const h = (v / hi) * 200;
     const slot = 668 / Math.max(1, W);
@@ -149,7 +149,7 @@ export function buildPartnerOverviewModel(api, state) {
         : r[3] === "trial"
           ? `from ${money(PRICE[r[2]] * RATE)}`
           : "—",
-    earnColor: r[3] === "paying" ? "#4DA3FF" : "#7D848E",
+    earnColor: r[3] === "paying" ? "#D5F879" : "#7D848E",
   }));
   const payouts = [
     {
@@ -179,10 +179,10 @@ export function buildPartnerOverviewModel(api, state) {
   const stepped = PROG ? Boolean(PROG.steppedUp) : RATE >= top;
   const shown = Math.min(need, recent);
   const rate = {
-    title: F ? "Your founding partner rate" : "Your affiliate rate",
+    title: F ? "Your founding partner rate" : "Your commission rate",
     sub: F
       ? "Of every payment, for each customer’s first 12 months. Locked in by your agreement."
-      : "Of every payment, for each customer’s first 12 months.",
+      : `Of every payment, for each customer’s first 12 months. ${recent} qualified referrals in the last 6 months.`,
     now: `${Math.round(RATE * 100)}%`,
     next: stepped ? "Top rate, for good" : `${Math.round(top * 100)}% for good`,
     hasNext: true,
@@ -195,11 +195,11 @@ export function buildPartnerOverviewModel(api, state) {
     aria: `${stepped ? need : shown} of ${need} qualified referrals`,
     dots: Array.from({ length: need }, (_, i) => {
       const on = stepped || i < shown;
-      return { bg: on ? "#4DA3FF" : "#1A1D22", glow: on ? "0 0 8px rgba(213,248,121,.35)" : "none" };
+      return { bg: on ? "#D5F879" : "#1A1D22", glow: on ? "0 0 8px rgba(213,248,121,.35)" : "none" };
     }),
   };
   const balances = [
-    { label: "Cleared, paying next 15th", sub: "past the 30-day hold", value: money(monthly), color: "#3DDC84", valueColor: "#4DA3FF" },
+    { label: "Cleared, paying next 15th", sub: "past the 30-day hold", value: money(monthly), color: "#3DDC84", valueColor: "#D5F879" },
     { label: "In the 30-day hold", sub: "clears over the next weeks", value: money(hold), color: "#4DA3FF", valueColor: "#F2F4F5" },
     { label: "Paid out so far", sub: `since ${since}`, value: money(paid), color: "#8A93A3", valueColor: "#F2F4F5" },
   ];

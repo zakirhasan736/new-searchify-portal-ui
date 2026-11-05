@@ -149,7 +149,7 @@ export default function HqProblems() {
               borderRadius: 16,
               padding: "14px 16px",
               background: k.on ? "rgba(213,248,121,.06)" : "#101215",
-              border: `1px solid ${k.on ? "#4DA3FF" : "#1A1D22"}`,
+              border: `1px solid ${k.on ? "#D5F879" : "#1A1D22"}`,
               display: "flex",
               flexDirection: "column",
               gap: 4,
@@ -235,7 +235,7 @@ export default function HqProblems() {
                       padding: "0 14px",
                       borderRadius: 11,
                       border: 0,
-                      background: "#4DA3FF",
+                      background: "#D5F879",
                       color: "#0A0B0D",
                       fontSize: 13,
                       fontWeight: 600,
@@ -313,7 +313,7 @@ export default function HqProblems() {
             </span>
             {dunning.map((d) => (
               <div key={d.day} style={{ display: "flex", gap: 12, fontSize: 13, lineHeight: 1.45 }}>
-                <span style={{ width: 54, flex: "none", fontFamily: "'Geist Mono', monospace", color: "#4DA3FF" }}>{d.day}</span>
+                <span style={{ width: 54, flex: "none", fontFamily: "'Geist Mono', monospace", color: "#D5F879" }}>{d.day}</span>
                 <span style={{ color: "#D7DADE" }}>{d.what}</span>
               </div>
             ))}

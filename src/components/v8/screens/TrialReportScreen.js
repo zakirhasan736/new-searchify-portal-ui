@@ -711,7 +711,7 @@ export default function TrialReportScreen() {
                 ? "Unlock Today’s moves, scans, keywords, and the rest of your workspace."
                 : `Continue after ${endLabel}. Results from your newest fixes land over the next two months.`}
             </span>
-            <Link href="/app/billing">{account?.needsPaidPlan || account?.trialEnded ? "Start paid plan" : "Keep Solo"}</Link>
+            <Link href={account?.needsPaidPlan || account?.trialEnded ? "/app/billing" : "/app/results"}>{account?.needsPaidPlan || account?.trialEnded ? "Start paid plan" : "Keep Solo"}</Link>
           </div>
           <div className="v8-tr-choice">
             <span style={{ fontSize: 17, fontWeight: 600 }}>Upgrade to Pro</span>
@@ -720,15 +720,13 @@ export default function TrialReportScreen() {
             </span>
             <Link href="/app/billing">See Pro</Link>
           </div>
-          {account?.needsPaidPlan || account?.trialEnded ? null : (
-            <div className="v8-tr-choice is-muted">
-              <span style={{ fontSize: 17, fontWeight: 600 }}>Not right now</span>
-              <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5, flex: 1 }}>
-                Cancel before {endLabel} and you pay nothing. Every fix we made stays on your site.
-              </span>
-              <Link href="/app/cancel">Cancel my free month</Link>
-            </div>
-          )}
+          <div className="v8-tr-choice" style={{ borderColor: "rgba(61,220,132,.55)", background: "rgba(61,220,132,.06)" }}>
+            <span style={{ fontSize: 17, fontWeight: 600 }}>Have our team do it for you</span>
+            <span style={{ fontSize: 14, color: "#9AA1AB", lineHeight: 1.5, flex: 1 }}>
+              Managed SEO: our team writes, publishes and checks every fix, and sends you a plain-English report each month. From $599 a month.
+            </span>
+            <Link href="/pricing" style={{ background: "#3DDC84", color: "#0A0B0D" }}>Talk to us about Managed</Link>
+          </div>
         </div>
       </section>
 

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   errorText,
   getBusinessProfile,
@@ -52,8 +51,8 @@ function roleLabel(role, clientHint) {
 }
 
 export default function SettingsScreen({ initialTab = 'auto' }) {
-  const router = useRouter();
   const [tab, setTab] = useState(initialTab === 'auto' || initialTab === 'billing' ? initialTab : 'auto');
+  const [tipOpen, setTipOpen] = useState(false);
   const [level, setLevel] = useState('ask');
   const [notif, setNotif] = useState({ results: true, weekly: true, broken: true, summary: false });
   const [profile, setProfile] = useState({ name: '', email: '', agency: '', timezone: '', photo: '' });
@@ -159,15 +158,20 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
         let renewNote = u.resetsOn ? `renews ${u.resetsOn}` : 'renews monthly';
         if (status === 'cancelled' && paidLabel) renewNote = `cancelled · access until ${paidLabel}`;
         else if (status === 'paused' && paidLabel) renewNote = `paused · resumes after ${paidLabel}`;
-        else if (paidLabel) renewNote = `paid through ${paidLabel}`;
+        else if (paidLabel) renewNote = `renews ${paidLabel}`;
+        const planName = billOk?.name || planDisplayName(planId) || planMeta?.name || 'Starter';
+        const amount = billOk?.amount ?? planMeta?.price;
+        const per = billOk?.per || 'month';
         setBilling({
-          plan: billOk?.name || planDisplayName(planId) || planMeta?.name || 'Starter',
+          plan: planName,
+          planLine: billOk?.planLine || (amount ? `${planName} · $${amount} / ${per}` : planName),
           planId,
           sitesUsed,
           siteLimit: billOk?.siteLimit || u.limit || planMeta?.sites || 5,
           renewNote,
           status,
           paidThroughLabel: paidLabel,
+          hasCheckout: Boolean(billOk?.hasCheckout),
         });
         if (u.scanHours) setScanHours(u.scanHours);
         if (u.scansPaused && !local.autonomy) setLevel('pause');
@@ -230,6 +234,9 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
       pick: () => {
         setLevel(l.id);
         saveLocal({ autonomy: l.id });
+        saveUsageControls({ scanHours, scansPaused: l.id === 'pause' }).then((res) => {
+          if (!res.ok) setSaved(errorText(res, 'Could not save settings.'));
+        });
       },
     };
   });
@@ -280,18 +287,6 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
     setBusy(false);
     if (acctRes.ok || bizRes.ok) setSaved('Profile saved.');
     else setSaved(errorText(bizRes, 'Could not save profile.'));
-  };
-
-  const saveAutonomy = async () => {
-    setBusy(true);
-    setSaved('');
-    saveLocal({ autonomy: level, lockedPages: lockedExtra });
-    const res = await saveUsageControls({
-      scanHours,
-      scansPaused: level === 'pause',
-    });
-    setBusy(false);
-    setSaved(res.ok ? 'Autonomy settings saved.' : errorText(res, 'Could not save settings.'));
   };
 
   const sendInvite = async () => {
@@ -386,7 +381,7 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
           </Link>
         </nav>
 
-        <section style={{ flex: '1 1 auto', minWidth: 0, borderRadius: '24px', background: '#101215', border: '1px solid #1A1D22', padding: 'clamp(20px, 3vw, 32px)', display: 'flex', flexDirection: 'column', gap: '22px' }}>
+        <section style={{ flex: '999 1 560px', minWidth: 0, borderRadius: '24px', background: '#101215', border: '1px solid #1A1D22', padding: 'clamp(20px, 3vw, 32px)', display: 'flex', flexDirection: 'column', gap: '22px' }}>
           {saved ? (
             <p style={{ margin: 0, fontSize: '13px', color: '#4DA3FF' }} role="status">
               {saved}
@@ -436,7 +431,7 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
                 </label>
                 <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#9AA1AB' }}>
                   Email
-                  <input type="email" value={profile.email} readOnly style={{ minHeight: '46px', padding: '0 14px', borderRadius: '12px', border: '1px solid #262A31', background: '#0A0B0D', color: '#9AA1AB', font: 'inherit', fontSize: '15px' }} />
+                  <input type="email" value={profile.email} readOnly style={{ minHeight: '46px', padding: '0 14px', borderRadius: '12px', border: '1px solid #262A31', background: '#0A0B0D', color: '#F2F4F5', font: 'inherit', fontSize: '15px' }} />
                 </label>
                 <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#9AA1AB' }}>
                   Agency name (shown on client reports)
@@ -522,7 +517,32 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
           {!loading && isAuto && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', animation: 'sfy-rise .25s ease both' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '600' }}>How much can Searchify do on its own?</h2>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '600' }}>How much can Searchify do on its own?</h2>
+                  <span className="sfy-tip" onMouseEnter={() => setTipOpen(true)} onMouseLeave={() => setTipOpen(false)}>
+                    <button
+                      type="button"
+                      className="sfy-i"
+                      aria-label="What is shipping small fixes on its own?"
+                      aria-expanded={tipOpen}
+                      aria-controls="tip-auto"
+                      onClick={() => setTipOpen((open) => !open)}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+                        <path d="M12 11v7" />
+                        <path d="M12 6.5h.01" />
+                      </svg>
+                    </button>
+                    {tipOpen ? (
+                      <span className="sfy-pop sfy-pop-r" id="tip-auto">
+                        <span className="sfy-pop-card">
+                          <span>“Ship small fixes on its own” lets Searchify ship small, low-risk fixes (titles, descriptions and internal links, up to 5 a week) without waiting for you. Bigger changes still need your OK, and everything can be undone.</span>
+                          <a href="https://searchify.io/help/autonomy">Learn more</a>
+                        </span>
+                      </span>
+                    ) : null}
+                  </span>
+                </span>
                 <span style={{ fontSize: '14px', color: '#9AA1AB' }}>You can change this any time. Every change is still checked live and can be undone.</span>
               </div>
               <div role="radiogroup" aria-label="Autonomy" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -541,9 +561,9 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '6px' }}>
                 <span style={{ fontSize: '15px', fontWeight: '600' }}>Never touch these pages</span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontFamily: "'Geist Mono', monospace", fontSize: '12px', padding: '6px 10px', borderRadius: '8px', border: '1px solid #4DA3FF', color: '#D7DADE' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: '12px', padding: '6px 10px', borderRadius: '8px', border: '1px solid #4DA3FF', color: '#D7DADE' }}>
                     <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#4DA3FF' }} />
-                    {winningCount} winning pages (automatic)
+                    {winningCount} winning {winningCount === 1 ? 'page' : 'pages'} (automatic)
                   </span>
                   {lockedExtra.map((path) => (
                     <button
@@ -551,9 +571,9 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
                       type="button"
                       title="Remove"
                       onClick={() => removeLocked(path)}
-                      style={{ fontFamily: "'Geist Mono', monospace", fontSize: '12px', padding: '6px 10px', borderRadius: '8px', border: '1px solid #262A31', color: '#D7DADE', background: 'transparent', cursor: 'pointer' }}
+                      style={{ fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: '12px', padding: '6px 10px', borderRadius: '8px', border: '1px solid #262A31', color: '#D7DADE', background: 'transparent', cursor: 'pointer' }}
                     >
-                      {path} ×
+                      {path}
                     </button>
                   ))}
                   {addPageOpen ? (
@@ -562,7 +582,7 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
                         value={newPage}
                         onChange={(e) => setNewPage(e.target.value)}
                         placeholder="/page"
-                        style={{ minHeight: '32px', width: '120px', padding: '0 8px', borderRadius: '8px', border: '1px solid #262A31', background: '#0A0B0D', color: '#F2F4F5', fontFamily: "'Geist Mono', monospace", fontSize: '12px' }}
+                        style={{ minHeight: '32px', width: '120px', padding: '0 8px', borderRadius: '8px', border: '1px solid #262A31', background: '#0A0B0D', color: '#F2F4F5', fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: '12px' }}
                       />
                       <button type="button" onClick={addLockedPage} style={{ minHeight: '32px', padding: '0 10px', borderRadius: '8px', border: 0, background: '#4DA3FF', color: '#0A0B0D', fontSize: '12px', fontWeight: 600 }}>
                         Add
@@ -575,9 +595,6 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
                   )}
                 </div>
               </div>
-              <button type="button" disabled={busy} onClick={saveAutonomy} style={{ alignSelf: 'flex-start', minHeight: '48px', padding: '0 20px', borderRadius: '12px', border: 0, background: '#4DA3FF', color: '#0A0B0D', fontSize: '15px', fontWeight: '600' }}>
-                Save autonomy
-              </button>
             </div>
           )}
 
@@ -586,23 +603,19 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
               <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '600' }}>Plan and billing</h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', padding: '18px', borderRadius: '16px', border: '1px solid #4DA3FF', boxShadow: '0 0 24px rgba(77,163,255,.18)' }}>
                 <span style={{ flex: '1 1 220px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ fontSize: '18px', fontWeight: '600' }}>{billing.plan}</span>
+                  <span style={{ fontSize: '18px', fontWeight: '600' }}>{billing.planLine || billing.plan}</span>
                   <span style={{ fontSize: '14px', color: '#9AA1AB' }}>
                     {billing.sitesUsed} of {billing.siteLimit} websites in use · {billing.renewNote}
                   </span>
                 </span>
-                <button
-                  type="button"
-                  onClick={() => router.push('/app/billing')}
-                  style={{ display: 'inline-flex', alignItems: 'center', minHeight: '44px', padding: '0 16px', borderRadius: '11px', border: '1px solid #262A31', color: '#F2F4F5', background: 'transparent', textDecoration: 'none', fontSize: '14px', cursor: 'pointer' }}
-                >
+                <Link href="/app/billing" style={{ display: 'inline-flex', alignItems: 'center', minHeight: '44px', padding: '0 16px', borderRadius: '11px', border: '1px solid #262A31', color: '#F2F4F5', textDecoration: 'none', fontSize: '14px' }}>
                   Change plan
-                </button>
+                </Link>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', fontSize: '15px' }}>
                 <span>Payment method</span>
                 <span style={{ color: '#9AA1AB' }}>
-                  Managed by your payment provider ·{' '}
+                  {billing.hasCheckout ? 'Card on file' : 'No card on file'} ·{' '}
                   <Link href="/app/billing" style={{ color: '#4DA3FF' }}>
                     Update
                   </Link>
@@ -610,72 +623,13 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: '13px', color: '#7D848E', paddingBottom: '6px', borderBottom: '1px solid #1A1D22' }}>Invoices</span>
-                <p style={{ margin: '14px 0 0', fontSize: '14px', color: '#9AA1AB' }}>
-                  Invoices appear here after a paid cycle. Manage billing on{' '}
-                  <Link href="/app/billing" style={{ color: '#4DA3FF' }}>
-                    Plans
-                  </Link>
-                  .
-                </p>
-              </div>
-              {billing.status === 'cancelled' ? (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 12,
-                    alignItems: 'center',
-                    padding: '14px 16px',
-                    borderRadius: 14,
-                    background: 'rgba(255,90,78,.08)',
-                    border: '1px solid rgba(255,90,78,.35)',
-                  }}
-                >
-                  <span style={{ flex: '1 1 220px', fontSize: 14, color: '#FF8A80' }}>
-                    Subscription cancelled{billing.paidThroughLabel ? ` · access until ${billing.paidThroughLabel}` : ''}.
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => router.push('/app/cancel')}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      minHeight: 40,
-                      padding: '0 14px',
-                      borderRadius: 11,
-                      border: 0,
-                      background: '#4DA3FF',
-                      color: '#0A0B0D',
-                      textDecoration: 'none',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Changed my mind
-                  </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #1A1D22', fontSize: '14px' }}>
+                  <span style={{ color: '#9AA1AB' }}>No invoices stored yet</span>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => router.push('/app/cancel')}
-                  style={{
-                    alignSelf: 'flex-start',
-                    minHeight: 40,
-                    padding: '0 12px',
-                    border: 0,
-                    background: 'transparent',
-                    color: '#9AA1AB',
-                    fontSize: 13,
-                    textDecoration: 'underline',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancel subscription
-                </button>
-              )}
+              </div>
+              <Link href="/app/cancel" style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', minHeight: '40px', padding: '0 12px', color: '#9AA1AB', fontSize: '13px', textDecoration: 'underline' }}>
+                Cancel subscription
+              </Link>
             </div>
           )}
         </section>

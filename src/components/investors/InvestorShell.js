@@ -65,9 +65,11 @@ export default function InvestorShell({ children, minHeight = 1300, showSample =
     <InvestorCtx.Provider value={{ me }}>
       <style>{`
         @keyframes sfy-rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-        .inv-shell a.inv-link:hover{color:#CFF4FA}
+        .inv-shell a{color:#9FE7F5;text-decoration:none}
+        .inv-shell a:hover{color:#CFF4FA}
         .inv-shell button{font-family:inherit;cursor:pointer}
         .inv-shell button:focus-visible,.inv-shell a:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
+        .inv-shell [style*="Geist Mono"],.inv-shell [style*="geist-mono"]{font-family:"Open Sans",sans-serif !important;font-weight:700 !important}
         @media (prefers-reduced-motion: reduce){.inv-shell *{animation:none !important;transition:none !important}}
       `}</style>
       <div
@@ -102,7 +104,8 @@ export default function InvestorShell({ children, minHeight = 1300, showSample =
             </span>
             <span
               style={{
-                fontFamily: "'Geist Mono', monospace",
+                fontFamily: '"Open Sans", sans-serif',
+                fontWeight: 700,
                 fontSize: 11,
                 padding: "3px 8px",
                 borderRadius: 6,

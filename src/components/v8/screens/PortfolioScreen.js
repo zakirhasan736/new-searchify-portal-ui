@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -144,20 +144,8 @@ function healthLevel(red, yellow, green, blue, captured) {
   return 3;
 }
 
-function PlugIcon({ color }) {
-  return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ filter: `drop-shadow(0 0 5px ${color})` }}>
-      <path d="M9 2v6" />
-      <path d="M15 2v6" />
-      <path d="M6 8h12v3a6 6 0 0 1-12 0z" />
-      <path d="M12 17v5" />
-    </svg>
-  );
-}
-
 export default function PortfolioScreen() {
   const router = useRouter();
-  const [sort, setSort] = useState('attention');
   const [base, setBase] = useState([]);
   const [agencyName, setAgencyName] = useState('Your agency');
   const [avatar, setAvatar] = useState('??');
@@ -257,11 +245,8 @@ export default function PortfolioScreen() {
           } else {
             red = redQ;
             yellow = yellowQ;
-            green = Math.max(0, 8 - red - yellow);
-            blue = Math.max(
-              0,
-              assigned.filter((c) => ['approved', 'monitoring', 'applied'].includes(c.status)).length,
-            );
+            green = 0;
+            blue = assigned.filter((c) => ['approved', 'monitoring', 'applied', 'closed'].includes(c.status)).length;
           }
 
           const cmsBroken = site.status === 'error' || site.status === 'disconnected';
@@ -330,20 +315,13 @@ export default function PortfolioScreen() {
   const score = (s) => (s.broken ? 1000 : 0) + s.red * 10 + s.yellow * 2;
   const list = useMemo(() => {
     const next = base.slice();
-    if (sort === 'attention') next.sort((a, b) => score(b) - score(a));
-    else next.sort((a, b) => a.name.localeCompare(b.name));
+    next.sort((a, b) => score(b) - score(a));
     return next;
-  }, [base, sort]);
+  }, [base]);
 
   const activate = (s) => {
     if (s.siteId != null && !s.journeyId) setActiveSite(s.siteId);
     if (s.journeyId != null) selectJourneySite(s.journeyId);
-  };
-
-  const openSite = (s) => (e) => {
-    e.preventDefault();
-    activate(s);
-    router.push(s.broken ? '/app/connections' : '/app');
   };
 
   const rows = list.map((s) => {
@@ -384,434 +362,216 @@ export default function PortfolioScreen() {
     };
   });
 
-  const sorts = [
-    { id: 'attention', label: 'Needs attention first' },
-    { id: 'az', label: 'A–Z' },
-  ];
+  const grouped = useMemo(() => {
+    const groupOf = (s) => {
+      if (s.broken || s.red > 0) return 'need';
+      if (s.yellow > 0 || s.scanning || s.moves > 0) return 'bake';
+      return 'good';
+    };
+    const decorated = rows.map((s) => {
+      const lights = s.nowArr || [s.red, s.yellow, s.green, s.blue];
+      const total = lights.reduce((a, b) => a + b, 0);
+      const denom = total || 1;
+      const w = (n) => `${((n / denom) * 100).toFixed(2)}%`;
+      const group = groupOf(s);
+      const primary = group === 'need';
+      const href = s.broken ? '/app/connections' : group === 'bake' ? '/app' : group === 'good' ? '/app/results' : '/app/queue';
+      const cta = s.broken ? 'Reconnect' : group === 'bake' ? 'See progress' : group === 'good' ? 'View the site' : 'Fix the next one';
+      const step = s.broken
+        ? 'Reconnect WordPress'
+        : s.red > 0
+          ? `Fix the next red light on ${s.name}`
+          : s.problem || 'Open the next fix';
+      return {
+        ...s,
+        group,
+        lights,
+        total,
+        passing: lights[2] + lights[3],
+        rw: total ? w(lights[0]) : '0%',
+        yw: total ? w(lights[1]) : '0%',
+        gw: total ? w(lights[2]) : '0%',
+        bw: total ? w(lights[3]) : '0%',
+        href,
+        cta,
+        step,
+        time: s.broken
+          ? s.red > 0
+            ? `About 2 minutes · unblocks ${s.red} red ${s.red === 1 ? 'fix' : 'fixes'}`
+            : 'About 2 minutes · unblocks publishing'
+          : s.red > 0
+            ? 'A few minutes · start with the biggest red light'
+            : 'A few minutes',
+        nextLine: s.broken
+          ? 'WordPress is disconnected, so fixes cannot publish. Reconnecting takes about 2 minutes.'
+          : group === 'bake'
+            ? s.blue > 0
+              ? `${s.blue} published. Google is re-reading them.`
+              : 'Published and live. Google is re-reading them.'
+            : group === 'good'
+              ? 'Doing well. We will tell you if a light turns red.'
+              : s.problem || 'Open the next fix.',
+        border: primary ? 'rgba(255,90,78,.3)' : '#1A1D22',
+        ctaBg: primary ? 'rgba(77,163,255,.12)' : 'transparent',
+        ctaBorder: primary ? 'rgba(77,163,255,.55)' : '#262A31',
+        ctaColor: primary ? '#8CC4FF' : '#D7DADE',
+      };
+    });
+    const GROUPS = [
+      { id: 'need', title: 'Needs you', short: 'Do these first', explain: 'Each one takes a few minutes.', color: '#FF5A4E', soft: 'rgba(255,90,78,.14)', icon: 'M12 8v5 M12 16.5h.01 M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z' },
+      { id: 'bake', title: 'Fixes baking', short: 'Google is working on it', explain: 'Published and live. Nothing for you to do.', color: '#4DA3FF', soft: 'rgba(77,163,255,.14)', icon: 'M12 6v6l4 2 M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20z' },
+      { id: 'good', title: 'Doing well', short: 'Nothing to do', explain: 'Healthy. We will tell you if anything changes.', color: '#3DDC84', soft: 'rgba(61,220,132,.14)', icon: 'M20 6L9 17l-5-5' },
+    ];
+    return GROUPS.map((g) => ({ ...g, rows: decorated.filter((s) => s.group === g.id) }));
+  }, [rows]);
+
+  const nextSteps = (grouped.find((g) => g.id === 'need')?.rows || []).slice().sort((a, b) => (b.broken - a.broken) || (b.red - a.red));
+  const counts = Object.fromEntries(grouped.map((g) => [g.id, g.rows.length]));
+  const summary = loading
+    ? ''
+    : `${base.length} client ${base.length === 1 ? 'site' : 'sites'}. ${counts.need || 0} need you today, ${counts.bake || 0} ${counts.bake === 1 ? 'is' : 'are'} baking, and ${counts.good || 0} ${counts.good === 1 ? 'is' : 'are'} doing well.`;
+  const nextSend = useMemo(() => {
+    const d = new Date();
+    const next = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    return next.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }, []);
+
+  const go = (s) => (e) => {
+    e.preventDefault();
+    activate(s);
+    router.push(s.href);
+  };
 
   return (
     <div
       style={{
         flex: '999 1 560px',
         minWidth: 0,
-        minHeight: 2400,
+        minHeight: 900,
         background: '#0A0B0D',
         color: '#F2F4F5',
         fontFamily: "Geist, 'Helvetica Neue', sans-serif",
         boxSizing: 'border-box',
-        padding: '22px clamp(16px, 4vw, 56px) 56px',
+        padding: '24px clamp(16px, 4vw, 56px) 56px',
         display: 'flex',
         flexDirection: 'column',
-        gap: 32,
+        gap: 30,
       }}
     >
-      <header style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginRight: 'auto' }}>
-          <span style={{ fontWeight: 600, fontSize: 17 }}>{agencyName}</span>
-        </div>
-        <Link
-          href="/app/settings"
-          aria-label="Settings"
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            background: '#262A31',
-            display: 'grid',
-            placeItems: 'center',
-            color: '#F2F4F5',
-            textDecoration: 'none',
-            fontSize: 13,
-            fontWeight: 600,
-          }}
-        >
+      <header style={{ maxWidth: 1060, width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <span style={{ fontWeight: 600, fontSize: 16, marginRight: 'auto' }}>{agencyName}</span>
+        <Link href="/app/connections" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 42, padding: '0 16px', borderRadius: 12, border: '1px solid #262A31', color: '#F2F4F5', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>
+          <span aria-hidden="true" style={{ fontSize: 18, lineHeight: 1 }}>+</span>
+          Add a client site
+        </Link>
+        <Link href="/app/settings" aria-label="Settings" style={{ width: 40, height: 40, borderRadius: '50%', background: '#262A31', display: 'grid', placeItems: 'center', color: '#F2F4F5', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
           {avatar}
         </Link>
       </header>
 
-      <div
-        style={{
-          maxWidth: 1180,
-          width: '100%',
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
-          gap: 20,
-          flexWrap: 'wrap',
-        }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <h1
-            style={{
-              margin: 0,
-              fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
-              fontSize: 'clamp(36px, 4.6vw, 58px)',
-              lineHeight: 1,
-              letterSpacing: '-1.6px',
-              fontWeight: 700,
-            }}
-          >
-            Your clients
-          </h1>
-          <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', fontSize: 14, color: '#9AA1AB' }}>
-            <span>
-              <strong style={{ color: '#F2F4F5' }}>{loading ? '…' : totals.sites}</strong> sites
-            </span>
-            <span>
-              <strong style={{ color: '#F2F4F5' }}>{loading ? '…' : totals.moves}</strong> moves waiting
-            </span>
-            <span style={{ color: totals.broken > 0 ? '#FF5A4E' : '#9AA1AB' }}>
-              <strong style={{ color: totals.broken > 0 ? '#FF5A4E' : '#F2F4F5' }}>{loading ? '…' : totals.broken}</strong>{' '}
-              connection broken
-            </span>
-          </div>
+      <section style={{ maxWidth: 1060, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 10, animation: 'sfy-rise .4s ease both' }}>
+        <h1 style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 'clamp(34px, 4.2vw, 52px)', lineHeight: 1.04, letterSpacing: '-1.5px', fontWeight: 700 }}>Your clients</h1>
+        <p style={{ margin: 0, fontSize: 17, lineHeight: 1.55, color: '#D7DADE', maxWidth: 720 }}>{summary}</p>
+      </section>
+
+      {loading ? (
+        <div style={{ maxWidth: 1060, width: '100%', margin: '0 auto' }}>
+          <SkeletonCards count={3} lines={4} />
         </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-          <div role="group" aria-label="Sort" style={{ display: 'inline-flex', padding: 3, borderRadius: 11, background: '#131519', border: '1px solid #1A1D22' }}>
-            {sorts.map((s) => {
-              const on = sort === s.id;
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => setSort(s.id)}
-                  style={{
-                    minHeight: 36,
-                    padding: '0 12px',
-                    borderRadius: 8,
-                    border: 0,
-                    background: on ? '#262A31' : 'transparent',
-                    color: on ? '#F2F4F5' : '#9AA1AB',
-                    fontSize: 13,
-                  }}
-                >
-                  {s.label}
-                </button>
-              );
-            })}
+      ) : null}
+
+      {!loading && base.length === 0 ? (
+        <section style={{ maxWidth: 1060, width: '100%', margin: '0 auto', borderRadius: 24, background: '#101215', border: '1px solid #262A31', padding: 28, display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start' }}>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>No client sites yet</h2>
+          <p style={{ margin: 0, fontSize: 15, color: '#D7DADE', lineHeight: 1.5 }}>Add a website and it shows up here, grouped by what needs you, what is baking, and what is already doing well.</p>
+          <Link href="/app/connections" style={{ display: 'inline-flex', alignItems: 'center', minHeight: 46, padding: '0 18px', borderRadius: 13, background: '#4DA3FF', color: '#0A0B0D', textDecoration: 'none', fontSize: 15, fontWeight: 600 }}>Add a client site</Link>
+        </section>
+      ) : null}
+
+      {!loading && nextSteps.length ? (
+        <section aria-labelledby="next-h" style={{ maxWidth: 1060, width: '100%', margin: '0 auto', boxSizing: 'border-box', borderRadius: 24, background: '#101215', border: '1px solid #262A31', padding: 'clamp(18px, 2.4vw, 26px)', display: 'flex', flexDirection: 'column', gap: 16, animation: 'sfy-rise .4s .06s ease both' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+            <h2 id="next-h" style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Start here: your next {nextSteps.length} {nextSteps.length === 1 ? 'step' : 'steps'}, across every client</h2>
+            <span style={{ fontSize: 13, color: '#9AA1AB' }}>Most important first. Do one, then the next.</span>
           </div>
-          <Link
-            href="/app/connections"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              minHeight: 46,
-              padding: '0 18px',
-              borderRadius: 12,
-              background: '#4DA3FF',
-              color: '#0A0B0D',
-              textDecoration: 'none',
-              fontSize: 14,
-              fontWeight: 600,
-              boxShadow: '0 0 22px rgba(77,163,255,.4)',
-            }}
-          >
-            Add a site
-          </Link>
-        </div>
-      </div>
+          <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {nextSteps.map((n, i) => (
+              <li key={`${n.domain}-step`} style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '14px 16px', borderRadius: 18, background: i === 0 ? 'rgba(77,163,255,.06)' : '#0D0F12', border: `1px solid ${i === 0 ? 'rgba(77,163,255,.45)' : '#1A1D22'}` }}>
+                <span aria-hidden="true" style={{ width: 46, height: 46, flex: 'none', borderRadius: 14, display: 'grid', placeItems: 'center', background: 'linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.04))', border: `1.5px solid rgba(255,255,255,${i === 0 ? '.9' : '.4'})`, boxShadow: i === 0 ? '0 0 18px rgba(255,255,255,.35), 0 0 42px rgba(255,255,255,.12)' : '0 0 10px rgba(255,255,255,.12)', fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 20, fontWeight: 800, color: '#FFFFFF', textShadow: '0 0 10px rgba(255,255,255,.55)' }}>{i + 1}</span>
+                <span style={{ flex: '1 1 320px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#9AA1AB' }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: n.red > 0 || n.broken ? '#FF5A4E' : '#FFC53D', boxShadow: `0 0 8px ${n.red > 0 || n.broken ? '#FF5A4E' : '#FFC53D'}` }} />
+                    {n.name}
+                  </span>
+                  <span style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.35 }}>{n.step}</span>
+                  <span style={{ fontSize: 13, color: '#9AA1AB' }}>{n.time}</span>
+                </span>
+                {i === 0 ? (
+                  <a href={n.href} onClick={go(n)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 48, padding: '0 20px', borderRadius: 13, background: '#4DA3FF', color: '#0A0B0D', textDecoration: 'none', fontSize: 15, fontWeight: 600, boxShadow: '0 0 22px rgba(77,163,255,.4)' }}>{n.step.split(' ').slice(0, 2).join(' ')} <span aria-hidden="true">→</span></a>
+                ) : (
+                  <span style={{ fontSize: 13, color: '#7D848E' }}>Up next</span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
 
-      <div
-        style={{
-          maxWidth: 1180,
-          width: '100%',
-          margin: '0 auto',
-          display: 'flex',
-          gap: 16,
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          fontSize: 12,
-          color: '#9AA1AB',
-          marginTop: -14,
-        }}
-      >
-        <span style={{ fontFamily: "'Geist Mono', monospace", letterSpacing: '0.06em' }}>COLOR LEGEND</span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF5A4E' }} />
-          Red: dire, fix first
-        </span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FFC53D' }} />
-          Yellow: worth doing next
-        </span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#3DDC84' }} />
-          Green: passes
-        </span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4DA3FF' }} />
-          Blue: winning, locked
-        </span>
-      </div>
-
-      <div
-        role="list"
-        aria-label="Client sites, now and where we'd like to be"
-        style={{ maxWidth: 1180, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}
-      >
-        {loading ? <SkeletonCards count={3} lines={6} /> : null}
-        {!loading && rows.length === 0 ? (
-          <article
-            role="listitem"
-            style={{
-              borderRadius: 22,
-              background: '#101215',
-              border: '1px solid #1A1D22',
-              padding: 28,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 14,
-              alignItems: 'flex-start',
-            }}
-          >
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>No client sites yet</h2>
-            <p style={{ margin: 0, fontSize: 15, color: '#9AA1AB', lineHeight: 1.5 }}>
-              Add a WordPress site to see Current vs Where we&apos;d like to be boards, health, and waiting moves — the same
-              layout as the Portfolio design.
-            </p>
-            <Link
-              href="/app/connections"
-              className="pf-go"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                minHeight: 44,
-                padding: '0 16px',
-                borderRadius: 12,
-                background: '#4DA3FF',
-                color: '#0A0B0D',
-                textDecoration: 'none',
-                fontSize: 14,
-                fontWeight: 600,
-              }}
-            >
-              Add a site
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M5 12h14M13 6l6 6-6 6" />
-              </svg>
-            </Link>
-          </article>
-        ) : null}
-
-        {rows.map((s) => (
-          <article
-            key={`${s.domain}-${s.siteId || s.journeyId || s.name}`}
-            role="listitem"
-            aria-label={s.name}
-            style={{
-              borderRadius: 22,
-              background: '#101215',
-              border: `1px solid ${s.border}`,
-              boxShadow: s.shadow,
-              padding: 20,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 16,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <span
-                style={{
-                  width: 12,
-                  height: 12,
-                  flex: 'none',
-                  borderRadius: '50%',
-                  background: s.dot,
-                  boxShadow: `0 0 12px ${s.dot}`,
-                  animation: s.anim,
-                }}
-              />
-              <span style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                <span style={{ fontSize: 17, fontWeight: 600 }}>{s.name}</span>
-                <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 12, color: '#9AA1AB' }}>{s.domain}</span>
+      {!loading && base.length ? (
+        <nav aria-label="Jump to a group" style={{ maxWidth: 1060, width: '100%', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10, animation: 'sfy-rise .4s .1s ease both' }}>
+          {grouped.map((g) => (
+            <a key={g.id} href={`#${g.id}`} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 18, background: '#101215', border: '1px solid #1A1D22', color: '#F2F4F5', textDecoration: 'none' }}>
+              <span style={{ width: 40, height: 40, flex: 'none', borderRadius: '50%', display: 'grid', placeItems: 'center', background: g.soft }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={g.color} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={g.icon} /></svg>
               </span>
-              <span style={{ fontSize: 12, color: s.statusColor }}>{s.status}</span>
-              <Link
-                href={s.href}
-                className="pf-go"
-                aria-label={`Begin changes for ${s.name}`}
-                onClick={openSite(s)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  minHeight: 44,
-                  padding: '0 16px',
-                  borderRadius: 12,
-                  background: '#4DA3FF',
-                  color: '#0A0B0D',
-                  textDecoration: 'none',
-                  fontSize: 14,
-                  fontWeight: 600,
-                }}
-              >
-                Begin changes
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M5 12h14M13 6l6 6-6 6" />
-                </svg>
-              </Link>
-            </div>
-
-            <div className="pf-pair" style={{ display: 'flex', gap: 12, alignItems: 'stretch' }}>
-              <section
-                aria-label="Current"
-                style={{
-                  flex: '1 1 0',
-                  minWidth: 0,
-                  borderRadius: 16,
-                  background: '#0A0B0D',
-                  border: '1px solid #1A1D22',
-                  padding: 16,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 12,
-                }}
-              >
-                <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, letterSpacing: '0.06em', color: '#9AA1AB' }}>CURRENT</span>
-                <div role="img" aria-label={s.now.aria} style={{ display: 'flex', height: 10, borderRadius: 5, overflow: 'hidden', background: '#1A1D22', gap: 2 }}>
-                  <span style={{ width: s.now.rw, background: '#FF5A4E' }} />
-                  <span style={{ width: s.now.yw, background: '#FFC53D' }} />
-                  <span style={{ width: s.now.gw, background: '#3DDC84' }} />
-                  <span style={{ width: s.now.bw, background: '#4DA3FF' }} />
-                </div>
-                <div aria-hidden="true" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', fontFamily: "'Geist Mono', monospace", fontSize: 12 }}>
-                  {[
-                    ['#FF5A4E', s.now.r, 'red'],
-                    ['#FFC53D', s.now.y, 'yellow'],
-                    ['#3DDC84', s.now.g, 'green'],
-                    ['#4DA3FF', s.now.b, 'blue'],
-                  ].map(([c, n, label]) => (
-                    <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 9px', borderRadius: 7, background: '#131519' }}>
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />
-                      {n} {label}
-                    </span>
-                  ))}
-                </div>
-                <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-                  <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ fontSize: 12, color: '#9AA1AB' }}>Health</span>
-                    <span style={{ fontSize: 15, fontWeight: 600, color: s.now.qColor }}>
-                      Level {s.now.level} · {s.now.quality}
-                    </span>
-                  </span>
-                  <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ fontSize: 12, color: '#9AA1AB' }}>Clicks / month</span>
-                    <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 15, fontWeight: 500 }}>{s.now.clicks}</span>
-                  </span>
-                </div>
-                <span style={{ fontSize: 13, color: '#D7DADE', lineHeight: 1.45, paddingTop: 10, borderTop: '1px solid #16181C' }}>
-                  <span style={{ color: '#9AA1AB' }}>Top problem: </span>
-                  {s.problem}
-                </span>
-              </section>
-
-              <div className="pf-arrow" aria-hidden="true" style={{ flex: 'none', display: 'grid', placeItems: 'center', color: '#4DA3FF' }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M13 6l6 6-6 6" />
-                </svg>
-              </div>
-
-              <section
-                aria-label="Where we'd like to be"
-                style={{
-                  flex: '1 1 0',
-                  minWidth: 0,
-                  borderRadius: 16,
-                  background: '#0A0B0D',
-                  border: '1px solid rgba(77,163,255,.6)',
-                  boxShadow: '0 0 26px rgba(77,163,255,.22), inset 0 0 18px rgba(77,163,255,.06)',
-                  padding: 16,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 12,
-                }}
-              >
-                <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, letterSpacing: '0.06em', color: '#4DA3FF' }}>WHERE WE&apos;D LIKE TO BE</span>
-                <div role="img" aria-label={s.goal.aria} style={{ display: 'flex', height: 10, borderRadius: 5, overflow: 'hidden', background: '#1A1D22', gap: 2 }}>
-                  <span style={{ width: s.goal.rw, background: '#FF5A4E' }} />
-                  <span style={{ width: s.goal.yw, background: '#FFC53D' }} />
-                  <span style={{ width: s.goal.gw, background: '#3DDC84' }} />
-                  <span style={{ width: s.goal.bw, background: '#4DA3FF' }} />
-                </div>
-                <div aria-hidden="true" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', fontFamily: "'Geist Mono', monospace", fontSize: 12 }}>
-                  {[
-                    ['#FF5A4E', s.goal.r, 'red'],
-                    ['#FFC53D', s.goal.y, 'yellow'],
-                    ['#3DDC84', s.goal.g, 'green'],
-                    ['#4DA3FF', s.goal.b, 'blue'],
-                  ].map(([c, n, label]) => (
-                    <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 9px', borderRadius: 7, background: '#131519' }}>
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />
-                      {n} {label}
-                    </span>
-                  ))}
-                </div>
-                <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-                  <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ fontSize: 12, color: '#9AA1AB' }}>Target health</span>
-                    <span style={{ fontSize: 15, fontWeight: 600, color: s.goal.qColor }}>
-                      Level {s.goal.level} · {s.goal.quality}
-                    </span>
-                  </span>
-                  <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ fontSize: 12, color: '#9AA1AB', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      Clicks / month{' '}
-                      <span
-                        style={{
-                          fontFamily: "'Geist Mono', monospace",
-                          fontSize: 10,
-                          padding: '1px 6px',
-                          borderRadius: 5,
-                          border: '1px solid #5B616B',
-                          color: '#D7DADE',
-                        }}
-                      >
-                        ESTIMATE
-                      </span>
-                    </span>
-                    <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 15, fontWeight: 500 }}>{s.goal.range}</span>
-                  </span>
-                </div>
-                <span style={{ fontSize: 13, color: '#D7DADE', lineHeight: 1.45, paddingTop: 10, borderTop: '1px solid #16181C' }}>
-                  About <strong style={{ fontWeight: 600 }}>{s.fixes} fixes</strong> to get there, one at a time, each with your OK.
-                </span>
-              </section>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: 10,
-                flexWrap: 'wrap',
-                paddingTop: 12,
-                borderTop: '1px solid #1A1D22',
-                fontSize: 13,
-              }}
-            >
-              <span style={{ display: 'inline-flex', gap: 14, flexWrap: 'wrap' }}>
-                <span title={s.p1title} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: s.p1color }}>
-                  <PlugIcon color={s.p1color} />
-                  {s.p1label}
-                </span>
-                <span title={s.p2title} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: s.p2color }}>
-                  <PlugIcon color={s.p2color} />
-                  {s.p2label}
-                </span>
+              <span style={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 15, fontWeight: 600 }}>{g.title}</span>
+                <span style={{ fontSize: 12, color: '#9AA1AB' }}>{g.short}</span>
               </span>
-              <span style={{ color: '#9AA1AB' }}>{s.waiting}</span>
-            </div>
-          </article>
-        ))}
-      </div>
+              <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 30, fontWeight: 800, color: g.color }}>{g.rows.length}</span>
+            </a>
+          ))}
+        </nav>
+      ) : null}
 
-      <span style={{ maxWidth: 1180, width: '100%', margin: '0 auto', fontSize: 12, color: '#9AA1AB', lineHeight: 1.5 }}>
-        Targets are estimates based on each site&apos;s Google data and results from similar fixes. They&apos;re where we&apos;d like to get to, not a promise, and results usually show about a month after each fix.
-      </span>
+      {!loading && base.length
+        ? grouped.map((g) => (
+          <section key={g.id} id={g.id} aria-labelledby={`${g.id}-h`} style={{ maxWidth: 1060, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 10, animation: 'sfy-rise .4s .14s ease both' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '0 4px' }}>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: g.color, boxShadow: `0 0 10px ${g.color}` }} />
+              <h2 id={`${g.id}-h`} style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>{g.title} · {g.rows.length}</h2>
+              <span style={{ fontSize: 14, color: '#9AA1AB' }}>{g.explain}</span>
+            </div>
+            {g.rows.map((r) => (
+              <article key={`${r.domain}-${r.siteId || r.journeyId || r.name}`} className="pf-row" style={{ borderRadius: 20, background: '#101215', border: `1px solid ${r.border}`, padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
+                <span style={{ flex: '1 1 260px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <span style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 17, fontWeight: 600 }}>{r.name}</span>
+                    <span style={{ fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: 12, color: '#7D848E' }}>{r.domain}</span>
+                  </span>
+                  <span style={{ fontSize: 14, color: '#D7DADE', lineHeight: 1.5 }}>{r.nextLine}</span>
+                </span>
+                <span style={{ flex: '0 1 230px', minWidth: 180, display: 'flex', flexDirection: 'column', gap: 7 }}>
+                  <span role="img" aria-label={`${r.lights[0]} red, ${r.lights[1]} yellow, ${r.lights[2]} green and ${r.lights[3]} blue lights`} style={{ display: 'flex', height: 8, borderRadius: 999, overflow: 'hidden', background: '#1A1D22', gap: 2 }}>
+                    <span style={{ width: r.rw, background: '#FF5A4E' }} />
+                    <span style={{ width: r.yw, background: '#FFC53D' }} />
+                    <span style={{ width: r.gw, background: '#3DDC84' }} />
+                    <span style={{ width: r.bw, background: '#4DA3FF' }} />
+                  </span>
+                  <span style={{ fontSize: 12, color: '#9AA1AB' }}>{r.total ? <><strong style={{ color: '#F2F4F5', fontWeight: 600 }}>{r.passing}</strong> of {r.total} lights green or blue</> : 'No lights measured yet'}</span>
+                </span>
+                <a href={r.href} onClick={go(r)} style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minWidth: 170, minHeight: 46, padding: '0 18px', boxSizing: 'border-box', borderRadius: 13, background: r.ctaBg, border: `1px solid ${r.ctaBorder}`, color: r.ctaColor, textDecoration: 'none', fontSize: 14, fontWeight: 600 }}>{r.cta} <span aria-hidden="true">→</span></a>
+              </article>
+            ))}
+          </section>
+        ))
+        : null}
+
+      <div style={{ maxWidth: 1060, width: '100%', margin: '0 auto', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', padding: '16px 20px', borderRadius: 18, background: 'rgba(61,220,132,.06)', border: '1px solid rgba(61,220,132,.35)' }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3DDC84" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 2H6v20h12V6z" /><path d="M14 2v4h4" /><path d="M8 13h8M8 17h5" /></svg>
+        <span style={{ flex: '1 1 300px', fontSize: 15, color: '#F2F4F5' }}>Client reports send themselves on the 1st of each month, under your logo. Next send: {nextSend}.</span>
+        <Link href="/app/month" style={{ fontSize: 14, fontWeight: 600, color: '#3DDC84', textDecoration: 'none' }}>Preview a report →</Link>
+      </div>
     </div>
   );
 }

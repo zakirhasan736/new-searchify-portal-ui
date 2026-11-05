@@ -103,7 +103,7 @@ export default function PartnerApply() {
       </header>
 
       <div className="v8-aff-apply">
-        <div className="v8-aff-side">
+        <div className="v8-aff-side" hidden={done}>
           <span className="v8-aff-kicker">ABOUT 2 MINUTES</span>
           <h1>Apply to be a Searchify affiliate.</h1>
           <p style={{ margin: 0, fontSize: 16, color: "#9AA1AB", lineHeight: 1.55 }}>
@@ -141,16 +141,17 @@ export default function PartnerApply() {
         </div>
 
         {done ? (
-          <div className="v8-aff-form" role="status">
-            <h2 style={{ margin: 0, fontSize: 22 }}>Application sent</h2>
-            <p className="v8-aff-ok">
-              Thanks{name ? `, ${name.split(" ")[0]}` : ""}. We reply within 2 business days. When you’re approved,
-              you’ll get a link to set your password, then you’ll sign the agreement and unlock your referral link.
-            </p>
-            <Link href="/partners/login" className="v8-aff-cta is-block" style={{ display: "grid", placeItems: "center", textDecoration: "none" }}>
-              Go to affiliate sign in
-            </Link>
-          </div>
+          <section aria-labelledby="done-h" style={{ flex: "1 1 100%", maxWidth: 640, margin: "40px auto 0", borderRadius: 26, background: "#101215", border: "1px solid rgba(213,248,121,.45)", boxShadow: "0 0 40px rgba(213,248,121,.1)", padding: "clamp(24px, 4vw, 40px)", display: "flex", flexDirection: "column", gap: 18 }}>
+            <span style={{ width: 54, height: 54, borderRadius: "50%", background: "#D5F879", color: "#0A0B0D", display: "grid", placeItems: "center" }}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+            </span>
+            <h1 id="done-h" style={{ margin: 0, fontFamily: "var(--display)", fontSize: 36, letterSpacing: "-1px", fontWeight: 700 }}>Thanks, {name.trim().split(/\s+/)[0] || "there"}. Application received.</h1>
+            <p role="status" style={{ margin: 0, fontSize: 16, color: "#D7DADE", lineHeight: 1.6 }}>We read every one ourselves and reply to {email || "your email"} within 2 business days. Once you&apos;re approved, the first time you sign in you&apos;ll read the rules, sign the agreement, and get your link.</p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <Link href="/partners/welcome" style={{ display: "inline-flex", alignItems: "center", minHeight: 48, padding: "0 18px", borderRadius: 13, background: "#4DA3FF", color: "#0A0B0D", textDecoration: "none", fontSize: 15, fontWeight: 600 }}>Preview your first sign-in</Link>
+              <Link href="/" style={{ display: "inline-flex", alignItems: "center", minHeight: 48, padding: "0 18px", borderRadius: 13, border: "1px solid #262A31", color: "#F2F4F5", textDecoration: "none", fontSize: 15 }}>Back to searchify.io</Link>
+            </div>
+          </section>
         ) : (
           <form className="v8-aff-form" aria-label="Affiliate application" onSubmit={submit}>
             <fieldset>
