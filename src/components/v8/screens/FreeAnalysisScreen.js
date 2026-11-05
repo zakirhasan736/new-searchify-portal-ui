@@ -460,6 +460,16 @@ export default function FreeAnalysisScreen() {
                 {scan.aboutGoogle ||
                   "Your site is readable, but titles and descriptions decide what Google shows. Fix the urgent ones first."}
               </p>
+              {scan.category ? (
+                <span style={{ display: "block", marginTop: 8, fontSize: 14, color: "#D7DADE", lineHeight: 1.5 }}>
+                  Category we read: {scan.category}.
+                </span>
+              ) : null}
+              {scan.topics?.length ? (
+                <span style={{ display: "block", marginTop: 8, fontSize: 14, color: "#D7DADE", lineHeight: 1.5 }}>
+                  Topics on the site: {scan.topics.slice(0, 8).join(", ")}.
+                </span>
+              ) : null}
               {scan.offers?.length ? (
                 <span style={{ display: "block", marginTop: 8, fontSize: 14, color: "#D7DADE", lineHeight: 1.5 }}>
                   Offers we read on the site: {scan.offers.slice(0, 6).join(", ")}.
