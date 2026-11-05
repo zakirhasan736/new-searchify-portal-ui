@@ -40,17 +40,12 @@
 .lv2 .sfy-hero { --sf-p: 0; }
 .lv2 .sfy-lock {
   transform-origin: center center;
-  transform: translate3d(0, calc(var(--sf-p) * -36px), 0) scale(calc(1 + var(--sf-p) * 0.34));
-  opacity: calc(1 - var(--sf-p));
-  filter: blur(calc(var(--sf-p) * 7px));
+  transform: translate3d(0, calc(var(--sf-p) * -24px), 0) scale(calc(1 + var(--sf-p) * 0.16));
+  opacity: calc(1 - var(--sf-p) * 0.55);
+  will-change: transform, opacity;
 }
-.lv2 .sfy-hero > canvas {
-  transform-origin: center center;
-  transform: scale(calc(1 + var(--sf-p) * 0.16));
-  opacity: calc(1 - var(--sf-p) * 0.62);
-}
-.lv2 .sfy-hero > nav.sfy-nav { opacity: calc(1 - min(1, var(--sf-p) * 1.25)); }
-.lv2 .sfy-cue { opacity: calc(1 - min(1, var(--sf-p) * 1.8)); }
+.lv2 .sfy-hero > nav.sfy-nav { opacity: calc(1 - var(--sf-p) * 0.35); }
+.lv2 .sfy-cue { opacity: calc(1 - min(1, var(--sf-p) * 1.6)); }
 .lv2 .sfy-cue { animation: sfy-nudge 2.4s ease-in-out infinite; }
 .lv2 .sfy-cue:hover { color: #f2f4f5 !important; }
 .lv2 .lv2-menu { display: none; }
@@ -64,6 +59,11 @@
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
   border-bottom: 1px solid #1a1d22;
+}
+html:has(.lv2),
+body:has(.lv2) {
+  scroll-behavior: auto;
+  overflow-x: clip;
 }
 html:has(.lv2) { scroll-padding-top: 76px; }
 .lv2 .lv2-side, .lv2 .lv2-backdrop { display: none; }

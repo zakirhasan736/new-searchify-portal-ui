@@ -157,6 +157,8 @@ export default function HomeView() {
   useEffect(() => {
     let lastY = window.scrollY || 0;
     let wasPast = lastY > (heroRef.current?.offsetHeight || window.innerHeight) - 48;
+    let pastNow = false;
+    let hiddenNow = false;
     let ticking = false;
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     const measure = () => {
@@ -165,17 +167,25 @@ export default function HomeView() {
       const heroH = heroRef.current?.offsetHeight || window.innerHeight;
       const past = y > heroH - 48;
       if (!reduce && heroRef.current) {
-        const progress = Math.max(0, Math.min(1, y / heroH));
-        heroRef.current.style.setProperty("--sf-p", progress.toFixed(3));
+        const linear = Math.max(0, Math.min(1, y / heroH));
+        const eased = linear * linear * (3 - 2 * linear);
+        heroRef.current.style.setProperty("--sf-p", eased.toFixed(4));
       }
-      setPastHero(past);
+      if (past !== pastNow) {
+        pastNow = past;
+        setPastHero(past);
+      }
       const delta = y - lastY;
+      let nextHidden = hiddenNow;
       if (!past) {
-        setBarHidden(false);
+        nextHidden = false;
         if (wasPast) setMenu(false);
       } else if (Math.abs(delta) > 4) {
-        if (menuRef.current) setBarHidden(false);
-        else setBarHidden(delta > 0 && y > heroH + 24);
+        nextHidden = menuRef.current ? false : delta > 0 && y > heroH + 24;
+      }
+      if (nextHidden !== hiddenNow) {
+        hiddenNow = nextHidden;
+        setBarHidden(nextHidden);
       }
       wasPast = past;
       lastY = y;

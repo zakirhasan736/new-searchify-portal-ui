@@ -171,10 +171,22 @@ export default function FreeAnalysisScreen() {
         delay: "1.7s",
       },
       {
+        text: scan?.onpageSource
+          ? `On-page audit ${scan.onpageScore != null ? scan.onpageScore : "done"} from live search data`
+          : "Checked on-page SEO when search data is connected",
+        delay: "1.9s",
+      },
+      {
+        text: scan?.business?.sentence
+          ? `Understood the business${scan.category ? `: ${scan.category}` : ""}`
+          : "Read the pages to understand the business",
+        delay: "2.05s",
+      },
+      {
         text: scan?.researchSource
-          ? `Matched ${scan.visibility?.searches || scan.keywords?.length || 0} live search rankings`
+          ? `Matched ${scan.visibility?.searches || scan.keywords?.length || 0} live search rankings${scan.country ? ` in ${scan.country}` : ""}`
           : "Built your free Google health report",
-        delay: "2.1s",
+        delay: "2.2s",
       },
     ];
   }, [scan]);
@@ -327,14 +339,15 @@ export default function FreeAnalysisScreen() {
     if (list.length) {
       return list.slice(0, 48).map((d) => {
         const tone = TONE[d.color] || TONE.yellow;
-        return { color: tone[0], glow: tone[1] };
+        const position = d.position ? ` #${d.position}` : "";
+        return {
+          color: tone[0],
+          glow: tone[1],
+          label: `${d.label || d.keyword || d.path || ""}${position}`.trim(),
+        };
       });
     }
-    return Array.from({ length: 30 }, (_, i) => {
-      const keys = ["green", "yellow", "red"];
-      const k = keys[i % 3];
-      return { color: TONE[k][0], glow: TONE[k][1] };
-    });
+    return Array.from({ length: 24 }, () => ({ color: "#2A2E36", glow: "transparent", label: "" }));
   }, [scan]);
 
   const marketLabel = visibility.market || city || "your market";
@@ -455,6 +468,11 @@ export default function FreeAnalysisScreen() {
                 {scan.aboutGoogle ||
                   "Your site is readable, but titles and descriptions decide what Google shows. Fix the urgent ones first."}
               </p>
+              {scan.offers?.length ? (
+                <span style={{ display: "block", marginTop: 8, fontSize: 14, color: "#D7DADE", lineHeight: 1.5 }}>
+                  Offers we read on the site: {scan.offers.slice(0, 6).join(", ")}.
+                </span>
+              ) : null}
             </div>
             <div className="v8-fa-health">
               <span style={{ fontSize: 13, color: "#9AA1AB" }}>Your Google health</span>
@@ -462,15 +480,31 @@ export default function FreeAnalysisScreen() {
                 <strong style={{ color: gradeColor }}>{grade}</strong>
                 <span style={{ fontSize: 14, color: "#9AA1AB" }}>{gradeNote}</span>
               </span>
-              <div className="v8-fa-health-dots" aria-hidden="true">
+              {scan.gradeDetail ? (
+                <span style={{ fontSize: 12, color: "#7D848E", lineHeight: 1.45 }}>{scan.gradeDetail}</span>
+              ) : null}
+              <div
+                className="v8-fa-health-dots"
+                aria-label={scan.healthKind === "rankings" ? "Each dot is a live Google search" : "Each dot is a page we read"}
+              >
                 {dots.map((d, i) => (
-                  <span key={i} style={{ background: d.color, boxShadow: `0 0 8px ${d.glow}` }} />
+                  <span key={`${d.label}-${i}`} title={d.label || undefined} style={{ background: d.color, boxShadow: `0 0 8px ${d.glow}` }} />
                 ))}
               </div>
               <span className="v8-fa-legend">
-                <i style={{ "--dot": "#FF5A4E" }}>{red} urgent</i>
-                <i style={{ "--dot": "#FFC53D" }}>{yellow} need work</i>
-                <i style={{ "--dot": "#3DDC84" }}>{green} healthy</i>
+                {scan.healthKind === "rankings" ? (
+                  <>
+                    <i style={{ "--dot": "#FF5A4E" }}>{red} buried</i>
+                    <i style={{ "--dot": "#FFC53D" }}>{yellow} page 2</i>
+                    <i style={{ "--dot": "#3DDC84" }}>{green} page one</i>
+                  </>
+                ) : (
+                  <>
+                    <i style={{ "--dot": "#FF5A4E" }}>{red} urgent</i>
+                    <i style={{ "--dot": "#FFC53D" }}>{yellow} need work</i>
+                    <i style={{ "--dot": "#3DDC84" }}>{green} healthy</i>
+                  </>
+                )}
               </span>
             </div>
           </section>
@@ -517,6 +551,10 @@ export default function FreeAnalysisScreen() {
               </h2>
               <span style={{ fontSize: 13, color: "#9AA1AB" }}>
                 Grade {grade}
+                {pagespeed?.performance && pagespeed.performance !== "—" ? ` · Mobile speed ${pagespeed.performance}` : ""}
+                {pagespeed?.desktop?.performance && pagespeed.desktop.performance !== "—" ? ` · Desktop ${pagespeed.desktop.performance}` : ""}
+                {pagespeed?.seo && pagespeed.seo !== "—" ? ` · SEO ${pagespeed.seo}` : ""}
+                {scan?.onpageScore != null ? ` · On-page ${scan.onpageScore}` : ""}
                 {pagespeed?.vitals?.lcp ? ` · LCP ${pagespeed.vitals.lcp}` : ""}
                 {pagespeed?.vitals?.cls ? ` · CLS ${pagespeed.vitals.cls}` : ""}
                 {rendering?.modeLabel ? ` · ${rendering.modeLabel}` : ""}
