@@ -419,16 +419,8 @@ export default function FreeAnalysisScreen() {
         <section className="v8-fa-scan" aria-live="polite">
           <h1>Looking at {host}…</h1>
           <div className="v8-fa-dotgrid" aria-hidden="true">
-            {dots.map((d, i) => (
-              <span
-                key={i}
-                className="dot"
-                style={{
-                  background: d.color,
-                  boxShadow: `0 0 10px ${d.glow}`,
-                  animationDelay: `${(i * 0.04).toFixed(2)}s`,
-                }}
-              />
+            {Array.from({ length: 30 }, (_, i) => (
+              <span key={i} className="dot" style={{ animationDelay: `${(i * 0.08).toFixed(2)}s` }} />
             ))}
           </div>
           <ol className="v8-fa-steps">
