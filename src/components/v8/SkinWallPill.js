@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SKINS_HOME } from "@/lib/skinCatalog";
-import { canAccessCustomerApp, isPartnerAuthenticated, isPreviewSignedIn } from "@/lib/authRoles";
+import { isAdminAuthenticated } from "@/lib/authRoles";
 
 const BEFORE_LOGIN = new Set([
   "/login",
@@ -26,15 +26,14 @@ function abovePhoneTabs(pathname) {
 
 /**
  * Fixed bottom-right shortcut to the screen wall.
- * Visible only after a customer, admin, partner, or preview sign-in.
+ * Visible only after an admin login.
  */
 export default function SkinWallPill() {
   const pathname = usePathname() || "/";
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    const signedIn = canAccessCustomerApp() || isPartnerAuthenticated() || isPreviewSignedIn();
-    setShow(signedIn && !BEFORE_LOGIN.has(pathname));
+    setShow(isAdminAuthenticated() && !BEFORE_LOGIN.has(pathname));
   }, [pathname]);
 
   if (!show) return null;
