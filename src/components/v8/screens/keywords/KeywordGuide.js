@@ -36,20 +36,55 @@ function roundVisits(vol) {
   return Math.round((vol * 0.2) / 10) * 10;
 }
 
+function rising(row) {
+  const trend = row?.localTrend || row?.trend;
+  const nums = Array.isArray(trend) ? trend.map(Number).filter((n) => Number.isFinite(n)) : [];
+  if (nums.length < 4) return false;
+  const early = nums.slice(0, 3).reduce((sum, n) => sum + n, 0) / 3;
+  const late = nums.slice(-3).reduce((sum, n) => sum + n, 0) / 3;
+  return late > early * 1.1 && late > 0;
+}
+
+function rankScore(row) {
+  const volume = volumeOf(row);
+  const difficulty = Number(row?.difficulty);
+  const kd = Number.isFinite(difficulty) ? difficulty : 50;
+  const weight = row?.fit === "related" ? 0.6 : 1;
+  let score = (weight * volume) / (10 + kd);
+  const pos = Number(row?.position);
+  if (Number.isFinite(pos) && pos >= 4 && pos <= 20) score *= 1.8;
+  else if (Number.isFinite(pos) && pos > 20) score *= 1.25;
+  if (rising(row)) score *= 1.35;
+  const impressions = Number(row?.impressions);
+  if (Number.isFinite(impressions) && impressions > 0) score += Math.min(impressions, 5000) * 0.02;
+  if (Number(row?.analyticsSessions) > 0) score *= 1.15;
+  return score;
+}
+
+function sourceLine(items) {
+  const kinds = new Set(items.map((row) => row.kind));
+  const parts = [];
+  if ([...kinds].some((kind) => kind && kind !== "console")) parts.push("DataForSEO keyword and organic data");
+  if (items.some((row) => row.kind === "console" || row.alsoInSearchConsole)) parts.push("Search Console queries");
+  if (items.some((row) => Number(row.analyticsSessions) > 0)) parts.push("Analytics landing pages");
+  if (items.some(rising)) parts.push("searches that are rising");
+  return parts.length ? parts.join(", ") : "the keyword data stored for this website";
+}
+
 function clustersFrom(suggestions) {
-  const rows = (suggestions || []).filter((row) => row?.keyword && row.kind !== "gap" && !row.gapDomain);
+  const rows = (suggestions || []).filter((row) => row?.keyword && row.kind !== "gap");
   const groups = new Map();
   rows.forEach((row) => {
-    const page = pathOf(row.page);
+    const page = pathOf(row.page || row.url);
     const key = String(row.concept || page || "Other searches").trim() || "Other searches";
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(row);
   });
   return [...groups.entries()]
     .map(([topic, items]) => {
-      const sorted = [...items].sort((a, b) => volumeOf(b) - volumeOf(a)).slice(0, 6);
-      const page = pathOf(sorted.find((row) => pathOf(row.page) && pathOf(row.page) !== "/")?.page || "");
-      const questions = sorted.filter((row) => row.question).length;
+      const sorted = [...items].sort((a, b) => rankScore(b) - rankScore(a)).slice(0, 8);
+      const page = pathOf(sorted.find((row) => pathOf(row.page || row.url) && pathOf(row.page || row.url) !== "/")?.page || sorted.find((row) => pathOf(row.url))?.url || "");
+      const questions = sorted.filter((row) => row.question || String(row.intent || "").includes("inform")).length;
       return {
         id: topic,
         topic,
@@ -58,10 +93,11 @@ function clustersFrom(suggestions) {
         intent: questions > sorted.length / 2 ? "research" : "buying",
         items: sorted,
         vol: sorted.reduce((sum, row) => sum + volumeOf(row), 0),
+        source: sourceLine(sorted),
       };
     })
-    .sort((a, b) => b.vol - a.vol)
-    .slice(0, 6);
+    .sort((a, b) => b.items.reduce((sum, row) => sum + rankScore(row), 0) - a.items.reduce((sum, row) => sum + rankScore(row), 0))
+    .slice(0, 8);
 }
 
 function rivalCards(competitors, suggestions, total) {
@@ -392,7 +428,9 @@ export default function KeywordGuide({
                             <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
                               <span style={{ fontSize: 14, lineHeight: 1.3 }}>{row.keyword}</span>
                               <span style={{ fontSize: 12, color: "#7D848E", lineHeight: 1.35 }}>
-                                {num(volumeOf(row)) ? `${num(volumeOf(row))} a month · ` : ""}you: {you}
+                                {num(volumeOf(row)) ? `${num(volumeOf(row))} a month · ` : ""}
+                                {rising(row) ? "rising · " : ""}
+                                you: {you}
                               </span>
                             </span>
                             <span style={{ flex: "none", fontSize: 11, fontWeight: 600, padding: "4px 8px", borderRadius: 8, color: win.color, background: win.bg, whiteSpace: "nowrap" }}>{win.label}</span>
@@ -602,6 +640,7 @@ function TopicCard({ topic, typed, place, why, onWhy, isChk, onToggle, tracking,
           <dl style={{ margin: 0, display: "flex", flexDirection: "column", gap: 10, animation: "sfy-rise .2s ease both" }}>
             {[
               ["Who wins it now", winner ? `${winner} shows up on these searches.` : "Competitor ranks were not returned for this topic."],
+              ["Where it came from", topic.source || "the keyword data stored for this website"],
               ["What it takes", topic.isNew ? "A new page. We draft it, you approve it." : `Edits to ${topic.page}.`],
             ].map(([k, v]) => (
               <div key={k} style={{ display: "grid", gridTemplateColumns: "140px minmax(0, 1fr)", gap: 12, fontSize: 14, lineHeight: 1.5 }}>

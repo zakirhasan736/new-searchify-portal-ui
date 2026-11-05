@@ -120,7 +120,7 @@ const SITE_HELP = {
 const TIMELINE = [
   { when: "WEEK 1", title: "Scan and first fixes", body: "Every page scored. Your first fixes approved and live.", color: "#4DA3FF" },
   { when: "WEEKS 2–4", title: "Google catches up", body: "Google re-reads your updated pages. Early signs appear, like showing up in more searches.", color: "#FFC53D" },
-  { when: "DAY 30", title: "Your before-and-after", body: "A report of where you started, what we fixed, and what has moved so far.", color: "#4DA3FF" },
+  { when: "DAY 30", title: "Your before-and-after", body: "A report of where you started, what we fixed, and what has moved so far.", color: "#3DDC84" },
   { when: "MONTHS 2–3", title: "Results build", body: "Rankings, clicks and calls usually move most over this stretch.", color: "#3DDC84" },
 ];
 
@@ -186,7 +186,7 @@ function Tip({ id, openId, setOpenId, label, children }) {
 
 function Check() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DDC84" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M5 12l5 5L20 7" />
     </svg>
   );
@@ -511,7 +511,7 @@ export default function PricingView({ embedded = false, onboarding = false }) {
                   {early.lastClaimed}
                   <span className="v8-pricing-caret" aria-hidden="true" />
                 </p>
-                <span>{claimed ? "since the last spot was claimed" : "waiting for the first claim"}</span>
+                <span>since the last spot was claimed</span>
               </div>
             </div>
           </div>
@@ -569,6 +569,7 @@ export default function PricingView({ embedded = false, onboarding = false }) {
                     <span className="v8-pricing-free-pill">First month free</span>
                     <Tip id={`free-${pl.id}`} openId={tip} setOpenId={setTip} label="What is the free month?">
                       <span>{freeMonthText}</span>
+                      <a href="https://searchify.io/help/free-month">Learn more</a>
                     </Tip>
                   </p>
                 ) : null}
@@ -587,6 +588,7 @@ export default function PricingView({ embedded = false, onboarding = false }) {
                 {pl.sites}
                 <Tip id={`site-${pl.id}`} openId={tip} setOpenId={setTip} label="What is a site?">
                   <span>{SITE_HELP[pl.id] || SITE_HELP.solo}</span>
+                  <a href="https://searchify.io/help/sites">Learn more</a>
                 </Tip>
               </span>
               <ul className="v8-pricing-feats">
@@ -669,7 +671,8 @@ export default function PricingView({ embedded = false, onboarding = false }) {
         }))}
       />
 
-      <section className="v8-wrap v8-pricing-expect" aria-labelledby="exp-h">
+      <section className="v8-wrap v8-pricing-expect-wrap" aria-labelledby="exp-h">
+        <div className="v8-pricing-expect">
         <p className="v8-pricing-expect-eyebrow">Honest expectations</p>
         <h2 id="exp-h">Good SEO takes at least a month to show up.</h2>
         <p className="v8-pricing-expect-lede">
@@ -700,9 +703,11 @@ export default function PricingView({ embedded = false, onboarding = false }) {
             clicks and you pay nothing.
           </span>
         </div>
+        </div>
       </section>
 
-      <section className="v8-wrap v8-pricing-panel" id="order" aria-label="Your order">
+      <section className="v8-wrap v8-pricing-order" id="order" aria-label="Your order">
+        <div className="v8-pricing-panel">
         <h2>Your order</h2>
         <div className="v8-pricing-row">
           <span>
@@ -735,6 +740,7 @@ export default function PricingView({ embedded = false, onboarding = false }) {
           {alreadyOn ? "You're on this plan" : "Continue to secure checkout"}
         </V8Button>
         <span className="v8-pricing-fine">{orderFoot}</span>
+        </div>
       </section>
 
       <section className="v8-wrap v8-pricing-faq" aria-label="Questions">
