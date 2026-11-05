@@ -176,6 +176,7 @@ export default function KeywordGuide({
   onTrack,
   onUntrack,
   onSeeTracked,
+  readingLand = "",
   aiChecks = [],
 }) {
   const clusters = useMemo(() => clustersFrom(suggestions), [suggestions]);
@@ -219,18 +220,23 @@ export default function KeywordGuide({
     return !Number.isFinite(kd) || kd <= 30;
   };
 
-  const trackRows = async (rows) => {
+  const trackRows = async (rows, group) => {
     const fresh = rows.filter((row) => row?.keyword && !trackedTerms.has(String(row.keyword).toLowerCase()));
-    if (!fresh.length || tracking) return;
+    if (!fresh.length || tracking) return !tracking;
+    const saved = [];
     for (const row of fresh) {
-      await onTrack?.(row.keyword, {
-        page: pathOf(row.page),
-        concept: row.concept || "",
+      const own = pathOf(row.page || row.url);
+      const path = own && own !== "/" ? own : (group && group.page && group.page !== "No page yet" ? group.page : "");
+      const ok = await onTrack?.(row.keyword, {
+        page: path && path !== "/" && group?.isNew ? `${path} (planned)` : path && path !== "/" ? path : "",
+        concept: row.concept || group?.topic || "",
         source: "suggestion",
         apply: false,
       });
+      if (ok) saved.push(row.keyword);
     }
-    setSession((prev) => [...new Set([...prev, ...fresh.map((row) => row.keyword)])]);
+    if (saved.length) setSession((prev) => [...new Set([...prev, ...saved])]);
+    return saved.length > 0;
   };
 
   const sessionVol = session.reduce((sum, term) => {
@@ -341,8 +347,8 @@ export default function KeywordGuide({
               tracking={tracking}
               onTrack={async () => {
                 if (tracking) return;
-                await trackRows(topic.items.filter(isChk));
-                setStep((n) => n + 1);
+                const ok = await trackRows(topic.items.filter(isChk), topic);
+                if (ok) setStep((n) => n + 1);
               }}
               onSkip={() => setStep(step + 1)}
               rivals={rivals}
@@ -359,7 +365,7 @@ export default function KeywordGuide({
               </h2>
               <p style={{ margin: 0, fontSize: 17, lineHeight: 1.55, color: "#D7DADE" }}>
                 {session.length
-                  ? `Worth about ${num(sessionVol) || "—"} searches a month. First readings within 7 days, then we’ll show you your first move.`
+                  ? `Worth about ${num(sessionVol) || "—"} searches a month. First readings by ${readingLand || "next week"}, then we’ll show you your first move.`
                   : "Go through the topics again and pick the ones that fit your business."}
               </p>
               <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
@@ -405,7 +411,7 @@ export default function KeywordGuide({
             <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: "14px 18px", borderRadius: 16, background: "rgba(61,220,132,.07)", border: "1px solid rgba(61,220,132,.45)", animation: "sfy-rise .3s ease both" }}>
               <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#3DDC84", boxShadow: "0 0 10px #3DDC84", animation: "sfy-breathe 1.6s ease-in-out infinite" }} />
               <span style={{ flex: "1 1 300px", fontSize: 15, lineHeight: 1.5 }}>
-                Tracking {session.length} new search{session.length === 1 ? "" : "es"} worth about {num(sessionVol) || "—"} searches a month. First readings land within 7 days.
+                Tracking {session.length} new search{session.length === 1 ? "" : "es"} worth about {num(sessionVol) || "—"} searches a month. First readings land {readingLand || "next week"}.
               </span>
               <button type="button" onClick={onSeeTracked} style={{ minHeight: 46, padding: "0 18px", borderRadius: 12, border: "1px solid #3A404A", background: "#1A1D22", color: "#F2F4F5", fontSize: 14, fontWeight: 600 }}>
                 See them in Tracked →
@@ -469,7 +475,7 @@ export default function KeywordGuide({
                               aria-pressed={on}
                               aria-label={`${on ? "Stop tracking" : "Track"} ${row.keyword}`}
                               disabled={Boolean(tracking)}
-                              onClick={() => (on ? onUntrack?.(row.keyword) : trackRows([row]))}
+                              onClick={() => (on ? onUntrack?.(row.keyword) : trackRows([row], group))}
                               style={{ flex: "none", minWidth: 92, minHeight: 40, padding: "0 12px", borderRadius: 10, border: `1px solid ${on ? "rgba(61,220,132,.5)" : "#4DA3FF"}`, background: on ? "rgba(61,220,132,.12)" : "#4DA3FF", color: on ? "#3DDC84" : "#0A0B0D", fontSize: 13, fontWeight: 600 }}
                             >
                               {tracking === String(row.keyword).toLowerCase() ? "…" : on ? "✓ Tracking" : "Track"}
@@ -479,7 +485,7 @@ export default function KeywordGuide({
                       })}
                     </div>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                      <button type="button" disabled={Boolean(tracking)} onClick={() => (allOn ? rows.forEach((row) => onUntrack?.(row.keyword)) : trackRows(rows))} style={{ minHeight: 46, padding: "0 16px", borderRadius: 12, border: "1px solid #3A404A", background: "#1A1D22", color: "#F2F4F5", fontSize: 14, fontWeight: 600 }}>
+                      <button type="button" disabled={Boolean(tracking)} onClick={() => (allOn ? rows.forEach((row) => onUntrack?.(row.keyword)) : trackRows(rows, group))} style={{ minHeight: 46, padding: "0 16px", borderRadius: 12, border: "1px solid #3A404A", background: "#1A1D22", color: "#F2F4F5", fontSize: 14, fontWeight: 600 }}>
                         {allOn ? `✓ All ${rows.length} tracked` : `Track all ${rows.length}`}
                       </button>
                       {group.isNew ? (

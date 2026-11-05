@@ -112,7 +112,8 @@ function normalizeTracked(row) {
   if (!base) return null;
   return {
     ...base,
-    page: pathFrom(row.page || row.url) || "/",
+    page: pathFrom(row.page || row.url) || row.page || "/",
+    trackedAt: row.trackedAt || null,
     change: row.change || null,
     concept: row.concept || "",
     trackedSource: row.trackedSource || "",
@@ -132,9 +133,30 @@ function fmtNum(n) {
   return Math.round(Number(n)).toLocaleString("en-US");
 }
 
+function trackedDay(iso) {
+  if (!iso) return "TODAY";
+  const raw = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(String(iso)) ? iso : `${iso}Z`);
+  if (Number.isNaN(raw.getTime())) return "TODAY";
+  const now = new Date();
+  if (raw.toDateString() === now.toDateString()) return "TODAY";
+  return raw.toLocaleString("en-US", { month: "short", day: "numeric" }).toUpperCase();
+}
+
+function readingStamp(iso) {
+  const raw = iso ? new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(String(iso)) ? iso : `${iso}Z`) : new Date();
+  const start = Number.isNaN(raw.getTime()) ? new Date() : raw;
+  const d = new Date(start);
+  d.setDate(d.getDate() + 7);
+  const land = d.toLocaleString("en-US", { month: "short", day: "numeric" });
+  return { by: `BY ${land.toUpperCase()}`, land };
+}
+
 function keywordStatus(row, appliedAt) {
   const pos = row.position;
   const prev = row.previous;
+  const hasPos = pos != null && pos !== "" && Number(pos) > 0;
+  const hasPrev = prev != null && prev !== "" && Number(prev) > 0;
+  if (!hasPos && !hasPrev) return "fresh";
   const age = daysSince(appliedAt);
   if (pos != null && prev != null) {
     if (Number(pos) < Number(prev)) return "worked";
@@ -200,27 +222,35 @@ function mapKeywordRow(source, idx, changeByPath, device = "desktop") {
   const p = change?.proposed || {};
   const appliedAt = change?.appliedAt || null;
   const status = keywordStatus(row, appliedAt || change?.updatedAt);
-  const was = p.beforeTitle || p.liveTitle || p.beforeMetaDescription || "(Live page before changes)";
-  const now = p.title || p.metaDescription || row.url || "(No page update yet)";
-  const date = change ? formatWinDate(appliedAt || change.updatedAt) : "—";
+  const stamp = readingStamp(source.trackedAt);
+  const freshNote = "Visitor numbers start once Google shows you for this search.";
+  const was = status === "fresh"
+    ? "Not tracked before today"
+    : p.beforeTitle || p.liveTitle || p.beforeMetaDescription || "(Live page before changes)";
+  const now = status === "fresh"
+    ? `Tracking. First reading by ${stamp.land}.`
+    : p.title || p.metaDescription || row.url || "(No page update yet)";
+  const date = status === "fresh" ? trackedDay(source.trackedAt) : change ? formatWinDate(appliedAt || change.updatedAt) : "—";
   const pos = row.position;
   const prev = row.previous;
   const clicks = row.clicks != null ? Number(row.clicks) : null;
   const ctr = row.ctr;
-  const rankNow = live && pos == null ? "100+" : rankLabel(pos);
-  const rankWas = prev != null ? rankLabel(prev) : "—";
+  const rankNow = status === "fresh" ? "—" : live && pos == null ? "100+" : rankLabel(pos);
+  const rankWas = status === "fresh" ? "—" : prev != null ? rankLabel(prev) : "—";
   // Only real numbers: Search Console clicks/CTR and DataForSEO ranks. No estimates are filled in.
-  const visitorsNow = clicks != null ? String(Math.round(clicks)) : "—";
-  const rateNow = pctLabel(typeof ctr === "string" ? parseFloat(ctr) : ctr);
+  const visitorsNow = status === "fresh" ? "—" : clicks != null ? String(Math.round(clicks)) : "—";
+  const rateNow = status === "fresh" ? "—" : pctLabel(typeof ctr === "string" ? parseFloat(ctr) : ctr);
 
   const ST_BADGE =
-    status === "measuring"
-      ? measuringBadge(appliedAt || change?.updatedAt)
-      : status === "worked"
-        ? "IT WORKED"
-        : status === "dropped"
-          ? "WENT DOWN · FIX READY"
-          : "NO CLEAR EFFECT YET";
+    status === "fresh"
+      ? `JUST ADDED · FIRST READING ${stamp.by}`
+      : status === "measuring"
+        ? measuringBadge(appliedAt || change?.updatedAt)
+        : status === "worked"
+          ? "IT WORKED"
+          : status === "dropped"
+            ? "WENT DOWN · FIX READY"
+            : "NO CLEAR EFFECT YET";
 
   return {
     id: keywordId(term),
@@ -232,6 +262,8 @@ function mapKeywordRow(source, idx, changeByPath, device = "desktop") {
     was,
     now,
     concept: row.concept || "",
+    trackedAt: source.trackedAt || null,
+    reading: stamp,
     volume: row.volume,
     localVolume: row.localVolume,
     difficulty: row.difficulty,
@@ -241,21 +273,31 @@ function mapKeywordRow(source, idx, changeByPath, device = "desktop") {
     rankSource: live ? "live" : source.rankSource,
     change: change && change.id ? { id: change.id, status: change.status } : null,
     m: {
-      rank: [rankWas, rankNow, rankNarrative({ ...row, position: pos, previous: prev }, status)],
+      rank: [
+        rankWas,
+        rankNow,
+        status === "fresh"
+          ? `First reading by ${stamp.land}. Then we’ll suggest the move that gets you higher.`
+          : rankNarrative({ ...row, position: pos, previous: prev }, status),
+      ],
       visitors: [
         "—",
         visitorsNow,
-        visitorsNow !== "—"
-          ? "Clicks from this search in the last 28 days (Search Console)."
-          : "Connect Search Console for real click totals on this search.",
+        status === "fresh"
+          ? freshNote
+          : visitorsNow !== "—"
+            ? "Clicks from this search in the last 28 days (Search Console)."
+            : "Connect Search Console for real click totals on this search.",
       ],
-      leads: ["—", "—", "Calls and form fills need Google Analytics conversions for this search."],
+      leads: ["—", "—", status === "fresh" ? freshNote : "Calls and form fills need Google Analytics conversions for this search."],
       rate: [
         "—",
         rateNow,
-        rateNow !== "—"
-          ? "Click-through rate from Search Console for this query."
-          : "Click rate comes from Search Console once enough impressions are logged.",
+        status === "fresh"
+          ? freshNote
+          : rateNow !== "—"
+            ? "Click-through rate from Search Console for this query."
+            : "Click rate comes from Search Console once enough impressions are logged.",
       ],
     },
   };
@@ -325,7 +367,6 @@ export default function WinScreen() {
   const [tip, setTip] = useState(null);
   const [tipPin, setTipPin] = useState(false);
   const [view, setView] = useState("guide");
-  const [freshN, setFreshN] = useState(0);
   const { hostname, href } = activeSiteContext(loadJourney());
 
   useEffect(() => {
@@ -428,13 +469,13 @@ export default function WinScreen() {
       page: extra.page || "",
       concept: extra.concept || "",
       source: extra.source || "manual",
-      apply: extra.apply !== false,
+      apply: extra.apply === true,
     }).catch(() => ({ ok: false }));
     if (!res?.ok) {
       setProblems(problemsFrom(res, "keywords"));
       setTrackNote(errorText(res, "The keyword could not be tracked. Try again."));
       setTracking("");
-      return;
+      return false;
     }
     if (raw == null) setAddTerm("");
     const d = res.data || {};
@@ -443,10 +484,10 @@ export default function WinScreen() {
     if (d.note) parts.push(d.note);
     (d.warnings || []).forEach((w) => parts.push(w));
     setTrackNote(parts.join(" "));
-    setFreshN((n) => n + 1);
     await rebuild();
     setSelId(keywordId(d.keyword || term));
     setTracking("");
+    return true;
   };
 
   const handleUntrack = async (term) => {
@@ -512,13 +553,15 @@ export default function WinScreen() {
     let flat = 0;
     let down = 0;
     let measuring = 0;
+    let fresh = 0;
     K.forEach((row) => {
       if (row.status === "worked") up += 1;
       else if (row.status === "dropped") down += 1;
       else if (row.status === "measuring") measuring += 1;
+      else if (row.status === "fresh") fresh += 1;
       else flat += 1;
     });
-    return { up, flat, down, measuring };
+    return { up, flat, down, measuring, fresh };
   }, [K]);
 
   const ST = {
@@ -553,6 +596,14 @@ export default function WinScreen() {
       border: "rgba(255,90,78,.5)",
       arrow: "#FF5A4E",
       after: "#FF5A4E",
+    },
+    fresh: {
+      dot: "#D7DADE",
+      text: "#D7DADE",
+      bg: "#1A1D22",
+      border: "#3A404A",
+      arrow: "#9AA1AB",
+      after: "#F2F4F5",
     },
   };
 
@@ -589,6 +640,7 @@ export default function WinScreen() {
   const moveOf = (x) => {
     const b = parseInt(String(x.m.rank[0]).replace("#", ""), 10);
     const a = parseInt(String(x.m.rank[1]).replace("#", ""), 10);
+    if (!Number.isFinite(a) && !Number.isFinite(b)) return { t: "new", c: "#D7DADE", bg: "#1A1D22", n: 0, w: "just added" };
     if (!Number.isFinite(a) || !Number.isFinite(b)) return { t: "—", c: "#9AA1AB", bg: "#1A1D22", n: 0, w: "no change" };
     if (a < b)
       return {
@@ -627,7 +679,9 @@ export default function WinScreen() {
 
   const headline = empty
     ? "No keywords tracked yet."
-    : cur.status === "worked"
+    : cur.status === "fresh"
+      ? `Now tracking “${cur.term}”.`
+      : cur.status === "worked"
       ? `"${cur.term}" is bringing in more customers.`
       : cur.status === "measuring"
         ? `Too early to call "${cur.term}".`
@@ -636,12 +690,19 @@ export default function WinScreen() {
           : `"${cur.term}" hasn't moved yet.`;
 
   const MLAB = { rank: "Spot on Google", visitors: "Visitors", leads: "Calls & leads", rate: "Click rate" };
-  const SRC = {
-    rank: "Live Google check · DataForSEO · your spot in the results for this search (#1 is the top result)",
-    visitors: "From Search Console · clicks from this search",
-    leads: "From Analytics · calls and form fills from this search",
-    rate: "From Search Console · clicks ÷ times shown",
-  };
+  const SRC = cur?.status === "fresh"
+    ? {
+        rank: "From Search Console · your average spot on Google for this search (#1 is the top result)",
+        visitors: "From Search Console · clicks from this search",
+        leads: "From Analytics · calls and form fills from this search",
+        rate: "From Search Console · clicks ÷ times shown",
+      }
+    : {
+        rank: "Live Google check · DataForSEO · your spot in the results for this search (#1 is the top result)",
+        visitors: "From Search Console · clicks from this search",
+        leads: "From Analytics · calls and form fills from this search",
+        rate: "From Search Console · clicks ÷ times shown",
+      };
 
   const mv = empty
     ? ["—", "—", "Connect Search Console or run keyword research to start tracking."]
@@ -670,7 +731,9 @@ export default function WinScreen() {
     summary.flat ? `${summary.flat} flat` : "",
     summary.down ? `${summary.down} down` : "",
     summary.measuring ? `${summary.measuring} measuring` : "",
+    summary.fresh ? `${summary.fresh} just added` : "",
   ].filter(Boolean);
+  const reading = readingStamp(K.find((row) => row.status === "fresh")?.trackedAt);
   const trackedLabel =
     view === "guide"
       ? `Searches around ${areaName || "your area"} that fit what you do`
@@ -703,6 +766,9 @@ export default function WinScreen() {
         .v8-page .win-page a:hover{color:#8CC4FF}
         .win-page button{font-family:inherit;cursor:pointer}
         .win-page select:focus-visible,.win-page button:focus-visible,.win-page input:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
+        @keyframes sfy-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+        @keyframes sfy-breathe{0%,100%{opacity:1}50%{opacity:.5}}
+        @media (prefers-reduced-motion: reduce){.win-page *{animation:none !important;transition:none !important}}
       `}</style>
       <header
         style={{
@@ -796,28 +862,31 @@ export default function WinScreen() {
           <SkeletonCards count={2} lines={4} />
         </div>
       ) : null}
-      {!loading && view === "guide" ? (
-        <KeywordGuide
-          suggestions={suggestions}
-          competitors={research.competitors}
-          localVolume={research.localVolume}
-          trackedTerms={new Set(K.map((row) => row.term.toLowerCase()))}
-          tracking={tracking}
-          onTrack={handleTrack}
-          onUntrack={handleUntrack}
-          onSeeTracked={() => setView("tracked")}
-          aiChecks={(research.aiChecks || []).filter((row) => row?.prompt).slice(0, 6)}
-        />
+      {!loading ? (
+        <div style={{ display: view === "guide" ? "contents" : "none" }}>
+          <KeywordGuide
+            suggestions={suggestions}
+            competitors={research.competitors}
+            localVolume={research.localVolume}
+            trackedTerms={new Set(K.map((row) => row.term.toLowerCase()))}
+            tracking={tracking}
+            readingLand={reading.land}
+            onTrack={handleTrack}
+            onUntrack={handleUntrack}
+            onSeeTracked={() => setView("tracked")}
+            aiChecks={(research.aiChecks || []).filter((row) => row?.prompt).slice(0, 6)}
+          />
+        </div>
       ) : null}
 
-      {!loading && view === "tracked" && freshN > 0 ? (
+      {!loading && view === "tracked" && summary.fresh > 0 ? (
         <section aria-labelledby="cg-h" style={{ maxWidth: 1120, width: "100%", margin: "0 auto", boxSizing: "border-box", borderRadius: 22, background: "#101215", border: "1px solid rgba(61,220,132,.45)", boxShadow: "0 0 30px rgba(61,220,132,.08)", padding: "clamp(20px, 3vw, 30px)", display: "flex", flexDirection: "column", gap: 18, animation: "sfy-rise .3s ease both" }}>
           <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
             <span style={{ width: 44, height: 44, flex: "none", borderRadius: "50%", background: "rgba(61,220,132,.14)", display: "grid", placeItems: "center" }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DDC84" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
             </span>
             <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
-              <h2 id="cg-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "clamp(24px, 2.6vw, 30px)", lineHeight: 1.1, letterSpacing: "-0.6px", fontWeight: 700 }}>Congratulations, you&apos;re now tracking {freshN} keywords.</h2>
+              <h2 id="cg-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "clamp(24px, 2.6vw, 30px)", lineHeight: 1.1, letterSpacing: "-0.6px", fontWeight: 700 }}>Congratulations, you&apos;re now tracking {summary.fresh} keywords.</h2>
               <p style={{ margin: 0, fontSize: 16, lineHeight: 1.6, color: "#D7DADE", maxWidth: 760 }}>Results will begin to populate over the next 30 to 60 days, at minimum. Please give SEO time. It&apos;s a slow process, but a very rewarding one for your website and your business.</p>
             </div>
           </div>
@@ -828,7 +897,7 @@ export default function WinScreen() {
               <span style={{ fontSize: 13, color: "#9AA1AB" }}>We start watching these searches on Google.</span>
             </li>
             <li style={{ borderRadius: 14, background: "#0A0B0D", border: "1px solid #262A31", padding: "14px 16px", display: "flex", flexDirection: "column", gap: 4 }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: 11, color: "#9AA1AB" }}><span style={{ width: 8, height: 8, boxSizing: "border-box", borderRadius: "50%", border: "2px solid #9AA1AB" }} />WITHIN 7 DAYS</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: 11, color: "#9AA1AB" }}><span style={{ width: 8, height: 8, boxSizing: "border-box", borderRadius: "50%", border: "2px solid #9AA1AB" }} />{reading.by}</span>
               <span style={{ fontSize: 15, fontWeight: 600 }}>First reading</span>
               <span style={{ fontSize: 13, color: "#9AA1AB" }}>Where you stand on Google today, if you show up at all.</span>
             </li>
