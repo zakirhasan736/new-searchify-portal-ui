@@ -100,16 +100,29 @@ function clustersFrom(suggestions) {
 }
 
 function rowMeta(row) {
-  const bits = [];
   const vol = num(volumeOf(row));
-  if (vol) bits.push(`${vol} a month`);
   const rivals = Number(row?.localRivals);
-  if (Number.isFinite(rivals) && rivals >= 0) {
-    bits.push(rivals ? `${rivals} local rival${rivals === 1 ? "" : "s"} on page one` : "no local rivals on page one");
-  }
-  const you = row?.position != null && row.position !== "" ? `#${Math.round(Number(row.position))}` : "not found";
-  bits.push(`you: ${you}`);
-  return bits.join(" · ");
+  const rivalBit = Number.isFinite(rivals) && rivals >= 0
+    ? (rivals ? `${rivals} local rival${rivals === 1 ? "" : "s"} on page one` : "no local rivals on page one")
+    : "";
+  const you = row?.position != null && row.position !== "" && Number(row.position) > 0 ? `#${Math.round(Number(row.position))}` : "not found";
+  return [vol ? `${vol} a month` : "", rivalBit, `you: ${you}`].filter(Boolean).join(" · ");
+}
+
+function aiRowsFrom(checks, clusters) {
+  const live = (checks || []).filter((row) => row?.prompt).slice(0, 3);
+  if (live.length) return live.map((row) => ({ ...row, live: true }));
+  const keywords = [];
+  (clusters || []).forEach((group) => {
+    group.items.forEach((row) => {
+      if (keywords.length < 3 && row?.keyword) keywords.push(row.keyword);
+    });
+  });
+  return keywords.map((keyword) => ({
+    prompt: keyword,
+    engine: "ChatGPT, Google AI Overview",
+    live: false,
+  }));
 }
 
 function mentionBadge(check) {
@@ -258,8 +271,10 @@ export default function KeywordGuide({
         @keyframes sfy-breathe{0%,100%{opacity:1}50%{opacity:.5}}
         .kw-guide button{font-family:inherit;cursor:pointer}
         .kw-guide button:focus-visible,.kw-guide a:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
-        .kw-guide a.kw-link{color:#4DA3FF;text-decoration:none}
-        .kw-guide a.kw-link:hover{color:#8CC4FF}
+        .v8-app-main .kw-guide a.kw-link,.kw-guide a.kw-link{color:#4DA3FF !important;text-decoration:none}
+        .v8-app-main .kw-guide a.kw-link:hover,.kw-guide a.kw-link:hover{color:#8CC4FF !important}
+        .kw-all{box-sizing:border-box;width:100%}
+        .kw-all article,.kw-all section{box-sizing:border-box}
         @media (prefers-reduced-motion: reduce){.kw-guide *{animation:none !important;transition:none !important}}
       `}</style>
 
@@ -359,7 +374,7 @@ export default function KeywordGuide({
           ) : null}
         </div>
       ) : (
-        <div style={{ maxWidth: 1120, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 22, animation: "sfy-rise .3s ease both" }}>
+        <div className="kw-all" style={{ maxWidth: 1120, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 22, animation: "sfy-rise .3s ease both" }}>
           <button type="button" onClick={() => setView("guide")} style={{ alignSelf: "flex-start", minHeight: 40, padding: 0, border: 0, background: "transparent", color: "#4DA3FF", fontSize: 14, fontWeight: 600 }}>
             ← Back to one at a time
           </button>
@@ -415,7 +430,7 @@ export default function KeywordGuide({
                 })}
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 14, alignItems: "start" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: 14, alignItems: "start" }}>
               {visible.map((group) => {
                 const rows = filter === "easy" ? group.items.filter((row) => Number(row.difficulty) < 20) : group.items;
                 const vol = rows.reduce((sum, row) => sum + volumeOf(row), 0);
@@ -484,7 +499,7 @@ export default function KeywordGuide({
                 <h2 id="comp-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 26, letterSpacing: "-0.5px", fontWeight: 700 }}>Who&apos;s winning these searches near you</h2>
                 <span style={{ fontSize: 14, color: "#9AA1AB" }}>The sites Google shows most often for the {count} searches above.</span>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 12, alignItems: "start" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: 12, alignItems: "start" }}>
                 {rivals.map((card) => {
                   const open = gapOpen === card.domain;
                   return (
@@ -538,14 +553,14 @@ export default function KeywordGuide({
                 <span style={{ fontSize: 14, color: "#9AA1AB" }}>Questions your customers ask ChatGPT and Google&apos;s AI answers, and who gets named.</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column" }}>
-                {(aiChecks.length ? aiChecks : [{ prompt: "No live answer check is stored yet", engine: "ChatGPT, Google AI Overview", excerpt: "Run AI visibility to see who gets named" }]).map((check, index) => {
-                  const badge = mentionBadge(check);
+                {aiRowsFrom(aiChecks, board).map((check, index) => {
+                  const badge = check.live ? mentionBadge(check) : { text: "Not checked yet", color: "#FFC53D", bg: "rgba(255,197,61,.12)" };
                   const who = (check.sources || []).map((source) => source.title || source.url).filter(Boolean).slice(0, 3).join(", ");
                   return (
-                    <div key={check.id || index} style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", minHeight: 64, padding: "10px 0", borderTop: "1px solid #1A1D22" }}>
+                    <div key={check.id || check.prompt || index} style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", minHeight: 64, padding: "10px 0", borderTop: "1px solid #1A1D22" }}>
                       <span style={{ flex: "1 1 320px", minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
-                        <span style={{ fontSize: 15 }}>{aiChecks.length ? `“${check.prompt}”` : check.prompt}</span>
-                        <span style={{ fontSize: 12, color: "#7D848E" }}>{check.engine || "ChatGPT, Google AI Overview"}{who ? ` · names: ${who}` : aiChecks.length ? " · names: not stored" : ` · ${check.excerpt}`}</span>
+                        <span style={{ fontSize: 15 }}>{`“${check.prompt}”`}</span>
+                        <span style={{ fontSize: 12, color: "#7D848E" }}>{check.engine || "ChatGPT, Google AI Overview"} · names: {who || "not stored"}</span>
                       </span>
                       <span style={{ flex: "none", fontSize: 12, fontWeight: 600, padding: "5px 10px", borderRadius: 8, color: badge.color, background: badge.bg }}>{badge.text}</span>
                     </div>
