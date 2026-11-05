@@ -96,8 +96,26 @@ function clustersFrom(suggestions) {
         source: sourceLine(sorted),
       };
     })
-    .sort((a, b) => b.items.reduce((sum, row) => sum + rankScore(row), 0) - a.items.reduce((sum, row) => sum + rankScore(row), 0))
-    .slice(0, 8);
+    .sort((a, b) => b.items.reduce((sum, row) => sum + rankScore(row), 0) - a.items.reduce((sum, row) => sum + rankScore(row), 0));
+}
+
+function rowMeta(row) {
+  const bits = [];
+  const vol = num(volumeOf(row));
+  if (vol) bits.push(`${vol} a month`);
+  const rivals = Number(row?.localRivals);
+  if (Number.isFinite(rivals) && rivals >= 0) {
+    bits.push(rivals ? `${rivals} local rival${rivals === 1 ? "" : "s"} on page one` : "no local rivals on page one");
+  }
+  const you = row?.position != null && row.position !== "" ? `#${Math.round(Number(row.position))}` : "not found";
+  bits.push(`you: ${you}`);
+  return bits.join(" · ");
+}
+
+function mentionBadge(check) {
+  if (check?.observed && check?.mention) return { text: "You: mentioned", color: "#3DDC84", bg: "rgba(61,220,132,.12)" };
+  if (check?.observed || check?.mention === false) return { text: "You: not mentioned", color: "#FF5A4E", bg: "rgba(255,90,78,.12)" };
+  return { text: "Not checked yet", color: "#FFC53D", bg: "rgba(255,197,61,.12)" };
 }
 
 function rivalCards(competitors, suggestions, total) {
@@ -145,8 +163,10 @@ export default function KeywordGuide({
   onTrack,
   onUntrack,
   onSeeTracked,
+  aiChecks = [],
 }) {
   const clusters = useMemo(() => clustersFrom(suggestions), [suggestions]);
+  const walk = clusters;
   const area = localVolume?.location ? String(localVolume.location).split(",")[0] : "";
   const place = area || "your area";
   const [view, setView] = useState("guide");
@@ -158,16 +178,17 @@ export default function KeywordGuide({
   const [gapOpen, setGapOpen] = useState(null);
   const [session, setSession] = useState([]);
 
-  const totalVol = clusters.reduce((sum, group) => sum + group.vol, 0);
-  const count = clusters.reduce((sum, group) => sum + group.items.length, 0);
-  const appear = clusters.reduce(
+  const board = view === "all" ? clusters : walk;
+  const totalVol = board.reduce((sum, group) => sum + group.vol, 0);
+  const count = board.reduce((sum, group) => sum + group.items.length, 0);
+  const appear = board.reduce(
     (sum, group) => sum + group.items.filter((row) => row.position != null && row.position !== "").length,
     0
   );
-  const onPageOne = clusters.some((group) => group.items.some((row) => Number(row.position) > 0 && Number(row.position) <= 10));
+  const onPageOne = board.some((group) => group.items.some((row) => Number(row.position) > 0 && Number(row.position) <= 10));
   const rivals = useMemo(() => rivalCards(competitors, suggestions, count), [competitors, suggestions, count]);
-  const topic = clusters[step - 1] || null;
-  const done = step > clusters.length;
+  const topic = walk[step - 1] || null;
+  const done = step > walk.length;
 
   useEffect(() => {
     if (!topic) return undefined;
@@ -246,7 +267,7 @@ export default function KeywordGuide({
         <div style={{ maxWidth: 720, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 18, paddingTop: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
             <div aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              {clusters.map((group, i) => {
+              {walk.map((group, i) => {
                 const current = i === step - 1;
                 const past = done || i < step - 1;
                 return (
@@ -264,7 +285,7 @@ export default function KeywordGuide({
               })}
             </div>
             <span style={{ ...MONO, fontSize: 12, color: "#9AA1AB" }}>
-              {step === 0 ? "Getting started" : done ? "All done" : `Topic ${step} of ${clusters.length}`}
+              {step === 0 ? "Getting started" : done ? "All done" : `Topic ${step} of ${walk.length}`}
             </span>
             <button type="button" onClick={() => setView("all")} style={{ marginLeft: "auto", minHeight: 40, padding: "0 4px", border: 0, background: "transparent", color: "#9AA1AB", fontSize: 13, textDecoration: "underline" }}>
               See everything at once
@@ -283,7 +304,7 @@ export default function KeywordGuide({
                 {appear
                   ? `Google shows you for ${appear} of them${onPageOne ? "." : ", none on page one yet."}`
                   : "Google doesn’t show your site for any of these yet. That’s normal for a new site."}{" "}
-                We found {clusters.length} topics you could win. Let’s go through them one at a time.
+                We found {walk.length} topics you could win. Let’s go through them one at a time.
               </p>
               <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                 <button type="button" onClick={() => setStep(1)} style={{ minHeight: 54, padding: "0 26px", borderRadius: 14, border: 0, background: "#4DA3FF", color: "#0A0B0D", fontSize: 16, fontWeight: 600, boxShadow: "0 0 22px rgba(77,163,255,.45)" }}>
@@ -415,23 +436,18 @@ export default function KeywordGuide({
                       <h3 style={{ margin: 0, fontSize: 19, fontWeight: 600 }}>{group.topic}</h3>
                       <span style={{ fontSize: 14, color: "#9AA1AB" }}>
                         <strong style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 22, color: "#F2F4F5" }}>{vol ? `~${num(vol)}` : "—"}</strong>{" "}
-                        searches a month{visits ? ` · about ${num(visits)} visitors if you reach the top 3` : ""}
+                        searches a month · about {num(visits) || "0"} visitors if you reach the top 3
                       </span>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column" }}>
                       {rows.map((row) => {
                         const on = trackedTerms.has(String(row.keyword).toLowerCase());
                         const win = winOf(row.difficulty);
-                        const you = row.position != null && row.position !== "" ? `#${Math.round(Number(row.position))}` : "not found";
                         return (
                           <div key={row.keyword} style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 56, padding: "6px 0", borderTop: "1px solid #1A1D22" }}>
                             <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
                               <span style={{ fontSize: 14, lineHeight: 1.3 }}>{row.keyword}</span>
-                              <span style={{ fontSize: 12, color: "#7D848E", lineHeight: 1.35 }}>
-                                {num(volumeOf(row)) ? `${num(volumeOf(row))} a month · ` : ""}
-                                {rising(row) ? "rising · " : ""}
-                                you: {you}
-                              </span>
+                              <span style={{ fontSize: 12, color: "#7D848E", lineHeight: 1.35 }}>{rowMeta(row)}</span>
                             </span>
                             <span style={{ flex: "none", fontSize: 11, fontWeight: 600, padding: "4px 8px", borderRadius: 8, color: win.color, background: win.bg, whiteSpace: "nowrap" }}>{win.label}</span>
                             <button
@@ -464,8 +480,7 @@ export default function KeywordGuide({
             </div>
           </div>
 
-          {rivals.length ? (
-            <section aria-labelledby="comp-h" style={{ borderRadius: 22, background: "#101215", border: "1px solid #1A1D22", padding: "clamp(18px, 2.4vw, 24px)", display: "flex", flexDirection: "column", gap: 14 }}>
+          <section aria-labelledby="comp-h" style={{ borderRadius: 22, background: "#101215", border: "1px solid #1A1D22", padding: "clamp(18px, 2.4vw, 24px)", display: "flex", flexDirection: "column", gap: 14 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 <h2 id="comp-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 26, letterSpacing: "-0.5px", fontWeight: 700 }}>Who&apos;s winning these searches near you</h2>
                 <span style={{ fontSize: 14, color: "#9AA1AB" }}>The sites Google shows most often for the {count} searches above.</span>
@@ -513,8 +528,36 @@ export default function KeywordGuide({
                   );
                 })}
               </div>
+              {!rivals.length ? (
+                <span style={{ fontSize: 14, color: "#9AA1AB" }}>No competitor ranks are stored for these searches yet.</span>
+              ) : null}
             </section>
-          ) : null}
+
+            <section aria-labelledby="ai-h" style={{ borderRadius: 22, background: "#101215", border: "1px solid #1A1D22", padding: "clamp(18px, 2.4vw, 24px)", display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <h2 id="ai-h" style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 26, letterSpacing: "-0.5px", fontWeight: 700 }}>What AI assistants recommend</h2>
+                <span style={{ fontSize: 14, color: "#9AA1AB" }}>Questions your customers ask ChatGPT and Google&apos;s AI answers, and who gets named.</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {(aiChecks.length ? aiChecks : [{ prompt: "No live answer check is stored yet", engine: "ChatGPT, Google AI Overview", excerpt: "Run AI visibility to see who gets named" }]).map((check, index) => {
+                  const badge = mentionBadge(check);
+                  const who = (check.sources || []).map((source) => source.title || source.url).filter(Boolean).slice(0, 3).join(", ");
+                  return (
+                    <div key={check.id || index} style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", minHeight: 64, padding: "10px 0", borderTop: "1px solid #1A1D22" }}>
+                      <span style={{ flex: "1 1 320px", minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
+                        <span style={{ fontSize: 15 }}>{aiChecks.length ? `“${check.prompt}”` : check.prompt}</span>
+                        <span style={{ fontSize: 12, color: "#7D848E" }}>{check.engine || "ChatGPT, Google AI Overview"}{who ? ` · names: ${who}` : aiChecks.length ? " · names: not stored" : ` · ${check.excerpt}`}</span>
+                      </span>
+                      <span style={{ flex: "none", fontSize: 12, fontWeight: 600, padding: "5px 10px", borderRadius: 8, color: badge.color, background: badge.bg }}>{badge.text}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "12px 14px", borderRadius: 12, background: "#0A0B0D", border: "1px solid #262A31" }}>
+                <span style={{ flex: "1 1 320px", fontSize: 14, color: "#D7DADE", lineHeight: 1.5 }}>AI tends to name businesses whose pages answer plainly: prices, timelines, service areas. Your suggested pages are planned that way.</span>
+                <Link href="/app/queue" className="kw-link" style={{ fontSize: 14, fontWeight: 600 }}>See how →</Link>
+              </div>
+            </section>
         </div>
       )}
     </div>

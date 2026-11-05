@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   researchKeywords,
+  getAiVisibility,
   trackKeyword,
   untrackKeyword,
   approveChange,
@@ -340,10 +341,11 @@ export default function WinScreen() {
     const site = href || activeSiteContext(loadJourney()).href || "";
     setLoading(true);
     try {
-      const [kwRes, changeRes, scanRes] = await Promise.all([
+      const [kwRes, changeRes, scanRes, visRes] = await Promise.all([
         site ? researchKeywords({ site, force }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
         listChanges({ force: true }).catch(() => ({ ok: false, data: [] })),
         site ? getSiteScan(site).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
+        getAiVisibility().catch(() => ({ ok: false })),
       ]);
       setProblems(site ? problemsFrom(kwRes, "keywords") : []);
       setSitePages(scanRes?.ok ? collectScanPages(scanRes.data) : []);
@@ -372,6 +374,7 @@ export default function WinScreen() {
         cannibalization: data.cannibalization || [],
         competitors: data.competitors || [],
         localVolume: data.localVolume || null,
+        aiChecks: (visRes?.ok ? visRes.data?.report?.checks : []) || [],
       });
 
       const changes = Array.isArray(changeRes?.data) ? changeRes.data : changeRes?.data?.changes || [];
@@ -746,14 +749,13 @@ export default function WinScreen() {
               ))}
             </select>
           </label>
-        ) : null}
+        ) : (
+          <button type="button" onClick={() => rebuild({ force: true })} disabled={loading} style={{ minHeight: 44, padding: "0 4px", border: 0, background: "transparent", color: "#9AA1AB", fontSize: 13, textDecoration: "underline", cursor: "pointer" }}>
+            {loading ? "Refreshing…" : "Refresh live suggestions"}
+          </button>
+        )}
       </header>
 
-      <div style={{ maxWidth: 1120, width: "100%", margin: "0 auto", display: "flex", justifyContent: "flex-end" }}>
-        <button type="button" onClick={() => rebuild({ force: true })} disabled={loading} style={{ minHeight: 44, padding: "0 16px", borderRadius: 12, border: "1px solid #262A31", background: "#131519", color: "#F2F4F5", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-          {loading ? "Refreshing live keywords…" : "Refresh live suggestions"}
-        </button>
-      </div>
       <ProblemNotice problems={problems} onRetry={() => rebuild({ force: true })} style={{ maxWidth: "1120px", width: "100%", margin: "0 auto" }} />
 
       {!loading ? (
@@ -799,6 +801,7 @@ export default function WinScreen() {
           onTrack={handleTrack}
           onUntrack={handleUntrack}
           onSeeTracked={() => setView("tracked")}
+          aiChecks={(research.aiChecks || []).filter((row) => row?.prompt).slice(0, 6)}
         />
       ) : null}
 
