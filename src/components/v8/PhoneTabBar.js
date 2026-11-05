@@ -48,16 +48,16 @@ const IconPlan = (
 
 /** Exact Phone.dc.html bottom tabs — mobile layout reference. */
 export const PHONE_TABS = [
-  { href: "/app", label: "Moves", match: (p) => p === "/app", alwaysOpen: true, icon: IconMoves },
-  { href: "/app/results", label: "Board", match: (p) => p.startsWith("/app/results") || p.startsWith("/app/scan"), icon: IconBoard },
+  { href: "/app", label: "In progress", match: (p) => p === "/app", alwaysOpen: true, icon: IconMoves },
+  { href: "/app/results", label: "Scan", match: (p) => p.startsWith("/app/results") || p.startsWith("/app/scan"), icon: IconBoard },
   { href: "/app/path", label: "Progress", match: (p) => p.startsWith("/app/path"), icon: IconProgress },
   { href: "/app/keywords", label: "Keywords", match: (p) => p.startsWith("/app/keywords") || p.startsWith("/app/win"), icon: IconKeywords },
   { href: "/app/workspace", label: "Sites", match: (p) => p.startsWith("/app/workspace") || p.startsWith("/app/sites"), icon: IconSites },
 ];
 
 const LOCKED_TABS = [
-  { href: "/app", label: "Moves", match: (p) => p === "/app", alwaysOpen: true, icon: IconMoves },
-  { href: "/app/results", label: "Board", match: (p) => p.startsWith("/app/results"), icon: IconBoard },
+  { href: "/app", label: "In progress", match: (p) => p === "/app", alwaysOpen: true, icon: IconMoves },
+  { href: "/app/results", label: "Scan", match: (p) => p.startsWith("/app/results"), icon: IconBoard },
   { href: "/app/path", label: "Progress", match: (p) => p.startsWith("/app/path"), icon: IconProgress },
   { href: "/app/keywords", label: "Keywords", match: (p) => p.startsWith("/app/keywords"), icon: IconKeywords },
   { href: "/app/billing", label: "Plan", match: (p) => p.startsWith("/app/billing") || p.startsWith("/app/plans"), alwaysOpen: true, icon: IconPlan },

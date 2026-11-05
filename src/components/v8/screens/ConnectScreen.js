@@ -8,7 +8,7 @@ import ConnectDialog, { useConnectionStatus } from "@/components/board/ConnectDi
 import V8PropertyPicker from "@/components/v8/V8PropertyPicker";
 import SfyTip from "@/components/v8/SfyTip";
 import { activeSiteContext } from "@/lib/siteContext";
-import { addReadyWebsite, dropReadyWebsite, loadJourney, readySites, selectJourneySite, syncJourneyNow, websiteLabel } from "@/lib/journey";
+import { addReadyWebsite, baselineDone, dropReadyWebsite, loadJourney, readySites, selectJourneySite, syncJourneyNow, websiteLabel } from "@/lib/journey";
 import { getBillingAccount } from "@/lib/billingApi";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
 import CheckPopup from "@/components/v8/CheckPopup";
@@ -607,8 +607,8 @@ export default function ConnectScreen() {
                 {item.label} · {item.path}
               </span>
             ))}
-            <Link href="/app/results" style={{ color: "#4DA3FF", fontSize: 14 }}>
-              Open the full site scan
+            <Link href={baselineDone() ? "/app/results" : "/app/baseline"} style={{ color: "#4DA3FF", fontSize: 14 }}>
+              {baselineDone() ? "Open the full site scan" : "Save your starting point, then scan"}
             </Link>
           </div>
         ) : null}
@@ -984,7 +984,7 @@ export default function ConnectScreen() {
         {ready ? (
           <button
             type="button"
-            onClick={() => router.push("/app/results")}
+            onClick={() => router.push(baselineDone() ? "/app/results" : "/app/baseline")}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -1000,7 +1000,7 @@ export default function ConnectScreen() {
               boxShadow: "0 0 24px rgba(77,163,255,.45)",
             }}
           >
-            Next: scan my site →
+            {baselineDone() ? "Next: scan my site →" : "Next: your starting point →"}
           </button>
         ) : (
           <span
@@ -1059,8 +1059,15 @@ export default function ConnectScreen() {
           "Google Search Console · reading what people search",
           "WordPress · ready to publish the fixes you approve",
         ]}
-        lead="Next, we'll scan your whole site and light up your SearchLites. It takes about a minute."
-        primary={{ label: "Scan my site →", onClick: () => router.push("/app/results") }}
+        lead={
+          baselineDone()
+            ? "Next, we'll scan your whole site and light up your SearchLites. It takes about a minute."
+            : "Next we save where you're starting from. A snapshot, then 3 short questions, then the scan."
+        }
+        primary={{
+          label: baselineDone() ? "Scan my site →" : "Save my starting point →",
+          onClick: () => router.push(baselineDone() ? "/app/results" : "/app/baseline"),
+        }}
         secondary={state.ga === "live" ? null : { label: "First, add Google Analytics", onClick: () => setParty(false) }}
         onClose={() => setParty(false)}
       />

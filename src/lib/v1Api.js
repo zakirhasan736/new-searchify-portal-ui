@@ -452,11 +452,11 @@ export async function previewSiteScan(site, { email = "" } = {}) {
   );
 }
 
-export async function runSiteScan({ site = null, force = false } = {}) {
+export async function runSiteScan({ site = null, force = false, quick = false } = {}) {
   return json(await fetch("/api/v1/operator/site-scan", {
     method: "POST",
     headers: authHeaders(),
-    body: JSON.stringify({ force, ...scanBrief(site || undefined) }),
+    body: JSON.stringify({ force, quick, ...scanBrief(site || undefined) }),
   }));
 }
 

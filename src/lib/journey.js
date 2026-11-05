@@ -382,6 +382,14 @@ export function requiredJourneyPath(pathname) {
   const state = loadJourney();
   if (!readySites(state).length) return "/app/start";
   if (!state.planId) return "/app/plans";
+  // Plug in → starting point (snapshot + 3 questions) → SearchLites. Don't open the scan first.
+  if (
+    pathname !== "/app/baseline" &&
+    (pathname === "/app/results" || pathname.startsWith("/app/results/")) &&
+    !baselineDone(state)
+  ) {
+    return "/app/baseline";
+  }
   return null;
 }
 

@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import HomeScreen from "@/components/v8/screens/HomeScreen";
+import InProgressScreen from "@/components/v8/screens/InProgressScreen";
 import TrialReportScreen from "@/components/v8/screens/TrialReportScreen";
 import { getBillingAccount } from "@/lib/billingApi";
 import { accountNeedsPaidPlan } from "@/lib/trialGate";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
 
 /**
- * Today's moves (/app). After a free-month trial ends (and before they pay),
- * this route shows the trial report so the urgency is front-and-center.
+ * In progress (/app). After a free-month trial ends (and before they pay),
+ * this route shows the trial report.
  */
 export default function Page() {
   const [mode, setMode] = useState("loading");
@@ -38,5 +38,5 @@ export default function Page() {
     );
   }
   if (mode === "trial-report") return <TrialReportScreen />;
-  return <HomeScreen />;
+  return <InProgressScreen />;
 }

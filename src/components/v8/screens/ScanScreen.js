@@ -18,7 +18,6 @@ import {
   historyItems,
   listChanges,
   loadFeature,
-  proposeFromGsc,
   researchAudit,
   runSiteScan,
   undoChange,
@@ -83,7 +82,7 @@ export default function ScanScreen() {
       let scan = scanRes.data?.scan || scanRes.data;
       let scanProblems = problemsFrom(scanRes, "site_scan");
       if (href && !scan?.pagesRead) {
-        const started = await runSiteScan({ force: false }).catch(() => ({ ok: false }));
+        const started = await runSiteScan({ force: false, quick: true }).catch(() => ({ ok: false }));
         scan = started?.data?.scan || (started?.ok ? started?.data : null) || scan;
         scanProblems = problemsFrom(started, "site_scan");
       }
@@ -103,7 +102,15 @@ export default function ScanScreen() {
       setChangeByPath(byPath);
       setLiveChanges(changes);
       const crawl = auditRes?.ok ? auditRes.data : null;
-      const built = buildAuditFindings({ audit, pages, queries, landings, changes, crawl });
+      const built = buildAuditFindings({
+        audit,
+        pages,
+        queries,
+        landings,
+        changes,
+        crawl,
+        scanIssues: scan?.auditIssues || [],
+      });
       const locked = historyItems(changes)
         .filter((c) => c.status === "monitoring" || c.status === "closed" || c.status === "applied")
         .slice(0, 13)
@@ -167,30 +174,21 @@ export default function ScanScreen() {
     setFilter("red");
     setOrder("scan");
     // Presentation timing: ~3.5s to 100%, then connect or reveal.
+    const startedAt = Date.now();
+    // Creep toward 90% while the read is in flight. Jumping to 100% early is what left the
+    // screen sitting on "READING" after the bar had already finished.
     timerRef.current = setInterval(() => {
-      setPct((prev) => {
-        const next = Math.min(100, prev + 2);
-        if (next >= 100) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
-        }
-        return next;
-      });
-    }, 70);
+      setPct((prev) => (prev >= 90 ? prev : Math.min(90, prev + 3)));
+    }, 200);
+    let scanRun = { ok: false };
     try {
-      const { href } = activeSiteContext(loadJourney());
-      const scanRun = await runSiteScan({ force: true }).catch(() => ({ ok: false }));
-      const auditRun = href ? await researchAudit({ site: href, force: true }).catch(() => ({ ok: false })) : null;
-      if (connectionStatus.gsc) {
-        await proposeFromGsc({ breadth: "balanced", limit: 8, rescan: true });
-      }
+      scanRun = await runSiteScan({ force: true, quick: true }).catch(() => ({ ok: false }));
       await reloadLive();
-      const runProblems = [...problemsFrom(scanRun, "site_scan"), ...(auditRun ? problemsFrom(auditRun, "site_audit") : [])];
+      const runProblems = problemsFrom(scanRun, "site_scan");
       if (runProblems.some((p) => p.severity === "error")) setProblems(runProblems);
     } catch {
       /* keep animation; empty board if APIs fail */
     }
-    // Finish animation then advance stage.
     const finish = () => {
       setPct(100);
       if (timerRef.current) {
@@ -200,7 +198,8 @@ export default function ScanScreen() {
       setStage(connectionStatus.gsc ? "reveal" : "connect");
       setScanDone(true);
     };
-    setTimeout(finish, 3600);
+    const hold = Math.max(0, 1600 - (Date.now() - startedAt));
+    setTimeout(finish, hold);
   }, [connectionStatus.gsc, reloadLive]);
 
   // Live scan only — no Northline HTML sample when the workspace has no findings yet.

@@ -41,6 +41,12 @@ const CORE = [
   { id: "reports", label: "Reports and change log", href: "/app/history", n: "9" },
 ];
 
+/** Kept beside the presentation menu. These reports are not in Nav.html, and the product still needs them. */
+const RESEARCH = [
+  { id: "visibility", label: "AI visibility", href: "/app/visibility" },
+  { id: "audit", label: "Site audit", href: "/app/audit" },
+];
+
 const ACCOUNT = [
   { id: "command", label: "Agency command centre", href: "/app/command" },
   { id: "sites", label: "All client sites", href: "/app/workspace" },
@@ -436,6 +442,54 @@ export default function AppChrome({ children, current }) {
               <span style={{ flex: 1, minWidth: 0 }}>MCP</span>
               <span style={{ flex: "none", padding: "2px 7px", borderRadius: 999, border: "1px solid #3A404A", fontSize: 10, fontWeight: 600, color: "#9AA1AB", letterSpacing: ".03em" }}>SOON</span>
             </Link>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ padding: "0 10px 6px", fontSize: 12, fontWeight: 600, color: "#7D848E" }}>Reports</span>
+            {RESEARCH.map((it) => {
+              const on = current ? current === it.id : isOn(pathname, it);
+              const locked = trialLocked && !isTrialLockAllowedPath(it.href);
+              const style = on
+                ? {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    minHeight: 42,
+                    padding: "0 12px",
+                    borderRadius: 11,
+                    background: "#131519",
+                    boxShadow: "inset 3px 0 0 #4DA3FF",
+                    color: "#F2F4F5",
+                    textDecoration: "none",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    opacity: locked ? 0.45 : 1,
+                  }
+                : {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    minHeight: 42,
+                    padding: "0 12px",
+                    borderRadius: 11,
+                    color: "#B4BAC3",
+                    textDecoration: "none",
+                    fontSize: 14,
+                    opacity: locked ? 0.45 : 1,
+                  };
+              if (locked) {
+                return (
+                  <span key={it.href} aria-disabled="true" title="Start a paid plan to unlock" style={style}>
+                    {it.label}
+                  </span>
+                );
+              }
+              return (
+                <Link key={it.href} href={it.href} aria-current={on ? "page" : undefined} style={style}>
+                  {it.label}
+                </Link>
+              );
+            })}
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>

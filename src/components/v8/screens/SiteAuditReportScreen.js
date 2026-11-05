@@ -359,7 +359,7 @@ export default function SiteAuditReportScreen() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
             <path d="M15 6l-6 6 6 6" />
           </svg>
-          Home
+          In progress
         </Link>
         <Link
           href="/app/workspace"
