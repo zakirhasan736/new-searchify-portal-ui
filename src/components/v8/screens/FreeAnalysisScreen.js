@@ -642,9 +642,11 @@ export default function FreeAnalysisScreen() {
             <section className="v8-fa-panel v8-fa-rivals" aria-labelledby="cp-h">
               <h2 id="cp-h">Who&apos;s getting your customers</h2>
               <span style={{ fontSize: 13, color: "#9AA1AB" }}>
-                {placesQuery
-                  ? `Google Places for “${placesQuery}” — estimated monthly visits from Google, for the same kind of searches.`
-                  : "Estimated monthly visits from Google, for the same kind of searches."}
+                {scan.rivalSource === "search" && placesQuery
+                  ? `Sites Google ranks in ${scan.country || marketLabel} for “${placesQuery}”, the search this site is actually in.`
+                  : placesQuery && scan.rivalSource === "places"
+                    ? `Google Places for “${placesQuery}” in ${scan.city || city || "that city"}.`
+                    : "Rivals from the same searches and category. None came back for this scan."}
               </span>
               {competitors.length === 0 && places.length === 0 ? (
                 <p style={{ margin: 0, fontSize: 14, color: "#9AA1AB", lineHeight: 1.5 }}>
