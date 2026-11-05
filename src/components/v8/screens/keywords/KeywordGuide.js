@@ -227,9 +227,9 @@ export default function KeywordGuide({
 
   if (!clusters.length) {
     return (
-      <section style={{ maxWidth: 720, width: "100%", margin: "0 auto", borderRadius: 24, background: "#101215", border: "1px solid #1A1D22", padding: "clamp(24px, 4vw, 44px)", display: "flex", flexDirection: "column", gap: 14 }}>
+      <section style={{ maxWidth: 720, width: "100%", margin: "0 auto", borderRadius: 24, background: "#101215", border: "1px solid #1A1D22", padding: "clamp(24px, 4vw, 44px)", display: "flex", flexDirection: "column", gap: 18 }}>
         <span style={{ ...MONO, fontSize: 12, color: "#4DA3FF", letterSpacing: ".5px" }}>YOUR STARTING POINT</span>
-        <h2 style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "clamp(28px, 3.4vw, 40px)", letterSpacing: "-1px" }}>No suggestions yet.</h2>
+        <h2 style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "clamp(30px, 3.6vw, 44px)", lineHeight: 1.08, letterSpacing: "-1.2px", fontWeight: 700 }}>No suggestions yet.</h2>
         <p style={{ margin: 0, fontSize: 17, lineHeight: 1.55, color: "#D7DADE" }}>
           Searchify looks up searches that match this website. Nothing is filled in until that data comes back.
         </p>
@@ -296,9 +296,7 @@ export default function KeywordGuide({
             <section style={{ borderRadius: 24, background: "#101215", border: "1px solid #1A1D22", padding: "clamp(24px, 4vw, 44px)", display: "flex", flexDirection: "column", gap: 18, animation: "sfy-rise .3s ease both" }}>
               <span style={{ ...MONO, fontSize: 12, color: "#4DA3FF", letterSpacing: ".5px" }}>YOUR STARTING POINT</span>
               <h2 style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "clamp(30px, 3.6vw, 44px)", lineHeight: 1.08, letterSpacing: "-1.2px", fontWeight: 700 }}>
-                {totalVol
-                  ? `People around ${place} search for what you do about ${num(totalVol)} times a month.`
-                  : `${clusters.length} topics people already search for.`}
+                {`People around ${place} search for what you do about ${num(totalVol) || "0"} times a month.`}
               </h2>
               <p style={{ margin: 0, fontSize: 17, lineHeight: 1.55, color: "#D7DADE" }}>
                 {appear
@@ -320,6 +318,7 @@ export default function KeywordGuide({
               topic={topic}
               typed={topic.topic.slice(0, typed)}
               place={place}
+              aiChecks={aiChecks}
               why={why}
               onWhy={() => setWhy((open) => !open)}
               isChk={isChk}
@@ -574,7 +573,23 @@ function Stat({ kicker, value, note, valueColor = "#F2F4F5" }) {
   );
 }
 
-function TopicCard({ topic, typed, place, why, onWhy, isChk, onToggle, tracking, onTrack, onSkip, rivals }) {
+function aiAnswerLine(topic, checks) {
+  const words = String(topic?.topic || "")
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((word) => word.length > 3);
+  const hit = (checks || []).find((check) => {
+    const text = `${check.prompt || ""} ${(check.sources || []).map((source) => source.title || source.url || "").join(" ")}`.toLowerCase();
+    return words.some((word) => text.includes(word));
+  });
+  if (!hit) return "No live AI answer check is stored for this topic yet.";
+  const where = hit.engine || "an AI assistant";
+  if (hit.observed && hit.mention) return `A live ${where} check named you for “${hit.prompt}”.`;
+  if (hit.observed || hit.mention === false) return `A live ${where} check did not name you for “${hit.prompt}”.`;
+  return `“${hit.prompt}” is queued. It has not been checked live yet.`;
+}
+
+function TopicCard({ topic, typed, place, why, onWhy, isChk, onToggle, tracking, onTrack, onSkip, rivals, aiChecks = [] }) {
   const selected = topic.items.filter(isChk);
   const buying = topic.intent === "buying";
   const vol = num(topic.vol);
@@ -683,7 +698,7 @@ function TopicCard({ topic, typed, place, why, onWhy, isChk, onToggle, tracking,
           <dl style={{ margin: 0, display: "flex", flexDirection: "column", gap: 10, animation: "sfy-rise .2s ease both" }}>
             {[
               ["Who wins it now", winner ? `${winner} shows up on these searches.` : "Competitor ranks were not returned for this topic."],
-              ["Where it came from", topic.source || "the keyword data stored for this website"],
+              ["In AI answers", aiAnswerLine(topic, aiChecks)],
               ["What it takes", topic.isNew ? "A new page. We draft it, you approve it." : `Edits to ${topic.page}.`],
             ].map(([k, v]) => (
               <div key={k} style={{ display: "grid", gridTemplateColumns: "140px minmax(0, 1fr)", gap: 12, fontSize: 14, lineHeight: 1.5 }}>

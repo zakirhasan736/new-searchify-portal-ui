@@ -22,12 +22,12 @@ import CheckPopup from "@/components/v8/CheckPopup";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
 import ProblemNotice from "@/components/v8/ProblemNotice";
 import KeywordGuide from "@/components/v8/screens/keywords/KeywordGuide";
-import { RankChart, Sparkline } from "@/components/v8/screens/keywords/charts";
 import { problemsFrom } from "@/lib/problems";
 import "@/styles/v8-screens.css";
 
-const SPOT_TIP =
-  "Your spot on Google is the average position for this search. #1 is the top result — a smaller number is better. Search Console updates it as people search.";
+const SPOT_TIP = "Where your page shows up in Google for this search, on average. #1 is the top.";
+const CLICK_TIP =
+  "The share of people who clicked after your page appeared in Google. Every appearance counts as an impression, whether or not anyone clicked, so 100 appearances and 5 clicks is 5%.";
 
 function formatWinDate(iso) {
   if (!iso) return "—";
@@ -261,16 +261,27 @@ function mapKeywordRow(source, idx, changeByPath, device = "desktop") {
   };
 }
 
-function SpotTip({ tipId, open, onToggle, tipRef }) {
+function InfoTip({ tipId, label, text, href, align = "left", open, onEnter, onLeave, onToggle, onKey, tipRef }) {
   return (
-    <span ref={tipRef} className="v8-path-tip">
+    <span
+      ref={tipRef}
+      className="v8-path-tip"
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+      onFocus={onEnter}
+      onBlur={(event) => {
+        if (event.currentTarget.contains(event.relatedTarget)) return;
+        onLeave();
+      }}
+    >
       <button
         type="button"
         className="v8-path-tip-btn"
-        aria-label="What is a spot on Google?"
+        aria-label={label}
         aria-expanded={open}
         aria-controls={tipId}
         onClick={onToggle}
+        onKeyDown={onKey}
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
           <path d="M12 11v7" />
@@ -278,10 +289,10 @@ function SpotTip({ tipId, open, onToggle, tipRef }) {
         </svg>
       </button>
       {open ? (
-        <span className="v8-path-tip-pop" id={tipId} role="dialog" aria-label="What is a spot on Google?">
+        <span className={`v8-path-tip-pop${align === "right" ? " v8-path-tip-pop-r" : ""}`} id={tipId} role="dialog" aria-label={label}>
           <span className="v8-path-tip-card">
-            <span>{SPOT_TIP}</span>
-            <a href="https://searchify.io/help/keyword-tracker" target="_blank" rel="noreferrer">
+            <span>{text}</span>
+            <a href={href} target="_blank" rel="noreferrer">
               Learn more
             </a>
           </span>
@@ -311,22 +322,25 @@ export default function WinScreen() {
   const [sitePages, setSitePages] = useState([]);
   const [pageNote, setPageNote] = useState("");
   const [problems, setProblems] = useState([]);
-  const [listTipOpen, setListTipOpen] = useState(false);
-  const [metricTipOpen, setMetricTipOpen] = useState(false);
+  const [tip, setTip] = useState(null);
+  const [tipPin, setTipPin] = useState(false);
   const [view, setView] = useState("guide");
   const [freshN, setFreshN] = useState(0);
   const { hostname, href } = activeSiteContext(loadJourney());
 
   useEffect(() => {
-    if (!listTipOpen && !metricTipOpen) return undefined;
+    if (!tip) return undefined;
     const onDoc = (event) => {
-      if (listTipOpen && !listTipRef.current?.contains(event.target)) setListTipOpen(false);
-      if (metricTipOpen && !metricTipRef.current?.contains(event.target)) setMetricTipOpen(false);
+      const node = tip === "spot" ? listTipRef.current : metricTipRef.current;
+      if (node && !node.contains(event.target)) {
+        setTip(null);
+        setTipPin(false);
+      }
     };
     const onKey = (event) => {
       if (event.key === "Escape") {
-        setListTipOpen(false);
-        setMetricTipOpen(false);
+        setTip(null);
+        setTipPin(false);
       }
     };
     document.addEventListener("mousedown", onDoc);
@@ -335,7 +349,7 @@ export default function WinScreen() {
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
     };
-  }, [listTipOpen, metricTipOpen]);
+  }, [tip]);
 
   const rebuild = useCallback(async ({ force = false } = {}) => {
     const site = href || activeSiteContext(loadJourney()).href || "";
@@ -354,7 +368,7 @@ export default function WinScreen() {
       if (kwRes?.ok) {
         data = kwRes.data || {};
         const version = Number(data.qualityVersion || 0);
-        if (!force && version < 8) {
+        if (!force && version < 9) {
           const fresh = await researchKeywords({ site, force: true }).catch(() => null);
           if (fresh?.ok) data = fresh.data || data;
         }
@@ -668,6 +682,7 @@ export default function WinScreen() {
 
   return (
     <div
+      className="win-page"
       style={{
         flex: "999 1 560px",
         minWidth: 0,
@@ -682,6 +697,13 @@ export default function WinScreen() {
         gap: 24,
       }}
     >
+      <style>{`
+        .win-page [style*="Geist Mono"]{font-family:'Open Sans',sans-serif !important;font-weight:700 !important}
+        .v8-page .win-page a{color:#4DA3FF}
+        .v8-page .win-page a:hover{color:#8CC4FF}
+        .win-page button{font-family:inherit;cursor:pointer}
+        .win-page select:focus-visible,.win-page button:focus-visible,.win-page input:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
+      `}</style>
       <header
         style={{
           maxWidth: "1120px",
@@ -749,14 +771,8 @@ export default function WinScreen() {
               ))}
             </select>
           </label>
-        ) : (
-          <button type="button" onClick={() => rebuild({ force: true })} disabled={loading} style={{ minHeight: 44, padding: "0 4px", border: 0, background: "transparent", color: "#9AA1AB", fontSize: 13, textDecoration: "underline", cursor: "pointer" }}>
-            {loading ? "Refreshing…" : "Refresh live suggestions"}
-          </button>
-        )}
+        ) : null}
       </header>
-
-      <ProblemNotice problems={problems} onRetry={() => rebuild({ force: true })} style={{ maxWidth: "1120px", width: "100%", margin: "0 auto" }} />
 
       {!loading ? (
         <nav aria-label="Keyword views" style={{ maxWidth: 1120, width: "100%", margin: "0 auto", display: "flex", gap: 8, flexWrap: "wrap", paddingBottom: 14, borderBottom: "1px solid #1A1D22" }}>
@@ -780,17 +796,6 @@ export default function WinScreen() {
           <SkeletonCards count={2} lines={4} />
         </div>
       ) : null}
-      {trackNote ? (
-        <p role="status" style={{ maxWidth: "1120px", width: "100%", margin: "0 auto", fontSize: 14, lineHeight: 1.45, color: "#4DA3FF" }}>
-          {trackNote}
-        </p>
-      ) : null}
-      {!loading && pageNote ? (
-        <p style={{ maxWidth: "1120px", width: "100%", margin: "0 auto", fontSize: 14, lineHeight: 1.45, color: "#D7DADE" }}>
-          {pageNote}
-        </p>
-      ) : null}
-
       {!loading && view === "guide" ? (
         <KeywordGuide
           suggestions={suggestions}
@@ -842,7 +847,7 @@ export default function WinScreen() {
 
       {!loading && view === "tracked" && !K.length ? (
         <div style={{ maxWidth: 1120, width: "100%", margin: "0 auto", boxSizing: "border-box", borderRadius: 22, background: "#101215", border: "1px solid #1A1D22", padding: "40px 28px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 14 }}>
-          <h2 style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 30, letterSpacing: "-0.6px" }}>Nothing tracked yet.</h2>
+          <h2 style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 30, letterSpacing: "-0.6px", fontWeight: 700 }}>Nothing tracked yet.</h2>
           <p style={{ margin: 0, fontSize: 16, color: "#D7DADE", lineHeight: 1.55, maxWidth: 560 }}>Pick a few searches from Suggestions. We&apos;ll take a first reading of where you stand within 7 days, then show you the moves that get you higher.</p>
           <button type="button" onClick={() => setView("guide")} style={{ minHeight: 52, padding: "0 22px", borderRadius: 13, border: 0, background: "#4DA3FF", color: "#0A0B0D", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>See suggestions</button>
         </div>
@@ -879,44 +884,41 @@ export default function WinScreen() {
                 <h2 id="list-h" style={{ margin: "0", fontSize: "14px", fontWeight: "600", color: "#D7DADE" }}>
                   Tracked keywords
                 </h2>
-                <SpotTip
+                <InfoTip
                   tipId="tip-spot"
-                  open={listTipOpen}
-                  onToggle={() => {
-                    setListTipOpen((v) => !v);
-                    setMetricTipOpen(false);
-                  }}
+                  label="What is a spot on Google?"
+                  text={SPOT_TIP}
+                  href="https://searchify.io/help/position"
+                  open={tip === "spot"}
                   tipRef={listTipRef}
+                  onEnter={() => {
+                    if (!tipPin) setTip("spot");
+                  }}
+                  onLeave={() => {
+                    if (!tipPin && tip === "spot") setTip(null);
+                  }}
+                  onToggle={() => {
+                    if (tip === "spot" && tipPin) {
+                      setTip(null);
+                      setTipPin(false);
+                    } else {
+                      setTip("spot");
+                      setTipPin(true);
+                    }
+                  }}
+                  onKey={(event) => {
+                    if (event.key === "Escape") {
+                      event.stopPropagation();
+                      setTip(null);
+                      setTipPin(false);
+                    }
+                  }}
                 />
               </span>
               <span style={{ fontSize: "12px", color: "#7D848E", lineHeight: "1.4" }}>
                 Your spot on Google. <span style={{ color: "#D7DADE" }}>#1 is the top result</span> — a smaller number is
                 better.
               </span>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 6 }}>
-                <div role="group" aria-label="Device" style={{ display: "inline-flex", padding: 3, borderRadius: 999, border: "1px solid #262A31" }}>
-                  {["desktop", "mobile"].map((d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      aria-pressed={device === d}
-                      onClick={() => setDevice(d)}
-                      style={{ minHeight: 30, padding: "0 12px", borderRadius: 999, border: 0, background: device === d ? "#F2F4F5" : "transparent", color: device === d ? "#0A0B0D" : "#D7DADE", fontSize: 13, fontWeight: device === d ? 600 : 400 }}
-                    >
-                      {d === "desktop" ? "Desktop" : "Mobile"}
-                    </button>
-                  ))}
-                </div>
-                <button type="button" onClick={handleCheckRanks} disabled={checking || !K.length} style={{ minHeight: 36, padding: "0 14px", borderRadius: 999, border: "1px solid #262A31", background: "transparent", color: "#D7DADE", fontSize: 13, opacity: checking || !K.length ? 0.6 : 1 }}>
-                  {checking ? "Checking Google…" : "Check ranks now"}
-                </button>
-                {lastCheck ? (
-                  <span style={{ fontSize: 12, color: "#7D848E" }}>
-                    Last live check {lastCheck.when}
-                    {lastCheck.location ? ` · ${lastCheck.location.replace(/,/g, ", ")}` : ""} · runs daily
-                  </span>
-                ) : null}
-              </div>
             </div>
             <div
               aria-hidden="true"
@@ -1165,17 +1167,7 @@ export default function WinScreen() {
                   </h1>
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     <span style={{ fontSize: "13px", color: "#9AA1AB" }}>
-                      {cur.date !== "—" ? "What we changed on" : "Page for this keyword:"}{" "}
-                      <span style={{ fontFamily: "'Geist Mono', monospace", color: "#D7DADE" }}>{cur.page}</span>
-                      {cur.date !== "—" ? <> · {cur.date}</> : null}
-                      {cur.concept ? <> · {cur.concept}</> : null} ·{" "}
-                      <button
-                        type="button"
-                        onClick={() => handleUntrack(cur.term)}
-                        style={{ border: 0, background: "none", padding: 0, color: "#7D848E", fontSize: "13px", textDecoration: "underline" }}
-                      >
-                        Stop tracking
-                      </button>
+                      What we changed on <span style={{ fontFamily: "'Geist Mono', monospace", color: "#D7DADE" }}>{cur.page}</span> · {cur.date}
                     </span>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
                       <div
@@ -1211,50 +1203,6 @@ export default function WinScreen() {
                   </div>
                 </div>
 
-                {cur.change && OPEN_CHANGE.has(cur.change.status) ? (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "10px",
-                      alignItems: "center",
-                      borderRadius: "16px",
-                      border: "1px solid rgba(77,163,255,.5)",
-                      background: "rgba(77,163,255,.07)",
-                      padding: "14px 16px",
-                    }}
-                  >
-                    <span style={{ flex: "1 1 240px", fontSize: "14px", lineHeight: 1.45, color: "#D7DADE" }}>
-                      {cur.change.status === "approved"
-                        ? "Approved. Publish it to update the page on your website."
-                        : cur.change.status === "failed"
-                          ? "The last publish failed. Try again once the website connection works."
-                          : `This new title and description targets “${cur.term}”. Approve it to update the page on your website.`}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handlePublish(cur.change)}
-                      disabled={Boolean(publishing)}
-                      style={{
-                        minHeight: "44px",
-                        padding: "0 18px",
-                        borderRadius: "11px",
-                        border: "0",
-                        background: "#4DA3FF",
-                        color: "#0A0B0D",
-                        fontSize: "14px",
-                        fontWeight: "600",
-                        opacity: publishing ? 0.6 : 1,
-                      }}
-                    >
-                      {publishing === cur.change.id ? "Publishing…" : cur.change.status === "approved" ? "Publish to website" : "Approve and publish"}
-                    </button>
-                    <Link href="/app/queue" style={{ fontSize: "14px", color: "#4DA3FF" }}>
-                      Edit first
-                    </Link>
-                  </div>
-                ) : null}
-
                 <section
                   aria-label="Result"
                   style={{
@@ -1274,7 +1222,13 @@ export default function WinScreen() {
                           key={m.id}
                           type="button"
                           aria-pressed={m.on ? "true" : "false"}
-                          onClick={() => setMetric(m.id)}
+                          onClick={() => {
+                            setMetric(m.id);
+                            if (tip === "metric") {
+                              setTip(null);
+                              setTipPin(false);
+                            }
+                          }}
                           style={{
                             minHeight: "40px",
                             padding: "0 15px",
@@ -1290,15 +1244,39 @@ export default function WinScreen() {
                         </button>
                       ))}
                     </div>
-                    <SpotTip
-                      tipId="tip-metric"
-                      open={metricTipOpen}
-                      onToggle={() => {
-                        setMetricTipOpen((v) => !v);
-                        setListTipOpen(false);
-                      }}
-                      tipRef={metricTipRef}
-                    />
+                    {metric === "rank" || metric === "rate" ? (
+                      <InfoTip
+                        tipId="tip-metric"
+                        label={metric === "rank" ? "What is a spot on Google?" : "What is click rate?"}
+                        text={metric === "rank" ? SPOT_TIP : CLICK_TIP}
+                        href={metric === "rank" ? "https://searchify.io/help/position" : "https://searchify.io/help/click-rate"}
+                        align="right"
+                        open={tip === "metric"}
+                        tipRef={metricTipRef}
+                        onEnter={() => {
+                          if (!tipPin) setTip("metric");
+                        }}
+                        onLeave={() => {
+                          if (!tipPin && tip === "metric") setTip(null);
+                        }}
+                        onToggle={() => {
+                          if (tip === "metric" && tipPin) {
+                            setTip(null);
+                            setTipPin(false);
+                          } else {
+                            setTip("metric");
+                            setTipPin(true);
+                          }
+                        }}
+                        onKey={(event) => {
+                          if (event.key === "Escape") {
+                            event.stopPropagation();
+                            setTip(null);
+                            setTipPin(false);
+                          }
+                        }}
+                      />
+                    ) : null}
                   </div>
                   <div
                     style={{
@@ -1354,7 +1332,7 @@ export default function WinScreen() {
                       </span>
                     </div>
                   </div>
-                  {metric === "rank" && curMove ? (
+                  {metric === "rank" && curMove && cur.status !== "fresh" ? (
                     <span
                       style={{
                         alignSelf: "flex-start",
@@ -1374,87 +1352,6 @@ export default function WinScreen() {
                   ) : null}
                   <p style={{ margin: "0", fontSize: "18px", lineHeight: "1.45" }}>{mv[2]}</p>
                   <span style={{ fontSize: "13px", color: "#7D848E" }}>{SRC[metric]}</span>
-                </section>
-
-                <section
-                  aria-label="On Google now"
-                  style={{
-                    background: "#101215",
-                    border: "1px solid #1A1D22",
-                    borderRadius: "24px",
-                    padding: "clamp(18px, 3vw, 24px)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "16px",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", flexWrap: "wrap", alignItems: "baseline" }}>
-                    <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 600, color: "#D7DADE" }}>Spot on Google over time</h2>
-                    <span style={{ fontSize: "12px", color: "#7D848E" }}>
-                      <span style={{ color: "#4DA3FF" }}>●</span> Desktop <span style={{ color: "#C8A2FF", marginLeft: 8 }}>●</span> Mobile
-                    </span>
-                  </div>
-                  {cur.live && Object.keys(cur.live).length ? (
-                    <RankChart series={cur.live} active={device} />
-                  ) : (
-                    <p style={{ margin: 0, fontSize: 14, color: "#9AA1AB" }}>
-                      The first live Google check has not run yet. Use “Check ranks now”, or it runs with the daily check.
-                    </p>
-                  )}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                      <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>ON THE RESULTS PAGE</span>
-                      <span style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                        {(cur.slot?.latest?.features || []).filter((f) => f.type !== "related_searches" && f.type !== "people_also_search").length ? (
-                          cur.slot.latest.features
-                            .filter((f) => f.type !== "related_searches" && f.type !== "people_also_search")
-                            .map((f) => (
-                              <span
-                                key={f.type}
-                                title={f.owned ? "This website appears here" : "Google shows this for the search"}
-                                style={{
-                                  fontSize: "12px",
-                                  padding: "4px 9px",
-                                  borderRadius: "999px",
-                                  color: f.owned ? "#3DDC84" : "#D7DADE",
-                                  background: f.owned ? "rgba(61,220,132,.12)" : "#1A1D22",
-                                }}
-                              >
-                                {f.owned ? "✓ " : ""}
-                                {f.label}
-                              </span>
-                            ))
-                        ) : (
-                          <span style={{ fontSize: "13px", color: "#7D848E" }}>Plain links only</span>
-                        )}
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                      <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>TOP 3 ON GOOGLE</span>
-                      {(cur.slot?.latest?.top || []).length ? (
-                        cur.slot.latest.top.map((t) => (
-                          <span key={t.url} style={{ fontSize: "13px", color: t.domain === hostname ? "#3DDC84" : "#D7DADE", overflowWrap: "anywhere" }}>
-                            #{t.position} {t.domain}
-                          </span>
-                        ))
-                      ) : (
-                        <span style={{ fontSize: "13px", color: "#7D848E" }}>Shows after the first live check</span>
-                      )}
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                      <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "11px", color: "#7D848E" }}>SEARCHES / MONTH</span>
-                      <span style={{ fontSize: "20px", fontWeight: 700, fontFamily: "'Bricolage Grotesque', Geist, sans-serif" }}>
-                        {fmtNum(cur.volume)}
-                      </span>
-                      {cur.localVolume != null && research.localVolume?.available ? (
-                        <span style={{ fontSize: "12px", color: "#9AA1AB" }}>
-                          {fmtNum(cur.localVolume)} in {String(research.localVolume.location).split(",")[0]}
-                        </span>
-                      ) : null}
-                      <Sparkline values={cur.trend} width={120} height={26} label="Searches over the last 12 months" />
-                      <span style={{ fontSize: "12px", color: "#7D848E" }}>Difficulty {fmtNum(cur.difficulty)} / 100</span>
-                    </div>
-                  </div>
                 </section>
 
                 {cur.status === "worked" ? (
@@ -1480,31 +1377,27 @@ export default function WinScreen() {
                     <span style={{ fontSize: "13px", color: "#9AA1AB" }}>Added to your total and this month&apos;s client report.</span>
                   </div>
                 ) : null}
-                {cur.status === "dropped" ? (
-                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-                    <Link
-                      href="/app"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        minHeight: "52px",
-                        padding: "0 24px",
-                        borderRadius: "13px",
-                        background: "#FF5A4E",
-                        color: "#0A0B0D",
-                        fontSize: "15px",
-                        fontWeight: "600",
-                        textDecoration: "none",
-                      }}
-                    >
-                      Open today&apos;s moves
-                    </Link>
-                  </div>
-                ) : null}
               </>
             )}
           </main>
         </div>
+      ) : null}
+
+      {problems.length ? (
+        <ProblemNotice problems={problems} onRetry={() => rebuild({ force: true })} style={{ maxWidth: "1120px", width: "100%", margin: "0 auto" }} />
+      ) : null}
+      {trackNote ? (
+        <p role="status" style={{ maxWidth: "1120px", width: "100%", margin: "0 auto", fontSize: 14, lineHeight: 1.45, color: "#4DA3FF" }}>
+          {trackNote}
+        </p>
+      ) : null}
+      {!loading && pageNote ? (
+        <p style={{ maxWidth: "1120px", width: "100%", margin: "0 auto", fontSize: 14, lineHeight: 1.45, color: "#9AA1AB" }}>
+          {pageNote}{" "}
+          <button type="button" onClick={() => rebuild({ force: true })} disabled={loading} style={{ border: 0, background: "transparent", color: "#4DA3FF", fontSize: 14, fontWeight: 600, textDecoration: "underline", padding: 0 }}>
+            Refresh live suggestions
+          </button>
+        </p>
       ) : null}
 
       <CheckPopup

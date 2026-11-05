@@ -737,8 +737,14 @@ body:has(.v8-app-chrome) {
   left: -8px;
   padding-top: 8px;
   z-index: 40;
-  width: min(320px, calc(100vw - 32px));
+  width: 280px;
+  max-width: 80vw;
   text-align: left;
+}
+
+.v8-path-tip-pop-r {
+  left: auto;
+  right: -8px;
 }
 
 .v8-path-tip-card {
