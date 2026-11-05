@@ -351,7 +351,12 @@ export default function WinScreen() {
       let data = {};
       if (kwRes?.ok) {
         data = kwRes.data || {};
-        setPageNote("");
+        const version = Number(data.qualityVersion || 0);
+        if (!force && version < 8) {
+          const fresh = await researchKeywords({ site, force: true }).catch(() => null);
+          if (fresh?.ok) data = fresh.data || data;
+        }
+        setPageNote(data.cached ? "Showing the last saved keyword set. Refresh live suggestions to pull DataForSEO, Search Console, and Analytics again." : "");
       } else if (site) {
         // Live research failed: still show what is stored (tracked list is in the database).
         const stored = await researchKeywords({ site, storedOnly: true }).catch(() => null);
@@ -744,7 +749,12 @@ export default function WinScreen() {
         ) : null}
       </header>
 
-      <ProblemNotice problems={problems} onRetry={() => rebuild()} style={{ maxWidth: "1120px", width: "100%", margin: "0 auto" }} />
+      <div style={{ maxWidth: 1120, width: "100%", margin: "0 auto", display: "flex", justifyContent: "flex-end" }}>
+        <button type="button" onClick={() => rebuild({ force: true })} disabled={loading} style={{ minHeight: 44, padding: "0 16px", borderRadius: 12, border: "1px solid #262A31", background: "#131519", color: "#F2F4F5", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+          {loading ? "Refreshing live keywords…" : "Refresh live suggestions"}
+        </button>
+      </div>
+      <ProblemNotice problems={problems} onRetry={() => rebuild({ force: true })} style={{ maxWidth: "1120px", width: "100%", margin: "0 auto" }} />
 
       {!loading ? (
         <nav aria-label="Keyword views" style={{ maxWidth: 1120, width: "100%", margin: "0 auto", display: "flex", gap: 8, flexWrap: "wrap", paddingBottom: 14, borderBottom: "1px solid #1A1D22" }}>

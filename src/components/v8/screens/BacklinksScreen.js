@@ -259,21 +259,15 @@ function monthLabels() {
   return labels;
 }
 
-function buildTrend(domainsNow, newN, lostN, history) {
-  if (Array.isArray(history) && history.length >= 6) {
-    const slice = history.slice(-12);
-    while (slice.length < 12) slice.unshift(slice[0] || { total: domainsNow, neu: 0, lost: 0 });
-    return {
-      TOT: slice.map((h) => Number(h.total ?? h.domains ?? domainsNow) || 0),
-      NEW: slice.map((h) => Number(h.new ?? h.neu ?? 0) || 0),
-      LOST: slice.map((h) => Number(h.lost ?? 0) || 0),
-    };
-  }
-  const start = Math.max(0, domainsNow - Math.max(newN * 4, Math.round(domainsNow * 0.4), 8));
-  const TOT = Array.from({ length: 12 }, (_, i) => Math.round(start + ((domainsNow - start) * i) / 11));
-  const NEW = Array.from({ length: 12 }, (_, i) => (i === 11 ? newN : i > 7 ? Math.max(0, Math.round(newN / 3)) : Math.max(0, Math.round(newN / 6))));
-  const LOST = Array.from({ length: 12 }, (_, i) => (i === 11 ? lostN : i > 8 ? Math.max(0, Math.round(lostN / 2)) : Math.max(0, Math.round(lostN / 4))));
-  return { TOT, NEW, LOST };
+function buildTrend(history) {
+  if (!Array.isArray(history) || history.length < 2) return null;
+  const slice = history.slice(-12);
+  return {
+    TOT: slice.map((h) => Number(h.total ?? h.domains ?? 0) || 0),
+    NEW: slice.map((h) => Number(h.new ?? h.neu ?? 0) || 0),
+    LOST: slice.map((h) => Number(h.lost ?? 0) || 0),
+    labels: slice.map((h) => String(h.label || h.date || "").slice(0, 7)),
+  };
 }
 
 export default function BacklinksScreen() {
@@ -438,19 +432,20 @@ export default function BacklinksScreen() {
   const domainsNow = liveSummary?.referringDomains ?? liveLinks?.length ?? 0;
   const newCount = (liveLinks || []).filter((l) => String(l.state) === 'New').length;
   const lostCount = (liveLinks || []).filter((l) => String(l.state) === 'Lost').length;
-  const { TOT, NEW, LOST } =
-    domainsNow > 0
-      ? buildTrend(domainsNow, newCount, lostCount, liveSummary?.history || liveSummary?.monthly)
-      : { TOT: [], NEW: [], LOST: [] };
-  const chartMax = Math.max(45, Math.ceil((Math.max(...TOT, 1) + 1) / 10) * 10);
-  const X = (i) => 60 + i * (562 / 11);
+  const trend = buildTrend(liveSummary?.history || liveSummary?.monthly);
+  const TOT = trend?.TOT || [];
+  const NEW = trend?.NEW || [];
+  const LOST = trend?.LOST || [];
+  const trendLabels = trend?.labels || [];
+  const chartMax = Math.max(45, Math.ceil((Math.max(...(TOT.length ? TOT : [1]), 1) + 1) / 10) * 10);
+  const X = (i) => 60 + (TOT.length <= 1 ? 0 : i * (562 / (TOT.length - 1)));
   const Y = (v) => 150 - (v / chartMax) * 140;
   const line = TOT.length ? TOT.map((v, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1)).join(' ') : '';
-  const area = line ? `${line} L${X(11).toFixed(1)} 150 L${X(0).toFixed(1)} 150 Z` : '';
+  const area = line ? `${line} L${X(TOT.length - 1).toFixed(1)} 150 L${X(0).toFixed(1)} 150 Z` : '';
   const pts = TOT.map((v, i) => ({
     x: X(i).toFixed(1),
     y: Y(v).toFixed(1),
-    label: months.at(i),
+    label: trendLabels[i] || months.at(-(TOT.length - i)),
     bx: (X(i) - 5).toFixed(1),
     ny: (196 - (NEW.at(i) || 0) * 8).toFixed(1),
     nh: String((NEW.at(i) || 0) * 8),
@@ -840,7 +835,7 @@ export default function BacklinksScreen() {
                 </g>
               ))}
               <line x1="40" x2="632" y1="196" y2="196" stroke="#262A31" />
-              <text x={pts[11].x} y={(Y(domainsNow) - 10).toFixed(1)} textAnchor="middle" fontSize="13" fontWeight="600" fill="#F2F4F5" fontFamily="Geist, sans-serif">
+              <text x={pts[pts.length - 1].x} y={(Y(domainsNow) - 10).toFixed(1)} textAnchor="middle" fontSize="13" fontWeight="600" fill="#F2F4F5" fontFamily="Geist, sans-serif">
                 {domainsNow}
               </text>
             </svg>
