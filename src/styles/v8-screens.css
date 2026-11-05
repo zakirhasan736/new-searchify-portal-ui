@@ -112,6 +112,26 @@
   }
 }
 
+@keyframes sfy-caret {
+  0%,
+  49% { opacity: 1; }
+  50%,
+  100% { opacity: 0; }
+}
+@keyframes sfy-glint {
+  0%,
+  100% { opacity: 1; box-shadow: 0 0 10px #3DDC84, 0 0 22px rgba(61, 220, 132, 0.55); }
+  48% { opacity: 0.5; box-shadow: 0 0 4px #3DDC84; }
+  55% { opacity: 1; box-shadow: 0 0 12px #3DDC84, 0 0 26px rgba(61, 220, 132, 0.65); }
+}
+@keyframes sfy-b0 { from { transform: none; opacity: 1; } to { transform: translate(78px, 0) scale(0.3); opacity: 0; } }
+@keyframes sfy-b1 { from { transform: none; opacity: 1; } to { transform: translate(55px, -55px) scale(0.3); opacity: 0; } }
+@keyframes sfy-b2 { from { transform: none; opacity: 1; } to { transform: translate(0, -78px) scale(0.3); opacity: 0; } }
+@keyframes sfy-b3 { from { transform: none; opacity: 1; } to { transform: translate(-55px, -55px) scale(0.3); opacity: 0; } }
+@keyframes sfy-b4 { from { transform: none; opacity: 1; } to { transform: translate(-78px, 0) scale(0.3); opacity: 0; } }
+@keyframes sfy-b5 { from { transform: none; opacity: 1; } to { transform: translate(-55px, 55px) scale(0.3); opacity: 0; } }
+@keyframes sfy-b6 { from { transform: none; opacity: 1; } to { transform: translate(0, 78px) scale(0.3); opacity: 0; } }
+@keyframes sfy-b7 { from { transform: none; opacity: 1; } to { transform: translate(55px, 55px) scale(0.3); opacity: 0; } }
 @keyframes sfy-pop {
   0% {
     transform: scale(0.3);

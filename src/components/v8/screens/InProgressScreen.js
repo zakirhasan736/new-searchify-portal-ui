@@ -212,7 +212,7 @@ export default function InProgressScreen() {
       <section aria-labelledby="progress-list" style={{ maxWidth: 1000, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
           <h2 id="progress-list" style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
-            {stage ? STAGES[stage].title : "All published fixes"}
+            {stage ? `${STAGES[stage].title} · ${visible.length} ${visible.length === 1 ? "fix" : "fixes"}` : `${rows.length} fixes published`}
           </h2>
           {stage ? (
             <button type="button" onClick={() => setStage(0)} style={{ minHeight: 36, padding: 0, border: 0, background: "transparent", color: "#9AA1AB", fontSize: 13, textDecoration: "underline", cursor: "pointer" }}>
@@ -251,7 +251,7 @@ export default function InProgressScreen() {
                   </span>
                 </span>
                 <span style={{ flex: "none", display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, color: meta.color }}>
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: meta.color }} />
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: meta.color, animation: done ? "none" : "sfy-breathe 1.6s ease-in-out infinite" }} />
                   {done ? "Result in" : `Step ${row.stage} of 4 · ${meta.title}`}
                 </span>
               </div>
@@ -265,7 +265,7 @@ export default function InProgressScreen() {
                   return (
                     <div key={label} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       <div style={{ height: 8, borderRadius: 999, background: "#1A1D22", overflow: "hidden" }}>
-                        <div style={{ height: "100%", width, borderRadius: 999, background: col }} />
+                        <div style={{ height: "100%", width, borderRadius: 999, background: current ? `repeating-linear-gradient(135deg, ${col} 0 6px, rgba(255,255,255,.35) 6px 12px)` : col, backgroundSize: current ? "24px 8px" : undefined, animation: current ? "sfy-march 1s linear infinite" : "none", transformOrigin: "left center" }} />
                       </div>
                       <span style={{ fontSize: 11, color: filled || current ? "#D7DADE" : "#7D848E" }}>{label}</span>
                     </div>

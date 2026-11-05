@@ -1,8 +1,8 @@
-import QueueScreen from "@/components/v8/screens/QueueScreen";
+"use client";
 
-export const metadata = { title: "Edit queue" };
+import EditPublishScreen from "@/components/v8/screens/EditPublishScreen";
 
-/** Pending drafts → Edit.dc.html at /app/queue/[id]. */
+/** Edit.html — one fix at a time, with the waiting list in the search bar. */
 export default function Page() {
-  return <QueueScreen />;
+  return <EditPublishScreen />;
 }

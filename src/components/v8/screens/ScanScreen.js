@@ -823,8 +823,8 @@ export default function ScanScreen() {
               >
                 {pct}%
               </div>
-              <div style={{ height: 4, borderRadius: 4, background: "#1A1D22", overflow: "hidden" }}>
-                <div style={{ height: 4, background: "#4DA3FF", width: `${pct}%`, transition: "width .08s linear" }} />
+              <div role="progressbar" aria-label="Scan progress" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} style={{ height: 12, borderRadius: 999, background: "#1A1D22", overflow: "hidden" }}>
+                <div style={{ height: 12, borderRadius: 999, background: "linear-gradient(90deg, #4DA3FF, #3DDC84)", boxShadow: "0 0 22px rgba(77,163,255,.6)", width: `${pct}%`, transition: "width .1s linear" }} />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, fontFamily: "'Geist Mono', monospace", fontSize: 14, color: "#9AA1AB" }}>
                 {log.map((line) => (

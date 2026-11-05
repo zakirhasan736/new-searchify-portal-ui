@@ -1,12 +1,7 @@
 "use client";
 
-import { Suspense } from "react";
-import ReviewScreen from "@/components/v8/screens/ReviewScreen";
+import EditPublishScreen from "@/components/v8/screens/EditPublishScreen";
 
 export default function Page() {
-  return (
-    <Suspense fallback={null}>
-      <ReviewScreen />
-    </Suspense>
-  );
+  return <EditPublishScreen />;
 }
