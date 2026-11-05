@@ -85,7 +85,7 @@ function Badges({ badges }) {
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 999, background: "rgba(61,220,132,.12)", border: "1px solid rgba(61,220,132,.55)", color: "#3DDC84", fontSize: 12, fontWeight: 600 }}>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
           Customer opted for the Managed plan
-        </span>
+      </span>
       ) : null}
     </span>
   );
@@ -651,14 +651,14 @@ export default function HomeView() {
                   <div key={day.name} style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                     <span style={{ fontSize: 10, fontWeight: 700, color: "#7D848E", textAlign: "center" }}>{day.name}</span>
                     {day.slots.map((slot, index) => <span key={index} style={{ flex: 1, borderRadius: 6, background: slot.bg, border: `1px solid ${slot.border}`, display: "grid", placeItems: "center", fontSize: 9, fontWeight: 700, color: "#0A0B0D", animation: slot.anim, transition: "background .3s ease" }}>{slot.t}</span>)}
-                  </div>
-                ))}
               </div>
-            </div>
+            ))}
+          </div>
+        </div>
             <Story client={sample.clients.physio} />
           </article>
         </section>
-      </div>
+          </div>
 
       <section id="agencies" style={{ maxWidth: 1240, margin: "0 auto", boxSizing: "border-box", padding: "90px clamp(16px, 4vw, 40px) 100px" }}>
         <div style={{ borderRadius: 28, background: "#101215", border: "1px solid #1A1D22", padding: "clamp(28px, 4vw, 56px)", display: "flex", flexWrap: "wrap", gap: 40, alignItems: "center" }}>

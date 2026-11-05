@@ -71,26 +71,52 @@ function sourceLine(items) {
   return parts.length ? parts.join(", ") : "the keyword data stored for this website";
 }
 
+function pagePath(row) {
+  const page = pathOf(row?.page || row?.url);
+  return page && page !== "/" ? page : "";
+}
+
+function topicTitle(page, items) {
+  const names = items.map((row) => String(row.concept || row.pageTarget || "").trim()).filter(Boolean);
+  const winner = names.sort((a, b) => names.filter((name) => name === b).length - names.filter((name) => name === a).length)[0];
+  if (winner) return winner;
+  if (page) {
+    const slug = page.split("/").filter(Boolean).pop() || page;
+    return slug.replace(/[-_]+/g, " ");
+  }
+  return "Other searches";
+}
+
+function intentOf(items) {
+  let research = 0;
+  let buying = 0;
+  items.forEach((row) => {
+    const intent = String(row.intent || "").toLowerCase();
+    if (intent.includes("inform") || row.question) research += 1;
+    else buying += 1;
+  });
+  return research > buying ? "research" : "buying";
+}
+
 function clustersFrom(suggestions) {
-  const rows = (suggestions || []).filter((row) => row?.keyword && row.kind !== "gap");
+  const rows = (suggestions || []).filter((row) => row?.keyword);
   const groups = new Map();
   rows.forEach((row) => {
-    const page = pathOf(row.page || row.url);
-    const key = String(row.concept || page || "Other searches").trim() || "Other searches";
+    const page = pagePath(row);
+    const key = page || String(row.concept || "Other searches").trim() || "Other searches";
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(row);
   });
   return [...groups.entries()]
-    .map(([topic, items]) => {
+    .map(([key, items]) => {
       const sorted = [...items].sort((a, b) => rankScore(b) - rankScore(a)).slice(0, 8);
-      const page = pathOf(sorted.find((row) => pathOf(row.page || row.url) && pathOf(row.page || row.url) !== "/")?.page || sorted.find((row) => pathOf(row.url))?.url || "");
-      const questions = sorted.filter((row) => row.question || String(row.intent || "").includes("inform")).length;
+      const page = pagePath(sorted.find((row) => pagePath(row)) || {}) || (key.startsWith("/") ? key : "");
       return {
-        id: topic,
-        topic,
+        id: key,
+        topic: topicTitle(page, sorted),
         page: page || "No page yet",
         isNew: !page,
-        intent: questions > sorted.length / 2 ? "research" : "buying",
+        intent: intentOf(sorted),
         items: sorted,
         vol: sorted.reduce((sum, row) => sum + volumeOf(row), 0),
         source: sourceLine(sorted),
@@ -175,6 +201,7 @@ export default function KeywordGuide({
   tracking = "",
   onTrack,
   onUntrack,
+  onRefresh,
   onSeeTracked,
   readingLand = "",
   aiChecks = [],
@@ -232,10 +259,14 @@ export default function KeywordGuide({
         concept: row.concept || group?.topic || "",
         source: "suggestion",
         apply: false,
+        skipRefresh: true,
       });
       if (ok) saved.push(row.keyword);
     }
-    if (saved.length) setSession((prev) => [...new Set([...prev, ...saved])]);
+    if (saved.length) {
+      setSession((prev) => [...new Set([...prev, ...saved])]);
+      await onRefresh?.();
+    }
     return saved.length > 0;
   };
 

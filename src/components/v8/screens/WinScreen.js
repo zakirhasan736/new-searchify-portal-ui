@@ -392,9 +392,9 @@ export default function WinScreen() {
     };
   }, [tip]);
 
-  const rebuild = useCallback(async ({ force = false } = {}) => {
+  const rebuild = useCallback(async ({ force = false, quiet = false } = {}) => {
     const site = href || activeSiteContext(loadJourney()).href || "";
-    setLoading(true);
+    if (!quiet) setLoading(true);
     try {
       const [kwRes, changeRes, scanRes, visRes] = await Promise.all([
         site ? researchKeywords({ site, force }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
@@ -445,7 +445,7 @@ export default function WinScreen() {
     } catch {
       setPageNote("Keyword tracking could not be loaded. Try again in a moment.");
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, [href]);
 
@@ -484,7 +484,7 @@ export default function WinScreen() {
     if (d.note) parts.push(d.note);
     (d.warnings || []).forEach((w) => parts.push(w));
     setTrackNote(parts.join(" "));
-    await rebuild();
+    if (!extra.skipRefresh) await rebuild({ quiet: true });
     setSelId(keywordId(d.keyword || term));
     setTracking("");
     return true;
@@ -494,7 +494,7 @@ export default function WinScreen() {
     if (!href || !term) return;
     await untrackKeyword({ site: href, keyword: term }).catch(() => null);
     setTrackNote(`Stopped tracking “${term}”.`);
-    await rebuild();
+    await rebuild({ quiet: true });
   };
 
   // Approve the exact text shown, then publish it to the connected website (WordPress, Shopify, Webflow…).
@@ -843,7 +843,7 @@ export default function WinScreen() {
       {!loading ? (
         <nav aria-label="Keyword views" style={{ maxWidth: 1120, width: "100%", margin: "0 auto", display: "flex", gap: 8, flexWrap: "wrap", paddingBottom: 14, borderBottom: "1px solid #1A1D22" }}>
           {[
-            { id: "guide", label: "Suggestions", count: suggestions.filter((row) => row.kind !== "gap").length },
+            { id: "guide", label: "Suggestions", count: suggestions.length },
             { id: "tracked", label: "Tracked", count: K.length },
           ].map((tab) => {
             const on = view === tab.id;
@@ -873,6 +873,7 @@ export default function WinScreen() {
             readingLand={reading.land}
             onTrack={handleTrack}
             onUntrack={handleUntrack}
+            onRefresh={() => rebuild({ quiet: true })}
             onSeeTracked={() => setView("tracked")}
             aiChecks={(research.aiChecks || []).filter((row) => row?.prompt).slice(0, 6)}
           />
