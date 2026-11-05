@@ -1,0 +1,175 @@
+{
+  "_about": "Sample data for Searchify landing page v2. In production this comes from the CMS / API. Every key here is shown on the page.",
+  "hero": {
+    "headline": "Be found on Google, ChatGPT, and Claude. Get more calls.",
+    "sub": "Searchify finds what's keeping your website out of Google and AI answers, writes the fix, and publishes it with your OK. Then it shows you what each fix earned: visitors, calls and quote requests."
+  },
+  "aiExamples": [
+    {
+      "topic": "RESTAURANTS",
+      "question": "What are the best restaurants near me for a date night?",
+      "answer": {
+        "before": "Top picks near you: ",
+        "business": "Juniper & Ash",
+        "middle": " is known for its seasonal tasting menu and quiet booths",
+        "site": "juniperandash.example",
+        "after": ", and two other local spots come up often."
+      }
+    },
+    {
+      "topic": "WHOLESALE",
+      "question": "Who are the best wholesale soap manufacturers in Canada?",
+      "answer": {
+        "before": "For bulk and private-label orders, ",
+        "business": "Prairie Lather Co.",
+        "middle": " is often recommended for natural bar soap with low minimums",
+        "site": "prairielather.example",
+        "after": ". Two other suppliers also come up."
+      }
+    },
+    {
+      "topic": "HOME SERVICES",
+      "question": "Who's good for hail damage roof repair in Calgary?",
+      "answer": {
+        "before": "A few well-reviewed options: ",
+        "business": "Northline Roofing",
+        "middle": " offers 24/7 emergency leak repair and helps with insurance claims",
+        "site": "northline.example",
+        "after": ", and two other local companies come up often."
+      }
+    },
+    {
+      "topic": "HEALTH",
+      "question": "Best family dentist in Airdrie taking new patients?",
+      "answer": {
+        "before": "",
+        "business": "Bowvalley Dental",
+        "middle": " is accepting new patients and offers evening and Saturday appointments",
+        "site": "bowvalleydental.example",
+        "after": ". Two other clinics are also well reviewed."
+      }
+    },
+    {
+      "topic": "EMERGENCY",
+      "question": "Emergency plumber open right now in Edmonton?",
+      "answer": {
+        "before": "",
+        "business": "Riverbend Plumbing",
+        "middle": " offers 24/7 emergency service across Edmonton with upfront pricing",
+        "site": "riverbendplumbing.example",
+        "after": ". Call ahead to confirm wait times."
+      }
+    },
+    {
+      "topic": "PROFESSIONAL",
+      "question": "Who does small business taxes near me?",
+      "answer": {
+        "before": "Many local owners recommend ",
+        "business": "Ledgerline Accounting",
+        "middle": ", which specialises in small-business and self-employed returns",
+        "site": "ledgerline.example",
+        "after": ", and offers a free first call."
+      }
+    }
+  ],
+  "integrations": {
+    "live": [
+      "WordPress",
+      "Google Search Console",
+      "Google Analytics",
+      "Bing"
+    ],
+    "soon": [
+      "Shopify",
+      "Webflow",
+      "Wix and Squarespace"
+    ]
+  },
+  "clients": {
+    "soap": {
+      "name": "Soap & More",
+      "place": "Wholesaler · Calgary, Alberta",
+      "story": "A Calgary wholesaler selling across the country. Searchify took their category searches to the top of Google, one fix at a time, until they owned the first spot coast to coast.",
+      "badges": {
+        "builtBySovereign": true,
+        "managedPlan": true
+      },
+      "stats": [
+        {
+          "value": "100+",
+          "label": "keywords at #1",
+          "tone": "green"
+        },
+        {
+          "value": "Canada",
+          "label": "ranking nationwide",
+          "tone": "blue"
+        }
+      ],
+      "keywordCount": 100,
+      "region": "GOOGLE · CANADA",
+      "keywords": [
+        "wholesale soap canada",
+        "bulk bar soap supplier",
+        "private label soap canada",
+        "natural soap wholesale",
+        "handmade soap distributor",
+        "soap manufacturer alberta",
+        "wholesale liquid hand soap",
+        "bulk castile soap canada",
+        "goat milk soap wholesale",
+        "hotel soap supplier canada",
+        "shea butter soap wholesale",
+        "glycerin soap supplier",
+        "essential oil soap wholesale",
+        "organic soap distributor canada",
+        "bulk laundry soap canada",
+        "soap bases wholesale"
+      ]
+    },
+    "aca": {
+      "name": "Angel City Armory",
+      "place": "Gun customization · Los Angeles, California",
+      "story": "We designed their website, then Searchify climbed it up Google in one of the most competitive cities in the country. Today they are the #1 ranked gun customization company in LA.",
+      "badges": {
+        "builtBySovereign": true,
+        "managedPlan": true
+      },
+      "stats": [
+        {
+          "value": "#1",
+          "label": "in Los Angeles",
+          "tone": "green"
+        },
+        {
+          "value": "Site + SEO",
+          "label": "by Sovereign Standard + Searchify",
+          "tone": "blue"
+        }
+      ],
+      "query": "gun customization los angeles",
+      "rankBadge": "#1 in LA"
+    },
+    "physio": {
+      "name": "PhysioDome",
+      "place": "Chiropractic and physiotherapy · Calgary, Alberta",
+      "story": "A Calgary clinic that wanted a fuller schedule. Over the last few years, Searchify turned Google searches into thousands of phone calls, and those calls into booked appointments.",
+      "badges": {
+        "builtBySovereign": true,
+        "managedPlan": true
+      },
+      "stats": [
+        {
+          "value": "1,000s",
+          "label": "of calls from Google",
+          "tone": "green"
+        },
+        {
+          "value": "Years",
+          "label": "of steady bookings",
+          "tone": "blue"
+        }
+      ]
+    }
+  }
+}

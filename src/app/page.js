@@ -2,9 +2,9 @@ import { pageMeta } from "@/lib/seo";
 import HomeView from "@/components/landing/HomeView";
 
 export const metadata = pageMeta({
-  title: "Get found on Google. And in the AI answers.",
+  title: "Be found on Google, ChatGPT, and Claude. Get more calls.",
   description:
-    "Your customers search Google, then ask ChatGPT. Searchify finds what's keeping your site out of both, fixes it one step at a time with your OK, and shows you what each fix earned.",
+    "Searchify finds what's keeping your website out of Google and AI answers, writes the fix, and publishes it with your OK. Then it shows you what each fix earned: visitors, calls and quote requests.",
   path: "/",
 });
 

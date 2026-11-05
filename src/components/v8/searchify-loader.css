@@ -30,7 +30,7 @@
 }
 
 .sf-mark-loader-mark {
-  width: clamp(64px, 16vw, 88px);
+  width: clamp(112px, 28vw, 148px);
   height: auto;
   display: block;
   overflow: visible;
@@ -40,7 +40,7 @@
 .sf-mark-dot {
   transform-box: fill-box;
   transform-origin: center;
-  animation: sf-mark-dot 1.15s ease-in-out infinite;
+  animation: sf-mark-dot 1.35s ease-in-out infinite;
 }
 
 .sf-mark-loader-label.sr-only {
@@ -58,12 +58,12 @@
 @keyframes sf-mark-dot {
   0%,
   100% {
-    opacity: 0.28;
-    transform: scale(0.7);
+    opacity: 0.38;
+    transform: scale(0.86);
   }
-  45% {
+  42% {
     opacity: 1;
-    transform: scale(1.18);
+    transform: scale(1);
   }
 }
 
@@ -71,11 +71,9 @@
   0%,
   100% {
     transform: translateY(0);
-    filter: drop-shadow(0 0 0 rgba(77, 163, 255, 0));
   }
   50% {
-    transform: translateY(-5px);
-    filter: drop-shadow(0 0 18px rgba(77, 163, 255, 0.22));
+    transform: translateY(-4px);
   }
 }
 
