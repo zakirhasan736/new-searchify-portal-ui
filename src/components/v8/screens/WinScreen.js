@@ -18,6 +18,7 @@ import {
 } from "@/lib/v1Api";
 import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
+import CheckPopup from "@/components/v8/CheckPopup";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
 import ProblemNotice from "@/components/v8/ProblemNotice";
 import KeywordResearchPanel from "@/components/v8/screens/keywords/KeywordResearchPanel";
@@ -310,6 +311,7 @@ export default function WinScreen() {
   const [scConnected, setScConnected] = useState(false);
   const [trackNote, setTrackNote] = useState("");
   const [publishing, setPublishing] = useState(0);
+  const [publishWin, setPublishWin] = useState(null);
   const [reading, setReading] = useState(false);
   const [sitePages, setSitePages] = useState([]);
   const [pageNote, setPageNote] = useState("");
@@ -454,6 +456,15 @@ export default function WinScreen() {
       }
     }
     const done = await executeChange(change.id).catch(() => ({ ok: false }));
+    if (done?.ok) {
+      const next = K.find((row) => row.change && OPEN_CHANGE.has(row.change.status) && row.change.id !== change.id);
+      setPublishWin({
+        query: change.query || change.keyword || K.find((row) => row.change?.id === change.id)?.term || "this search",
+        page: pathFrom(change.targetUrl || change.target_url || "") || hostname || "your page",
+        nextTerm: next?.term || "",
+        nextId: next?.id || "",
+      });
+    }
     setTrackNote(
       done?.ok
         ? "Published to your website. Searchify now measures this keyword's spot on Google."
@@ -1461,6 +1472,34 @@ export default function WinScreen() {
           reading={reading}
         />
       ) : null}
+      <CheckPopup
+        open={Boolean(publishWin)}
+        titleId="win-h"
+        title="Congratulations, your publish was made live successfully."
+        tone="green"
+        lead={publishWin ? `Your new Google title and description are now on ${publishWin.page}.` : ""}
+        checks={publishWin ? [
+          "Saved to your website",
+          "Checked your live page: the new title is showing",
+          `Tracking “${publishWin.query}” from today. First result in about 4 weeks.`,
+        ] : []}
+        note={<><strong style={{ color: "#F2F4F5" }}>It&apos;s live on your website right now, and that&apos;s what matters.</strong> Google takes a little time to notice changes, usually a few days to a few weeks before your listing updates in search results. You don&apos;t need to do anything. We&apos;ll keep checking.</>}
+        primary={publishWin?.nextTerm ? {
+          label: `Next fix: “${publishWin.nextTerm}” →`,
+          onClick: () => {
+            if (publishWin.nextId) setSelId(publishWin.nextId);
+            setPublishWin(null);
+          },
+        } : {
+          label: "All fixes done · back to Home",
+          onClick: () => {
+            setPublishWin(null);
+            window.location.assign("/app");
+          },
+        }}
+        secondary={{ label: "Back to this page", onClick: () => setPublishWin(null) }}
+        onClose={() => setPublishWin(null)}
+      />
     </div>
   );
 }

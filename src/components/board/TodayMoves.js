@@ -222,7 +222,7 @@ export default function TodayMoves() {
                 {openMoves.length ? "moves waiting for your approval" : "no open moves yet — generate from Search Console"}
               </span>
             </div>
-            <span style={{ fontFamily: "var(--mono)", fontSize: 13, color: "#D5F879" }}>
+            <span style={{ fontFamily: "var(--mono)", fontSize: 13, color: "#4DA3FF" }}>
               {status.gsc && status.wordpress ? "Ready to ship" : "Connect GSC + WordPress"}
             </span>
           </div>
@@ -344,7 +344,7 @@ export default function TodayMoves() {
                 </div>
                 <div className="v8-move-actions">
                   <div style={{ flex: "1 1 280px", display: "flex", flexDirection: "column", minWidth: 0 }}>
-                    <span style={{ fontFamily: "var(--display)", fontSize: 28, fontWeight: 700, letterSpacing: "-0.6px", color: "#D5F879" }}>
+                    <span style={{ fontFamily: "var(--display)", fontSize: 28, fontWeight: 700, letterSpacing: "-0.6px", color: "#4DA3FF" }}>
                       {move.gain}
                     </span>
                     <span style={{ fontSize: 13, color: "#9AA1AB" }}>{move.ships}</span>
@@ -362,7 +362,7 @@ export default function TodayMoves() {
               </article>
             ) : (
               <div className="v8-move-card">
-                <span style={{ fontFamily: "var(--mono)", fontSize: 13, color: "#D5F879" }}>NO OPEN DIRE MOVES</span>
+                <span style={{ fontFamily: "var(--mono)", fontSize: 13, color: "#4DA3FF" }}>NO OPEN DIRE MOVES</span>
                 <h1 className="v8-move-title">Generate the next batch from Search Console.</h1>
                 <p style={{ margin: 0, color: "#9AA1AB", fontSize: 17, maxWidth: 560 }}>
                   Searchify writes title and description drafts from live evidence. You still approve every ship.
@@ -405,7 +405,7 @@ export default function TodayMoves() {
         </div>
 
         <label className="v8-cmd" htmlFor="v8-cmd">
-          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#D5F879" }} />
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4DA3FF" }} />
           <input
             id="v8-cmd"
             type="text"

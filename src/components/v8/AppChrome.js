@@ -31,15 +31,14 @@ import "@/styles/v8-phone.css";
 /** Nav.dc.html route map — labels identical to the estimate. */
 const CORE = [
   { id: "connect", label: "Plug in", href: "/app/connections", n: "1" },
-  { id: "scan", label: "Site scan", href: "/app/results", n: "2" },
-  { id: "home", label: "Today’s moves", href: "/app", n: "3", exact: true },
-  { id: "path", label: "Page progress", href: "/app/path", n: "4" },
-  { id: "tracker", label: "Keyword tracker", href: "/app/keywords", n: "5" },
-  { id: "backlinks", label: "Backlinks", href: "/app/backlinks", n: "6" },
-  { id: "visibility", label: "AI visibility", href: "/app/visibility", n: "7" },
-  { id: "audit", label: "Site audit report", href: "/app/audit", n: "8" },
-  { id: "results", label: "Results", href: "/app/outcomes", n: "9" },
-  { id: "reports", label: "Reports and change log", href: "/app/history", n: "10" },
+  { id: "scan", label: "SearchLites (site scan)", href: "/app/results", n: "2" },
+  { id: "edit", label: "Edit and publish", href: "/app/queue", n: "3" },
+  { id: "home", label: "In progress", href: "/app", n: "4", exact: true },
+  { id: "path", label: "Page progress", href: "/app/path", n: "5" },
+  { id: "tracker", label: "Keyword tracker", href: "/app/keywords", n: "6" },
+  { id: "backlinks", label: "Backlinks", href: "/app/backlinks", n: "7" },
+  { id: "results", label: "Results", href: "/app/outcomes", n: "8" },
+  { id: "reports", label: "Reports and change log", href: "/app/history", n: "9" },
 ];
 
 const ACCOUNT = [
@@ -324,7 +323,7 @@ export default function AppChrome({ children, current }) {
                 lineHeight: 1.45,
               }}
             >
-              Free month ended. Today’s moves shows your report. Start a plan to unlock the other tabs.
+              Free month ended. In progress shows your report. Start a plan to unlock the other tabs.
             </div>
           ) : null}
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -409,6 +408,34 @@ export default function AppChrome({ children, current }) {
                 </Link>
               );
             })}
+            <Link
+              href="/app/mcp"
+              aria-current={pathname.startsWith("/app/mcp") ? "page" : undefined}
+              title="Coming soon"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                minHeight: 44,
+                padding: "0 10px",
+                borderRadius: 11,
+                background: pathname.startsWith("/app/mcp") ? "#131519" : "transparent",
+                boxShadow: pathname.startsWith("/app/mcp") ? "inset 3px 0 0 #4DA3FF" : "none",
+                color: pathname.startsWith("/app/mcp") ? "#F2F4F5" : "#8A919B",
+                textDecoration: "none",
+                fontSize: 14,
+                fontWeight: pathname.startsWith("/app/mcp") ? 600 : 400,
+              }}
+            >
+              <span style={{ width: 22, height: 22, flex: "none", borderRadius: "50%", border: "1px solid #3A404A", boxSizing: "border-box", display: "grid", placeItems: "center" }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AA1AB" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="5" y="11" width="14" height="10" rx="2" />
+                  <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                </svg>
+              </span>
+              <span style={{ flex: 1, minWidth: 0 }}>MCP</span>
+              <span style={{ flex: "none", padding: "2px 7px", borderRadius: 999, border: "1px solid #3A404A", fontSize: 10, fontWeight: 600, color: "#9AA1AB", letterSpacing: ".03em" }}>SOON</span>
+            </Link>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>

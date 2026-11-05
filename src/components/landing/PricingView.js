@@ -120,7 +120,7 @@ const SITE_HELP = {
 const TIMELINE = [
   { when: "WEEK 1", title: "Scan and first fixes", body: "Every page scored. Your first fixes approved and live.", color: "#4DA3FF" },
   { when: "WEEKS 2–4", title: "Google catches up", body: "Google re-reads your updated pages. Early signs appear, like showing up in more searches.", color: "#FFC53D" },
-  { when: "DAY 30", title: "Your before-and-after", body: "A report of where you started, what we fixed, and what has moved so far.", color: "#D5F879" },
+  { when: "DAY 30", title: "Your before-and-after", body: "A report of where you started, what we fixed, and what has moved so far.", color: "#4DA3FF" },
   { when: "MONTHS 2–3", title: "Results build", body: "Rankings, clicks and calls usually move most over this stretch.", color: "#3DDC84" },
 ];
 
@@ -186,7 +186,7 @@ function Tip({ id, openId, setOpenId, label, children }) {
 
 function Check() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D5F879" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M5 12l5 5L20 7" />
     </svg>
   );

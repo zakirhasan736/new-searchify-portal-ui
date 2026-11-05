@@ -55,6 +55,20 @@ function money(n) {
   return `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+// Same integer split the API charges: tax on the plan, then 2.9% + $0.30 card processing.
+function chargeParts(baseDollars, taxRate) {
+  const baseCents = Math.round(Number(baseDollars) * 100);
+  const taxCents = Math.round(baseCents * taxRate);
+  const totalCents = Math.floor(((baseCents + taxCents + 30) * 1000 + 970) / 971);
+  const feeCents = totalCents - baseCents - taxCents;
+  return {
+    base: baseCents / 100,
+    tax: taxCents / 100,
+    fee: feeCents / 100,
+    total: totalCents / 100,
+  };
+}
+
 function normalizePlan(raw) {
   const id = String(raw || "solo").trim().toLowerCase();
   if (id === "premium" || id === "agency" || id === "scale") return "agency";
@@ -206,23 +220,26 @@ export default function CheckoutView() {
   const chosen = catalog[plan] || catalog.solo;
   const countryMeta = COUNTRIES.find((c) => c.id === country) || COUNTRIES[0];
   const taxRate = countryMeta.tax;
-  const tax = chosen.today * taxRate;
-  const renewTax = chosen.after * taxRate;
-  const dueToday = chosen.today + tax;
+  const todayParts = chosen.free ? { base: 0, tax: 0, fee: 0, total: 0 } : chargeParts(chosen.today, taxRate);
+  const renewParts = chargeParts(chosen.after, taxRate);
+  const dueToday = todayParts.total;
   const per = yearly ? "a year" : "a month";
+  const feeLabel = "Card processing (2.9% + $0.30)";
 
   const lines = chosen.free
     ? [
         { label: "Solo · first month", value: "Free", color: "#3DDC84" },
-        { label: "From day 31", value: `${money(chosen.after + renewTax)}${yearly ? " / yr" : " / mo"}`, color: "#F2F4F5" },
-        { label: `${countryMeta.taxLabel} · ${region}`, value: money(renewTax), color: "#9AA1AB" },
+        { label: "From day 31", value: `${money(renewParts.total)}${yearly ? " / yr" : " / mo"}`, color: "#F2F4F5" },
+        { label: feeLabel, value: money(renewParts.fee), color: "#9AA1AB" },
+        { label: `${countryMeta.taxLabel} · ${region}`, value: money(renewParts.tax), color: "#9AA1AB" },
       ]
     : [
-        { label: `${chosen.name}${yearly ? " · yearly" : " · monthly"}`, value: money(chosen.today), color: "#F2F4F5" },
-        { label: `${countryMeta.taxLabel} · ${region}`, value: money(tax), color: "#9AA1AB" },
+        { label: `${chosen.name}${yearly ? " · yearly" : " · monthly"}`, value: money(todayParts.base), color: "#F2F4F5" },
+        { label: feeLabel, value: money(todayParts.fee), color: "#9AA1AB" },
+        { label: `${countryMeta.taxLabel} · ${region}`, value: money(todayParts.tax), color: "#9AA1AB" },
       ];
 
-  const renewAmount = chosen.after + renewTax;
+  const renewAmount = renewParts.total;
   const headline = from === "billing" || from === "plans"
     ? `Switch to ${chosen.name}, billed ${yearly ? "yearly" : "monthly"}.`
     : chosen.free
@@ -706,7 +723,7 @@ export default function CheckoutView() {
             </label>
             <span className="v8-checkout-stripe-note">
               {stripeOn
-                ? "Country is used for the tax added on the Stripe price. The card itself is collected on the next page."
+                ? "Country sets the tax. Card processing is added on every plan, monthly or yearly. The card itself is collected on the next page."
                 : "Country is saved with the plan. Tax is added once Stripe checkout is turned on."}
             </span>
           </fieldset>
@@ -800,7 +817,7 @@ export default function CheckoutView() {
             <span>✓ Every change is approved by you and can be undone.</span>
           </div>
           <span className="v8-checkout-tax-note">
-            Prices in USD. Sales tax, GST or VAT is added where required, based on your location.
+            Prices in USD. The charge includes card processing (2.9% + $0.30) and sales tax, GST, or VAT for your country.
           </span>
           <button type="button" className="v8-checkout-survey-skip" style={{ alignSelf: "flex-start", paddingLeft: 0 }} onClick={() => router.push("/pricing")}>
             Back to pricing

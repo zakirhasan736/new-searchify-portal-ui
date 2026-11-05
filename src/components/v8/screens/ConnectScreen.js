@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { deleteCmsConnection, disconnectGoogle, forgetWebsite, previewSiteScan, runSiteScan, startGoogleOAuth } from "@/lib/v1Api";
@@ -11,6 +11,7 @@ import { activeSiteContext } from "@/lib/siteContext";
 import { addReadyWebsite, dropReadyWebsite, loadJourney, readySites, selectJourneySite, syncJourneyNow, websiteLabel } from "@/lib/journey";
 import { getBillingAccount } from "@/lib/billingApi";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
+import CheckPopup from "@/components/v8/CheckPopup";
 
 const TONE = { red: "#FF5A4E", yellow: "#FFC53D", green: "#3DDC84", blue: "#4DA3FF" };
 import "@/styles/v8-screens.css";
@@ -77,6 +78,8 @@ export default function ConnectScreen() {
   const [siteNote, setSiteNote] = useState("");
   const [freeScan, setFreeScan] = useState(null);
   const [freeBusy, setFreeBusy] = useState(false);
+  const [party, setParty] = useState(false);
+  const readySeen = useRef(null);
   const [sitesTick, setSitesTick] = useState(0);
   const [state, setState] = useState({
     gsc: "off",
@@ -340,6 +343,21 @@ export default function ConnectScreen() {
   const missing = state.gsc !== "live" ? "Search Console" : "WordPress";
   const ready = reqLive === 2;
   const counterColor = reqLive === 2 ? BLUE : "#9AA1AB";
+
+  useEffect(() => {
+    if (!plugsReady) return undefined;
+    if (readySeen.current === null) {
+      readySeen.current = ready;
+      return undefined;
+    }
+    if (ready && !readySeen.current) {
+      const timer = setTimeout(() => setParty(true), 900);
+      readySeen.current = true;
+      return () => clearTimeout(timer);
+    }
+    readySeen.current = ready;
+    return undefined;
+  }, [ready, plugsReady]);
   const { hostname: siteHost } = activeSiteContext();
 
   return (
@@ -966,7 +984,7 @@ export default function ConnectScreen() {
         {ready ? (
           <button
             type="button"
-            onClick={() => router.push("/app/baseline")}
+            onClick={() => router.push("/app/results")}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -982,7 +1000,7 @@ export default function ConnectScreen() {
               boxShadow: "0 0 24px rgba(77,163,255,.45)",
             }}
           >
-            Save your starting point
+            Next: scan my site →
           </button>
         ) : (
           <span
@@ -1031,6 +1049,21 @@ export default function ConnectScreen() {
       ) : null}
 
       <PluginsAndMcpPanel siteHost={siteHost} />
+      <CheckPopup
+        open={party}
+        titleId="plug-h"
+        title="You're plugged in."
+        tone="blue"
+        icon="plug"
+        checks={[
+          "Google Search Console · reading what people search",
+          "WordPress · ready to publish the fixes you approve",
+        ]}
+        lead="Next, we'll scan your whole site and light up your SearchLites. It takes about a minute."
+        primary={{ label: "Scan my site →", onClick: () => router.push("/app/results") }}
+        secondary={state.ga === "live" ? null : { label: "First, add Google Analytics", onClick: () => setParty(false) }}
+        onClose={() => setParty(false)}
+      />
     </div>
   );
 }
@@ -1193,7 +1226,7 @@ function PluginsAndMcpPanel({ siteHost }) {
                 fontWeight: 600,
                 letterSpacing: "0.6px",
                 textTransform: "uppercase",
-                color: "#D5F879",
+                color: "#4DA3FF",
               }}
             >
               Searchify for AI assistants
@@ -1205,7 +1238,7 @@ function PluginsAndMcpPanel({ siteHost }) {
                 letterSpacing: "0.4px",
                 textTransform: "uppercase",
                 color: "#0A0B0D",
-                background: "#D5F879",
+                background: "#4DA3FF",
                 padding: "4px 8px",
                 borderRadius: "6px",
               }}

@@ -1756,7 +1756,7 @@ export function CompletionView() {
           <h1 style={{ margin: "0", fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "clamp(36px, 4.6vw, 58px)", lineHeight: "1", letterSpacing: "-1.6px", fontWeight: "700" }}>Reports and change log</h1>
           <div style={{ display: "flex", gap: "18px", flexWrap: "wrap", fontSize: "14px", color: "#9AA1AB" }}>
             <span><strong style={{ color: "#F2F4F5" }}>{allChanges.length}</strong> changes shipped</span>
-            <span><strong style={{ color: "#D5F879" }}>+{allChanges.filter(c => c.delta).reduce((sum, c) => sum + (c.delta || 0), 0)}</strong> visitors / mo captured</span>
+            <span><strong style={{ color: "#4DA3FF" }}>+{allChanges.filter(c => c.delta).reduce((sum, c) => sum + (c.delta || 0), 0)}</strong> visitors / mo captured</span>
           </div>
         </div>
         <div role="tablist" aria-label="View" style={{ display: "inline-flex", padding: "4px", borderRadius: "14px", background: "#131519", border: "1px solid #262A31" }}>
@@ -2198,7 +2198,7 @@ export function ManageView() {
                   <span>{pct}%</span>
                 </div>
                 <div style={{ height: "6px", borderRadius: "4px", background: "#1A1D22", overflow: "hidden" }}>
-                  <div style={{ height: "6px", background: "#D5F879", width: `${pct}%` }}></div>
+                  <div style={{ height: "6px", background: "#4DA3FF", width: `${pct}%` }}></div>
                 </div>
               </div>
               <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", fontFamily: "'Geist Mono', monospace", fontSize: "12px" }}>
@@ -2419,7 +2419,7 @@ export function CommandView() {
                   <span style={{ fontSize: "12px", color: "#9AA1AB" }}>{q.client}<span style={{ color: "#3A404A" }}> · </span><span style={{ fontFamily: "'Geist Mono', monospace" }}>{q.page}</span></span>
                   <span style={{ fontSize: "15px", fontWeight: "500" }}>{q.what}</span>
                 </span>
-                <span style={{ fontSize: "13px", fontWeight: "600", color: "#D5F879", whiteSpace: "nowrap" }}>{q.gain}</span>
+                <span style={{ fontSize: "13px", fontWeight: "600", color: "#4DA3FF", whiteSpace: "nowrap" }}>{q.gain}</span>
                 {q.low && !s && <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: "10px", padding: "3px 7px", borderRadius: "6px", border: "1px solid #262A31", color: "#9AA1AB" }}>LOW RISK</span>}
                 {!s ? (
                   <span style={{ display: "flex", gap: "8px" }}>

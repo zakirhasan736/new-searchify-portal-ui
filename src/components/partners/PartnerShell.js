@@ -35,11 +35,11 @@ export function meFromProfile(profile, ptype) {
 
 const SHELL_CSS = `
 .partner-v8-root{margin:0;background:#0A0B0D}
-.partner-v8-root a{color:#D5F879;text-decoration:none}
+.partner-v8-root a{color:#4DA3FF;text-decoration:none}
 .partner-v8-root a:hover{color:#ECFFB8}
 .partner-v8-root button{font-family:inherit;cursor:pointer}
 .partner-v8-root input:focus-visible,.partner-v8-root button:focus-visible,.partner-v8-root a:focus-visible,.partner-v8-root select:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
-.partner-v8-root input[type=checkbox]{accent-color:#D5F879;width:18px;height:18px;flex:none}
+.partner-v8-root input[type=checkbox]{accent-color:#4DA3FF;width:18px;height:18px;flex:none}
 @keyframes sfy-grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 @keyframes sfy-rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion: reduce){.partner-v8-root *{animation:none !important;transition:none !important}}
@@ -199,8 +199,8 @@ export default function PartnerShell({
                 fontSize: 11,
                 padding: "3px 8px",
                 borderRadius: 6,
-                border: "1px solid #D5F879",
-                color: "#D5F879",
+                border: "1px solid #4DA3FF",
+                color: "#4DA3FF",
               }}
             >
               PARTNER CENTRE

@@ -34,7 +34,7 @@ export function buildPartnerEarningsModel(api, filter) {
       pay: money(p),
       rate: `${Math.round(RATE * 100)}%`,
       earn: rev ? money(-c) : money(c),
-      earnColor: rev ? "#FFC53D" : r[3] === "paid" ? "#9AA1AB" : "#D5F879",
+      earnColor: rev ? "#FFC53D" : r[3] === "paid" ? "#9AA1AB" : "#4DA3FF",
       strike: "none",
       status: sty[0],
       color: sty[1],
@@ -53,7 +53,7 @@ export function buildPartnerEarningsModel(api, filter) {
     cleared: money(clearedN),
     hold: money(holdN),
     totals: [
-      { label: "Cleared", value: money(clearedN), sub: "included in the next payout on the 15th", color: "#D5F879", dot: "#3DDC84" },
+      { label: "Cleared", value: money(clearedN), sub: "included in the next payout on the 15th", color: "#4DA3FF", dot: "#3DDC84" },
       {
         label: "In the 30-day hold",
         value: money(holdN),

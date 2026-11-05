@@ -18,7 +18,7 @@ import { buildMoveProof, estimateClickGain } from "@/lib/moveEvidence";
 import SkeletonPage from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
 
-const ACCENT = "#D5F879";
+const ACCENT = "#4DA3FF";
 
 const CONTENT_COL = {
   flex: "999 1 560px",

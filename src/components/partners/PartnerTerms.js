@@ -160,7 +160,7 @@ function PartnerTermsBody() {
       const reached = refMrr >= lvl;
       const isNext = i === nextIdx;
       const st = reached
-        ? ["Reached · held 3 months to earn", "#D5F879", "rgba(213,248,121,.06)", "rgba(213,248,121,.4)", "#D5F879", "#0A0B0D", `Your referrals bring in $${Math.round(refMrr).toLocaleString("en-US")} a month`]
+        ? ["Reached · held 3 months to earn", "#4DA3FF", "rgba(213,248,121,.06)", "rgba(213,248,121,.4)", "#4DA3FF", "#0A0B0D", `Your referrals bring in $${Math.round(refMrr).toLocaleString("en-US")} a month`]
         : isNext
           ? ["Next", "#4DA3FF", "#0A0B0D", "#1A1D22", "#1A1D22", "#F2F4F5", `$${Math.round(lvl - refMrr).toLocaleString("en-US")} a month to go`]
           : ["", "#7D848E", "#0A0B0D", "#1A1D22", "#1A1D22", "#7D848E", "0.5% of the company"];
@@ -288,7 +288,7 @@ function PartnerTermsBody() {
               </span>
               <span style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
                 <span>Your referrals now bring in</span>
-                <span style={{ fontFamily: "'Geist Mono', monospace", color: "#D5F879" }}>${Math.round(refMrr).toLocaleString("en-US")} / mo</span>
+                <span style={{ fontFamily: "'Geist Mono', monospace", color: "#4DA3FF" }}>${Math.round(refMrr).toLocaleString("en-US")} / mo</span>
               </span>
               {steps.map((st) => (
                 <div key={st.n} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 12, background: st.bg, border: `1px solid ${st.border}` }}>
@@ -360,7 +360,7 @@ function PartnerTermsBody() {
               <button
                 type="button"
                 onClick={() => doCopy(`d-${sn[0]}`, sn[1])}
-                style={{ alignSelf: "flex-start", minHeight: 36, padding: "0 12px", borderRadius: 10, border: 0, background: copied === `d-${sn[0]}` ? "#3DDC84" : "#D5F879", color: "#0A0B0D", fontSize: 13, fontWeight: 600 }}
+                style={{ alignSelf: "flex-start", minHeight: 36, padding: "0 12px", borderRadius: 10, border: 0, background: copied === `d-${sn[0]}` ? "#3DDC84" : "#4DA3FF", color: "#0A0B0D", fontSize: 13, fontWeight: 600 }}
               >
                 {copied === `d-${sn[0]}` ? "Copied" : "Copy"}
               </button>
@@ -387,9 +387,9 @@ function PartnerTermsBody() {
                 minHeight: 34,
                 padding: "0 12px",
                 borderRadius: 999,
-                border: `1px solid ${channel === id ? "#D5F879" : "#262A31"}`,
+                border: `1px solid ${channel === id ? "#4DA3FF" : "#262A31"}`,
                 background: channel === id ? "rgba(213,248,121,.08)" : "transparent",
-                color: channel === id ? "#D5F879" : "#9AA1AB",
+                color: channel === id ? "#4DA3FF" : "#9AA1AB",
                 fontSize: 13,
               }}
             >
@@ -411,7 +411,7 @@ function PartnerTermsBody() {
                 <button
                   type="button"
                   onClick={() => doCopy(`m-${m.id}`, m.text)}
-                  style={{ minHeight: 36, padding: "0 12px", borderRadius: 10, border: 0, background: copied === `m-${m.id}` ? "#3DDC84" : "#D5F879", color: "#0A0B0D", fontSize: 13, fontWeight: 600 }}
+                  style={{ minHeight: 36, padding: "0 12px", borderRadius: 10, border: 0, background: copied === `m-${m.id}` ? "#3DDC84" : "#4DA3FF", color: "#0A0B0D", fontSize: 13, fontWeight: 600 }}
                 >
                   {copied === `m-${m.id}` ? "Copied" : "Copy message"}
                 </button>

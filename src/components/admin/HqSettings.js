@@ -74,7 +74,7 @@ export default function HqSettings() {
             <dd style={{ margin: 0, fontFamily: "'Geist Mono', monospace", fontSize: 13 }}>/admin/login</dd>
             <dt style={{ color: "#7D848E" }}>Workspace</dt>
             <dd style={{ margin: 0 }}>
-              <Link href="/app/settings" style={{ color: "#D5F879", textDecoration: "none" }}>
+              <Link href="/app/settings" style={{ color: "#4DA3FF", textDecoration: "none" }}>
                 Customer Settings →
               </Link>
             </dd>

@@ -102,7 +102,7 @@ export default function ReportScreen() {
   const [loading, setLoading] = useState(true);
   const [gscLink, setGscLink] = useState('');
   const [problems, setProblems] = useState([]);
-  const accent = '#D5F879';
+  const accent = '#4DA3FF';
 
   useEffect(() => {
     if (clientView) return undefined;

@@ -116,7 +116,7 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Caveat:wght@600;700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Mrs+Saint+Delafield&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Caveat:wght@600;700&family=Geist:wght@400;500;600&family=Open+Sans:wght@700&family=Mrs+Saint+Delafield&display=swap"
           rel="stylesheet"
         />
       </head>
@@ -126,7 +126,7 @@ export default function RootLayout({ children }) {
           margin: 0,
           background: "#0A0B0D",
           ["--font-geist"]: "Geist, Helvetica Neue, sans-serif",
-          ["--font-geist-mono"]: "Geist Mono, ui-monospace, monospace",
+          ["--font-geist-mono"]: "'Open Sans', sans-serif",
         }}
       >
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />

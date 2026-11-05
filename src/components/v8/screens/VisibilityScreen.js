@@ -293,7 +293,7 @@ export default function VisibilityScreen() {
               Domain <strong style={{ color: "#F2F4F5" }}>{hostname}</strong>
             </span>
             <span>
-              Overall <strong style={{ color: "#D5F879" }}>{overall == null ? "—" : `${overall}%`}</strong>
+              Overall <strong style={{ color: "#4DA3FF" }}>{overall == null ? "—" : `${overall}%`}</strong>
             </span>
             <span>
               Gaps <strong style={{ color: "#F2F4F5" }}>{issues.length}</strong>

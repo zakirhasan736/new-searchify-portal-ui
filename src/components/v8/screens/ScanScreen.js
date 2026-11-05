@@ -26,6 +26,7 @@ import {
 import { useConnectionStatus } from "@/components/board/ConnectDialog";
 import { loadJourney } from "@/lib/journey";
 import ProblemNotice from "@/components/v8/ProblemNotice";
+import CheckPopup from "@/components/v8/CheckPopup";
 import PriorityInfoButton from "@/components/v8/PriorityInfoButton";
 import { problemsFrom } from "@/lib/problems";
 import "@/styles/v8-screens.css";
@@ -38,6 +39,7 @@ export default function ScanScreen() {
   const router = useRouter();
   const [connectionStatus] = useConnectionStatus();
   const [stage, setStage] = useState("reveal");
+  const [scanDone, setScanDone] = useState(false);
   const [pct, setPct] = useState(100);
   const [hover, setHover] = useState(-1);
   const [filter, setFilter] = useState("red");
@@ -196,6 +198,7 @@ export default function ScanScreen() {
         timerRef.current = null;
       }
       setStage(connectionStatus.gsc ? "reveal" : "connect");
+      setScanDone(true);
     };
     setTimeout(finish, 3600);
   }, [connectionStatus.gsc, reloadLive]);
@@ -679,7 +682,7 @@ export default function ScanScreen() {
                 lineHeight: 0.9,
                 letterSpacing: "-2px",
                 fontWeight: 800,
-                color: "#D5F879",
+                color: "#4DA3FF",
               }}
             >
               {scanLoading ? "…" : untappedVisitors.toLocaleString("en-US")}
@@ -692,7 +695,7 @@ export default function ScanScreen() {
           </span>
           <p style={{ flex: "1 1 360px", margin: 0, fontSize: "16px", lineHeight: 1.5, color: "#D7DADE" }}>
             That&apos;s roughly{" "}
-            <strong style={{ color: "#D5F879" }}>
+            <strong style={{ color: "#4DA3FF" }}>
               {callsEstimate || "—"} calls or quote requests a month
             </strong>
             . These people already see your site in Google, then pick someone else. Hover the board to read each
@@ -714,7 +717,8 @@ export default function ScanScreen() {
       >
         <section
           style={{
-            flex: "1 1 440px",
+            order: 2,
+            flex: "1.35 1 520px",
             minWidth: 0,
             display: "flex",
             flexDirection: "column",
@@ -801,7 +805,7 @@ export default function ScanScreen() {
                 style={{
                   fontFamily: "'Geist Mono', monospace",
                   fontSize: 13,
-                  color: "#D5F879",
+                  color: "#4DA3FF",
                   letterSpacing: "0.5px",
                   animation: "sfy-breathe 1.2s ease-in-out infinite",
                   textTransform: "uppercase",
@@ -821,7 +825,7 @@ export default function ScanScreen() {
                 {pct}%
               </div>
               <div style={{ height: 4, borderRadius: 4, background: "#1A1D22", overflow: "hidden" }}>
-                <div style={{ height: 4, background: "#D5F879", width: `${pct}%`, transition: "width .08s linear" }} />
+                <div style={{ height: 4, background: "#4DA3FF", width: `${pct}%`, transition: "width .08s linear" }} />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, fontFamily: "'Geist Mono', monospace", fontSize: 14, color: "#9AA1AB" }}>
                 {log.map((line) => (
@@ -1241,7 +1245,7 @@ export default function ScanScreen() {
 
               <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
                 <a
-                  href="/app"
+                  href="/app/queue"
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -1257,7 +1261,7 @@ export default function ScanScreen() {
                     textDecoration: "none",
                   }}
                 >
-                  Work through them one at a time in Today's moves <span aria-hidden="true">→</span>
+                  Work through them one at a time in Edit and publish <span aria-hidden="true">→</span>
                 </a>
                 <span style={{ fontSize: "13px", color: "#7D848E" }}>
                   Pick reds, yellows, greens or blues there.
@@ -1270,7 +1274,8 @@ export default function ScanScreen() {
         <section
           aria-label="Every task Searchify found"
           style={{
-            flex: "1 1 440px",
+            order: 1,
+            flex: "1 1 400px",
             minWidth: 0,
             display: "flex",
             flexDirection: "column",
@@ -1599,6 +1604,22 @@ export default function ScanScreen() {
         problems={problems}
         onRetry={() => reloadLive()}
         style={{ maxWidth: "1180px", width: "100%", margin: "8px auto 0" }}
+      />
+      <CheckPopup
+        open={scanDone}
+        titleId="done-h"
+        title="Your scan is complete."
+        tone="blue"
+        lead={`We checked ${N || 0} things on ${activeSiteContext(loadJourney()).hostname || "your site"}. Here's what your SearchLites found:`}
+        counts={[
+          { n: red.length, label: "red · fix first", color: "#FF5A4E" },
+          { n: yellow.length, label: "yellow · next", color: "#FFC53D" },
+          { n: green.length, label: "green · in place", color: "#3DDC84" },
+          { n: blue.length, label: "blue · extra", color: "#4DA3FF" },
+        ]}
+        primary={{ label: "Continue to the next step →", onClick: () => setScanDone(false) }}
+        footnote="Next, we'll show you the red ones first. They cost you the most visitors."
+        onClose={() => setScanDone(false)}
       />
     </div>
   );

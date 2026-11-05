@@ -190,7 +190,7 @@ export default function HqPayouts() {
                 <span style={{ color: "#9AA1AB", alignSelf: "center" }}>%</span>
               </div>
             ))}
-            <button type="button" onClick={saveSettings} style={{ alignSelf: "flex-start", minHeight: 36, border: 0, borderRadius: 8, background: "#D5F879", color: "#101215", padding: "0 12px" }}>
+            <button type="button" onClick={saveSettings} style={{ alignSelf: "flex-start", minHeight: 36, border: 0, borderRadius: 8, background: "#4DA3FF", color: "#101215", padding: "0 12px" }}>
               Save settings
             </button>
           </section>
@@ -240,7 +240,7 @@ export default function HqPayouts() {
             <textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Note" style={{ minHeight: 70, borderRadius: 8, border: "1px solid #262A31", background: "#101215", color: "#F2F4F5", padding: 8 }} />
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button type="button" onClick={recalculate} style={{ minHeight: 36, border: 0, borderRadius: 8, background: "#262A31", color: "#F2F4F5", padding: "0 12px" }}>Recalculate</button>
-              <button type="button" onClick={async () => setStatement((await approvePayoutStatement(statement.id, note)).data?.statement || statement)} style={{ minHeight: 36, border: 0, borderRadius: 8, background: "#D5F879", color: "#101215", padding: "0 12px" }}>Approve</button>
+              <button type="button" onClick={async () => setStatement((await approvePayoutStatement(statement.id, note)).data?.statement || statement)} style={{ minHeight: 36, border: 0, borderRadius: 8, background: "#4DA3FF", color: "#101215", padding: "0 12px" }}>Approve</button>
               <button type="button" onClick={async () => setStatement((await rejectPayoutStatement(statement.id, note)).data?.statement || statement)} style={{ minHeight: 36, border: 0, borderRadius: 8, background: "#262A31", color: "#F2F4F5", padding: "0 12px" }}>Reject</button>
               <button type="button" onClick={download} style={{ minHeight: 36, border: 0, borderRadius: 8, background: "#262A31", color: "#F2F4F5", padding: "0 12px" }}>Download CSV</button>
             </div>

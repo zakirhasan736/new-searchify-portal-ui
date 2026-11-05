@@ -258,7 +258,7 @@ export default function HqOverview() {
                   }}
                 >
                   <rect x={b.x} y={b.y4} width={b.w} height={b.h4} fill="#9FE7F5" />
-                  <rect x={b.x} y={b.y3} width={b.w} height={b.h3} fill="#D5F879" />
+                  <rect x={b.x} y={b.y3} width={b.w} height={b.h3} fill="#4DA3FF" />
                   <rect x={b.x} y={b.y2} width={b.w} height={b.h2} fill="#8A93A3" />
                   <rect x={b.x} y={b.y1} width={b.w} height={b.h1} rx="3" fill="#4A5160" />
                 </g>
@@ -481,12 +481,12 @@ export default function HqOverview() {
                 <span style={{ fontSize: 14 }}>{a.name}</span>
                 <span style={{ fontSize: 12, color: "#7D848E" }}>{a.sub}</span>
               </span>
-              <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 13, color: "#D5F879" }}>{a.owed}</span>
+              <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 13, color: "#4DA3FF" }}>{a.owed}</span>
             </div>
           ))}
           <span style={{ fontSize: 12, color: "#7D848E" }}>
             Commission owed this month, paid on the 15th.{" "}
-            <Link href="/admin/hq/partners" style={{ color: "#D5F879", textDecoration: "none" }}>
+            <Link href="/admin/hq/partners" style={{ color: "#4DA3FF", textDecoration: "none" }}>
               Review the payout run
             </Link>
           </span>

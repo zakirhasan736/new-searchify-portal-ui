@@ -31,7 +31,7 @@ import { userIsAuthenticated } from "@/utils/users/Helpers";
 import { SkeletonCards } from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
 
-const ACCENT = "#D5F879";
+const ACCENT = "#4DA3FF";
 
 const GOAL_DEFS = [
   { id: "repair", label: "More repair calls" },

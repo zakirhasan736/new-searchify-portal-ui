@@ -101,7 +101,7 @@ function PartnerOverviewBody() {
               fontWeight: 700,
             }}
           >
-            Your next payout is <span style={{ color: "#D5F879" }}>{data.nextPayout}</span> on {data.payoutOn}.
+            Your next payout is <span style={{ color: "#4DA3FF" }}>{data.nextPayout}</span> on {data.payoutOn}.
           </h1>
           <span style={{ fontSize: 15, color: "#9AA1AB" }}>{data.earnedLine}</span>
         </div>
@@ -198,7 +198,7 @@ function PartnerOverviewBody() {
                   fontSize: 40,
                   fontWeight: 800,
                   letterSpacing: "-1px",
-                  color: "#D5F879",
+                  color: "#4DA3FF",
                   lineHeight: 1,
                 }}
               >
@@ -227,7 +227,7 @@ function PartnerOverviewBody() {
                 </span>
                 <span style={{ color: "#9AA1AB" }}>{data.rate.window}</span>
               </span>
-              <span style={{ fontSize: 14, color: "#D5F879" }}>{data.rate.toGo}</span>
+              <span style={{ fontSize: 14, color: "#4DA3FF" }}>{data.rate.toGo}</span>
             </div>
           ) : null}
           <span style={{ fontSize: 12, color: "#7D848E", lineHeight: 1.5 }}>
@@ -440,7 +440,7 @@ function PartnerOverviewBody() {
                 padding: "0 16px",
                 borderRadius: 12,
                 border: 0,
-                background: copied ? "#3DDC84" : "#D5F879",
+                background: copied ? "#3DDC84" : "#4DA3FF",
                 color: "#0A0B0D",
                 fontSize: 14,
                 fontWeight: 600,
@@ -465,7 +465,7 @@ function PartnerOverviewBody() {
                     minHeight: 34,
                     padding: "0 12px",
                     borderRadius: 999,
-                    border: "1px solid #D5F879",
+                    border: "1px solid #4DA3FF",
                     background: "rgba(213,248,121,.1)",
                     color: "#F2F4F5",
                     fontSize: 13,

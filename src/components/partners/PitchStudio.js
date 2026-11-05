@@ -207,7 +207,7 @@ export default function PitchStudio({ handle }) {
                 padding: "3px 8px",
                 borderRadius: 6,
                 fontFamily: "'Geist Mono', monospace",
-                color: meta?.source === "ai" ? "#4DA3FF" : "#D5F879",
+                color: meta?.source === "ai" ? "#4DA3FF" : "#4DA3FF",
                 background: meta?.source === "ai" ? "rgba(77,163,255,.12)" : "rgba(213,248,121,.1)",
               }}
             >
@@ -230,7 +230,7 @@ export default function PitchStudio({ handle }) {
           <button
             type="button"
             onClick={copy}
-            style={{ alignSelf: "flex-start", minHeight: 40, padding: "0 14px", borderRadius: 11, border: 0, background: copied ? "#3DDC84" : "#D5F879", color: "#0A0B0D", fontSize: 14, fontWeight: 600 }}
+            style={{ alignSelf: "flex-start", minHeight: 40, padding: "0 14px", borderRadius: 11, border: 0, background: copied ? "#3DDC84" : "#4DA3FF", color: "#0A0B0D", fontSize: 14, fontWeight: 600 }}
           >
             {copied ? "Copied" : "Copy draft"}
           </button>

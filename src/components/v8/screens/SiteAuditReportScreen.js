@@ -408,7 +408,7 @@ export default function SiteAuditReportScreen() {
               <strong style={{ color: "#F2F4F5" }}>{findings.length}</strong> findings
             </span>
             <span>
-              SEO score <strong style={{ color: "#D5F879" }}>{seoScore || "—"}</strong>
+              SEO score <strong style={{ color: "#4DA3FF" }}>{seoScore || "—"}</strong>
             </span>
             <span>{seoSource || "PageSpeed + Search Console + crawl"}</span>
           </div>

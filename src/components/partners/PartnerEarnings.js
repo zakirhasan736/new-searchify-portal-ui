@@ -105,7 +105,7 @@ function PartnerEarningsBody() {
             fontWeight: 700,
           }}
         >
-          <span style={{ color: "#D5F879" }}>{cleared}</span> cleared. {hold} still in the 30-day hold.
+          <span style={{ color: "#4DA3FF" }}>{cleared}</span> cleared. {hold} still in the 30-day hold.
         </h1>
         <span style={{ fontSize: 15, color: "#9AA1AB" }}>
           Each commission waits 30 days in case the customer asks for a refund, then it clears and goes into the next payout on the 15th.
@@ -213,7 +213,7 @@ function PartnerEarningsBody() {
                       minHeight: 34,
                       padding: "0 12px",
                       borderRadius: 999,
-                      border: "1px solid #D5F879",
+                      border: "1px solid #4DA3FF",
                       background: "rgba(213,248,121,.1)",
                       color: "#F2F4F5",
                       fontSize: 13,
@@ -343,7 +343,7 @@ function PartnerEarningsBody() {
                 minHeight: 44,
                 borderRadius: 12,
                 border: 0,
-                background: "#D5F879",
+                background: "#4DA3FF",
                 color: "#0A0B0D",
                 fontSize: 14,
                 fontWeight: 600,

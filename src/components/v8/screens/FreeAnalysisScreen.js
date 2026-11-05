@@ -632,7 +632,7 @@ export default function FreeAnalysisScreen() {
                       <span style={{ fontFamily: "var(--mono)" }}>{row.signal}</span>
                     </span>
                     <div className="v8-fa-bar">
-                      <i style={{ width: `${row.pct || 12}%`, background: row.you ? "#D5F879" : "#4A5160" }} />
+                      <i style={{ width: `${row.pct || 12}%`, background: row.you ? "#4DA3FF" : "#4A5160" }} />
                     </div>
                     {row.address ? <span style={{ fontSize: 12, color: "#7D848E" }}>{row.address}</span> : null}
                   </div>

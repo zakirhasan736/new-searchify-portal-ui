@@ -641,7 +641,7 @@ export default function HomeScreen() {
     },
   ];
 
-  const accent = "#D5F879";
+  const accent = "#4DA3FF";
   const { hostname: siteHostname } = activeSiteContext();
   const queueEmpty = !loading && RED.length + YELLOW.length === 0;
   const needsPlugIn = queueEmpty && !connectionStatus.gsc && !connectionStatus.wordpress;

@@ -243,7 +243,7 @@ export default function ChangelogScreen() {
     setCsv(true);
   };
 
-  const accent = '#D5F879';
+  const accent = '#4DA3FF';
 
   const TYPES = { title: 'TITLE TAG', desc: 'DESCRIPTION', image: 'IMAGES', schema: 'SCHEMA', links: 'LINKS', content: 'CONTENT' };
   const BENCH = {
@@ -608,7 +608,7 @@ export default function ChangelogScreen() {
               {include.results ? (
                 <TopicCard title="Results: visitors and calls gained">
                   <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.5 }}>
-                    Shipped changes account for <strong style={{ color: '#D5F879' }}>+{totalCaptured}</strong> visitors / mo.
+                    Shipped changes account for <strong style={{ color: '#4DA3FF' }}>+{totalCaptured}</strong> visitors / mo.
                     {' '}Search Console clicks for this site: {featureKpi(sources.gsc, 'click')}. Calls are shown when Analytics has stored them.
                   </p>
                 </TopicCard>

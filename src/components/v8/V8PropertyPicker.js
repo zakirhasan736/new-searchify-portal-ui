@@ -382,7 +382,7 @@ const eyebrowStyle = {
   fontFamily: "'Geist Mono', monospace",
   fontSize: "11px",
   letterSpacing: "0.6px",
-  color: "#D5F879",
+  color: "#4DA3FF",
   fontWeight: 600,
 };
 

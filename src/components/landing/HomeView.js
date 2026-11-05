@@ -23,7 +23,7 @@ const TILE = {
   blue: ["Locked", "Winning pages Searchify never touches."],
 };
 const DOT_PATTERN = "gbgygrbgggybgygrbggybggrgbyggbgybgygb";
-const ACCENT = "#D5F879";
+const ACCENT = "#4DA3FF";
 
 const LOOK_FOR = [
   "Google",

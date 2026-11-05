@@ -102,8 +102,8 @@ export default function HqPanel({
         .hq-shell a.hq-exit:hover{color:#ECFFB8}
         .hq-shell button{font-family:inherit;cursor:pointer}
         .hq-shell button:disabled{cursor:not-allowed;opacity:.45}
-        .hq-shell input[type=range]{accent-color:#D5F879}
-        .hq-shell input[type=checkbox]{accent-color:#D5F879;width:18px;height:18px}
+        .hq-shell input[type=range]{accent-color:#4DA3FF}
+        .hq-shell input[type=checkbox]{accent-color:#4DA3FF;width:18px;height:18px}
         .hq-shell button:focus-visible,.hq-shell a:focus-visible{outline:2px solid #4DA3FF;outline-offset:2px}
         @media (prefers-reduced-motion: reduce){.hq-shell *{animation:none !important;transition:none !important}}
       `}</style>
@@ -150,7 +150,7 @@ export default function HqPanel({
                 fontSize: 11,
                 padding: "3px 8px",
                 borderRadius: 6,
-                background: "#D5F879",
+                background: "#4DA3FF",
                 color: "#0A0B0D",
                 fontWeight: 600,
               }}

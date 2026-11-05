@@ -602,7 +602,7 @@ export default function CommandScreen() {
                 </span>
                 <span style={{ fontSize: '15px', fontWeight: '500' }}>{q.what}</span>
               </span>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: '#D5F879', whiteSpace: 'nowrap' }}>{q.gain}</span>
+              <span style={{ fontSize: '13px', fontWeight: '600', color: '#4DA3FF', whiteSpace: 'nowrap' }}>{q.gain}</span>
               {q.lowRisk && <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: '10px', padding: '3px 7px', borderRadius: '6px', border: '1px solid #262A31', color: '#9AA1AB' }}>LOW RISK</span>}
               {q.open && (
                 <span style={{ display: 'flex', gap: '8px' }}>
