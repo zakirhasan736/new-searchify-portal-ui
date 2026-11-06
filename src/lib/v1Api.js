@@ -1,7 +1,7 @@
 import { authHeaders } from "@/utils/users/Helpers";
 import { HOT_FEATURES, invalidateV3Cache, useV3Store } from "@/lib/v3Store";
 import { briefFromAnswers } from "@/lib/businessBrief";
-import { activeJourneySite } from "@/lib/journey";
+import { activeJourneySite, loadJourney } from "@/lib/journey";
 import { activeSiteContext } from "@/lib/siteContext";
 
 function activeHost() {
@@ -412,7 +412,38 @@ export async function createChange(body) {
   return res;
 }
 
-export function scanBrief(site = activeJourneySite()) {
+function hostOnly(value) {
+  return String(value || "")
+    .trim()
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .split(/[/?#]/)[0]
+    .toLowerCase();
+}
+
+/**
+ * The journey site to scan. Callers pass either a site record or just its address ("https://acme.com").
+ * An address used to be read as a record (site.answers on a string), which sent an empty site and made the
+ * first scan after setup, sign-in or adding a site fail silently.
+ */
+function resolveScanSite(site) {
+  if (site && typeof site === "object") return site;
+  if (typeof site === "string" && site.trim()) {
+    const host = hostOnly(site);
+    let sites = [];
+    try {
+      sites = loadJourney().sites || [];
+    } catch {
+      sites = [];
+    }
+    const match = sites.find((item) => hostOnly(item?.answers?.site) === host);
+    return match || { answers: { site: site.trim() } };
+  }
+  return activeJourneySite();
+}
+
+export function scanBrief(siteOrAddress) {
+  const site = resolveScanSite(siteOrAddress);
   const answers = site?.answers || {};
   const brief = briefFromAnswers(answers);
   return {
@@ -1037,4 +1068,11 @@ export async function checkKeywordRanks({ site, keyword = "" }) {
     headers: authHeaders(),
     body: JSON.stringify({ site, keyword }),
   }));
+}
+
+/** What each SEO tool needs for a site (scan, robots.txt, research service, market, Google), with the fix. */
+export async function getDataHealth(site = "") {
+  const address = site || activeJourneySite()?.answers?.site || "";
+  const q = address ? `?site=${encodeURIComponent(address)}` : "";
+  return json(await fetch(`/api/v1/operator/data-health${q}`, { headers: authHeaders(), cache: "no-store" }));
 }

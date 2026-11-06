@@ -24,6 +24,7 @@ import ProblemNotice from "@/components/v8/ProblemNotice";
 import KeywordGuide from "@/components/v8/screens/keywords/KeywordGuide";
 import { problemsFrom } from "@/lib/problems";
 import "@/styles/v8-screens.css";
+import DataHealthNotice from "@/components/v8/DataHealthNotice";
 
 const SPOT_TIP = "Where your page shows up in Google for this search, on average. #1 is the top.";
 const CLICK_TIP =
@@ -1222,7 +1223,9 @@ export default function WinScreen() {
                   so Searchify can fill ranks automatically.
                 </p>
               </div>
-            ) : (
+            ) : null}
+            <DataHealthNotice need={["site", "scan", "business", "firewall", "research", "market", "quota", "gsc", "gsc_data"]} onFixed={() => rebuild({ force: true })} />
+            {empty ? null : (
               <>
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   <span

@@ -24,6 +24,7 @@ import { SkeletonRows } from "@/components/v8/SkeletonWave";
 import ProblemNotice from "@/components/v8/ProblemNotice";
 import { problemsFrom } from "@/lib/problems";
 import "@/styles/v8-screens.css";
+import DataHealthNotice from "@/components/v8/DataHealthNotice";
 
 const TOPICS = [
   { id: "ai", label: "AI search · LLM", area: ["AI search"], keys: ["ai_"] },
@@ -391,6 +392,12 @@ export default function SiteAuditReportScreen() {
         problems={[...auditProblems, ...problems]}
         onRetry={() => refreshAudit()}
         style={{ maxWidth: "1180px", width: "100%", margin: "0 auto" }}
+      />
+
+      <DataHealthNotice
+        need={["site", "scan", "firewall", "robots", "research", "quota"]}
+        onFixed={() => refreshAudit()}
+        style={{ maxWidth: "1180px", width: "100%", margin: "0 auto", boxSizing: "border-box" }}
       />
 
       <div style={{ maxWidth: "1180px", width: "100%", margin: "0 auto", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}>

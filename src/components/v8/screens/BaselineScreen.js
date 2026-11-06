@@ -14,6 +14,7 @@ import { featurePayload, getSiteScan, listChanges, loadFeature } from "@/lib/v1A
 import { buildAuditFindings } from "@/lib/auditFindings";
 import { findingsToScanTasks } from "@/lib/v8LiveData";
 import { Skel } from "@/components/v8/SkeletonWave";
+import DataHealthNotice from "@/components/v8/DataHealthNotice";
 import "@/styles/v8-screens.css";
 
 const LEAD_OPTS = ["0 to 5", "6 to 20", "21 to 50", "More than 50", "Not sure"];
@@ -110,6 +111,7 @@ export default function BaselineScreen() {
   ]);
   const [board, setBoard] = useState({ red: 0, yellow: 0, green: 0, blue: 0, pages: 0 });
   const [sugs, setSugs] = useState([]);
+  const [fromGoogle, setFromGoogle] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -159,6 +161,7 @@ export default function BaselineScreen() {
           landings,
           changes: changeList,
           crawl: null,
+          scanIssues: Array.isArray(scan.auditIssues) ? scan.auditIssues : [],
         });
         const bundle = findingsToScanTasks(built.findings || [], { changes: changeList });
         const counts = {
@@ -189,10 +192,11 @@ export default function BaselineScreen() {
           },
           {
             value: pageTotal > 0 ? `${indexed || pageTotal} of ${pageTotal}` : "—",
-            label: "pages Google can find",
+            label: clicks > 0 || position > 0 ? "pages Google can find" : "pages Searchify could read",
             color: "#FF9F43",
           },
         ]);
+        setFromGoogle(clicks > 0 || position > 0);
         setBoard({ ...counts, pages: pageTotal });
 
         const rows = Array.isArray(gsc.rows) ? gsc.rows : Array.isArray(gsc.table) ? gsc.table : [];
@@ -389,8 +393,9 @@ export default function BaselineScreen() {
               This is where you&apos;re starting from.
             </h1>
             <p style={{ margin: 0, fontSize: "16px", color: "#9AA1AB", lineHeight: 1.55 }}>
-              We took this from Google just now for <strong style={{ color: "#F2F4F5", fontWeight: 600 }}>{host}</strong>. Nothing to fill
-              in. We save it so that later, you can see exactly what changed.
+              {fromGoogle ? "We took this from Google just now for " : "We read your website just now: "}
+              <strong style={{ color: "#F2F4F5", fontWeight: 600 }}>{host}</strong>. Nothing to fill in. We save it so that later, you can
+              see exactly what changed.
             </p>
           </div>
 
@@ -466,6 +471,8 @@ export default function BaselineScreen() {
               </div>
             </div>
           </div>
+
+          {loading ? null : <DataHealthNotice need={["scan", "firewall", "google", "gsc", "gsc_data"]} />}
 
           <div style={{ display: "flex", flexDirection: "column", gap: "12px", paddingTop: "4px" }}>
             <span style={{ fontSize: "15px", color: "#D7DADE", lineHeight: 1.5 }}>
