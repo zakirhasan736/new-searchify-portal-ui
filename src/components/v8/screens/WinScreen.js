@@ -156,17 +156,17 @@ function keywordStatus(row, appliedAt) {
   const prev = row.previous;
   const hasPos = pos != null && pos !== "" && Number(pos) > 0;
   const hasPrev = prev != null && prev !== "" && Number(prev) > 0;
-  if (!hasPos && !hasPrev) return "fresh";
-  const age = daysSince(appliedAt);
-  if (pos != null && prev != null) {
+  const published = Boolean(appliedAt);
+  // "First reading by …" is only for a fix we just published. Existing ranks stay visible.
+  if (!hasPos && !hasPrev) return published ? "fresh" : "ranked";
+  const age = published ? daysSince(appliedAt) : null;
+  if (hasPos && hasPrev) {
     if (Number(pos) < Number(prev)) return "worked";
     if (Number(pos) > Number(prev)) return "dropped";
-    if (age != null && age < 28) return "measuring";
+    if (published && age != null && age < 28) return "measuring";
     return "flat";
   }
-  if (row.measuring || row.isNew || (age != null && age < 28) || (pos != null && prev == null)) {
-    return "measuring";
-  }
+  if (published && (row.measuring || row.isNew || (age != null && age < 28))) return "measuring";
   return "flat";
 }
 
@@ -221,22 +221,27 @@ function mapKeywordRow(source, idx, changeByPath, device = "desktop") {
     : changeByPath.get(page);
   const p = change?.proposed || {};
   const appliedAt = change?.appliedAt || null;
-  const status = keywordStatus(row, appliedAt || change?.updatedAt);
-  const stamp = readingStamp(source.trackedAt);
+  const publishedAt = change?.appliedAt || null;
+  const status = keywordStatus(row, publishedAt);
+  const stamp = readingStamp(publishedAt || source.trackedAt);
   const freshNote = "Visitor numbers start once Google shows you for this search.";
   const was = status === "fresh"
     ? "Not tracked before today"
-    : p.beforeTitle || p.liveTitle || p.beforeMetaDescription || "(Live page before changes)";
+    : status === "ranked"
+      ? "Already ranking. No Searchify change yet."
+      : p.beforeTitle || p.liveTitle || p.beforeMetaDescription || "(Live page before changes)";
   const now = status === "fresh"
     ? `Tracking. First reading by ${stamp.land}.`
-    : p.title || p.metaDescription || row.url || "(No page update yet)";
-  const date = status === "fresh" ? trackedDay(source.trackedAt) : change ? formatWinDate(appliedAt || change.updatedAt) : "—";
+    : status === "ranked"
+      ? (row.url || row.page || "Current Google position for this page.")
+      : p.title || p.metaDescription || row.url || "(No page update yet)";
+  const date = status === "fresh" ? trackedDay(publishedAt) : change && publishedAt ? formatWinDate(publishedAt) : "—";
   const pos = row.position;
   const prev = row.previous;
   const clicks = row.clicks != null ? Number(row.clicks) : null;
   const ctr = row.ctr;
   const rankNow = status === "fresh" ? "—" : live && pos == null ? "100+" : rankLabel(pos);
-  const rankWas = status === "fresh" ? "—" : prev != null ? rankLabel(prev) : "—";
+  const rankWas = status === "fresh" || status === "ranked" ? "—" : prev != null ? rankLabel(prev) : "—";
   // Only real numbers: Search Console clicks/CTR and DataForSEO ranks. No estimates are filled in.
   const visitorsNow = status === "fresh" ? "—" : clicks != null ? String(Math.round(clicks)) : "—";
   const rateNow = status === "fresh" ? "—" : pctLabel(typeof ctr === "string" ? parseFloat(ctr) : ctr);
@@ -244,6 +249,8 @@ function mapKeywordRow(source, idx, changeByPath, device = "desktop") {
   const ST_BADGE =
     status === "fresh"
       ? `JUST ADDED · FIRST READING ${stamp.by}`
+      : status === "ranked"
+        ? (pos != null ? `ALREADY #${Math.round(Number(pos))}` : "ALREADY RANKING")
       : status === "measuring"
         ? measuringBadge(appliedAt || change?.updatedAt)
         : status === "worked"
@@ -286,7 +293,7 @@ function mapKeywordRow(source, idx, changeByPath, device = "desktop") {
         status === "fresh"
           ? freshNote
           : visitorsNow !== "—"
-            ? "Clicks from this search in the last 28 days (Search Console)."
+            ? "Clicks from this search in Search Console."
             : "Connect Search Console for real click totals on this search.",
       ],
       leads: ["—", "—", status === "fresh" ? freshNote : "Calls and form fills need Google Analytics conversions for this search."],
@@ -439,7 +446,12 @@ export default function WinScreen() {
         if (path && path !== "—" && !changeByPath.has(path)) changeByPath.set(path, c);
       });
 
-      const rows = (data.trackedList || []).map(normalizeTracked).filter(Boolean);
+      const tracked = (data.trackedList || []).map(normalizeTracked).filter(Boolean);
+      const seen = new Set(tracked.map((row) => String(row.keyword || "").toLowerCase()));
+      const existing = (data.current || [])
+        .map(normalizeTracked)
+        .filter((row) => row && !seen.has(String(row.keyword || "").toLowerCase()));
+      const rows = [...tracked, ...existing];
       setRaw({ rows, changeByPath });
       setSelId((prev) => (rows.some((r) => keywordId(r.keyword) === prev) ? prev : rows[0] ? keywordId(rows[0].keyword) : ""));
     } catch {
@@ -605,6 +617,14 @@ export default function WinScreen() {
       arrow: "#9AA1AB",
       after: "#F2F4F5",
     },
+    ranked: {
+      dot: "#4DA3FF",
+      text: "#D7DADE",
+      bg: "#1A1D22",
+      border: "#262A31",
+      arrow: "#4DA3FF",
+      after: "#F2F4F5",
+    },
   };
 
   const cur = K.find((x) => x.id === selId) || K[0];
@@ -681,6 +701,8 @@ export default function WinScreen() {
     ? "No keywords tracked yet."
     : cur.status === "fresh"
       ? `Now tracking “${cur.term}”.`
+      : cur.status === "ranked"
+        ? `"${cur.term}" is already on Google${cur.m.rank[1] && cur.m.rank[1] !== "—" ? ` at ${cur.m.rank[1]}` : ""}.`
       : cur.status === "worked"
       ? `"${cur.term}" is bringing in more customers.`
       : cur.status === "measuring"

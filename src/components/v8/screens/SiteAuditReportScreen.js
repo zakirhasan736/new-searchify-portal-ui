@@ -126,6 +126,8 @@ export default function SiteAuditReportScreen() {
   const [severity, setSeverity] = useState("all");
   const [report, setReport] = useState({});
   const [crawlState, setCrawlState] = useState(null);
+  const [robotsFile, setRobotsFile] = useState(null);
+  const [seoPluginName, setSeoPluginName] = useState("");
   const [inspection, setInspection] = useState(null);
   const [inspectBusy, setInspectBusy] = useState(false);
   const [scanBusy, setScanBusy] = useState(false);
@@ -155,6 +157,8 @@ export default function SiteAuditReportScreen() {
       setProblems([...problemsFrom(scan, "site_scan"), ...(site ? problemsFrom(crawlRes, "site_audit") : [])]);
       const crawl = crawlRes?.ok ? crawlRes.data : null;
       setCrawlState(crawl ? { state: crawl.state, crawled: crawl.crawled, queued: crawl.queued, fetchedAt: crawl.fetchedAt, maxPages: crawl.maxPages } : null);
+      setRobotsFile(crawl?.report?.robots?.status != null || (crawl?.report?.robots?.preview || []).length ? crawl.report.robots : null);
+      setSeoPluginName(crawl?.report?.seoPluginName || "");
       const inspectPayload = featurePayload(inspect);
       setInspection(inspectPayload?.inspected ? inspectPayload : null);
       const auditPayload = featurePayload(audit);
@@ -403,6 +407,11 @@ export default function SiteAuditReportScreen() {
           >
             Site audit report
           </h1>
+          {seoPluginName ? (
+            <p style={{ margin: 0, fontSize: "15px", color: "#3DDC84" }}>
+              {seoPluginName} detected. Searchify will work alongside it.
+            </p>
+          ) : null}
           <div style={{ display: "flex", gap: "18px", flexWrap: "wrap", fontSize: "14px", color: "#9AA1AB" }}>
             <span>
               <strong style={{ color: "#F2F4F5" }}>{findings.length}</strong> findings
@@ -652,7 +661,22 @@ export default function SiteAuditReportScreen() {
           }}
         >
           {loading ? <div style={{ padding: "18px" }}><SkeletonRows count={8} /></div> : null}
-          {!loading && rows.length === 0 ? (
+          {!loading && rows.length === 0 && (topic === "robots" || topic === "all") && robotsFile ? (
+            <div style={{ padding: "22px" }}>
+              <p style={{ margin: "0 0 10px", fontSize: "14px", color: "#D7DADE" }}>
+                robots.txt returned HTTP {robotsFile.status}.
+                {robotsFile.sitemaps?.length ? ` Sitemap: ${robotsFile.sitemaps[0]}.` : " No Sitemap line."}
+              </p>
+              {robotsFile.preview?.length ? (
+                <pre style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: "'Geist Mono', monospace", fontSize: "12px", lineHeight: 1.55, color: "#9AA1AB" }}>
+                  {robotsFile.preview.join("\n")}
+                </pre>
+              ) : (
+                <p style={{ margin: 0, fontSize: "14px", color: "#9AA1AB" }}>The file was reached and has no rules to list.</p>
+              )}
+            </div>
+          ) : null}
+          {!loading && rows.length === 0 && !((topic === "robots" || topic === "all") && robotsFile) ? (
             <p style={{ margin: 0, padding: "22px", fontSize: "14px", color: "#9AA1AB" }}>
               No findings in this topic yet. Connect Search Console and refresh the audit.
             </p>

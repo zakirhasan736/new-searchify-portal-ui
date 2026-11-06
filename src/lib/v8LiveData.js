@@ -17,10 +17,22 @@ export function hostFromUrl(raw) {
 
 export function weeklyBuckets(gscPayload) {
   const gsc = gscPayload || {};
-  if (Array.isArray(gsc.weekly) && gsc.weekly.length) return gsc.weekly;
-  if (Array.isArray(gsc.panels?.weeklyClicks) && gsc.panels.weeklyClicks.length) return gsc.panels.weeklyClicks;
-  if (!Array.isArray(gsc.daily) || !gsc.daily.length) return [];
-  const ordered = [...gsc.daily].sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+  const daily = Array.isArray(gsc.daily) ? gsc.daily : [];
+  const shortWeekly = Array.isArray(gsc.weekly) && gsc.weekly.length
+    ? gsc.weekly
+    : Array.isArray(gsc.panels?.weeklyClicks) ? gsc.panels.weeklyClicks : [];
+  // A stored 4-week chart must not hide the 16 months of daily Search Console history.
+  if (daily.length >= 14 && daily.length > shortWeekly.length * 7) {
+    return bucketsFromDaily(daily);
+  }
+  if (shortWeekly.length && shortWeekly[0] && shortWeekly[0].length >= 4) return shortWeekly;
+  if (!daily.length) return shortWeekly;
+  return bucketsFromDaily(daily);
+}
+
+function bucketsFromDaily(daily) {
+  if (!Array.isArray(daily) || !daily.length) return [];
+  const ordered = [...daily].sort((a, b) => String(a[0]).localeCompare(String(b[0])));
   const buckets = [];
   for (let i = 0; i < ordered.length; i += 7) {
     const chunk = ordered.slice(i, i + 7);

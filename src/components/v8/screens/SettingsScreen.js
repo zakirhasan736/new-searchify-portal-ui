@@ -13,7 +13,7 @@ import {
   saveUsageControls,
 } from '@/lib/v1Api';
 import { initials, planDisplayName } from '@/lib/v8LiveData';
-import { loadJourney, planById } from '@/lib/journey';
+import { activeJourneySite, loadJourney, planById, setActiveSiteAccess, websiteLabel } from '@/lib/journey';
 import { SkeletonCard } from '@/components/v8/SkeletonWave';
 import { authHeaders } from '@/utils/users/Helpers';
 import { getBillingAccount } from '@/lib/billingApi';
@@ -76,6 +76,7 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState('');
   const [loading, setLoading] = useState(true);
+  const [siteAccess, setSiteAccess] = useState({ readOnly: false, manageTitles: false, label: '' });
 
   useEffect(() => {
     if (initialTab === 'billing' || initialTab === 'profile' || initialTab === 'team' || initialTab === 'notif' || initialTab === 'auto') {
@@ -115,6 +116,12 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
       .then(([acct, biz, ws, usage, chRes, bill]) => {
         if (cancelled) return;
         const journey = loadJourney();
+        const site = activeJourneySite(journey);
+        setSiteAccess({
+          readOnly: Boolean(site?.readOnly),
+          manageTitles: Boolean(site?.manageTitles),
+          label: site ? websiteLabel(site) : '',
+        });
         const bizProfile = biz?.ok ? biz.data?.profile || biz.data || {} : {};
         const name = acct?.displayName || acct?.username || '';
         const email = acct?.email || '';
@@ -544,6 +551,35 @@ export default function SettingsScreen({ initialTab = 'auto' }) {
                   </span>
                 </span>
                 <span style={{ fontSize: '14px', color: '#9AA1AB' }}>You can change this any time. Every change is still checked live and can be undone.</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px 18px', borderRadius: '16px', border: '1px solid #262A31' }}>
+                <span style={{ fontSize: '16px', fontWeight: '600' }}>{siteAccess.label || 'This website'}</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <span style={{ fontSize: '15px' }}>Read only</span>
+                    <span style={{ fontSize: '13px', color: '#9AA1AB' }}>Connect the site for Search Console, the audit and keywords. Searchify will not publish any change.</span>
+                  </span>
+                  <button type="button" role="switch" aria-checked={siteAccess.readOnly} aria-label="Read only" onClick={() => {
+                    const readOnly = !siteAccess.readOnly;
+                    setActiveSiteAccess({ readOnly });
+                    setSiteAccess((current) => ({ ...current, readOnly }));
+                  }} style={{ width: '52px', height: '30px', borderRadius: '999px', border: 0, padding: '3px', background: siteAccess.readOnly ? '#4DA3FF' : '#262A31', display: 'flex', justifyContent: siteAccess.readOnly ? 'flex-end' : 'flex-start' }}>
+                    <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#F2F4F5' }} />
+                  </button>
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <span style={{ fontSize: '15px' }}>Let Searchify manage titles and descriptions</span>
+                    <span style={{ fontSize: '13px', color: '#9AA1AB' }}>Off until you turn it on. Yoast, Rank Math and All in One SEO stay installed. A published title is written into that plugin&apos;s own fields.</span>
+                  </span>
+                  <button type="button" role="switch" aria-checked={siteAccess.manageTitles} aria-label="Let Searchify manage titles and descriptions" disabled={siteAccess.readOnly} onClick={() => {
+                    const manageTitles = !siteAccess.manageTitles;
+                    setActiveSiteAccess({ manageTitles });
+                    setSiteAccess((current) => ({ ...current, manageTitles }));
+                  }} style={{ width: '52px', height: '30px', borderRadius: '999px', border: 0, padding: '3px', background: siteAccess.manageTitles && !siteAccess.readOnly ? '#4DA3FF' : '#262A31', display: 'flex', justifyContent: siteAccess.manageTitles && !siteAccess.readOnly ? 'flex-end' : 'flex-start', opacity: siteAccess.readOnly ? 0.45 : 1 }}>
+                    <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#F2F4F5' }} />
+                  </button>
+                </span>
               </div>
               <div role="radiogroup" aria-label="Autonomy" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {levels.map((l) => (

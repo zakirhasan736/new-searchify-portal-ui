@@ -320,6 +320,16 @@ export function activeJourneySite(state = loadJourney()) {
   return state.sites.find((site) => site.id === state.activeId) || readySites(state).at(-1) || null;
 }
 
+/** Per-site switches. readOnly never publishes. manageTitles defaults off. */
+export function setActiveSiteAccess(patch) {
+  const state = loadJourney();
+  const site = activeJourneySite(state);
+  if (!site) return null;
+  const sites = state.sites.map((item) => (item.id === site.id ? { ...item, ...patch } : item));
+  save({ ...state, sites });
+  return sites.find((item) => item.id === site.id) || null;
+}
+
 export function websiteLabel(site) {
   const raw = site?.answers?.site || "";
   if (!raw) return "Website";

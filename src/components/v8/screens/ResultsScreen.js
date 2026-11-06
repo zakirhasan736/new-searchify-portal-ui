@@ -18,6 +18,7 @@ const RANGES = [
   [13, "3 months"],
   [26, "6 months"],
   [52, "12 months"],
+  [70, "16 months"],
 ];
 
 function emptyModel(hostname) {
@@ -102,7 +103,7 @@ function ResultsEmpty({ hostname }) {
           </span>
           <h1 className="v8-results-title">No results data yet.</h1>
           <span className="v8-results-sub">
-            Connect Search Console for {hostname || "your site"} and wait for a few weeks of clicks. Shipped changes will appear on the chart once organic-search data is available.
+            Connect Search Console for {hostname || "your site"}. Clicks, impressions and position show as soon as Google has them. Search Console is about 2–3 days behind, so the chart says “Data up to” the last complete day. “First reading by” appears only after a fix is published.
           </span>
           <div className="v8-results-actions">
             <Link href="/app/connections" className="v8-results-btn is-primary">
@@ -154,6 +155,7 @@ export default function ResultsScreen() {
           CH,
           weekStarts: weekRows.map((row) => String(row[4] || "")),
           hostname,
+          dataThrough: gsc?.dataThrough || gsc?.lastCompleteDay || "",
         });
         if (CH.length) setSel(String(CH[CH.length - 1].id));
       })
@@ -168,7 +170,7 @@ export default function ResultsScreen() {
     };
   }, []);
 
-  const { N, START, CH, clicks, impr, pos, leads, hostname, weekLabels, weekStarts } = model;
+  const { N, START, CH, clicks, impr, pos, leads, hostname, weekLabels, weekStarts, dataThrough } = model;
   const empty = N < 4;
 
   const chart = useMemo(() => {
@@ -383,7 +385,9 @@ export default function ResultsScreen() {
           </span>
           <h1 className="v8-results-title">{headline}</h1>
           <span className="v8-results-sub">
-            {hostname || "your site"} · every shipped change is marked on the chart
+            {hostname || "your site"}
+            {dataThrough ? ` · Data up to ${dataThrough}` : ""}
+            {" · Search Console is about 2–3 days behind"}
           </span>
         </div>
         <div className="v8-results-ranges" role="group" aria-label="Time range">
