@@ -14,6 +14,7 @@ import {
   queueItems,
 } from "@/lib/v1Api";
 import { SkeletonRows } from "@/components/v8/SkeletonWave";
+import DataHealthNotice from "@/components/v8/DataHealthNotice";
 import "@/styles/v8-screens.css";
 
 const BURST = Array.from({ length: 16 }, (_, i) => ({
@@ -225,6 +226,7 @@ export default function EditPublishScreen() {
       <div style={{ padding: "22px clamp(16px, 4vw, 56px)", color: "#F2F4F5", display: "flex", flexDirection: "column", gap: 16, maxWidth: 720 }}>
         <h1 style={{ margin: 0, fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: "clamp(28px, 3.2vw, 40px)", letterSpacing: "-1px" }}>Edit how this page appears on Google</h1>
         <p style={{ margin: 0, color: "#9AA1AB", fontSize: 16 }}>Nothing is waiting. SearchLites writes the next title and description, then it shows up here.</p>
+        <DataHealthNotice need={["site", "scan", "business", "firewall", "research", "publishing"]} onFixed={() => window.location.reload()} />
         <Link href="/app/results" style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", minHeight: 56, padding: "0 28px", borderRadius: 14, background: "#4DA3FF", color: "#0A0B0D", fontWeight: 600, textDecoration: "none" }}>Open SearchLites</Link>
       </div>
     );
@@ -242,6 +244,8 @@ export default function EditPublishScreen() {
           <span style={{ fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: 12, color: "#7D848E" }}>{current.path}</span>
         </span>
       </header>
+
+      <DataHealthNotice need={["firewall", "publishing"]} />
 
       <div style={{ maxWidth: 1180, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 8 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>

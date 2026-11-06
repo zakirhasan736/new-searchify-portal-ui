@@ -8,6 +8,7 @@ import { activeSiteContext } from "@/lib/siteContext";
 import { loadJourney } from "@/lib/journey";
 import SkeletonPage from "@/components/v8/SkeletonWave";
 import "@/styles/v8-screens.css";
+import DataHealthNotice from "@/components/v8/DataHealthNotice";
 
 const CONTENT_COL = {
   flex: "999 1 560px",
@@ -117,6 +118,12 @@ export default function QueueScreen({ autoOpen = false } = {}) {
       </div>
 
       {error ? <p style={{ margin: 0, color: "#FF5A4E", maxWidth: 1180 }}>{error}</p> : null}
+
+      <DataHealthNotice
+        need={["site", "scan", "business", "firewall", "research", "market", "gsc", "gsc_data"]}
+        onFixed={() => window.location.reload()}
+        style={{ maxWidth: 1180, width: "100%", margin: "0 auto", boxSizing: "border-box" }}
+      />
 
       {!rows.length ? (
         <div

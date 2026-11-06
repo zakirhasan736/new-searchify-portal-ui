@@ -29,6 +29,7 @@ import CheckPopup from "@/components/v8/CheckPopup";
 import PriorityInfoButton from "@/components/v8/PriorityInfoButton";
 import { problemsFrom } from "@/lib/problems";
 import "@/styles/v8-screens.css";
+import DataHealthNotice from "@/components/v8/DataHealthNotice";
 
 const COLORS = DOT_COLORS;
 const RGB = DOT_RGB;
@@ -423,8 +424,14 @@ export default function ScanScreen() {
   const shownChoices = choices.slice(0, 3);
   const v = (variant[selTask.t] || 0) % choiceCount;
   const picked = shownChoices[v] || { title: "", description: "" };
-  const liveNowT = p.liveTitle || p.beforeTitle || nowT;
-  const liveNowD = p.liveMetaDescription || p.beforeMetaDescription || p.beforeDescription || nowD;
+  // Prefer what the page really says (from the scan) over a made-up placeholder.
+  const scanned = (Array.isArray(scanData?.listings) ? scanData.listings : []).find((row) => norm(row.path || "/") === pagePath) || null;
+  const liveNowT = p.liveTitle || p.beforeTitle || scanned?.title || nowT;
+  const liveNowD =
+    p.liveMetaDescription ||
+    p.beforeMetaDescription ||
+    p.beforeDescription ||
+    (scanned ? scanned.description || "(No description. Google shows a sentence it picks from the page.)" : nowD);
   const liveSugT = picked.title || "";
   const liveSugD = picked.description || "";
 
@@ -724,6 +731,10 @@ export default function ScanScreen() {
             gap: "24px",
           }}
         >
+          <DataHealthNotice
+            need={["site", "scan", "business", "firewall", "robots", "research", "market", "gsc", "gsc_data"]}
+            onFixed={() => window.location.reload()}
+          />
           {stage === "input" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "22px", animation: "sfy-rise .5s ease both" }}>
               <h1

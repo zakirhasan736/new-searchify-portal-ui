@@ -369,7 +369,10 @@ export function buildAuditFindings({ audit, pages, queries, landings, places, ch
     const impressions = new Map();
     pageRows.forEach((row) => impressions.set(keyOf(row[0]), (impressions.get(keyOf(row[0])) || 0) + (Number(row[2]) || 0)));
     const ctx = { impressions, sessions: new Map(), open };
-    if (scanIssues.length) findings.push(...crawlFindings({ issues: scanIssues, pagesCrawled: 0 }, ctx, "scan"));
+    // The scan repeats the crawl's on-page checks under the same keys; keep the crawl copy when both exist.
+    const crawlKeys = new Set((crawlReport?.issues || []).map((issue) => issue.key));
+    const ownScan = scanIssues.filter((issue) => !crawlKeys.has(issue.key));
+    if (ownScan.length) findings.push(...crawlFindings({ issues: ownScan, pagesCrawled: 0 }, ctx, "scan"));
     if (gscIssues.length) findings.push(...crawlFindings({ issues: gscIssues, pagesCrawled: 0 }, ctx, "gsc"));
   }
   findings.sort((a, b) => (SEVERITY_RANK[a.severity] ?? 3) - (SEVERITY_RANK[b.severity] ?? 3) || (b.traffic || 0) - (a.traffic || 0));
