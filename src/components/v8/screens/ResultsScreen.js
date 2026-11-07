@@ -199,6 +199,13 @@ export default function ResultsScreen() {
     const baseAvg = before.reduce((a, b) => a + b, 0) / before.length;
     let lo = Math.min(baseAvg, ...series);
     let hi = Math.max(baseAvg, ...series);
+    // A flat series still needs a readable axis: at least 8 units (0.8 spots) between top and bottom.
+    const minSpan = mk.invert ? 0.8 : 8;
+    if (hi - lo < minSpan) {
+      const mid = (hi + lo) / 2;
+      lo = mid - minSpan / 2;
+      hi = mid + minSpan / 2;
+    }
     const pad = (hi - lo) * 0.15 || 1;
     lo -= pad;
     hi += pad;
@@ -298,14 +305,19 @@ export default function ResultsScreen() {
       const delta = !d[3]
         ? "Waiting on baseline"
         : d[4]
-          ? "up " + (d[3] - d[2]).toFixed(1) + " spots since Searchify"
-          : (d[2] >= d[3] ? "+" : "") + Math.round((d[2] / d[3] - 1) * 100) + "% since Searchify";
+          ? Math.abs(d[3] - d[2]) < 0.1
+            ? "no change since Searchify"
+            : `${d[3] > d[2] ? "up" : "down"} ${Math.abs(d[3] - d[2]).toFixed(1)} spots since Searchify`
+          : Math.abs(Math.round((d[2] / d[3] - 1) * 100)) < 2
+            ? "no change since Searchify"
+            : (d[2] >= d[3] ? "+" : "") + Math.round((d[2] / d[3] - 1) * 100) + "% since Searchify";
+      const flat = !d[3] || / no change /.test(` ${delta} `);
       return {
         id: d[0],
         label: d[1],
         value: d[5](d[2]),
         delta,
-        deltaColor: !d[3] ? "#9AA1AB" : better ? "#3DDC84" : "#FF5A4E",
+        deltaColor: flat ? "#9AA1AB" : better ? "#3DDC84" : "#FF5A4E",
         on,
       };
     });
@@ -341,11 +353,15 @@ export default function ResultsScreen() {
       }));
     const clicksNow = Math.round(avg(lastN(clicks, 8)) * 4.33);
     const clicksBefore = Math.round(avg(clicks.slice(0, Math.max(1, START))) * 4.33);
-    const headline = clicksBefore
-      ? (clicksNow >= clicksBefore ? "+" : "") +
-        Math.round((clicksNow / clicksBefore - 1) * 100) +
-        "% more clicks since you started."
-      : `Results for ${hostname || "your site"}`;
+    const change = clicksBefore ? Math.round((clicksNow / clicksBefore - 1) * 100) : null;
+    const headline =
+      change == null
+        ? `Results for ${hostname || "your site"}`
+        : change >= 2
+          ? `+${change}% more clicks since you started.`
+          : change <= -2
+            ? `Clicks are down ${Math.abs(change)}% since you started.`
+            : "Clicks are holding steady since you started.";
 
     return {
       R,

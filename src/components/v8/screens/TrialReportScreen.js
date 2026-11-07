@@ -82,7 +82,10 @@ function statusForChange(change) {
   if (!change) return { status: "Too early to call", color: "#9AA1AB" };
   const c = String(change);
   if (/proven|goal/i.test(c)) return { status: "Proven", color: "#3DDC84" };
-  if (/\+/.test(c) || /rising|early/i.test(c)) {
+  // "Too early to call" contains "early", so it must be matched before the early-sign rule.
+  if (/too early|waiting|connect|no pages/i.test(c)) return { status: "Too early to call", color: "#9AA1AB" };
+  if (/^early sign$/i.test(c)) return { status: "Early sign", color: "#FFC53D" };
+  if (/\+/.test(c) || /rising|early sign/i.test(c)) {
     return {
       status: /early sign/i.test(c) ? c : c.startsWith("+") ? `Early sign, ${c}` : "Early sign, rising",
       color: "#3DDC84",
@@ -392,7 +395,9 @@ export default function TrialReportScreen() {
 
       if (label === "Healthy pages") {
         // Always prefer live heatmap for Now; Day 1 from stored baseline when present.
-        to = liveFallback.healthyNow || to;
+        // The page boards above and this row must agree: use their count whenever they have one.
+        const boardPages = healthPack.after.red + healthPack.after.yellow + healthPack.after.green;
+        to = boardPages ? healthPack.after.green : liveFallback.healthyNow || to;
         if (liveFallback.healthyFrom > 0) from = liveFallback.healthyFrom;
         else if (!apiRows.length) from = to;
       } else if (!apiRows.length || (from === 0 && to === 0)) {
@@ -440,7 +445,7 @@ export default function TrialReportScreen() {
         color: st.color,
       };
     });
-  }, [account?.trialMetrics, liveFallback]);
+  }, [account?.trialMetrics, liveFallback, healthPack]);
 
   const metricsNote =
     account?.trialMetricsNote ||
@@ -651,8 +656,8 @@ export default function TrialReportScreen() {
           <span style={{ fontSize: 14, color: "#9AA1AB" }}>
             {moves ? `${moves} fixes approved and live. All undoable.` : "Fixes you approve will show up here."}
           </span>
-          {(fixed.length ? fixed : ["Connect Google and approve your first move to start this list."]).map((f) => (
-            <div key={f} className="v8-tr-fix-row">
+          {(fixed.length ? fixed : ["Connect Google and approve your first move to start this list."]).map((f, i) => (
+            <div key={`${i}-${f}`} className="v8-tr-fix-row">
               <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style={{ flex: "none", marginTop: 3 }}>
                 <path
                   d="M5 12.5l4.5 4.5L19 7.5"
@@ -679,8 +684,8 @@ export default function TrialReportScreen() {
                 { what: "Newest title and description changes", when: "results in 3–6 weeks" },
                 { what: "Internal link updates", when: "results in 3–6 weeks" },
               ]
-          ).map((c) => (
-            <div key={c.what} className="v8-tr-coming-row">
+          ).map((c, i) => (
+            <div key={`${i}-${c.what}`} className="v8-tr-coming-row">
               <span>{c.what}</span>
               <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "#FFC53D" }}>{c.when}</span>
             </div>

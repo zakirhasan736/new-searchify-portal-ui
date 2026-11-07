@@ -185,9 +185,10 @@ export default function ScanScreen() {
     setScanRun((n) => n + 1);
   }, []);
 
-  const finishScan = useCallback(() => {
+  const finishScan = useCallback((found = {}) => {
     setPct(100);
-    setStage(connectionStatus.gsc ? "reveal" : "connect");
+    // The scan checked Google itself; the page's own status may still be loading.
+    setStage(found.gsc || connectionStatus.gsc ? "reveal" : "connect");
     setScanDone(true);
   }, [connectionStatus.gsc]);
 
@@ -1575,12 +1576,12 @@ export default function ScanScreen() {
         titleId="done-h"
         title="Your scan is complete."
         tone="blue"
-        lead={`We read ${activeSiteContext(loadJourney()).hostname || "your site"} with your Google data, keyword, backlink and audit research, and found ${N || 0} task${N === 1 ? "" : "s"}:`}
+        lead={`We checked ${N || 0} things across ${scanData?.pagesRead || 0} page${scanData?.pagesRead === 1 ? "" : "s"} of ${activeSiteContext(loadJourney()).hostname || "your site"}. Here's what your SearchLites found:`}
         counts={[
-          { n: red.length, label: "red · fix first", color: "#FF5A4E" },
-          { n: yellow.length, label: "yellow · next", color: "#FFC53D" },
-          { n: green.length, label: "green · in place", color: "#3DDC84" },
-          { n: blue.length, label: "blue · extra", color: "#4DA3FF" },
+          { n: red.length, label: "urgent fixes", color: "#FF5A4E" },
+          { n: yellow.length, label: "worth doing", color: "#FFC53D" },
+          { n: green.length, label: "already passing", color: "#3DDC84" },
+          { n: blue.length, label: "winning pages", color: "#4DA3FF" },
         ]}
         primary={{ label: "Continue to the next step →", onClick: () => setScanDone(false) }}
         footnote="Next, we'll show you the red ones first. They cost you the most visitors."
