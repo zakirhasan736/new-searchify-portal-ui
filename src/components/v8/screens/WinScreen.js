@@ -889,6 +889,7 @@ export default function WinScreen() {
         <div style={{ display: view === "guide" ? "contents" : "none" }}>
           <KeywordGuide
             suggestions={suggestions}
+            rankedCount={raw.rows.filter((row) => Number(row.position) > 0).length}
             competitors={research.competitors}
             localVolume={research.localVolume}
             trackedTerms={new Set(K.map((row) => row.term.toLowerCase()))}

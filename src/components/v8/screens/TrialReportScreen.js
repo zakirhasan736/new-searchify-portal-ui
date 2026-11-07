@@ -203,7 +203,7 @@ export default function TrialReportScreen() {
       loadFeature("site-audit").catch(() => ({ ok: false })),
       loadFeature("on-page-seo").catch(() => ({ ok: false })),
       loadFeature("organic-search").catch(() => ({ ok: false })),
-      loadFeature("ga4-overview").catch(() => ({ ok: false })),
+      loadFeature("traffic-analytics").catch(() => ({ ok: false })),
       getSiteScan().catch(() => ({ ok: false })),
     ])
       .then(([bill, ch, auditFeat, onPageFeat, organicFeat, ga4Feat, scanRes]) => {
