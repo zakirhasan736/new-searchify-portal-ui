@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import HqPanel, { useFirstLoad } from "@/components/admin/HqPanel";
 import { getHqProblems, hqProblemAction } from "@/lib/hqApi";
+import SystemCheck from "@/components/admin/SystemCheck";
 
 const SEV = {
   URGENT: ["#FF8A80", "rgba(255,90,78,.16)"],
@@ -124,6 +125,8 @@ export default function HqProblems() {
           Billing, connections and automation problems, worst first. Customers see a friendly version of each one in their own dashboard.
         </span>
       </div>
+
+      <SystemCheck />
 
       <section
         aria-label="Problem types"

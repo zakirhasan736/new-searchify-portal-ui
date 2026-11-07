@@ -235,3 +235,8 @@ export async function rejectPayoutStatement(id, note = "") {
     }),
   );
 }
+
+/** DataForSEO, OpenAI and Google setup, checked live. `deep` spends a few cents probing each DataForSEO API. */
+export async function getHqSystemCheck(deep = false) {
+  return json(await fetch(`/api/v1/hq/system-check${deep ? "?deep=true" : ""}`, { headers: authHeaders(), cache: "no-store" }));
+}

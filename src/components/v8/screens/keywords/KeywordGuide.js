@@ -195,6 +195,7 @@ const MONO = { fontFamily: '"Open Sans", sans-serif', fontWeight: 700 };
 
 export default function KeywordGuide({
   suggestions = [],
+  rankedCount = 0,
   competitors = [],
   localVolume = null,
   trackedTerms = new Set(),
@@ -353,8 +354,10 @@ export default function KeywordGuide({
               <p style={{ margin: 0, fontSize: 17, lineHeight: 1.55, color: "#D7DADE" }}>
                 {appear
                   ? `Google shows you for ${appear} of them${onPageOne ? "." : ", none on page one yet."}`
-                  : "Google doesn’t show your site for any of these yet. That’s normal for a new site."}{" "}
-                We found {walk.length} topics you could win. Let’s go through them one at a time.
+                  : rankedCount
+                    ? `You already show up on Google for ${rankedCount} search${rankedCount === 1 ? "" : "es"} (see Tracked). These are new ones you don’t show for yet.`
+                    : "Google doesn’t show your site for any of these yet. That’s normal for a new site."}{" "}
+                We found {walk.length} topic{walk.length === 1 ? "" : "s"} you could win. Let’s go through them one at a time.
               </p>
               <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                 <button type="button" onClick={() => setStep(1)} style={{ minHeight: 54, padding: "0 26px", borderRadius: 14, border: 0, background: "#4DA3FF", color: "#0A0B0D", fontSize: 16, fontWeight: 600, boxShadow: "0 0 22px rgba(77,163,255,.45)" }}>
