@@ -19,7 +19,6 @@ import {
   listChanges,
   loadFeature,
   researchAudit,
-  runSiteScan,
   undoChange,
 } from "@/lib/v1Api";
 import { useConnectionStatus } from "@/components/board/ConnectDialog";
@@ -30,6 +29,7 @@ import PriorityInfoButton from "@/components/v8/PriorityInfoButton";
 import { problemsFrom } from "@/lib/problems";
 import "@/styles/v8-screens.css";
 import DataHealthNotice from "@/components/v8/DataHealthNotice";
+import ScanPipeline from "@/components/v8/scan/ScanPipeline";
 
 const COLORS = DOT_COLORS;
 const RGB = DOT_RGB;
@@ -63,6 +63,10 @@ export default function ScanScreen() {
   const [regenNote, setRegenNote] = useState("");
   const [problems, setProblems] = useState([]);
   const timerRef = useRef(null);
+  const [scanRun, setScanRun] = useState(0);
+  const hasScanRef = useRef(false);
+  // Set once a scan starts, so the first page load finishing late never cuts a running scan off.
+  const scanStartedRef = useRef(false);
 
   const reloadLive = useCallback(async () => {
     const { hostname, href } = activeSiteContext(loadJourney());
@@ -80,13 +84,9 @@ export default function ScanScreen() {
         loadFeature("ga4-landing-pages"),
         href ? researchAudit({ site: href, force: false }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
       ]);
-      let scan = scanRes.data?.scan || scanRes.data;
-      let scanProblems = problemsFrom(scanRes, "site_scan");
-      if (href && !scan?.pagesRead) {
-        const started = await runSiteScan({ force: false, quick: true }).catch(() => ({ ok: false }));
-        scan = started?.data?.scan || (started?.ok ? started?.data : null) || scan;
-        scanProblems = problemsFrom(started, "site_scan");
-      }
+      const scan = scanRes.data?.scan || scanRes.data;
+      const scanProblems = problemsFrom(scanRes, "site_scan");
+      hasScanRef.current = Boolean(scan?.pagesRead);
       setProblems(href ? [...scanProblems, ...problemsFrom(auditRes, "site_audit")] : []);
       if (scan) setScanData(scan);
       const gsc = featurePayload(queries);
@@ -148,6 +148,7 @@ export default function ScanScreen() {
 
   useEffect(() => {
     reloadLive().then((bundle) => {
+      if (scanStartedRef.current) return;
       const total =
         (bundle?.red?.length || 0) +
         (bundle?.yellow?.length || 0) +
@@ -156,6 +157,12 @@ export default function ScanScreen() {
       if (total === 0 && !activeSiteContext(loadJourney()).hostname) {
         setStage("input");
         setPct(0);
+      } else if (!hasScanRef.current && activeSiteContext(loadJourney()).hostname) {
+        // First visit: read the site in view, step by step.
+        scanStartedRef.current = true;
+        setStage("scanning");
+        setPct(0);
+        setScanRun((n) => n + 1);
       } else {
         setStage("reveal");
         setPct(100);
@@ -167,41 +174,22 @@ export default function ScanScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const runScan = useCallback(async () => {
+  const runScan = useCallback(() => {
+    scanStartedRef.current = true;
     if (timerRef.current) clearInterval(timerRef.current);
-    setStage("scanning");
-    setPct(0);
     setPage(0);
     setFilter("red");
     setOrder("scan");
-    // Presentation timing: ~3.5s to 100%, then connect or reveal.
-    const startedAt = Date.now();
-    // Creep toward 90% while the read is in flight. Jumping to 100% early is what left the
-    // screen sitting on "READING" after the bar had already finished.
-    timerRef.current = setInterval(() => {
-      setPct((prev) => (prev >= 90 ? prev : Math.min(90, prev + 3)));
-    }, 200);
-    let scanRun = { ok: false };
-    try {
-      scanRun = await runSiteScan({ force: true, quick: true }).catch(() => ({ ok: false }));
-      await reloadLive();
-      const runProblems = problemsFrom(scanRun, "site_scan");
-      if (runProblems.some((p) => p.severity === "error")) setProblems(runProblems);
-    } catch {
-      /* keep animation; empty board if APIs fail */
-    }
-    const finish = () => {
-      setPct(100);
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      setStage(connectionStatus.gsc ? "reveal" : "connect");
-      setScanDone(true);
-    };
-    const hold = Math.max(0, 1600 - (Date.now() - startedAt));
-    setTimeout(finish, hold);
-  }, [connectionStatus.gsc, reloadLive]);
+    setPct(0);
+    setStage("scanning");
+    setScanRun((n) => n + 1);
+  }, []);
+
+  const finishScan = useCallback(() => {
+    setPct(100);
+    setStage(connectionStatus.gsc ? "reveal" : "connect");
+    setScanDone(true);
+  }, [connectionStatus.gsc]);
 
   // Live scan only — no Northline HTML sample when the workspace has no findings yet.
   const red = liveTasks?.red || [];
@@ -323,13 +311,6 @@ export default function ScanScreen() {
 
   const hv = hover;
   const hovered = hv >= 0 && hv < lit ? slice[hv] : null;
-
-  const log = [];
-  if (pct > 4) log.push(`→ reading ${scanHost || "your site"}`);
-  if (pct > 25) log.push("→ titles, headings and meta from the crawl");
-  if (pct > 50) log.push(connectionStatus.wordpress ? "→ WordPress / CMS signals" : "→ page structure and links");
-  if (pct > 72) log.push("→ mapping opportunities into the colour map");
-  if (pct > 90) log.push(`→ ${N || "…"} tasks · ${red.length} dire · ${yellow.length} medium`);
 
   const callsEstimate = Math.max(0, Math.round(untappedVisitors / 50));
 
@@ -810,41 +791,15 @@ export default function ScanScreen() {
           )}
 
           {stage === "scanning" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-              <div
-                style={{
-                  fontFamily: "'Geist Mono', monospace",
-                  fontSize: 13,
-                  color: "#4DA3FF",
-                  letterSpacing: "0.5px",
-                  animation: "sfy-breathe 1.2s ease-in-out infinite",
-                  textTransform: "uppercase",
-                }}
-              >
-                READING {scanHost || "YOUR SITE"}
-              </div>
-              <div
-                style={{
-                  fontFamily: "'Bricolage Grotesque', Geist, sans-serif",
-                  fontSize: "clamp(64px, 8vw, 112px)",
-                  lineHeight: 0.9,
-                  letterSpacing: "-3px",
-                  fontWeight: 800,
-                }}
-              >
-                {pct}%
-              </div>
-              <div role="progressbar" aria-label="Scan progress" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} style={{ height: 12, borderRadius: 999, background: "#1A1D22", overflow: "hidden" }}>
-                <div style={{ height: 12, borderRadius: 999, background: "linear-gradient(90deg, #4DA3FF, #3DDC84)", boxShadow: "0 0 22px rgba(77,163,255,.6)", width: `${pct}%`, transition: "width .1s linear" }} />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, fontFamily: "'Geist Mono', monospace", fontSize: 14, color: "#9AA1AB" }}>
-                {log.map((line) => (
-                  <div key={line} style={{ animation: "sfy-rise .3s ease both" }}>
-                    {line}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ScanPipeline
+              key={scanRun}
+              site={activeSiteContext(loadJourney()).href || urlInput}
+              host={scanHost || "your site"}
+              connection={connectionStatus}
+              onProgress={setPct}
+              onBuild={reloadLive}
+              onDone={finishScan}
+            />
           )}
 
           {stage === "connect" && (
@@ -1620,7 +1575,7 @@ export default function ScanScreen() {
         titleId="done-h"
         title="Your scan is complete."
         tone="blue"
-        lead={`We checked ${N || 0} things on ${activeSiteContext(loadJourney()).hostname || "your site"}. Here's what your SearchLites found:`}
+        lead={`We read ${activeSiteContext(loadJourney()).hostname || "your site"} with your Google data, keyword, backlink and audit research, and found ${N || 0} task${N === 1 ? "" : "s"}:`}
         counts={[
           { n: red.length, label: "red · fix first", color: "#FF5A4E" },
           { n: yellow.length, label: "yellow · next", color: "#FFC53D" },
