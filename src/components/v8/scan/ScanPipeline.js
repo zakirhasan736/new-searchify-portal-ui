@@ -33,6 +33,7 @@ const STEPS = [
   { id: "gsc", label: "Google Search Console", group: "Google" },
   { id: "ga4", label: "Google Analytics", group: "Google" },
   { id: "keywords", label: "Keywords and rankings", group: "DataForSEO" },
+  { id: "pagekw", label: "Best keyword for each page", group: "DataForSEO" },
   { id: "backlinks", label: "Backlinks", group: "DataForSEO" },
   { id: "audit", label: "Technical site audit", group: "DataForSEO" },
   { id: "speed", label: "PageSpeed Insights", group: "Google" },
@@ -44,11 +45,39 @@ const STEPS = [
 
 const HOLD = {
   pages: 2600, robots: 1500, sitemap: 1300, redirects: 1000, business: 2600, gsc: 1800, ga4: 1300,
-  keywords: 2200, backlinks: 1600, audit: 1600, speed: 1600, places: 1300, ai: 1400, drafts: 2400, board: 1400,
+  keywords: 2200, pagekw: 900, backlinks: 1600, audit: 1600, speed: 1600, places: 1300, ai: 1400, drafts: 2400, board: 1400,
 };
 
 const COLOR = { ok: "#3DDC84", warn: "#FFC53D", error: "#FF5A4E", skip: "#7D848E", running: "#4DA3FF", pending: "#3A3F47" };
 const MONO = { fontFamily: "'Geist Mono', monospace" };
+const TILES = [
+  ["red", "Urgent", "#FF5A4E"],
+  ["yellow", "Worth doing", "#FFC53D"],
+  ["green", "Passing", "#3DDC84"],
+  ["blue", "Winning", "#4DA3FF"],
+];
+
+/** Counts up to `value` once it arrives, so the board totals land like the dots lighting up. */
+function CountUp({ value, reduced }) {
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    if (value == null) return undefined;
+    if (reduced) {
+      setShown(value);
+      return undefined;
+    }
+    let frame;
+    const start = performance.now();
+    const tick = (t) => {
+      const k = Math.min(1, (t - start) / 900);
+      setShown(Math.round(value * (1 - (1 - k) ** 3)));
+      if (k < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [value, reduced]);
+  return value == null ? "—" : shown;
+}
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const safe = (promise) => Promise.resolve(promise).catch((error) => ({ ok: false, data: { detail: String(error?.message || error) } }));
@@ -72,6 +101,7 @@ export default function ScanPipeline({ site, host, connection = {}, onBuild, onD
   const [steps, setSteps] = useState(() => STEPS.map((s) => ({ ...s, state: "pending", detail: "", chips: [] })));
   const [feed, setFeed] = useState([]);
   const [now, setNow] = useState(0);
+  const [counts, setCounts] = useState(null);
   const started = useRef(false);
   const mounted = useRef(true);
   const feedRef = useRef(null);
@@ -130,11 +160,24 @@ export default function ScanPipeline({ site, host, connection = {}, onBuild, onD
         if (!res.ok || !scan.pagesRead) {
           return { state: "error", detail: errorText(res, scan.error || "The website could not be read.") };
         }
-        const paths = (scan.listings || []).map((row) => row.path || pathOf(row.url));
+        // Show each page as it was read: address, what it is, its title and how much it says.
+        const rows = scan.listings || [];
+        const shown = rows.slice(0, 15);
+        for (const [i, row] of shown.entries()) {
+          if (!mounted.current) break;
+          const path = row.path || pathOf(row.url);
+          set("pages", { detail: `Reading page ${i + 1} of ${scan.pagesRead}: ${path}` });
+          say([
+            `  ✓ ${path}${row.role ? ` · ${row.role} page` : ""}${row.words ? ` · ${num(row.words)} words` : ""}`,
+            row.title ? `      title “${row.title}”` : "      ! no title",
+            row.h1 ? `      H1 “${row.h1}”` : "",
+          ]);
+          await sleep(reduced ? 0 : 320);
+        }
         return {
-          detail: `${scan.pagesRead} page${scan.pagesRead === 1 ? "" : "s"} read${scan.siteRead?.readAsBrowser ? " (as a browser: a firewall blocked SearchifyBot)" : ""}`,
+          detail: `${scan.pagesRead} page${scan.pagesRead === 1 ? "" : "s"} read one by one${scan.siteRead?.readAsBrowser ? " (as a browser: a firewall blocked SearchifyBot)" : ""}`,
           state: scan.siteRead?.readAsBrowser ? "warn" : "ok",
-          lines: paths.slice(0, 12).map((p) => `  ✓ ${p}`),
+          lines: rows.length > shown.length ? [`  + ${rows.length - shown.length} more pages read`] : [],
         };
       });
       // These need the business read, so they start once the pages are in.
@@ -160,8 +203,12 @@ export default function ScanPipeline({ site, host, connection = {}, onBuild, onD
         if (!s.url) return { state: "warn", detail: "No sitemap found. Google finds pages more slowly without one." };
         return {
           state: s.problems?.length ? "warn" : "ok",
-          detail: `${num(s.urlCount) || 0} URLs in ${pathOf(s.url)}${s.index ? " (sitemap index)" : ""}`,
-          lines: (s.problems || []).map((p) => `  ! ${p}`),
+          detail: `${num(s.urlCount) || 0} URLs in ${pathOf(s.url)}${s.index ? ` (index of ${(s.files || []).length || "several"} sitemaps)` : ""}`,
+          lines: [
+            `  ${pathOf(s.url)}${s.index ? " (sitemap index)" : ` · ${num(s.urlCount) || 0} URLs`}`,
+            ...(s.files || []).map((f) => `    └ ${pathOf(f.url)} · ${num(f.urls) || 0} URLs`),
+            ...(s.problems || []).map((p) => `  ! ${p}`),
+          ],
         };
       });
       await run("redirects", async () => {
@@ -198,8 +245,10 @@ export default function ScanPipeline({ site, host, connection = {}, onBuild, onD
         const sessions = num(kpi(p, /session/i));
         return sessions ? { detail: `${sessions} sessions (28 days)`, lines: [`  users ${num(kpi(p, /user/i)) || "—"} · views ${num(kpi(p, /view/i)) || "—"}`] } : { state: "warn", detail: "Connected, but no visits recorded yet." };
       });
+      let kw = null;
       await run("keywords", async () => {
         const res = await hold("keywords", keywords);
+        kw = res.ok ? res.data || {} : null;
         if (!res.ok) return { state: "warn", detail: errorText(res, "Keyword research is unavailable.") };
         const d = res.data || {};
         const ideas = d.ideas || [];
@@ -207,6 +256,25 @@ export default function ScanPipeline({ site, host, connection = {}, onBuild, onD
           detail: `${(d.ranked || []).length} searches you rank for · ${ideas.length} new ideas${d.location ? ` (${d.location})` : ""}`,
           lines: ideas.slice(0, 5).map((row) => `  + ${row.keyword}${row.volume != null ? ` · ${num(row.volume)}/mo` : ""}`),
         };
+      });
+      await run("pagekw", async () => {
+        const pages = (kw?.pageKeywords || []).filter((row) => row.target || row.ranking?.length || row.suggested?.length);
+        if (!kw) return { state: "skip", detail: "Needs keyword research first." };
+        if (!pages.length) return { state: "warn", detail: "The business read did not map keywords to pages yet." };
+        // One page at a time: the search each page should win, with DataForSEO volume and difficulty.
+        for (const [i, row] of pages.slice(0, 10).entries()) {
+          if (!mounted.current) break;
+          const m = row.targetMetrics || {};
+          const best = row.ranking?.[0];
+          const target = row.target || best?.keyword || row.suggested?.[0]?.keyword || "";
+          set("pagekw", { detail: `Page ${i + 1} of ${Math.min(pages.length, 10)}: ${row.path}` });
+          say([
+            `  ${row.path} → “${target}”${m.volume != null ? ` · ${num(m.volume)}/mo` : ""}${m.difficulty != null ? ` · difficulty ${m.difficulty}` : ""}${best?.position ? ` · you're #${best.position}` : " · not ranking yet"}`,
+            row.suggested?.length ? `      also: ${row.suggested.slice(0, 3).map((x) => x.keyword).join(", ")}` : "",
+          ]);
+          await sleep(reduced ? 0 : 380);
+        }
+        return { detail: `A target search picked for ${Math.min(pages.length, 10)} page${pages.length === 1 ? "" : "s"}`, chips: pages.slice(0, 6).map((row) => row.target).filter(Boolean) };
       });
       await run("backlinks", async () => {
         const res = await hold("backlinks", backlinks);
@@ -263,12 +331,13 @@ export default function ScanPipeline({ site, host, connection = {}, onBuild, onD
       await run("board", async () => {
         const bundle = await hold("board", safe(onBuild?.()));
         const count = ["red", "yellow", "green", "blue"].reduce((sum, key) => sum + (bundle?.[key]?.length || 0), 0);
+        if (mounted.current) setCounts(Object.fromEntries(TILES.map(([key]) => [key, bundle?.[key]?.length || 0])));
         return { detail: `${count} tasks on the board` };
       });
       if (mounted.current) {
         setNow(STEPS.length);
         await sleep(reduced ? 0 : 700);
-        onDone?.();
+        onDone?.({ gsc: link.gsc, ga: link.ga });
       }
     })();
     // The scan runs once per mount; a replay remounts this component.
@@ -311,7 +380,7 @@ export default function ScanPipeline({ site, host, connection = {}, onBuild, onD
         <div style={{ height: 10, borderRadius: 999, background: "linear-gradient(90deg, #4DA3FF, #3DDC84)", boxShadow: "0 0 22px rgba(77,163,255,.6)", width: `${Math.max(pct, 3)}%`, transition: "width .6s ease" }} />
       </div>
 
-      <section aria-label="Live read" style={{ width: "100%", boxSizing: "border-box", borderRadius: 16, background: "#0D0F12", border: "1px solid #1A1D22", display: "flex", flexDirection: "column", overflow: "hidden", maxHeight: 220 }}>
+      <section aria-label="Live read" style={{ width: "100%", boxSizing: "border-box", borderRadius: 16, background: "#0D0F12", border: "1px solid #1A1D22", display: "flex", flexDirection: "column", overflow: "hidden", maxHeight: 220, position: "sticky", top: 8, zIndex: 3, boxShadow: "0 10px 24px rgba(10,11,13,.85)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderBottom: "1px solid #1A1D22" }}>
             <span aria-hidden style={{ width: 8, height: 8, borderRadius: 4, background: pct >= 100 ? COLOR.ok : COLOR.running, animation: pct >= 100 || reduced ? "none" : "sfy-breathe 1s ease-in-out infinite" }} />
             <span style={{ ...MONO, fontSize: 12, color: "#9AA1AB" }}>live read · {host}</span>
@@ -326,6 +395,20 @@ export default function ScanPipeline({ site, host, connection = {}, onBuild, onD
           </div>
       </section>
 
+      <div aria-label="Tasks found" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 8 }}>
+        {TILES.map(([key, label, color]) => (
+          <div key={key} style={{ borderRadius: 14, background: "#101215", border: "1px solid #1A1D22", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: "#9AA1AB" }}>
+              <span aria-hidden style={{ width: 9, height: 9, borderRadius: "50%", background: color, boxShadow: `0 0 8px ${color}` }} />
+              {label}
+            </span>
+            <span style={{ fontFamily: "'Bricolage Grotesque', Geist, sans-serif", fontSize: 30, fontWeight: 800, color }}>
+              <CountUp value={counts ? counts[key] : null} reduced={reduced} />
+            </span>
+          </div>
+        ))}
+      </div>
+
       <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "stretch" }}>
         <ol aria-label="Scan steps" style={{ listStyle: "none", margin: 0, padding: 0, flex: "1 1 340px", minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
           {steps.map((step, index) => {
@@ -333,7 +416,7 @@ export default function ScanPipeline({ site, host, connection = {}, onBuild, onD
             const color = COLOR[step.state];
             const newGroup = index === 0 || STEPS[index - 1].group !== step.group;
             return (
-              <li key={step.id} data-scan-step={step.id} style={{ display: "flex", flexDirection: "column", scrollMarginBottom: 24 }}>
+              <li key={step.id} data-scan-step={step.id} style={{ display: "flex", flexDirection: "column", scrollMarginBottom: 24, scrollMarginTop: 250 }}>
                 {newGroup ? <span style={{ ...MONO, fontSize: 11, color: "#7D848E", letterSpacing: ".6px", textTransform: "uppercase", margin: index ? "10px 0 4px" : "0 0 4px" }}>{step.group}</span> : null}
                 <div
                   style={{

@@ -34,7 +34,9 @@ function bucketsFromDaily(daily) {
   if (!Array.isArray(daily) || !daily.length) return [];
   const ordered = [...daily].sort((a, b) => String(a[0]).localeCompare(String(b[0])));
   const buckets = [];
-  for (let i = 0; i < ordered.length; i += 7) {
+  // Whole weeks ending on the newest day: a partial week would plot as a sudden drop.
+  const first = ordered.length >= 7 ? ordered.length % 7 : 0;
+  for (let i = first; i < ordered.length; i += 7) {
     const chunk = ordered.slice(i, i + 7);
     const clicks = chunk.reduce((s, r) => s + (Number(r[1]) || 0), 0);
     const impr = chunk.reduce((s, r) => s + (Number(r[2]) || 0), 0);
